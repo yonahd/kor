@@ -1,10 +1,8 @@
 package kor
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"github.com/olekukonko/tablewriter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
@@ -12,17 +10,53 @@ import (
 	"os"
 )
 
-func retrieveVolumesAndEnvSecret(clientset *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, error) {
+func getSATokens(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+	// Retrieve secrets in all namespaces with type "kubernetes.io/service-account-token"
+	secrets, err := clientset.CoreV1().Secrets(namespace).List(context.TODO(), metav1.ListOptions{
+		FieldSelector: "type=kubernetes.io/service-account-token",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve Kubernetes Service Account tokens: %v", err)
+	}
+
+	tokenNames := make([]string, 0)
+
+	// Extract secret names from secrets
+	for _, secret := range secrets.Items {
+		tokenNames = append(tokenNames, secret.ObjectMeta.Name)
+	}
+
+	return tokenNames, nil
+}
+
+func retrieveIngressTLS(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+	secretNames := make([]string, 0)
+	ingressList, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve Ingress resources: %v", err)
+	}
+
+	// Extract secret names from Ingress TLS
+	for _, ingress := range ingressList.Items {
+		for _, tls := range ingress.Spec.TLS {
+			secretNames = append(secretNames, tls.SecretName)
+		}
+	}
+
+	return secretNames, nil
+
+}
+
+func retrieveVolumesAndEnvSecret(clientset *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
 	envSecrets := []string{}
 	envSecrets2 := []string{}
 	volumeSecrets := []string{}
 	pullSecrets := []string{}
-	tlsSecrets := []string{}
 
 	// Retrieve pods in the specified namespace
 	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Extract volume and environment information from pods
@@ -51,13 +85,21 @@ func retrieveVolumesAndEnvSecret(clientset *kubernetes.Clientset, namespace stri
 		}
 	}
 
-	// TODO get tls secrets
+	tlsSecrets, err := retrieveIngressTLS(clientset, namespace)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, err
+	}
 
-	return envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, nil
+	saTokens, err := getSATokens(clientset, namespace)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, err
+	}
+
+	return envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, saTokens, nil
 }
 
 func retrieveSecretNames(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
-	secrets, err := clientset.CoreV1().Secrets("").List(context.TODO(), metav1.ListOptions{})
+	secrets, err := clientset.CoreV1().Secrets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -85,26 +127,8 @@ func calculateSecretDifference(usedSecrets []string, secretNames []string) []str
 	return difference
 }
 
-func formatOutput(namespace string, secretNames []string) string {
-	if len(secretNames) == 0 {
-		return fmt.Sprintf("No unused config maps found in the namespace: %s", namespace)
-	}
-
-	var buf bytes.Buffer
-	table := tablewriter.NewWriter(&buf)
-	table.SetHeader([]string{"#", "Config Map Name"})
-
-	for i, name := range secretNames {
-		table.Append([]string{fmt.Sprintf("%d", i+1), name})
-	}
-
-	table.Render()
-
-	return fmt.Sprintf("Unused Config Maps in Namespace: %s\n%s", namespace, buf.String())
-}
-
 func processNamespaceSecret(clientset *kubernetes.Clientset, namespace string) (string, error) {
-	envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, err := retrieveVolumesAndEnvSecret(clientset, namespace)
+	envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, saTokens, err := retrieveVolumesAndEnvSecret(clientset, namespace)
 	if err != nil {
 		return "", err
 	}
@@ -114,14 +138,15 @@ func processNamespaceSecret(clientset *kubernetes.Clientset, namespace string) (
 	volumeSecrets = RemoveDuplicatesAndSort(volumeSecrets)
 	pullSecrets = RemoveDuplicatesAndSort(pullSecrets)
 	tlsSecrets = RemoveDuplicatesAndSort(tlsSecrets)
+	saTokens = RemoveDuplicatesAndSort(saTokens)
 
 	secretNames, err := retrieveSecretNames(clientset, namespace)
 	if err != nil {
 		return "", err
 	}
 
-	usedSecrets := append(append(append(append(envSecrets, envSecrets2...), volumeSecrets...), pullSecrets...), tlsSecrets...)
-	diff := calculateCMDifference(usedSecrets, secretNames)
+	usedSecrets := append(append(append(append(append(envSecrets, envSecrets2...), volumeSecrets...), pullSecrets...), tlsSecrets...), saTokens...)
+	diff := calculateSecretDifference(usedSecrets, secretNames)
 	return FormatOutput(namespace, diff, "Secrets"), nil
 
 }
