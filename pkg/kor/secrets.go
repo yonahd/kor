@@ -47,7 +47,7 @@ func retrieveIngressTLS(clientset *kubernetes.Clientset, namespace string) ([]st
 
 }
 
-func retrieveVolumesAndEnvSecret(clientset *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
+func retrieveUsedSecret(clientset *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
 	envSecrets := []string{}
 	envSecrets2 := []string{}
 	volumeSecrets := []string{}
@@ -128,7 +128,7 @@ func calculateSecretDifference(usedSecrets []string, secretNames []string) []str
 }
 
 func processNamespaceSecret(clientset *kubernetes.Clientset, namespace string) (string, error) {
-	envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, saTokens, err := retrieveVolumesAndEnvSecret(clientset, namespace)
+	envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, saTokens, err := retrieveUsedSecret(clientset, namespace)
 	if err != nil {
 		return "", err
 	}
@@ -151,7 +151,7 @@ func processNamespaceSecret(clientset *kubernetes.Clientset, namespace string) (
 
 }
 
-func GetUnusedSecrets() {
+func GetUnusedSecrets(namespace string) {
 	var kubeconfig string
 	var namespaces []string
 
@@ -168,13 +168,17 @@ func GetUnusedSecrets() {
 		os.Exit(1)
 	}
 
-	namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
-		os.Exit(1)
-	}
-	for _, ns := range namespaceList.Items {
-		namespaces = append(namespaces, ns.Name)
+	if namespace != "" {
+		namespaces = append(namespaces, namespace)
+	} else {
+		namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
+			os.Exit(1)
+		}
+		for _, ns := range namespaceList.Items {
+			namespaces = append(namespaces, ns.Name)
+		}
 	}
 
 	for _, namespace := range namespaces {
