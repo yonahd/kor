@@ -9,13 +9,14 @@ var secretCmd = &cobra.Command{
 	Use:     "secret",
 	Aliases: []string{"scrt"},
 	Short:   "Gets unused secrets",
-	Args:    cobra.ExactArgs(0),
+	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		kor.GetUnusedSecrets()
+		kor.GetUnusedSecrets(namespace)
 
 	},
 }
 
 func init() {
+	secretCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "Namespace to run on")
 	rootCmd.AddCommand(secretCmd)
 }

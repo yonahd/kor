@@ -9,6 +9,11 @@ import (
 	"sort"
 )
 
+type ExceptionResource struct {
+	ResourceName string
+	Namespace    string
+}
+
 func RemoveDuplicatesAndSort(slice []string) []string {
 	uniqueSet := make(map[string]bool)
 	for _, item := range slice {
