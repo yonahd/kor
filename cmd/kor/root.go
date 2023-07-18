@@ -20,8 +20,6 @@ var namespace string
 
 func Execute() {
 
-	rootCmd.AddCommand(configmapCmd)
-	rootCmd.AddCommand(secretCmd)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while executing your CLI '%s'", err)
 		os.Exit(1)
