@@ -2,9 +2,14 @@ package kor
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/olekukonko/tablewriter"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	"os"
 	"path/filepath"
 	"sort"
 )
@@ -30,6 +35,40 @@ func RemoveDuplicatesAndSort(slice []string) []string {
 func GetKubeConfigPath() string {
 	home := homedir.HomeDir()
 	return filepath.Join(home, ".kube", "config")
+}
+
+func GetKubeClient() *kubernetes.Clientset {
+	var kubeconfig string
+	kubeconfig = GetKubeConfigPath()
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
+		os.Exit(1)
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+		os.Exit(1)
+	}
+	return clientset
+}
+
+func SetNamespaceList(namespace string, kubeClient *kubernetes.Clientset) []string {
+	var namespaces []string
+	if namespace != "" {
+		namespaces = append(namespaces, namespace)
+	} else {
+		namespaceList, err := kubeClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
+			os.Exit(1)
+		}
+		for _, ns := range namespaceList.Items {
+			namespaces = append(namespaces, ns.Name)
+		}
+	}
+	return namespaces
 }
 
 func FormatOutput(namespace string, resources []string, resourceType string) string {
