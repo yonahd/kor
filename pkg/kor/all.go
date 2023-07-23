@@ -47,6 +47,15 @@ func getUnusedServiceAccounts(kubeClient *kubernetes.Clientset, namespace string
 	return namespaceSADiff
 }
 
+func getUnusedDeployments(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
+	saDiff, err := ProcessNamespaceDeployments(kubeClient, namespace)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "serviceaccounts", namespace, err)
+	}
+	namespaceSADiff := ResourceDiff{"Deployment", saDiff}
+	return namespaceSADiff
+}
+
 func GetUnusedAll(namespace string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
@@ -64,6 +73,8 @@ func GetUnusedAll(namespace string) {
 		allDiffs = append(allDiffs, namespaceSecretDiff)
 		namespaceSADiff := getUnusedServiceAccounts(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceSADiff)
+		namespaceDeploymentDiff := getUnusedDeployments(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceDeploymentDiff)
 		output := FormatOutputAll(namespace, allDiffs)
 		fmt.Println(output)
 		fmt.Println()
