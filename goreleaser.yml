@@ -46,10 +46,6 @@ archives:
     files:
       - README.md
       - LICENSE
-checksum:
-  name_template: "{{ .ProjectName }}_checksums.txt"
-snapshot:
-  name_template: SNAPSHOT-{{.ShortCommit}}
 changelog:
   sort: asc
   filters:
