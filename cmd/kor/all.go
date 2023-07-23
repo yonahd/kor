@@ -2,7 +2,7 @@ package kor
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/ydissen/kor/pkg/kor"
+	"github.com/yonahd/kor/pkg/kor"
 )
 
 var allCmd = &cobra.Command{
