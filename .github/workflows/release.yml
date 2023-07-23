@@ -17,7 +17,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.x  # Specify the Go version
+          go-version: 1.20.2
 
       - name: Install goreleaser
         run: go install github.com/goreleaser/goreleaser@latest
@@ -27,4 +27,5 @@ jobs:
           goreleaser release
         env:
           GITHUB_TOKEN: "${{ secrets.RELEASE_GITHUB_TOKEN }}"
+          GOPROXY: "direct"
 
