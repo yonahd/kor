@@ -24,5 +24,6 @@ jobs:
 
       - name: Run goreleaser
         run: |
-          export GITHUB_TOKEN=$GITHUB_TOKEN  # Replace with your actual GitHub token
+          export GITHUB_TOKEN=$RELEASE_GITHUB_TOKEN  
           goreleaser release
+
