@@ -1,31 +1,66 @@
-# goreleaser.yml
+project_name: kor
 
-# This is a sample goreleaser configuration file.
-
-# Customize the version field with your project version.
-# You can use `goreleaser --snapshot --skip-publish` to create a snapshot build.
-version: 0.1.0
-snapshot:
-  name_template: "{{.Tag}}-{{.ShortCommit}}"
 builds:
-  - binary: kor
+  - id: linux-amd64
+    binary: kor-linux-{{ .Arch }}
+    main: ./main.go
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - "{{ .Env.LDFLAGS }}"
+    no_unique_dist_dir: true
+
+  - id: darwin-amd64
+    binary: kor-darwin-{{ .Arch }}
+    main: ./main.go
     goos:
       - darwin
-      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - "{{ .Env.LDFLAGS }}"
+    no_unique_dist_dir: true
+
+  - id: windows-amd64
+    binary: kor-windows-{{ .Arch }}
+    main: ./main.go
+    goos:
       - windows
     goarch:
       - amd64
-      - arm64
+    ldflags:
+      - -buildmode=exe
+      - "{{ .Env.LDFLAGS }}"
+    no_unique_dist_dir: true
+
+gomod:
+  proxy: true
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
     format_overrides:
-      zip:
+      - goos: windows
         format: zip
-release:
-  github:
-    owner: ydissen
-    name: kor
-  # Customize other release settings as needed.
+    files:
+      - README.md
+      - LICENSE
+checksum:
+  name_template: "{{ .ProjectName }}_checksums.txt"
+snapshot:
+  name_template: SNAPSHOT-{{.ShortCommit}}
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - 'README'
+      - Merge pull request
+      - Merge branch
