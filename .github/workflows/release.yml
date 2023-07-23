@@ -1,15 +1,13 @@
 name: Release
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-    branches:
-      - main
+  push:
+    tags:
+      - '*'
 
 jobs:
-  build:
+  release:
+    name: Release
     runs-on: ubuntu-latest
 
     steps:
@@ -19,10 +17,12 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.20.2
+          go-version: 1.x  # Specify the Go version
 
-      - name: Build
-        run: go build -v ./...
+      - name: Install goreleaser
+        run: go install github.com/goreleaser/goreleaser@latest
 
-      - name: Test
-        run: go test -v ./...
+      - name: Run goreleaser
+        run: |
+          export GITHUB_TOKEN=$RELEASE_GITHUB_TOKEN  # Replace with your actual GitHub token
+          goreleaser release
