@@ -5,6 +5,7 @@ Kor is a CLI tool to discover unused Kubernetes resources. Currently, Kor can id
 - Secrets.
 - Services
 - ServiceAccounts
+- Deployments
 
 ![Kor Screenshot](/images/screenshot.png)
 
