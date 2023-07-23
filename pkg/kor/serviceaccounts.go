@@ -5,7 +5,6 @@ import (
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 	"os"
 )
 
@@ -13,12 +12,12 @@ var exceptionServiceAccounts = []ExceptionResource{
 	{ResourceName: "default", Namespace: "*"},
 }
 
-func retrieveUsedSA(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func retrieveUsedSA(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
 
 	podServiceAccounts := []string{}
 
 	// Retrieve pods in the specified namespace
-	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +38,8 @@ func retrieveUsedSA(clientset *kubernetes.Clientset, namespace string) ([]string
 	return podServiceAccounts, nil
 }
 
-func retrieveServiceAccountNames(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
-	serviceaccounts, err := clientset.CoreV1().ServiceAccounts(namespace).List(context.TODO(), metav1.ListOptions{})
+func retrieveServiceAccountNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
+	serviceaccounts, err := kubeClient.CoreV1().ServiceAccounts(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -51,60 +50,39 @@ func retrieveServiceAccountNames(clientset *kubernetes.Clientset, namespace stri
 	return names, nil
 }
 
-func processNamespaceSA(clientset *kubernetes.Clientset, namespace string) (string, error) {
-	usedServiceAccounts, err := retrieveUsedSA(clientset, namespace)
+func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
+	usedServiceAccounts, err := retrieveUsedSA(kubeClient, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	usedServiceAccounts = RemoveDuplicatesAndSort(usedServiceAccounts)
 
-	serviceAccountNames, err := retrieveServiceAccountNames(clientset, namespace)
+	serviceAccountNames, err := retrieveServiceAccountNames(kubeClient, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	diff := calculateCMDifference(usedServiceAccounts, serviceAccountNames)
-	return FormatOutput(namespace, diff, "Service Account"), nil
+	return diff, nil
 
 }
 
 func GetUnusedServiceAccounts(namespace string) {
-	var kubeconfig string
+	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
-	kubeconfig = GetKubeConfigPath()
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
-		os.Exit(1)
-	}
+	kubeClient = GetKubeClient()
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
-		os.Exit(1)
-	}
-
-	if namespace != "" {
-		namespaces = append(namespaces, namespace)
-	} else {
-		namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
-			os.Exit(1)
-		}
-		for _, ns := range namespaceList.Items {
-			namespaces = append(namespaces, ns.Name)
-		}
-	}
+	namespaces = SetNamespaceList(namespace, kubeClient)
 
 	for _, namespace := range namespaces {
-		output, err := processNamespaceSA(clientset, namespace)
+		diff, err := processNamespaceSA(kubeClient, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+		output := FormatOutput(namespace, diff, "ServiceAccount")
 		fmt.Println(output)
 		fmt.Println()
 	}

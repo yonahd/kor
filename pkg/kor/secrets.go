@@ -6,7 +6,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
-	"k8s.io/client-go/tools/clientcmd"
 	"os"
 )
 
@@ -47,14 +46,14 @@ func retrieveIngressTLS(clientset *kubernetes.Clientset, namespace string) ([]st
 
 }
 
-func retrieveUsedSecret(clientset *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
+func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
 	envSecrets := []string{}
 	envSecrets2 := []string{}
 	volumeSecrets := []string{}
 	pullSecrets := []string{}
 
 	// Retrieve pods in the specified namespace
-	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, err
 	}
@@ -85,12 +84,12 @@ func retrieveUsedSecret(clientset *kubernetes.Clientset, namespace string) ([]st
 		}
 	}
 
-	tlsSecrets, err := retrieveIngressTLS(clientset, namespace)
+	tlsSecrets, err := retrieveIngressTLS(kubeClient, namespace)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, err
 	}
 
-	saTokens, err := getSATokens(clientset, namespace)
+	saTokens, err := getSATokens(kubeClient, namespace)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, err
 	}
@@ -98,8 +97,8 @@ func retrieveUsedSecret(clientset *kubernetes.Clientset, namespace string) ([]st
 	return envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, saTokens, nil
 }
 
-func retrieveSecretNames(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
-	secrets, err := clientset.CoreV1().Secrets(namespace).List(context.TODO(), metav1.ListOptions{})
+func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
+	secrets, err := kubeClient.CoreV1().Secrets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -127,10 +126,10 @@ func calculateSecretDifference(usedSecrets []string, secretNames []string) []str
 	return difference
 }
 
-func processNamespaceSecret(clientset *kubernetes.Clientset, namespace string) (string, error) {
-	envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, saTokens, err := retrieveUsedSecret(clientset, namespace)
+func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
+	envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, saTokens, err := retrieveUsedSecret(kubeClient, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	envSecrets = RemoveDuplicatesAndSort(envSecrets)
@@ -140,53 +139,32 @@ func processNamespaceSecret(clientset *kubernetes.Clientset, namespace string) (
 	tlsSecrets = RemoveDuplicatesAndSort(tlsSecrets)
 	saTokens = RemoveDuplicatesAndSort(saTokens)
 
-	secretNames, err := retrieveSecretNames(clientset, namespace)
+	secretNames, err := retrieveSecretNames(kubeClient, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	usedSecrets := append(append(append(append(append(envSecrets, envSecrets2...), volumeSecrets...), pullSecrets...), tlsSecrets...), saTokens...)
 	diff := calculateSecretDifference(usedSecrets, secretNames)
-	return FormatOutput(namespace, diff, "Secrets"), nil
+	return diff, nil
 
 }
 
 func GetUnusedSecrets(namespace string) {
-	var kubeconfig string
+	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
-	kubeconfig = GetKubeConfigPath()
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
-		os.Exit(1)
-	}
+	kubeClient = GetKubeClient()
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
-		os.Exit(1)
-	}
-
-	if namespace != "" {
-		namespaces = append(namespaces, namespace)
-	} else {
-		namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
-			os.Exit(1)
-		}
-		for _, ns := range namespaceList.Items {
-			namespaces = append(namespaces, ns.Name)
-		}
-	}
+	namespaces = SetNamespaceList(namespace, kubeClient)
 
 	for _, namespace := range namespaces {
-		output, err := processNamespaceSecret(clientset, namespace)
+		diff, err := processNamespaceSecret(kubeClient, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+		output := FormatOutput(namespace, diff, "Secrets")
 		fmt.Println(output)
 		fmt.Println()
 	}

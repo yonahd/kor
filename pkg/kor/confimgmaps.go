@@ -6,15 +6,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
-	"k8s.io/client-go/tools/clientcmd"
 	"os"
 )
 
 var exceptionconfigmaps = []ExceptionResource{
 	{ResourceName: "aws-auth", Namespace: "kube-system"},
+	{ResourceName: "kube-root-ca.crt", Namespace: "*"},
 }
 
-func retrieveUsedCM(clientset *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, error) {
+func retrieveUsedCM(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, error) {
 	volumesCM := []string{}
 	volumesProjectedCM := []string{}
 	envCM := []string{}
@@ -22,7 +22,7 @@ func retrieveUsedCM(clientset *kubernetes.Clientset, namespace string) ([]string
 	envFromContainerCM := []string{}
 
 	// Retrieve pods in the specified namespace
-	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
@@ -60,7 +60,7 @@ func retrieveUsedCM(clientset *kubernetes.Clientset, namespace string) ([]string
 		}
 	}
 
-	for _, resource := range exceptionServiceAccounts {
+	for _, resource := range exceptionconfigmaps {
 		if resource.Namespace == namespace || resource.Namespace == "*" {
 			volumesCM = append(volumesCM, resource.ResourceName)
 		}
@@ -69,8 +69,8 @@ func retrieveUsedCM(clientset *kubernetes.Clientset, namespace string) ([]string
 	return volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, nil
 }
 
-func retrieveConfigMapNames(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
-	configmaps, err := clientset.CoreV1().ConfigMaps(namespace).List(context.TODO(), metav1.ListOptions{})
+func retrieveConfigMapNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
+	configmaps, err := kubeClient.CoreV1().ConfigMaps(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -98,10 +98,10 @@ func calculateCMDifference(usedConfigMaps []string, configMapNames []string) []s
 	return difference
 }
 
-func processNamespaceCM(clientset *kubernetes.Clientset, namespace string) (string, error) {
-	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, err := retrieveUsedCM(clientset, namespace)
+func processNamespaceCM(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
+	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, err := retrieveUsedCM(kubeClient, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	volumesCM = RemoveDuplicatesAndSort(volumesCM)
@@ -110,53 +110,32 @@ func processNamespaceCM(clientset *kubernetes.Clientset, namespace string) (stri
 	envFromCM = RemoveDuplicatesAndSort(envFromCM)
 	envFromContainerCM = RemoveDuplicatesAndSort(envFromContainerCM)
 
-	configMapNames, err := retrieveConfigMapNames(clientset, namespace)
+	configMapNames, err := retrieveConfigMapNames(kubeClient, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	usedConfigMaps := append(append(append(append(volumesCM, volumesProjectedCM...), envCM...), envFromCM...), envFromContainerCM...)
 	diff := calculateCMDifference(usedConfigMaps, configMapNames)
-	return FormatOutput(namespace, diff, "Config Maps"), nil
+	return diff, nil
 
 }
 
 func GetUnusedConfigmaps(namespace string) {
-	var kubeconfig string
+	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
-	kubeconfig = GetKubeConfigPath()
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
-		os.Exit(1)
-	}
+	kubeClient = GetKubeClient()
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
-		os.Exit(1)
-	}
-
-	if namespace != "" {
-		namespaces = append(namespaces, namespace)
-	} else {
-		namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
-			os.Exit(1)
-		}
-		for _, ns := range namespaceList.Items {
-			namespaces = append(namespaces, ns.Name)
-		}
-	}
+	namespaces = SetNamespaceList(namespace, kubeClient)
 
 	for _, namespace := range namespaces {
-		output, err := processNamespaceCM(clientset, namespace)
+		diff, err := processNamespaceCM(kubeClient, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+		output := FormatOutput(namespace, diff, "Config Maps")
 		fmt.Println(output)
 		fmt.Println()
 	}
