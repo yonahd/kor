@@ -1,32 +1,26 @@
 name: Release
-
 on:
   push:
     tags:
       - '*'
-
-permissions:
-  contents: write
-
 jobs:
-  goreleaser:
+  release:
+    name: Release
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
         with:
-          fetch-depth: 0
-      -
-        name: Set up Go
-        uses: actions/setup-go@v4
-      -
-        name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v4
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean
+          go-version: 1.20.2
+
+      - name: Install goreleaser
+        run: go install github.com/goreleaser/goreleaser@latest
+
+      - name: Run goreleaser
+        run: |
+          goreleaser release
         env:
           GITHUB_TOKEN: "${{ secrets.RELEASE_GITHUB_TOKEN }}"
-

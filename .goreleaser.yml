@@ -30,8 +30,6 @@ builds:
       - -buildmode=exe
     no_unique_dist_dir: true
 
-gomod:
-  proxy: true
 archives:
   - format: tar.gz
     name_template: >-
