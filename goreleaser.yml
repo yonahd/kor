@@ -1,0 +1,31 @@
+# goreleaser.yml
+
+# This is a sample goreleaser configuration file.
+
+# Customize the version field with your project version.
+# You can use `goreleaser --snapshot --skip-publish` to create a snapshot build.
+version: 0.1.0
+snapshot:
+  name_template: "{{.Tag}}-{{.ShortCommit}}"
+builds:
+  - binary: kor
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+    format_overrides:
+      zip:
+        format: zip
+release:
+  github:
+    owner: ydissen
+    name: kor
+  # Customize other release settings as needed.

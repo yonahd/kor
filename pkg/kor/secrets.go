@@ -126,10 +126,10 @@ func calculateSecretDifference(usedSecrets []string, secretNames []string) []str
 	return difference
 }
 
-func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) (string, error) {
+func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
 	envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, saTokens, err := retrieveUsedSecret(kubeClient, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	envSecrets = RemoveDuplicatesAndSort(envSecrets)
@@ -141,12 +141,12 @@ func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) 
 
 	secretNames, err := retrieveSecretNames(kubeClient, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	usedSecrets := append(append(append(append(append(envSecrets, envSecrets2...), volumeSecrets...), pullSecrets...), tlsSecrets...), saTokens...)
 	diff := calculateSecretDifference(usedSecrets, secretNames)
-	return FormatOutput(namespace, diff, "Secrets"), nil
+	return diff, nil
 
 }
 
@@ -159,11 +159,12 @@ func GetUnusedSecrets(namespace string) {
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
 	for _, namespace := range namespaces {
-		output, err := processNamespaceSecret(kubeClient, namespace)
+		diff, err := processNamespaceSecret(kubeClient, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+		output := FormatOutput(namespace, diff, "Secrets")
 		fmt.Println(output)
 		fmt.Println()
 	}

@@ -8,11 +8,7 @@ import (
 	"os"
 )
 
-var exceptionServices = []ExceptionResource{
-	{ResourceName: "default", Namespace: "*"},
-}
-
-func GetEndpointsWithoutSubsets(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
+func getEndpointsWithoutSubsets(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
 	endpointsList, err := kubeClient.CoreV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -29,13 +25,13 @@ func GetEndpointsWithoutSubsets(kubeClient *kubernetes.Clientset, namespace stri
 	return endpointsWithoutSubsets, nil
 }
 
-func processNamespaceSerices(clientset *kubernetes.Clientset, namespace string) (string, error) {
-	usedServices, err := GetEndpointsWithoutSubsets(clientset, namespace)
+func ProcessNamespaceServices(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+	usedServices, err := getEndpointsWithoutSubsets(clientset, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return FormatOutput(namespace, usedServices, "Services"), nil
+	return usedServices, nil
 
 }
 
@@ -48,11 +44,12 @@ func GetUnusedServices(namespace string) {
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
 	for _, namespace := range namespaces {
-		output, err := processNamespaceSerices(kubeClient, namespace)
+		diff, err := ProcessNamespaceServices(kubeClient, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+		output := FormatOutput(namespace, diff, "Services")
 		fmt.Println(output)
 		fmt.Println()
 	}

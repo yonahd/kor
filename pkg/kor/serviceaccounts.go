@@ -50,21 +50,21 @@ func retrieveServiceAccountNames(kubeClient *kubernetes.Clientset, namespace str
 	return names, nil
 }
 
-func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) (string, error) {
+func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
 	usedServiceAccounts, err := retrieveUsedSA(kubeClient, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	usedServiceAccounts = RemoveDuplicatesAndSort(usedServiceAccounts)
 
 	serviceAccountNames, err := retrieveServiceAccountNames(kubeClient, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	diff := calculateCMDifference(usedServiceAccounts, serviceAccountNames)
-	return FormatOutput(namespace, diff, "Service Account"), nil
+	return diff, nil
 
 }
 
@@ -77,11 +77,12 @@ func GetUnusedServiceAccounts(namespace string) {
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
 	for _, namespace := range namespaces {
-		output, err := processNamespaceSA(kubeClient, namespace)
+		diff, err := processNamespaceSA(kubeClient, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+		output := FormatOutput(namespace, diff, "ServiceAccount")
 		fmt.Println(output)
 		fmt.Println()
 	}

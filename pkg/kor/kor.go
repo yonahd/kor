@@ -88,3 +88,23 @@ func FormatOutput(namespace string, resources []string, resourceType string) str
 
 	return fmt.Sprintf("Unused %s in Namespace: %s\n%s", resourceType, namespace, buf.String())
 }
+
+func FormatOutputAll(namespace string, allDiffs []ResourceDiff) string {
+	i := 0
+	var buf bytes.Buffer
+	table := tablewriter.NewWriter(&buf)
+	table.SetHeader([]string{"#", "Resource Type", "Resource Name"})
+	// TODO parse resourceType, diff
+	for _, data := range allDiffs {
+		for _, val := range data.diff {
+			row := []string{fmt.Sprintf("%d", i+1), data.resourceType, val}
+			table.Append(row)
+			i += 1
+		}
+	}
+
+	table.Render()
+	return fmt.Sprintf("Unused Resources in Namespace: %s\n%s", namespace, buf.String())
+}
+
+// TODO create formatter by resource "#", "Resource Name", "Namespace"

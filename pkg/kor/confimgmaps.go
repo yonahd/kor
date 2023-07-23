@@ -11,6 +11,7 @@ import (
 
 var exceptionconfigmaps = []ExceptionResource{
 	{ResourceName: "aws-auth", Namespace: "kube-system"},
+	{ResourceName: "kube-root-ca.crt", Namespace: "*"},
 }
 
 func retrieveUsedCM(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, error) {
@@ -59,7 +60,7 @@ func retrieveUsedCM(kubeClient *kubernetes.Clientset, namespace string) ([]strin
 		}
 	}
 
-	for _, resource := range exceptionServiceAccounts {
+	for _, resource := range exceptionconfigmaps {
 		if resource.Namespace == namespace || resource.Namespace == "*" {
 			volumesCM = append(volumesCM, resource.ResourceName)
 		}
@@ -97,10 +98,10 @@ func calculateCMDifference(usedConfigMaps []string, configMapNames []string) []s
 	return difference
 }
 
-func processNamespaceCM(kubeClient *kubernetes.Clientset, namespace string) (string, error) {
+func processNamespaceCM(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
 	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, err := retrieveUsedCM(kubeClient, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	volumesCM = RemoveDuplicatesAndSort(volumesCM)
@@ -111,12 +112,12 @@ func processNamespaceCM(kubeClient *kubernetes.Clientset, namespace string) (str
 
 	configMapNames, err := retrieveConfigMapNames(kubeClient, namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	usedConfigMaps := append(append(append(append(volumesCM, volumesProjectedCM...), envCM...), envFromCM...), envFromContainerCM...)
 	diff := calculateCMDifference(usedConfigMaps, configMapNames)
-	return FormatOutput(namespace, diff, "Config Maps"), nil
+	return diff, nil
 
 }
 
@@ -129,11 +130,12 @@ func GetUnusedConfigmaps(namespace string) {
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
 	for _, namespace := range namespaces {
-		output, err := processNamespaceCM(kubeClient, namespace)
+		diff, err := processNamespaceCM(kubeClient, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+		output := FormatOutput(namespace, diff, "Config Maps")
 		fmt.Println(output)
 		fmt.Println()
 	}
