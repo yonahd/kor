@@ -2,7 +2,7 @@ project_name: kor
 
 builds:
   - id: linux-amd64
-    binary: kor-linux-{{ .Arch }}
+    binary: kor
     main: ./main.go
     goos:
       - linux
@@ -11,7 +11,7 @@ builds:
     no_unique_dist_dir: true
 
   - id: darwin-amd64
-    binary: kor-darwin-{{ .Arch }}
+    binary: kor
     main: ./main.go
     goos:
       - darwin
@@ -20,7 +20,7 @@ builds:
     no_unique_dist_dir: true
 
   - id: windows-amd64
-    binary: kor-windows-{{ .Arch }}
+    binary: kor
     main: ./main.go
     goos:
       - windows

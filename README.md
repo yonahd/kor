@@ -6,6 +6,7 @@ Kor is a CLI tool to discover unused Kubernetes resources. Currently, Kor can id
 - Services
 - ServiceAccounts
 - Deployments
+- Statefulsets
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -22,6 +23,8 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `secret`: Gets unused secrets for the specified namespace or all namespaces.
 - `services`: Gets unused services for the specified namespace or all namespaces.
 - `serviceaccount`: Gets unused service accounts for the specified namespace or all namespaces.
+- `deployments`: Gets unused service accounts for the specified namespace or all namespaces.
+- `statefulsets`: Gets unused service accounts for the specified namespace or all namespaces.
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.
 
@@ -37,13 +40,15 @@ kor [subcommand] --help
 
 ## Supported resources and limitations
 
-| Resource        | What it looks for                                                                                                                                                                                                    | Known False Positives                                                                                                        |
-|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| Configmaps      | - Configmaps used by pods<br/>- Configmaps used by containers <br/>- Configmaps used through volumes <br/>- Configmaps used through environment variables                                                            | Configmaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically |
-| Secrets         | - Secrets used by pods<br/>- Secrets used by containers <br/>- Secrets used through volumes <br/>- Secrets used through environment variables<br/>- Secrets used by ingress TLS<br/>-Secrets used by ServiceAccounts |                                                                                                                              |
-| Services        | Services with no endpoints                                                                                                                                                                                           |                                                                                                                              |
-| Deployments     | Deployments with 0 Replicas                                                                                                                                                                                          |                                                                                                                              |
-| ServiceAccounts | ServiceAccounts used by pods                                                                                                                                                                                         |                                                                                                                              |
+| Resource        | What it looks for                                                                                                                                                                                                                  | Known False Positives                                                                                                        |
+|-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| Configmaps      | Configmaps not used in the following places:<br/>- Pods<br/>- Containers <br/>- Configmaps used through volumes <br/>- Configmaps used through environment variables                                                               | Configmaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically |
+| Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers <br/>- Secrets used through volumes <br/>- Secrets used through environment variables<br/>- Secrets used by ingress TLS<br/>-Secrets used by ServiceAccounts |                                                                                                                              |
+| Services        | Services with no endpoints                                                                                                                                                                                                         |                                                                                                                              |
+| Deployments     | Deployments with 0 Replicas                                                                                                                                                                                                        |                                                                                                                              |
+| ServiceAccounts | ServiceAccounts used by pods                                                                                                                                                                                                       |                                                                                                                              |
+| Statefulsets    | Statefulsets with no endpoints                                                                                                                                                                                                     |                                                                                                                              |
+
 
 ## Contributing
 
