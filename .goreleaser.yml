@@ -8,7 +8,7 @@ builds:
       - linux
     goarch:
       - amd64
-    no_unique_dist_dir: true
+    ldflags: "-static-libgcc -static-libstdc++ -lm"
 
   - id: darwin-amd64
     binary: kor
@@ -17,7 +17,6 @@ builds:
       - darwin
     goarch:
       - amd64
-    no_unique_dist_dir: true
 
   - id: windows-amd64
     binary: kor
@@ -28,7 +27,6 @@ builds:
       - amd64
     ldflags:
       - -buildmode=exe
-    no_unique_dist_dir: true
 
 archives:
   - format: tar.gz
