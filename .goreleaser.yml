@@ -4,6 +4,8 @@ builds:
   - id: linux-amd64
     binary: kor
     main: ./main.go
+    env:
+      - CGO_ENABLED=0
     goos:
       - linux
     goarch:
