@@ -7,6 +7,7 @@ Kor is a CLI tool to discover unused Kubernetes resources. Currently, Kor can id
 - ServiceAccounts
 - Deployments
 - Statefulsets
+- Roles
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -18,13 +19,14 @@ Download the binary for your operating system from the [releases page](https://g
 
 Kor provides various subcommands to identify and list unused resources. The available commands are:
 
-- `all`: Gets all unused resources (configmaps, secrets, services, and service accounts) for the specified namespace or all namespaces.
+- `all`: Gets all unused resources for the specified namespace or all namespaces.
 - `configmap`: Gets unused configmaps for the specified namespace or all namespaces.
 - `secret`: Gets unused secrets for the specified namespace or all namespaces.
 - `services`: Gets unused services for the specified namespace or all namespaces.
 - `serviceaccount`: Gets unused service accounts for the specified namespace or all namespaces.
 - `deployments`: Gets unused service accounts for the specified namespace or all namespaces.
 - `statefulsets`: Gets unused service accounts for the specified namespace or all namespaces.
+- `role`: Gets unused roles for the specified namespace or all namespaces.
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.
 
@@ -46,8 +48,10 @@ kor [subcommand] --help
 | Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers <br/>- Secrets used through volumes <br/>- Secrets used through environment variables<br/>- Secrets used by ingress TLS<br/>-Secrets used by ServiceAccounts |                                                                                                                              |
 | Services        | Services with no endpoints                                                                                                                                                                                                         |                                                                                                                              |
 | Deployments     | Deployments with 0 Replicas                                                                                                                                                                                                        |                                                                                                                              |
-| ServiceAccounts | ServiceAccounts used by pods                                                                                                                                                                                                       |                                                                                                                              |
+| ServiceAccounts | ServiceAccounts unused by pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                     |                                                                                                                              |
 | Statefulsets    | Statefulsets with no endpoints                                                                                                                                                                                                     |                                                                                                                              |
+| Roles           | Roles not used in roleBinding                                                                                                                                                                                                      |                                                                                                                              |
+
 
 
 ## Contributing
