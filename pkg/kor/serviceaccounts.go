@@ -12,14 +12,58 @@ var exceptionServiceAccounts = []ExceptionResource{
 	{ResourceName: "default", Namespace: "*"},
 }
 
-func retrieveUsedSA(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
+func getServiceAccountsFromClusterRoleBindings(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+	// Get a list of all role bindings in the specified namespace
+	roleBindings, err := clientset.RbacV1().ClusterRoleBindings().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list role bindings in namespace %s: %v", namespace, err)
+	}
+
+	// Create a slice to store service account names
+	var serviceAccounts []string
+
+	// Extract service account names from the role bindings
+	for _, rb := range roleBindings.Items {
+		for _, subject := range rb.Subjects {
+			if subject.Kind == "ServiceAccount" {
+				serviceAccounts = append(serviceAccounts, subject.Name)
+			}
+		}
+	}
+
+	return serviceAccounts, nil
+}
+
+func getServiceAccountsFromRoleBindings(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+	// Get a list of all role bindings in the specified namespace
+	roleBindings, err := clientset.RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list role bindings in namespace %s: %v", namespace, err)
+	}
+
+	// Create a slice to store service account names
+	var serviceAccounts []string
+
+	// Extract service account names from the role bindings
+	for _, rb := range roleBindings.Items {
+		for _, subject := range rb.Subjects {
+			if subject.Kind == "ServiceAccount" {
+				serviceAccounts = append(serviceAccounts, subject.Name)
+			}
+		}
+	}
+
+	return serviceAccounts, nil
+}
+
+func retrieveUsedSA(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, error) {
 
 	podServiceAccounts := []string{}
 
 	// Retrieve pods in the specified namespace
 	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
 	// Extract service account names from pods
@@ -35,7 +79,9 @@ func retrieveUsedSA(kubeClient *kubernetes.Clientset, namespace string) ([]strin
 		}
 	}
 
-	return podServiceAccounts, nil
+	roleServiceAccounts, err := getServiceAccountsFromRoleBindings(kubeClient, namespace)
+	clusterRoleServiceAccounts, err := getServiceAccountsFromClusterRoleBindings(kubeClient, namespace)
+	return podServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, nil
 }
 
 func retrieveServiceAccountNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -51,12 +97,16 @@ func retrieveServiceAccountNames(kubeClient *kubernetes.Clientset, namespace str
 }
 
 func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	usedServiceAccounts, err := retrieveUsedSA(kubeClient, namespace)
+	usedServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, err := retrieveUsedSA(kubeClient, namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	usedServiceAccounts = RemoveDuplicatesAndSort(usedServiceAccounts)
+	roleServiceAccounts = RemoveDuplicatesAndSort(roleServiceAccounts)
+	clusterRoleServiceAccounts = RemoveDuplicatesAndSort(clusterRoleServiceAccounts)
+
+	usedServiceAccounts = append(append(usedServiceAccounts, roleServiceAccounts...), clusterRoleServiceAccounts...)
 
 	serviceAccountNames, err := retrieveServiceAccountNames(kubeClient, namespace)
 	if err != nil {
