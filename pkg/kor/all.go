@@ -50,7 +50,7 @@ func getUnusedServiceAccounts(kubeClient *kubernetes.Clientset, namespace string
 func getUnusedDeployments(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
 	deployDiff, err := ProcessNamespaceDeployments(kubeClient, namespace)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "serviceaccounts", namespace, err)
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "deployments", namespace, err)
 	}
 	namespaceSADiff := ResourceDiff{"Deployment", deployDiff}
 	return namespaceSADiff
@@ -59,9 +59,18 @@ func getUnusedDeployments(kubeClient *kubernetes.Clientset, namespace string) Re
 func getUnusedStatefulsets(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
 	stsDiff, err := ProcessNamespaceStatefulsets(kubeClient, namespace)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "serviceaccounts", namespace, err)
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "statefulsets", namespace, err)
 	}
 	namespaceSADiff := ResourceDiff{"Statefulset", stsDiff}
+	return namespaceSADiff
+}
+
+func getUnusedRoles(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
+	roleDiff, err := processNamespaceRoles(kubeClient, namespace)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "roles", namespace, err)
+	}
+	namespaceSADiff := ResourceDiff{"Role", roleDiff}
 	return namespaceSADiff
 }
 
@@ -84,8 +93,10 @@ func GetUnusedAll(namespace string) {
 		allDiffs = append(allDiffs, namespaceSADiff)
 		namespaceDeploymentDiff := getUnusedDeployments(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceDeploymentDiff)
-		namespacestatefulsetDiff := getUnusedStatefulsets(kubeClient, namespace)
-		allDiffs = append(allDiffs, namespacestatefulsetDiff)
+		namespaceStatefulsetDiff := getUnusedStatefulsets(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
+		namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceRoleDiff)
 		output := FormatOutputAll(namespace, allDiffs)
 		fmt.Println(output)
 		fmt.Println()
