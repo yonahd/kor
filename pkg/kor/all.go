@@ -160,4 +160,3 @@ func GetUnusedAllJSON(namespace string) (string, error) {
 
 	return string(jsonResponse), nil
 }
-W
