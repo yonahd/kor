@@ -1,10 +1,16 @@
 package kor
 
 import (
+	"encoding/json"
 	"fmt"
 	"k8s.io/client-go/kubernetes"
 	"os"
 )
+
+type GetUnusedResourceJSONResponse struct {
+	ResourceType string              `json:"resourceType"`
+	Namespaces   map[string][]string `json:"namespaces"`
+}
 
 type ResourceDiff struct {
 	resourceType string
@@ -101,4 +107,58 @@ func GetUnusedAll(namespace string) {
 		fmt.Println(output)
 		fmt.Println()
 	}
+}
+
+func GetUnusedAllJSON(namespace string) (string, error) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient()
+
+	namespaces = SetNamespaceList(namespace, kubeClient)
+
+	// Create the JSON response object
+	response := GetUnusedResourceJSONResponse{
+		Namespaces: make(map[string][]string),
+	}
+
+	for _, namespace := range namespaces {
+		var allDiffs []ResourceDiff
+
+		namespaceCMDiff := getUnusedCMs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceCMDiff)
+
+		namespaceSVCDiff := getUnusedSVCs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceSVCDiff)
+
+		namespaceSecretDiff := getUnusedSecrets(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceSecretDiff)
+
+		namespaceSADiff := getUnusedServiceAccounts(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceSADiff)
+
+		namespaceDeploymentDiff := getUnusedDeployments(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceDeploymentDiff)
+
+		namespaceStatefulsetDiff := getUnusedStatefulsets(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
+
+		namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceRoleDiff)
+
+		// Store the unused resources under the namespace in the JSON response
+		var unusedResources []string
+		for _, diff := range allDiffs {
+			unusedResources = append(unusedResources, diff.diff...)
+		}
+		response.Namespaces[namespace] = unusedResources
+	}
+
+	// Convert the response object to JSON
+	jsonResponse, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	return string(jsonResponse), nil
 }
