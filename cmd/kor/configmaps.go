@@ -11,7 +11,11 @@ var configmapCmd = &cobra.Command{
 	Short:   "Gets unused configmaps",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		kor.GetUnusedConfigmaps(namespace)
+		if outputFormat == "json" {
+			kor.GetUnusedConfigmapsJSON(namespace)
+		} else {
+			kor.GetUnusedConfigmaps(namespace)
+		}
 
 	},
 }

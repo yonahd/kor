@@ -2,6 +2,7 @@ package kor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -139,4 +140,34 @@ func GetUnusedConfigmaps(namespace string) {
 		fmt.Println(output)
 		fmt.Println()
 	}
+}
+
+func GetUnusedConfigmapsJSON(namespace string) (string, error) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient()
+
+	namespaces = SetNamespaceList(namespace, kubeClient)
+
+	// Create a map to store the unused roles for each namespace
+	CMMap := make(map[string][]string)
+
+	for _, namespace := range namespaces {
+		diff, err := processNamespaceCM(kubeClient, namespace)
+		if err != nil {
+			return "", fmt.Errorf("failed to process namespace %s: %v", namespace, err)
+		}
+
+		// Store the unused roles in the map
+		CMMap[namespace] = diff
+	}
+
+	// Convert the map to JSON
+	jsonResponse, err := json.MarshalIndent(CMMap, "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	return string(jsonResponse), nil
 }
