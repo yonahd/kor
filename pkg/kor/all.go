@@ -118,9 +118,7 @@ func GetUnusedAllJSON(namespace string) (string, error) {
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
 	// Create the JSON response object
-	response := GetUnusedResourceJSONResponse{
-		Namespaces: make(map[string][]string),
-	}
+	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
 		var allDiffs []ResourceDiff
@@ -146,12 +144,12 @@ func GetUnusedAllJSON(namespace string) (string, error) {
 		namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceRoleDiff)
 
-		// Store the unused resources under the namespace in the JSON response
-		var unusedResources []string
+		// Store the unused resources for each resource type in the JSON response
+		resourceMap := make(map[string][]string)
 		for _, diff := range allDiffs {
-			unusedResources = append(unusedResources, diff.diff...)
+			resourceMap[diff.resourceType] = diff.diff
 		}
-		response.Namespaces[namespace] = unusedResources
+		response[namespace] = resourceMap
 	}
 
 	// Convert the response object to JSON
@@ -162,3 +160,4 @@ func GetUnusedAllJSON(namespace string) (string, error) {
 
 	return string(jsonResponse), nil
 }
+W
