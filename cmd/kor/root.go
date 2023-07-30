@@ -17,6 +17,7 @@ var rootCmd = &cobra.Command{
 }
 
 var namespace string
+var outputFormat string
 
 func Execute() {
 

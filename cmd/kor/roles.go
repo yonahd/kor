@@ -10,12 +10,16 @@ var roleCmd = &cobra.Command{
 	Short: "Gets unused roles",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		kor.GetUnusedRoles(namespace)
-
+		if outputFormat == "json" {
+			kor.GetUnusedRolesJSON(namespace)
+		} else {
+			kor.GetUnusedRoles(namespace)
+		}
 	},
 }
 
 func init() {
 	roleCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "Namespace to run on")
+	roleCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table or json)")
 	rootCmd.AddCommand(roleCmd)
 }
