@@ -147,26 +147,20 @@ func GetUnusedConfigmapsJSON(namespace string) (string, error) {
 	var namespaces []string
 
 	kubeClient = GetKubeClient()
-
 	namespaces = SetNamespaceList(namespace, kubeClient)
-
-	// Create the JSON response object
-	response := GetUnusedResourceJSONResponse{
-		ResourceType: "Configmaps",
-		Namespaces:   make(map[string][]string),
-	}
+	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceCM(kubeClient, namespace)
 		if err != nil {
-			return "", fmt.Errorf("failed to process namespace %s: %v", namespace, err)
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
 		}
-
-		// Store the unused roles under the namespace in the JSON response
-		response.Namespaces[namespace] = diff
+		resourceMap := make(map[string][]string)
+		resourceMap["configmap"] = diff
+		response[namespace] = resourceMap
 	}
 
-	// Convert the response object to JSON
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
 		return "", err
