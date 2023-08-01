@@ -11,12 +11,18 @@ var deployCmd = &cobra.Command{
 	Short:   "Gets unused deployments",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		kor.GetUnusedDeployments(namespace)
+		if outputFormat == "json" {
+			kor.GetUnusedDeploymentsJSON(namespace, kubeconfig)
+		} else {
+			kor.GetUnusedDeployments(namespace, kubeconfig)
+		}
 
 	},
 }
 
 func init() {
+	deployCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
 	deployCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "Namespace to run on")
+	deployCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table or json)")
 	rootCmd.AddCommand(deployCmd)
 }

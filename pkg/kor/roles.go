@@ -83,11 +83,11 @@ func processNamespaceRoles(kubeClient *kubernetes.Clientset, namespace string) (
 
 }
 
-func GetUnusedRoles(namespace string) {
+func GetUnusedRoles(namespace string, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
-	kubeClient = GetKubeClient()
+	kubeClient = GetKubeClient(kubeconfig)
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
 	for _, namespace := range namespaces {
@@ -102,24 +102,22 @@ func GetUnusedRoles(namespace string) {
 	}
 }
 
-func GetUnusedRolesJSON(namespace string) (string, error) {
+func GetUnusedRolesJSON(namespace string, kubeconfig string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
-	kubeClient = GetKubeClient()
+	kubeClient = GetKubeClient(kubeconfig)
 	namespaces = SetNamespaceList(namespace, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		var allDiffs []ResourceDiff
-
-		namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
-		allDiffs = append(allDiffs, namespaceRoleDiff)
-
-		resourceMap := make(map[string][]string)
-		for _, diff := range allDiffs {
-			resourceMap[diff.resourceType] = diff.diff
+		diff, err := processNamespaceRoles(kubeClient, namespace)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
 		}
+		resourceMap := make(map[string][]string)
+		resourceMap["Roles"] = diff
 		response[namespace] = resourceMap
 	}
 

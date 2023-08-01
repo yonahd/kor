@@ -37,9 +37,10 @@ func GetKubeConfigPath() string {
 	return filepath.Join(home, ".kube", "config")
 }
 
-func GetKubeClient() *kubernetes.Clientset {
-	var kubeconfig string
-	kubeconfig = GetKubeConfigPath()
+func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
+	if kubeconfig == "" {
+		kubeconfig = GetKubeConfigPath()
+	}
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)

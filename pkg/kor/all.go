@@ -80,12 +80,12 @@ func getUnusedRoles(kubeClient *kubernetes.Clientset, namespace string) Resource
 	return namespaceSADiff
 }
 
-func GetUnusedAll(namespace string) {
+func GetUnusedAll(namespace string, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 	var allDiffs []ResourceDiff
 
-	kubeClient = GetKubeClient()
+	kubeClient = GetKubeClient(kubeconfig)
 
 	namespaces = SetNamespaceList(namespace, kubeClient)
 	for _, namespace := range namespaces {
@@ -109,11 +109,11 @@ func GetUnusedAll(namespace string) {
 	}
 }
 
-func GetUnusedAllJSON(namespace string) (string, error) {
+func GetUnusedAllJSON(namespace string, kubeconfig string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
-	kubeClient = GetKubeClient()
+	kubeClient = GetKubeClient(kubeconfig)
 
 	namespaces = SetNamespaceList(namespace, kubeClient)
 

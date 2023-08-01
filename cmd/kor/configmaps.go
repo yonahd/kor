@@ -12,15 +12,16 @@ var configmapCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			kor.GetUnusedConfigmapsJSON(namespace)
+			kor.GetUnusedConfigmapsJSON(namespace, kubeconfig)
 		} else {
-			kor.GetUnusedConfigmaps(namespace)
+			kor.GetUnusedConfigmaps(namespace, kubeconfig)
 		}
 
 	},
 }
 
 func init() {
+	configmapCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
 	configmapCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "Namespace to run on")
 	configmapCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table or json)")
 	rootCmd.AddCommand(configmapCmd)

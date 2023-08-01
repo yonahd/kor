@@ -11,12 +11,18 @@ var serviceAccountCmd = &cobra.Command{
 	Short:   "Gets unused service accounts",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		kor.GetUnusedServiceAccounts(namespace)
+		if outputFormat == "json" {
+			kor.GetUnusedServiceAccountsJSON(namespace, kubeconfig)
+		} else {
+			kor.GetUnusedServiceAccounts(namespace, kubeconfig)
+		}
 
 	},
 }
 
 func init() {
+	serviceAccountCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
 	serviceAccountCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "Namespace to run on")
+	serviceAccountCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table or json)")
 	rootCmd.AddCommand(serviceAccountCmd)
 }
