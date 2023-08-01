@@ -2,6 +2,7 @@ package kor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -82,12 +83,11 @@ func processNamespaceRoles(kubeClient *kubernetes.Clientset, namespace string) (
 
 }
 
-func GetUnusedRoles(namespace string) {
+func GetUnusedRoles(namespace string, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
-	kubeClient = GetKubeClient()
-
+	kubeClient = GetKubeClient(kubeconfig)
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
 	for _, namespace := range namespaces {
@@ -100,4 +100,31 @@ func GetUnusedRoles(namespace string) {
 		fmt.Println(output)
 		fmt.Println()
 	}
+}
+
+func GetUnusedRolesJSON(namespace string, kubeconfig string) (string, error) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+	namespaces = SetNamespaceList(namespace, kubeClient)
+	response := make(map[string]map[string][]string)
+
+	for _, namespace := range namespaces {
+		diff, err := processNamespaceRoles(kubeClient, namespace)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
+		}
+		resourceMap := make(map[string][]string)
+		resourceMap["Roles"] = diff
+		response[namespace] = resourceMap
+	}
+
+	jsonResponse, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	return string(jsonResponse), nil
 }

@@ -2,6 +2,7 @@ package kor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -118,11 +119,11 @@ func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) ([]s
 
 }
 
-func GetUnusedServiceAccounts(namespace string) {
+func GetUnusedServiceAccounts(namespace string, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
-	kubeClient = GetKubeClient()
+	kubeClient = GetKubeClient(kubeconfig)
 
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
@@ -136,4 +137,31 @@ func GetUnusedServiceAccounts(namespace string) {
 		fmt.Println(output)
 		fmt.Println()
 	}
+}
+
+func GetUnusedServiceAccountsJSON(namespace string, kubeconfig string) (string, error) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+	namespaces = SetNamespaceList(namespace, kubeClient)
+	response := make(map[string]map[string][]string)
+
+	for _, namespace := range namespaces {
+		diff, err := processNamespaceSA(kubeClient, namespace)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
+		}
+		resourceMap := make(map[string][]string)
+		resourceMap["ServiceAccounts"] = diff
+		response[namespace] = resourceMap
+	}
+
+	jsonResponse, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	return string(jsonResponse), nil
 }

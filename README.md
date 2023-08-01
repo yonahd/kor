@@ -1,6 +1,6 @@
 # Kor - Kubernetes Orphaned Resources Finder
 
-Kor is a CLI tool to discover unused Kubernetes resources. Currently, Kor can identify and list unused:
+Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identify and list unused:
 - ConfigMaps  
 - Secrets.
 - Services
@@ -28,6 +28,14 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `statefulsets`: Gets unused service accounts for the specified namespace or all namespaces.
 - `role`: Gets unused roles for the specified namespace or all namespaces.
 
+### Supported Flags
+```
+-h, --help                help for role
+-k, --kubeconfig string   Path to kubeconfig file (optional)
+-n, --namespace string    Namespace to run on
+--output string       Output format (table or json) (default "table")
+```
+
 To use a specific subcommand, run `kor [subcommand] [flags]`.
 
 ```sh
@@ -49,9 +57,34 @@ kor [subcommand] --help
 | Services        | Services with no endpoints                                                                                                                                                                                                         |                                                                                                                              |
 | Deployments     | Deployments with 0 Replicas                                                                                                                                                                                                        |                                                                                                                              |
 | ServiceAccounts | ServiceAccounts unused by pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                     |                                                                                                                              |
-| Statefulsets    | Statefulsets with no endpoints                                                                                                                                                                                                     |                                                                                                                              |
+| Statefulsets    | Statefulsets with 0 Replicas                                                                                                                                                                                                     |                                                                                                                              |
 | Roles           | Roles not used in roleBinding                                                                                                                                                                                                      |                                                                                                                              |
 
+
+## Import Option
+You can also use kor as a Go library to programmatically discover unused resources. By importing the github.com/yonahd/kor/pkg/kor package, you can call the relevant functions to retrieve unused resources. The library provides the option to get the results in JSON format by specifying the outputFormat parameter.
+
+```go
+import (
+"github.com/yonahd/kor/pkg/kor"
+)
+
+func main() {
+namespace := "my-namespace"
+outputFormat := "json" // Set to "json" for JSON output
+
+    if outputFormat == "json" {
+        jsonResponse, err := kor.GetUnusedDeploymentsJSON(namespace)
+        if err != nil {
+            // Handle error
+        }
+        // Process the JSON response
+        // ...
+    } else {
+        kor.GetUnusedDeployments(namespace)
+    }
+}
+```
 
 
 ## Contributing

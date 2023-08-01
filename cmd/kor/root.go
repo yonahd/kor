@@ -17,9 +17,10 @@ var rootCmd = &cobra.Command{
 }
 
 var namespace string
+var outputFormat string
+var kubeconfig string
 
 func Execute() {
-
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while executing your CLI '%s'", err)
 		os.Exit(1)
