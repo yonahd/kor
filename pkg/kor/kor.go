@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+
 	"github.com/olekukonko/tablewriter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-	"os"
-	"path/filepath"
-	"sort"
 )
 
 type ExceptionResource struct {

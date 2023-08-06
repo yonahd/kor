@@ -2,8 +2,9 @@ package kor
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
@@ -12,7 +13,9 @@ var rootCmd = &cobra.Command{
 	Long: `kor is a CLI to to discover unused Kubernetes resources 
 	kor can currently discover unused configmaps and secrets`,
 	Run: func(cmd *cobra.Command, args []string) {
-
+		if len(args) == 0 {
+			cmd.Help()
+		}
 	},
 }
 
