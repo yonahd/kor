@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"os"
 )
 
 func getEndpointsWithoutSubsets(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
