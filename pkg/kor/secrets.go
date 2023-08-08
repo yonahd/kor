@@ -4,11 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"regexp"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
-	"os"
 )
+
+var exceptionSecretRegex = []ExceptionResource{
+	{ResourceName: "sh.helm.release.v1.*", Namespace: "*"},
+}
 
 func getSATokens(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
 	// Retrieve secrets in all namespaces with type "kubernetes.io/service-account-token"
@@ -98,6 +104,20 @@ func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]s
 	return envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, saTokens, nil
 }
 
+func checkExceptions(secretName string, namespace string) bool {
+	isException := false
+	for _, resource := range exceptionSecretRegex {
+		if resource.Namespace == namespace || resource.Namespace == "*" {
+			regex := regexp.MustCompile(resource.ResourceName)
+			if regex.MatchString(secretName) {
+				isException = true
+				break
+			}
+		}
+	}
+	return isException
+}
+
 func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
 	secrets, err := kubeClient.CoreV1().Secrets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -105,7 +125,10 @@ func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]
 	}
 	names := make([]string, 0, len(secrets.Items))
 	for _, secret := range secrets.Items {
-		names = append(names, secret.Name)
+		isException := checkExceptions(secret.Name, namespace)
+		if !isException {
+			names = append(names, secret.Name)
+		}
 	}
 	return names, nil
 }
