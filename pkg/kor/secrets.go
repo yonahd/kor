@@ -9,7 +9,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"k8s.io/utils/strings/slices"
 )
+
+var exceptionSecretTypes = []string{
+	`helm.sh/release.v1`,
+}
 
 func getSATokens(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
 	// Retrieve secrets in all namespaces with type "kubernetes.io/service-account-token"
@@ -106,7 +111,9 @@ func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]
 	}
 	names := make([]string, 0, len(secrets.Items))
 	for _, secret := range secrets.Items {
-		names = append(names, secret.Name)
+		if !slices.Contains(exceptionSecretTypes, string(secret.Type)) {
+			names = append(names, secret.Name)
+		}
 	}
 	return names, nil
 }
