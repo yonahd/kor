@@ -1,5 +1,5 @@
 ![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/yonahd/kor)
-![GitHub release (with filter)](https://img.shields.io/github/v/release/yonahd/kor?color=green&link=https%3A%2F%2Fgithub.com%2Fyonahd%2Fkor%2Freleases)
+![GitHub release (with filter)](https://img.shields.io/github/v/release/yonahd/kor?color=green&link=https://github.com/yonahd/kor/releases)
 
 # Kor - Kubernetes Orphaned Resources Finder
 
