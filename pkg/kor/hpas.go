@@ -138,7 +138,7 @@ func GetUnusedHpasJson(namespace string, kubeconfig string) (string, error) {
 			if response[namespace] == nil {
 				response[namespace] = make(map[string][]string)
 			}
-			response[namespace]["Hpas"] = diff
+			response[namespace]["Hpa"] = diff
 		}
 	}
 

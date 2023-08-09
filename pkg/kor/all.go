@@ -85,8 +85,8 @@ func getUnusedHpas(kubeClient *kubernetes.Clientset, namespace string) ResourceD
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "hpas", namespace, err)
 	}
-	namespaceSADiff := ResourceDiff{"HPA", hpaDiff}
-	return namespaceSADiff
+	namespaceHpaDiff := ResourceDiff{"Hpa", hpaDiff}
+	return namespaceHpaDiff
 }
 
 func GetUnusedAll(namespace string, kubeconfig string) {
