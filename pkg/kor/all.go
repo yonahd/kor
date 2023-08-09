@@ -84,12 +84,12 @@ func getUnusedRoles(kubeClient *kubernetes.Clientset, namespace string) Resource
 func GetUnusedAll(namespace string, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
-	var allDiffs []ResourceDiff
 
 	kubeClient = GetKubeClient(kubeconfig)
 
 	namespaces = SetNamespaceList(namespace, kubeClient)
 	for _, namespace := range namespaces {
+		var allDiffs []ResourceDiff
 		namespaceCMDiff := getUnusedCMs(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceCMDiff)
 		namespaceSVCDiff := getUnusedSVCs(kubeClient, namespace)
