@@ -3,8 +3,9 @@ package kor
 import (
 	"encoding/json"
 	"fmt"
-	"k8s.io/client-go/kubernetes"
 	"os"
+
+	"k8s.io/client-go/kubernetes"
 )
 
 type GetUnusedResourceJSONResponse struct {
