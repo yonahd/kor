@@ -81,6 +81,15 @@ func getUnusedRoles(kubeClient *kubernetes.Clientset, namespace string) Resource
 	return namespaceSADiff
 }
 
+func getUnusedHpas(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
+	hpaDiff, err := processNamespaceHpas(kubeClient, namespace)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "hpas", namespace, err)
+	}
+	namespaceHpaDiff := ResourceDiff{"Hpa", hpaDiff}
+	return namespaceHpaDiff
+}
+
 func GetUnusedAll(namespace string, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
@@ -104,6 +113,8 @@ func GetUnusedAll(namespace string, kubeconfig string) {
 		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
 		namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceRoleDiff)
+		namespaceHpaDiff := getUnusedHpas(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceHpaDiff)
 		output := FormatOutputAll(namespace, allDiffs)
 		fmt.Println(output)
 		fmt.Println()
