@@ -60,7 +60,7 @@ func getHpas(clientset *kubernetes.Clientset, namespace string) ([]Hpa, error) {
 	return hpas, nil
 }
 
-func findUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
 	deploymentNames, err := getDeploymentNames(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func findUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]string
 }
 
 func ProcessNamespaceHpas(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
-	unusedHpas, err := findUnusedHpas(clientset, namespace)
+	unusedHpas, err := extractUnusedHpas(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
