@@ -76,11 +76,12 @@ func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]str
 
 	var diff []string
 	for _, hpa := range hpas {
-		if hpa.TargetKind == "Deployment" {
+		switch hpa.TargetKind {
+		case "Deployment":
 			if !slices.Contains(deploymentNames, hpa.TargetName) {
 				diff = append(diff, hpa.Name)
 			}
-		} else if hpa.TargetKind == "StatefulSet" {
+		case "StatefulSet":
 			if !slices.Contains(statefulsetNames, hpa.TargetName) {
 				diff = append(diff, hpa.Name)
 			}
@@ -89,7 +90,7 @@ func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]str
 	return diff, nil
 }
 
-func ProcessNamespaceHpas(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func processNamespaceHpas(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
 	unusedHpas, err := extractUnusedHpas(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -106,7 +107,7 @@ func GetUnusedHpas(namespace string, kubeconfig string) {
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceHpas(kubeClient, namespace)
+		diff, err := processNamespaceHpas(kubeClient, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -128,7 +129,7 @@ func GetUnusedHpasJson(namespace string, kubeconfig string) (string, error) {
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceHpas(kubeClient, namespace)
+		diff, err := processNamespaceHpas(kubeClient, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
