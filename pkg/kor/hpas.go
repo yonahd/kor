@@ -12,13 +12,6 @@ import (
 	"os"
 )
 
-type Hpa struct {
-	TargetKind string
-	TargetName string
-	Name       string
-	Namespace  string
-}
-
 func getDeploymentNames(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
 	deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -43,23 +36,6 @@ func getStatefulSetNames(clientset *kubernetes.Clientset, namespace string) ([]s
 	return names, nil
 }
 
-func getHpas(clientset *kubernetes.Clientset, namespace string) ([]Hpa, error) {
-	rawHpas, err := clientset.AutoscalingV1().HorizontalPodAutoscalers(namespace).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	hpas := make([]Hpa, 0, len(rawHpas.Items))
-	for _, hpa := range rawHpas.Items {
-		hpas = append(hpas, Hpa{
-			TargetKind: hpa.Spec.ScaleTargetRef.Kind,
-			TargetName: hpa.Spec.ScaleTargetRef.Name,
-			Name:       hpa.Name,
-			Namespace:  hpa.Namespace,
-		})
-	}
-	return hpas, nil
-}
-
 func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
 	deploymentNames, err := getDeploymentNames(clientset, namespace)
 	if err != nil {
@@ -69,20 +45,20 @@ func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]str
 	if err != nil {
 		return nil, err
 	}
-	hpas, err := getHpas(clientset, namespace)
+	hpas, err := clientset.AutoscalingV1().HorizontalPodAutoscalers(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	var diff []string
-	for _, hpa := range hpas {
-		switch hpa.TargetKind {
+	for _, hpa := range hpas.Items {
+		switch hpa.Spec.ScaleTargetRef.Kind {
 		case "Deployment":
-			if !slices.Contains(deploymentNames, hpa.TargetName) {
+			if !slices.Contains(deploymentNames, hpa.Spec.ScaleTargetRef.Name) {
 				diff = append(diff, hpa.Name)
 			}
 		case "StatefulSet":
-			if !slices.Contains(statefulsetNames, hpa.TargetName) {
+			if !slices.Contains(statefulsetNames, hpa.Spec.ScaleTargetRef.Name) {
 				diff = append(diff, hpa.Name)
 			}
 		}
