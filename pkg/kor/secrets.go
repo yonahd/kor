@@ -14,25 +14,8 @@ import (
 
 var exceptionSecretTypes = []string{
 	`helm.sh/release.v1`,
-}
-
-func getSATokens(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
-	// Retrieve secrets in all namespaces with type "kubernetes.io/service-account-token"
-	secrets, err := clientset.CoreV1().Secrets(namespace).List(context.TODO(), metav1.ListOptions{
-		FieldSelector: "type=kubernetes.io/service-account-token",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve Kubernetes Service Account tokens: %v", err)
-	}
-
-	tokenNames := make([]string, 0)
-
-	// Extract secret names from secrets
-	for _, secret := range secrets.Items {
-		tokenNames = append(tokenNames, secret.ObjectMeta.Name)
-	}
-
-	return tokenNames, nil
+	`kubernetes.io/dockerconfigjson`,
+	`kubernetes.io/service-account-token`,
 }
 
 func retrieveIngressTLS(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -53,7 +36,7 @@ func retrieveIngressTLS(clientset *kubernetes.Clientset, namespace string) ([]st
 
 }
 
-func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
+func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, error) {
 	envSecrets := []string{}
 	envSecrets2 := []string{}
 	volumeSecrets := []string{}
@@ -62,7 +45,7 @@ func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]s
 	// Retrieve pods in the specified namespace
 	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	// Extract volume and environment information from pods
@@ -93,15 +76,10 @@ func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]s
 
 	tlsSecrets, err := retrieveIngressTLS(kubeClient, namespace)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
-	saTokens, err := getSATokens(kubeClient, namespace)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, err
-	}
-
-	return envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, saTokens, nil
+	return envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, nil
 }
 
 func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -136,7 +114,7 @@ func calculateSecretDifference(usedSecrets []string, secretNames []string) []str
 }
 
 func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, saTokens, err := retrieveUsedSecret(kubeClient, namespace)
+	envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(kubeClient, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -146,14 +124,13 @@ func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) 
 	volumeSecrets = RemoveDuplicatesAndSort(volumeSecrets)
 	pullSecrets = RemoveDuplicatesAndSort(pullSecrets)
 	tlsSecrets = RemoveDuplicatesAndSort(tlsSecrets)
-	saTokens = RemoveDuplicatesAndSort(saTokens)
 
 	secretNames, err := retrieveSecretNames(kubeClient, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	usedSecrets := append(append(append(append(append(envSecrets, envSecrets2...), volumeSecrets...), pullSecrets...), tlsSecrets...), saTokens...)
+	usedSecrets := append(append(append(append(envSecrets, envSecrets2...), volumeSecrets...), pullSecrets...), tlsSecrets...)
 	diff := calculateSecretDifference(usedSecrets, secretNames)
 	return diff, nil
 

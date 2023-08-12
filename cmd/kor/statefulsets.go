@@ -21,8 +21,5 @@ var stsCmd = &cobra.Command{
 }
 
 func init() {
-	stsCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
-	stsCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "Namespace to run on")
-	stsCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table or json)")
 	rootCmd.AddCommand(stsCmd)
 }

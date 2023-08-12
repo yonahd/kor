@@ -19,8 +19,5 @@ var hpaCmd = &cobra.Command{
 }
 
 func init() {
-	hpaCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
-	hpaCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "Namespace to run on")
-	hpaCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table or json)")
 	rootCmd.AddCommand(hpaCmd)
 }

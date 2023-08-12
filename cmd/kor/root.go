@@ -23,6 +23,9 @@ var outputFormat string
 var kubeconfig string
 
 func Execute() {
+	rootCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
+	rootCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "Namespace to run on")
+	rootCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table or json)")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while executing your CLI '%s'", err)
 		os.Exit(1)

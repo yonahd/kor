@@ -19,8 +19,5 @@ var roleCmd = &cobra.Command{
 }
 
 func init() {
-	roleCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
-	roleCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "Namespace to run on")
-	roleCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table or json)")
 	rootCmd.AddCommand(roleCmd)
 }

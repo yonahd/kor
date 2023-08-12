@@ -21,8 +21,5 @@ var deployCmd = &cobra.Command{
 }
 
 func init() {
-	deployCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
-	deployCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "Namespace to run on")
-	deployCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table or json)")
 	rootCmd.AddCommand(deployCmd)
 }

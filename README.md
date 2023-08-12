@@ -11,6 +11,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - Deployments
 - Statefulsets
 - Roles
+- Hpas
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -30,6 +31,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `deployments`: Gets unused service accounts for the specified namespace or all namespaces.
 - `statefulsets`: Gets unused service accounts for the specified namespace or all namespaces.
 - `role`: Gets unused roles for the specified namespace or all namespaces.
+- `hps`: Gets unused hpa for the specified namespace or all namespaces.
 
 ### Supported Flags
 ```
@@ -53,15 +55,17 @@ kor [subcommand] --help
 
 ## Supported resources and limitations
 
-| Resource        | What it looks for                                                                                                                                                                                                                  | Known False Positives  ⚠️                                                                                                    |
-|-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| Configmaps      | Configmaps not used in the following places:<br/>- Pods<br/>- Containers <br/>- Configmaps used through volumes <br/>- Configmaps used through environment variables                                                               | Configmaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically opa policies fluentd configs |
+| Resource        | What it looks for                                                                                                                                                                                                                 | Known False Positives  ⚠️                                                                                                    |
+|-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| Configmaps      | Configmaps not used in the following places:<br/>- Pods<br/>- Containers <br/>- Configmaps used through volumes <br/>- Configmaps used through environment variables                                                              | Configmaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically opa policies fluentd configs |
 | Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers <br/>- Secrets used through volumes <br/>- Secrets used through environment variables<br/>- Secrets used by ingress TLS<br/>-Secrets used by ServiceAccounts |    Secrets used by resources which don't explicitly state them in the config                                                                                                                         |
-| Services        | Services with no endpoints                                                                                                                                                                                                         |                                                                                                                              |
-| Deployments     | Deployments with 0 Replicas                                                                                                                                                                                                        |                                                                                                                              |
-| ServiceAccounts | ServiceAccounts unused by pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                     |                                                                                                                              |
-| Statefulsets    | Statefulsets with 0 Replicas                                                                                                                                                                                                     |                                                                                                                              |
-| Roles           | Roles not used in roleBinding                                                                                                                                                                                                      |                                                                                                                              |
+| Services        | Services with no endpoints                                                                                                                                                                                                        |                                                                                                                              |
+| Deployments     | Deployments with 0 Replicas                                                                                                                                                                                                       |                                                                                                                              |
+| ServiceAccounts | ServiceAccounts unused by pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                    |                                                                                                                              |
+| Statefulsets    | Statefulsets with 0 Replicas                                                                                                                                                                                                      |                                                                                                                              |
+| Roles           | Roles not used in roleBinding                                                                                                                                                                                                     |                                                                                                                              |
+| Hpas            | Hpas not used in Deployments   <br/>    Hpas not used in Statefulsets                                                                                                                                                                                               |                                                                                                                              |
+
 
 
 ## Import Option
