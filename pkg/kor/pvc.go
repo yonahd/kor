@@ -30,11 +30,11 @@ func retreiveUsedPvcs(kubeClient *kubernetes.Clientset, namespace string) ([]str
 	return usedPvcs, err
 }
 
-func calculatePvcDifference(usedConfigMaps []string, configMapNames []string) []string {
+func calculatePvcDifference(usedPvcs []string, pvcNames []string) []string {
 	difference := []string{}
-	for _, name := range configMapNames {
+	for _, name := range pvcNames {
 		found := false
-		for _, usedName := range usedConfigMaps {
+		for _, usedName := range usedPvcs {
 			if name == usedName {
 				found = true
 				break
@@ -96,7 +96,7 @@ func GetUnusedPvcsJson(namespace string, kubeconfig string) (string, error) {
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceHpas(kubeClient, namespace)
+		diff, err := processNamespacePvcs(kubeClient, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
