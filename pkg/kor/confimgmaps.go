@@ -83,23 +83,6 @@ func retrieveConfigMapNames(kubeClient *kubernetes.Clientset, namespace string) 
 	return names, nil
 }
 
-func calculateCMDifference(usedConfigMaps []string, configMapNames []string) []string {
-	difference := []string{}
-	for _, name := range configMapNames {
-		found := false
-		for _, usedName := range usedConfigMaps {
-			if name == usedName {
-				found = true
-				break
-			}
-		}
-		if !found {
-			difference = append(difference, name)
-		}
-	}
-	return difference
-}
-
 func processNamespaceCM(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
 	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, err := retrieveUsedCM(kubeClient, namespace)
 	if err != nil {
@@ -118,7 +101,7 @@ func processNamespaceCM(kubeClient *kubernetes.Clientset, namespace string) ([]s
 	}
 
 	usedConfigMaps := append(append(append(append(volumesCM, volumesProjectedCM...), envCM...), envFromCM...), envFromContainerCM...)
-	diff := calculateCMDifference(usedConfigMaps, configMapNames)
+	diff := CalculateResourceDifference(usedConfigMaps, configMapNames)
 	return diff, nil
 
 }

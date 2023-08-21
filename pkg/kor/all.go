@@ -90,6 +90,15 @@ func getUnusedHpas(kubeClient *kubernetes.Clientset, namespace string) ResourceD
 	return namespaceHpaDiff
 }
 
+func getUnusedPvcs(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
+	pvcDiff, err := processNamespacePvcs(kubeClient, namespace)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pvcs", namespace, err)
+	}
+	namespacePvcDiff := ResourceDiff{"Pvc", pvcDiff}
+	return namespacePvcDiff
+}
+
 func GetUnusedAll(namespace string, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
@@ -115,6 +124,8 @@ func GetUnusedAll(namespace string, kubeconfig string) {
 		allDiffs = append(allDiffs, namespaceRoleDiff)
 		namespaceHpaDiff := getUnusedHpas(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceHpaDiff)
+		namespacePvcDiff := getUnusedPvcs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespacePvcDiff)
 		output := FormatOutputAll(namespace, allDiffs)
 		fmt.Println(output)
 		fmt.Println()
@@ -155,6 +166,12 @@ func GetUnusedAllJSON(namespace string, kubeconfig string) (string, error) {
 
 		namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceRoleDiff)
+
+		namespaceHpaDiff := getUnusedHpas(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceHpaDiff)
+
+		namespacePvcDiff := getUnusedPvcs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespacePvcDiff)
 
 		// Store the unused resources for each resource type in the JSON response
 		resourceMap := make(map[string][]string)

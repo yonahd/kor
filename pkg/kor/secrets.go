@@ -96,23 +96,6 @@ func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]
 	return names, nil
 }
 
-func calculateSecretDifference(usedSecrets []string, secretNames []string) []string {
-	difference := []string{}
-	for _, name := range secretNames {
-		found := false
-		for _, usedName := range usedSecrets {
-			if name == usedName {
-				found = true
-				break
-			}
-		}
-		if !found {
-			difference = append(difference, name)
-		}
-	}
-	return difference
-}
-
 func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
 	envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(kubeClient, namespace)
 	if err != nil {
@@ -131,7 +114,7 @@ func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) 
 	}
 
 	usedSecrets := append(append(append(append(envSecrets, envSecrets2...), volumeSecrets...), pullSecrets...), tlsSecrets...)
-	diff := calculateSecretDifference(usedSecrets, secretNames)
+	diff := CalculateResourceDifference(usedSecrets, secretNames)
 	return diff, nil
 
 }

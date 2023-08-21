@@ -49,23 +49,6 @@ func retrieveRoleNames(kubeClient *kubernetes.Clientset, namespace string) ([]st
 	return names, nil
 }
 
-func calculateRoleDifference(usedRoles []string, roleNames []string) []string {
-	difference := []string{}
-	for _, name := range roleNames {
-		found := false
-		for _, usedName := range usedRoles {
-			if name == usedName {
-				found = true
-				break
-			}
-		}
-		if !found {
-			difference = append(difference, name)
-		}
-	}
-	return difference
-}
-
 func processNamespaceRoles(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
 	usedRoles, err := retrieveUsedRoles(kubeClient, namespace)
 	if err != nil {
@@ -79,7 +62,7 @@ func processNamespaceRoles(kubeClient *kubernetes.Clientset, namespace string) (
 		return nil, err
 	}
 
-	diff := calculateRoleDifference(usedRoles, roleNames)
+	diff := CalculateResourceDifference(usedRoles, roleNames)
 	return diff, nil
 
 }

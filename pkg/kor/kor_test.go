@@ -42,3 +42,21 @@ func TestRemoveDuplicatesAndSort(t *testing.T) {
 		t.Errorf("RemoveDuplicatesAndSort failed for empty slice, expected: %v, got: %v", emptyExpected, emptyResult)
 	}
 }
+
+func TestCalculateResourceDifference(t *testing.T) {
+	usedResourceNames := []string{"resource1", "resource2", "resource3"}
+	allResourceNames := []string{"resource1", "resource2", "resource3", "resource4", "resource5"}
+
+	expectedDifference := []string{"resource4", "resource5"}
+	difference := CalculateResourceDifference(usedResourceNames, allResourceNames)
+
+	if len(difference) != len(expectedDifference) {
+		t.Errorf("Expected %d difference items, but got %d", len(expectedDifference), len(difference))
+	}
+
+	for i, item := range difference {
+		if item != expectedDifference[i] {
+			t.Errorf("Difference item at index %d should be %s, but got %s", i, expectedDifference[i], item)
+		}
+	}
+}
