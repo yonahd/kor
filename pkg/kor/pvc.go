@@ -30,22 +30,6 @@ func retreiveUsedPvcs(kubeClient *kubernetes.Clientset, namespace string) ([]str
 	return usedPvcs, err
 }
 
-func calculatePvcDifference(usedPvcs []string, pvcNames []string) []string {
-	difference := []string{}
-	for _, name := range pvcNames {
-		found := false
-		for _, usedName := range usedPvcs {
-			if name == usedName {
-				found = true
-				break
-			}
-		}
-		if !found {
-			difference = append(difference, name)
-		}
-	}
-	return difference
-}
 func processNamespacePvcs(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
 	pvcs, err := kubeClient.CoreV1().PersistentVolumeClaims(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -61,7 +45,7 @@ func processNamespacePvcs(kubeClient *kubernetes.Clientset, namespace string) ([
 		return nil, err
 	}
 
-	diff := calculatePvcDifference(usedPvcs, pvcNames)
+	diff := CalculateResourceDifference(usedPvcs, pvcNames)
 	return diff, nil
 }
 

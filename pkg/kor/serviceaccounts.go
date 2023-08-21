@@ -115,7 +115,7 @@ func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) ([]s
 		return nil, err
 	}
 
-	diff := calculateCMDifference(usedServiceAccounts, serviceAccountNames)
+	diff := CalculateResourceDifference(usedServiceAccounts, serviceAccountNames)
 	return diff, nil
 
 }
