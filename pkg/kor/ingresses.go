@@ -6,11 +6,23 @@ import (
 	"fmt"
 	"os"
 
+	v1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
+
+func validateServiceBackend(kubeClient *kubernetes.Clientset, namespace string, backend *v1.IngressBackend) bool {
+	if backend.Service != nil {
+		serviceName := backend.Service.Name
+
+		_, err := kubeClient.CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
+		if err != nil {
+			return false
+		}
+	}
+	return true
+}
 
 func retrieveUsedIngress(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
 	ingresses, err := kubeClient.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
@@ -23,32 +35,26 @@ func retrieveUsedIngress(kubeClient *kubernetes.Clientset, namespace string) ([]
 	for _, ingress := range ingresses.Items {
 		used := true
 
+		if ingress.Spec.DefaultBackend != nil {
+			used = validateServiceBackend(kubeClient, namespace, ingress.Spec.DefaultBackend)
+		}
 		for _, rule := range ingress.Spec.Rules {
 			for _, path := range rule.HTTP.Paths {
 				if path.Backend.Service != nil {
-					serviceName := path.Backend.Service.Name
-
-					_, err := kubeClient.CoreV1().Services(namespace).Get(context.TODO(), serviceName, v1.GetOptions{})
-					if err != nil {
-						used = false
-						break
-					} else {
-						used = true
+					used = validateServiceBackend(kubeClient, namespace, &path.Backend)
+					if used {
 						break
 					}
 				}
 			}
-
 			if used {
 				break
 			}
 		}
-
 		if used {
 			usedIngresses = append(usedIngresses, ingress.Name)
 		}
 	}
-
 	return usedIngresses, nil
 }
 
