@@ -99,6 +99,15 @@ func getUnusedPvcs(kubeClient *kubernetes.Clientset, namespace string) ResourceD
 	return namespacePvcDiff
 }
 
+func getUnusedIngresses(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
+	ingressDiff, err := processNamespaceIngresses(kubeClient, namespace)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "ingresses", namespace, err)
+	}
+	namespaceIngressDiff := ResourceDiff{"Ingress", ingressDiff}
+	return namespaceIngressDiff
+}
+
 func GetUnusedAll(namespace string, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
@@ -126,6 +135,8 @@ func GetUnusedAll(namespace string, kubeconfig string) {
 		allDiffs = append(allDiffs, namespaceHpaDiff)
 		namespacePvcDiff := getUnusedPvcs(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespacePvcDiff)
+		namespaceIngressDiff := getUnusedIngresses(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceIngressDiff)
 		output := FormatOutputAll(namespace, allDiffs)
 		fmt.Println(output)
 		fmt.Println()
@@ -172,6 +183,9 @@ func GetUnusedAllJSON(namespace string, kubeconfig string) (string, error) {
 
 		namespacePvcDiff := getUnusedPvcs(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespacePvcDiff)
+
+		namespaceIngressDiff := getUnusedIngresses(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceIngressDiff)
 
 		// Store the unused resources for each resource type in the JSON response
 		resourceMap := make(map[string][]string)
