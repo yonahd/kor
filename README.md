@@ -18,6 +18,11 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 
 ## Installation
 
+For MacOS users, you can install Kor using Homebrew:
+```sh
+brew install kor
+```
+
 Download the binary for your operating system from the [releases page](https://github.com/yonahd/kor/releases) and add it to your system's PATH.
 
 ## Usage
