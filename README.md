@@ -13,17 +13,18 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - Roles
 - Hpas
 - Pvcs
+- Ingresses
 
 ![Kor Screenshot](/images/screenshot.png)
 
 ## Installation
 
+Download the binary for your operating system from the [releases page](https://github.com/yonahd/kor/releases) and add it to your system's PATH.
+
 For MacOS users, you can install Kor using Homebrew:
 ```sh
 brew install kor
 ```
-
-Download the binary for your operating system from the [releases page](https://github.com/yonahd/kor/releases) and add it to your system's PATH.
 
 ## Usage
 
@@ -39,6 +40,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `role`: Gets unused roles for the specified namespace or all namespaces.
 - `hps`: Gets unused hpa for the specified namespace or all namespaces.
 - `pvc`: Gets unused pvcs for the specified namespace or all namespaces.
+- `ingress`: Gets unused ingresses for the specified namespace or all namespaces.
 
 ### Supported Flags
 ```
@@ -72,6 +74,7 @@ kor [subcommand] --help
 | Statefulsets    | Statefulsets with 0 Replicas                                                                                                                                                                                                       |                                                                                                                              |
 | Roles           | Roles not used in roleBinding                                                                                                                                                                                                      |                                                                                                                              |
 | Pvcs            | Pvcs not used in pods                                                                                                                                                                                                              |                                                                                                                              |
+| Ingresses            | Ingresses not pointing at any service.                                                                                                                                                                                                              |                                                                                                                              |
 | Hpas            | Hpas not used in Deployments   <br/>    Hpas not used in Statefulsets                                                                                                                                                              |                                                                                                                              |
 
 
@@ -89,7 +92,7 @@ namespace := "my-namespace"
 outputFormat := "json" // Set to "json" for JSON output
 
     if outputFormat == "json" {
-        jsonResponse, err := kor.GetUnusedDeploymentsJSON(namespace)
+        jsonResponse, err := kor.GetUnusedDeploymentsJSON(namespace, kubeconfig)
         if err != nil {
             // Handle error
         }
