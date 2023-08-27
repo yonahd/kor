@@ -44,7 +44,7 @@ archives:
       - README.md
       - LICENSE
 changelog:
-  use: github
+  use: github-native
   sort: asc
   filters:
     exclude:
