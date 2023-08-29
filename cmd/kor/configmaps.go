@@ -1,6 +1,8 @@
 package kor
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/yonahd/kor/pkg/kor"
 )
@@ -12,7 +14,12 @@ var configmapCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			kor.GetUnusedConfigmapsJSON(namespace, kubeconfig)
+			if jsonResponse, err := kor.GetUnusedConfigmapsJSON(namespace, kubeconfig); err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(jsonResponse)
+			}
+
 		} else {
 			kor.GetUnusedConfigmaps(namespace, kubeconfig)
 		}
