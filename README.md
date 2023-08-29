@@ -14,6 +14,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - Hpas
 - Pvcs
 - Ingresses
+- Pdbs
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -41,6 +42,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `hps`: Gets unused hpa for the specified namespace or all namespaces.
 - `pvc`: Gets unused pvcs for the specified namespace or all namespaces.
 - `ingress`: Gets unused ingresses for the specified namespace or all namespaces.
+- `pdb`: Gets unused pdbs for the specified namespace or all namespaces.
 
 ### Supported Flags
 ```
@@ -74,8 +76,9 @@ kor [subcommand] --help
 | Statefulsets    | Statefulsets with 0 Replicas                                                                                                                                                                                                       |                                                                                                                              |
 | Roles           | Roles not used in roleBinding                                                                                                                                                                                                      |                                                                                                                              |
 | Pvcs            | Pvcs not used in pods                                                                                                                                                                                                              |                                                                                                                              |
-| Ingresses            | Ingresses not pointing at any service.                                                                                                                                                                                                              |                                                                                                                              |
+| Ingresses       | Ingresses not pointing at any service.                                                                                                                                                                                             |                                                                                                                              |
 | Hpas            | Hpas not used in Deployments   <br/>    Hpas not used in Statefulsets                                                                                                                                                              |                                                                                                                              |
+| Pdbs            | Pdbs not used in Deployments   <br/>    Pdbs not used in Statefulsets                                                                                                                                                              |                                                                                                                              |
 
 
 
