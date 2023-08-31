@@ -1,6 +1,8 @@
 package kor
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/yonahd/kor/pkg/kor"
 )
@@ -11,7 +13,11 @@ var pvcCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			kor.GetUnusedPvcsJson(namespace, kubeconfig)
+			if jsonResponse, err := kor.GetUnusedPvcsJson(namespace, kubeconfig); err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(jsonResponse)
+			}
 		} else {
 			kor.GetUnusedPvcs(namespace, kubeconfig)
 		}

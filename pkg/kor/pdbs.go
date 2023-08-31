@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -89,6 +88,5 @@ func GetUnusedPdbsJson(namespace string, kubeconfig string) (string, error) {
 		return "", err
 	}
 
-	log.Println(string(jsonResponse))
 	return string(jsonResponse), nil
 }
