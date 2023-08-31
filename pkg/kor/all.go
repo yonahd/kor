@@ -149,12 +149,7 @@ func GetUnusedAll(namespace string, kubeconfig string) {
 		namespacePdbDiff := getUnusedPdbs(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespacePdbDiff)
 		output := FormatOutputAll(namespace, allDiffs)
-
-		if len(output) == 0 {
-			fmt.Printf("No unused resources found in the namespace: %s\n", namespace)
-		} else {
-			fmt.Println(output)
-		}
+		fmt.Println(output)
 		fmt.Println()
 	}
 }
