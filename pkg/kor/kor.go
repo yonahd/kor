@@ -96,13 +96,25 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff) string {
 	var buf bytes.Buffer
 	table := tablewriter.NewWriter(&buf)
 	table.SetHeader([]string{"#", "Resource Type", "Resource Name"})
+
 	// TODO parse resourceType, diff
+
+	allEmpty := true
 	for _, data := range allDiffs {
+		if len(data.diff) == 0 {
+			continue
+		}
+
+		allEmpty = false
 		for _, val := range data.diff {
 			row := []string{fmt.Sprintf("%d", i+1), data.resourceType, val}
 			table.Append(row)
 			i += 1
 		}
+	}
+
+	if allEmpty {
+		return fmt.Sprintf("No unused resources found in the namespace: %s", namespace)
 	}
 
 	table.Render()
