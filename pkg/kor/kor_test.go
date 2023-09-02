@@ -1,7 +1,9 @@
 package kor
 
 import (
+	"os"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -58,5 +60,58 @@ func TestCalculateResourceDifference(t *testing.T) {
 		if item != expectedDifference[i] {
 			t.Errorf("Difference item at index %d should be %s, but got %s", i, expectedDifference[i], item)
 		}
+	}
+}
+
+func TestGetDefaultKubeConfigPath(t *testing.T) {
+	path := getDefaultKubeConfigPath()
+	if !strings.Contains(path, ".kube") || !strings.Contains(path, "config") {
+		t.Errorf("Expected to find '.kube' and 'config' keywords in path, but got %s", path)
+	}
+}
+
+func TestLoadOrGetKubeConfigPath_ShouldReadEnvvar(t *testing.T) {
+	originalKCEnv := os.Getenv("KUBECONFIG")
+	defer os.Setenv("KUBECONFIG", originalKCEnv)
+
+	testKCPath := "test/kubeconfig.yaml"
+	os.Setenv("KUBECONFIG", testKCPath)
+	kcPath := loadOrGetKubeConfigPath("")
+
+	if kcPath != testKCPath {
+		t.Errorf("Expected kubeconfig path to be %s, but got %s", testKCPath, kcPath)
+	}
+}
+
+func TestLoadOrGetKubeConfigPath_ShouldGetDefaultPath(t *testing.T) {
+	originalKCEnv := os.Getenv("KUBECONFIG")
+	defer os.Setenv("KUBECONFIG", originalKCEnv)
+
+	testKCPath := "test/kubeconfig.yaml"
+	os.Setenv("KUBECONFIG", "")
+	kcPath := loadOrGetKubeConfigPath("")
+
+	if kcPath == testKCPath {
+		t.Errorf("Expected kubeconfig path to be different than %s, but got %s", testKCPath, kcPath)
+	}
+
+	if !strings.Contains(kcPath, ".kube") || !strings.Contains(kcPath, "config") {
+		t.Errorf("Expected to find '.kube' and 'config' keywords in path, but got %s", kcPath)
+	}
+
+}
+
+func TestLoadOrGetKubeConfigPath_ShouldReturnSameStringIfNonEmpty(t *testing.T) {
+	originalKCEnv := os.Getenv("KUBECONFIG")
+	defer os.Setenv("KUBECONFIG", originalKCEnv)
+
+	inputKCPath := "test/inputkc.yaml"
+
+	testKCPath := "test/kubeconfig.yaml"
+	os.Setenv("KUBECONFIG", testKCPath)
+	kcPath := loadOrGetKubeConfigPath(inputKCPath)
+
+	if kcPath != inputKCPath {
+		t.Errorf("Expected kubeconfig path to be %s, but got %s", testKCPath, kcPath)
 	}
 }

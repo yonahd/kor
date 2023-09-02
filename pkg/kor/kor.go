@@ -33,16 +33,26 @@ func RemoveDuplicatesAndSort(slice []string) []string {
 	return uniqueSlice
 }
 
-func GetKubeConfigPath() string {
+func getDefaultKubeConfigPath() string {
 	home := homedir.HomeDir()
 	return filepath.Join(home, ".kube", "config")
 }
 
-func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
+func loadOrGetKubeConfigPath(kubeconfig string) string {
 	if kubeconfig == "" {
-		kubeconfig = GetKubeConfigPath()
+		if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
+			kubeconfig = configEnv
+		} else {
+			kubeconfig = getDefaultKubeConfigPath()
+		}
 	}
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	return kubeconfig
+}
+
+func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
+	kubeconfigPath := loadOrGetKubeConfigPath(kubeconfig)
+
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
 		os.Exit(1)
