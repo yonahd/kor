@@ -60,7 +60,7 @@ func getServiceAccountsFromRoleBindings(clientset *kubernetes.Clientset, namespa
 
 func retrieveUsedSA(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, error) {
 
-	podServiceAccounts := []string{}
+	var podServiceAccounts []string
 
 	// Retrieve pods in the specified namespace
 	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
@@ -82,7 +82,13 @@ func retrieveUsedSA(kubeClient *kubernetes.Clientset, namespace string) ([]strin
 	}
 
 	roleServiceAccounts, err := getServiceAccountsFromRoleBindings(kubeClient, namespace)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	clusterRoleServiceAccounts, err := getServiceAccountsFromClusterRoleBindings(kubeClient, namespace)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	return podServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, nil
 }
 
