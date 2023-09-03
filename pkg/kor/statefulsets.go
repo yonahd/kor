@@ -37,13 +37,13 @@ func ProcessNamespaceStatefulsets(clientset *kubernetes.Clientset, namespace str
 
 }
 
-func GetUnusedStatefulsets(namespace string, kubeconfig string) {
+func GetUnusedStatefulsets(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := ProcessNamespaceStatefulsets(kubeClient, namespace)
@@ -57,12 +57,12 @@ func GetUnusedStatefulsets(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedStatefulsetsJSON(namespace string, kubeconfig string) (string, error) {
+func GetUnusedStatefulsetsJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

@@ -12,9 +12,9 @@ var serviceAccountCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			kor.GetUnusedServiceAccountsJSON(namespace, kubeconfig)
+			kor.GetUnusedServiceAccountsJSON(includeExcludeLists, kubeconfig)
 		} else {
-			kor.GetUnusedServiceAccounts(namespace, kubeconfig)
+			kor.GetUnusedServiceAccounts(includeExcludeLists, kubeconfig)
 		}
 
 	},

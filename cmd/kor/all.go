@@ -11,9 +11,9 @@ var allCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			kor.GetUnusedAllJSON(namespace, kubeconfig)
+			kor.GetUnusedAllJSON(includeExcludeLists, kubeconfig)
 		} else {
-			kor.GetUnusedAll(namespace, kubeconfig)
+			kor.GetUnusedAll(includeExcludeLists, kubeconfig)
 		}
 
 	},

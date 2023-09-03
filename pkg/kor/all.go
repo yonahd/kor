@@ -99,13 +99,13 @@ func getUnusedPvcs(kubeClient *kubernetes.Clientset, namespace string) ResourceD
 	return namespacePvcDiff
 }
 
-func GetUnusedAll(namespace string, kubeconfig string) {
+func GetUnusedAll(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	for _, namespace := range namespaces {
 		var allDiffs []ResourceDiff
 		namespaceCMDiff := getUnusedCMs(kubeClient, namespace)
@@ -132,13 +132,13 @@ func GetUnusedAll(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedAllJSON(namespace string, kubeconfig string) (string, error) {
+func GetUnusedAllJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	// Create the JSON response object
 	response := make(map[string]map[string][]string)

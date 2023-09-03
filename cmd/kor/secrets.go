@@ -12,9 +12,9 @@ var secretCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			kor.GetUnusedSecretsJSON(namespace, kubeconfig)
+			kor.GetUnusedSecretsJSON(includeExcludeLists, kubeconfig)
 		} else {
-			kor.GetUnusedSecrets(namespace, kubeconfig)
+			kor.GetUnusedSecrets(includeExcludeLists, kubeconfig)
 		}
 
 	},

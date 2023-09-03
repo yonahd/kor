@@ -12,9 +12,9 @@ var deployCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			kor.GetUnusedDeploymentsJSON(namespace, kubeconfig)
+			kor.GetUnusedDeploymentsJSON(includeExcludeLists, kubeconfig)
 		} else {
-			kor.GetUnusedDeployments(namespace, kubeconfig)
+			kor.GetUnusedDeployments(includeExcludeLists, kubeconfig)
 		}
 
 	},

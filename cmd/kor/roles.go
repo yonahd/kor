@@ -11,9 +11,9 @@ var roleCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			kor.GetUnusedRolesJSON(namespace, kubeconfig)
+			kor.GetUnusedRolesJSON(includeExcludeLists, kubeconfig)
 		} else {
-			kor.GetUnusedRoles(namespace, kubeconfig)
+			kor.GetUnusedRoles(includeExcludeLists, kubeconfig)
 		}
 	},
 }

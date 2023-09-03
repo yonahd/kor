@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,6 +19,10 @@ import (
 type ExceptionResource struct {
 	ResourceName string
 	Namespace    string
+}
+type IncludeExcludeLists struct {
+	IncludeListStr string
+	ExcludeListStr string
 }
 
 func RemoveDuplicatesAndSort(slice []string) []string {
@@ -56,18 +61,44 @@ func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 	return clientset
 }
 
-func SetNamespaceList(namespace string, kubeClient *kubernetes.Clientset) []string {
-	var namespaces []string
-	if namespace != "" {
-		namespaces = append(namespaces, namespace)
-	} else {
-		namespaceList, err := kubeClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
-			os.Exit(1)
-		}
+func SetNamespaceList(namespaceLists IncludeExcludeLists, kubeClient *kubernetes.Clientset) []string {
+	namespaces := make([]string, 0)
+	namespacesMap := make(map[string]bool)
+	if namespaceLists.IncludeListStr != "" && namespaceLists.ExcludeListStr != "" {
+		fmt.Fprintf(os.Stderr, "Exclude namespaces can't be used together with include namespaces. Ignoring --exclude-namespace(-e) flag\n")
+		namespaceLists.ExcludeListStr = ""
+	}
+	includeNamespaces := strings.Split(namespaceLists.IncludeListStr, ",")
+	excludeNamespaces := strings.Split(namespaceLists.ExcludeListStr, ",")
+	namespaceList, err := kubeClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
+		os.Exit(1)
+	}
+	if namespaceLists.IncludeListStr != "" {
 		for _, ns := range namespaceList.Items {
-			namespaces = append(namespaces, ns.Name)
+			namespacesMap[ns.Name] = false
+		}
+		for _, ns := range includeNamespaces {
+			if _, exists := namespacesMap[ns]; exists {
+				namespacesMap[ns] = true
+			} else {
+				fmt.Fprintf(os.Stderr, "namespace [%s] not found\n", ns)
+			}
+		}
+	} else {
+		for _, ns := range namespaceList.Items {
+			namespacesMap[ns.Name] = true
+		}
+		for _, ns := range excludeNamespaces {
+			if _, exists := namespacesMap[ns]; exists {
+				namespacesMap[ns] = false
+			}
+		}
+	}
+	for ns := range namespacesMap {
+		if namespacesMap[ns] {
+			namespaces = append(namespaces, ns)
 		}
 	}
 	return namespaces

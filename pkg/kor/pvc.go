@@ -49,13 +49,13 @@ func processNamespacePvcs(kubeClient *kubernetes.Clientset, namespace string) ([
 	return diff, nil
 }
 
-func GetUnusedPvcs(namespace string, kubeconfig string) {
+func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespacePvcs(kubeClient, namespace)
@@ -70,13 +70,13 @@ func GetUnusedPvcs(namespace string, kubeconfig string) {
 
 }
 
-func GetUnusedPvcsJson(namespace string, kubeconfig string) (string, error) {
+func GetUnusedPvcsJson(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

@@ -11,9 +11,9 @@ var pvcCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			kor.GetUnusedPvcsJson(namespace, kubeconfig)
+			kor.GetUnusedPvcsJson(includeExcludeLists, kubeconfig)
 		} else {
-			kor.GetUnusedPvcs(namespace, kubeconfig)
+			kor.GetUnusedPvcs(includeExcludeLists, kubeconfig)
 		}
 	},
 }
