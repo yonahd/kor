@@ -39,13 +39,13 @@ func processNamespacePdbs(clientset *kubernetes.Clientset, namespace string) ([]
 	return unusedPdbs, nil
 }
 
-func GetUnusedPdbs(namespace string, kubeconfig string) {
+func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespacePdbs(kubeClient, namespace)
@@ -60,13 +60,13 @@ func GetUnusedPdbs(namespace string, kubeconfig string) {
 
 }
 
-func GetUnusedPdbsJson(namespace string, kubeconfig string) (string, error) {
+func GetUnusedPdbsJson(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
