@@ -119,13 +119,13 @@ func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) 
 
 }
 
-func GetUnusedSecrets(namespace string, kubeconfig string) {
+func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceSecret(kubeClient, namespace)
@@ -139,12 +139,12 @@ func GetUnusedSecrets(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedSecretsJSON(namespace string, kubeconfig string) (string, error) {
+func GetUnusedSecretsJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

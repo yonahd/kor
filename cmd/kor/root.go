@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/yonahd/kor/pkg/kor"
 )
 
 var rootCmd = &cobra.Command{
@@ -14,17 +15,19 @@ var rootCmd = &cobra.Command{
 	kor can currently discover unused configmaps and secrets`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-
 	},
 }
 
-var namespace string
-var outputFormat string
-var kubeconfig string
+var (
+	outputFormat        string
+	kubeconfig          string
+	includeExcludeLists kor.IncludeExcludeLists
+)
 
 func Execute() {
 	rootCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
-	rootCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "Namespace to run on")
+	rootCmd.PersistentFlags().StringVarP(&includeExcludeLists.IncludeListStr, "include-namespaces", "n", "", "Namespaces to run on, splited by comma. Example: --include-namespace ns1,ns2,ns3. ")
+	rootCmd.PersistentFlags().StringVarP(&includeExcludeLists.ExcludeListStr, "exclude-namespaces", "e", "", "Namespaces to be excluded, splited by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.")
 	rootCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table or json)")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while executing your CLI '%s'", err)

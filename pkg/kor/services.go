@@ -37,13 +37,13 @@ func ProcessNamespaceServices(clientset *kubernetes.Clientset, namespace string)
 
 }
 
-func GetUnusedServices(namespace string, kubeconfig string) {
+func GetUnusedServices(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := ProcessNamespaceServices(kubeClient, namespace)
@@ -57,12 +57,12 @@ func GetUnusedServices(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedServicesJSON(namespace string, kubeconfig string) (string, error) {
+func GetUnusedServicesJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

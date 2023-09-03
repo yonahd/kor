@@ -13,13 +13,13 @@ var hpaCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			if jsonResponse, err := kor.GetUnusedHpasJson(namespace, kubeconfig); err != nil {
+			if jsonResponse, err := kor.GetUnusedHpasJson(includeExcludeLists, kubeconfig); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(jsonResponse)
 			}
 		} else {
-			kor.GetUnusedHpas(namespace, kubeconfig)
+			kor.GetUnusedHpas(includeExcludeLists, kubeconfig)
 		}
 	},
 }

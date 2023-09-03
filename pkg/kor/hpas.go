@@ -74,13 +74,13 @@ func processNamespaceHpas(clientset *kubernetes.Clientset, namespace string) ([]
 	return unusedHpas, nil
 }
 
-func GetUnusedHpas(namespace string, kubeconfig string) {
+func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceHpas(kubeClient, namespace)
@@ -95,13 +95,13 @@ func GetUnusedHpas(namespace string, kubeconfig string) {
 
 }
 
-func GetUnusedHpasJson(namespace string, kubeconfig string) (string, error) {
+func GetUnusedHpasJson(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

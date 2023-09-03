@@ -13,13 +13,13 @@ var pvcCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			if jsonResponse, err := kor.GetUnusedPvcsJson(namespace, kubeconfig); err != nil {
+			if jsonResponse, err := kor.GetUnusedPvcsJson(includeExcludeLists, kubeconfig); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(jsonResponse)
 			}
 		} else {
-			kor.GetUnusedPvcs(namespace, kubeconfig)
+			kor.GetUnusedPvcs(includeExcludeLists, kubeconfig)
 		}
 	},
 }

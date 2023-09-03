@@ -14,13 +14,13 @@ var stsCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			if jsonResponse, err := kor.GetUnusedStatefulsetsJSON(namespace, kubeconfig); err != nil {
+			if jsonResponse, err := kor.GetUnusedStatefulsetsJSON(includeExcludeLists, kubeconfig); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(jsonResponse)
 			}
 		} else {
-			kor.GetUnusedStatefulsets(namespace, kubeconfig)
+			kor.GetUnusedStatefulsets(includeExcludeLists, kubeconfig)
 		}
 
 	},

@@ -14,13 +14,13 @@ var ingressCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			if jsonResponse, err := kor.GetUnusedIngressesJSON(namespace, kubeconfig); err != nil {
+			if jsonResponse, err := kor.GetUnusedIngressesJSON(includeExcludeLists, kubeconfig); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(jsonResponse)
 			}
 		} else {
-			kor.GetUnusedIngresses(namespace, kubeconfig)
+			kor.GetUnusedIngresses(includeExcludeLists, kubeconfig)
 		}
 
 	},

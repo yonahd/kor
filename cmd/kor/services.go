@@ -14,13 +14,13 @@ var serviceCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			if jsonResponse, err := kor.GetUnusedServicesJSON(namespace, kubeconfig); err != nil {
+			if jsonResponse, err := kor.GetUnusedServicesJSON(includeExcludeLists, kubeconfig); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(jsonResponse)
 			}
 		} else {
-			kor.GetUnusedServices(namespace, kubeconfig)
+			kor.GetUnusedServices(includeExcludeLists, kubeconfig)
 		}
 
 	},

@@ -67,12 +67,12 @@ func processNamespaceRoles(kubeClient *kubernetes.Clientset, namespace string) (
 
 }
 
-func GetUnusedRoles(namespace string, kubeconfig string) {
+func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceRoles(kubeClient, namespace)
@@ -86,12 +86,12 @@ func GetUnusedRoles(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedRolesJSON(namespace string, kubeconfig string) (string, error) {
+func GetUnusedRolesJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
