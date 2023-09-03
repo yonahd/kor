@@ -111,7 +111,7 @@ func getUnusedIngresses(kubeClient *kubernetes.Clientset, namespace string) Reso
 func getUnusedPdbs(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
 	pdbDiff, err := processNamespacePdbs(kubeClient, namespace)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "ingresses", namespace, err)
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pdbs", namespace, err)
 	}
 	namespacePdbDiff := ResourceDiff{"Pdb", pdbDiff}
 	return namespacePdbDiff
