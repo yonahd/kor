@@ -7,25 +7,25 @@ import (
 	"github.com/yonahd/kor/pkg/kor"
 )
 
-var serviceCmd = &cobra.Command{
-	Use:     "services",
-	Aliases: []string{"svc"},
-	Short:   "Gets unused services",
+var ingressCmd = &cobra.Command{
+	Use:     "ingress",
+	Aliases: []string{"ing"},
+	Short:   "Gets unused ingresses",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
-			if jsonResponse, err := kor.GetUnusedServicesJSON(includeExcludeLists, kubeconfig); err != nil {
+			if jsonResponse, err := kor.GetUnusedIngressesJSON(namespace, kubeconfig); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(jsonResponse)
 			}
 		} else {
-			kor.GetUnusedServices(includeExcludeLists, kubeconfig)
+			kor.GetUnusedIngresses(namespace, kubeconfig)
 		}
 
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(serviceCmd)
+	rootCmd.AddCommand(ingressCmd)
 }

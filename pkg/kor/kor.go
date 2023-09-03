@@ -143,7 +143,7 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff) string {
 // TODO create formatter by resource "#", "Resource Name", "Namespace"
 
 func CalculateResourceDifference(usedResourceNames []string, allResourceNames []string) []string {
-	difference := []string{}
+	var difference []string
 	for _, name := range allResourceNames {
 		found := false
 		for _, usedName := range usedResourceNames {

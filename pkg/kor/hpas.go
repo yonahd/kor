@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -124,6 +123,5 @@ func GetUnusedHpasJson(includeExcludeLists IncludeExcludeLists, kubeconfig strin
 		return "", err
 	}
 
-	log.Println(string(jsonResponse))
 	return string(jsonResponse), nil
 }

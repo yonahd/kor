@@ -99,6 +99,24 @@ func getUnusedPvcs(kubeClient *kubernetes.Clientset, namespace string) ResourceD
 	return namespacePvcDiff
 }
 
+func getUnusedIngresses(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
+	ingressDiff, err := processNamespaceIngresses(kubeClient, namespace)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "ingresses", namespace, err)
+	}
+	namespaceIngressDiff := ResourceDiff{"Ingress", ingressDiff}
+	return namespaceIngressDiff
+}
+
+func getUnusedPdbs(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
+	pdbDiff, err := processNamespacePdbs(kubeClient, namespace)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "ingresses", namespace, err)
+	}
+	namespacePdbDiff := ResourceDiff{"Pdb", pdbDiff}
+	return namespacePdbDiff
+}
+
 func GetUnusedAll(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
@@ -126,6 +144,10 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 		allDiffs = append(allDiffs, namespaceHpaDiff)
 		namespacePvcDiff := getUnusedPvcs(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespacePvcDiff)
+		namespaceIngressDiff := getUnusedIngresses(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceIngressDiff)
+		namespacePdbDiff := getUnusedPdbs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespacePdbDiff)
 		output := FormatOutputAll(namespace, allDiffs)
 		fmt.Println(output)
 		fmt.Println()
@@ -172,6 +194,12 @@ func GetUnusedAllJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string
 
 		namespacePvcDiff := getUnusedPvcs(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespacePvcDiff)
+
+		namespaceIngressDiff := getUnusedIngresses(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceIngressDiff)
+
+		namespacePdbDiff := getUnusedPdbs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespacePdbDiff)
 
 		// Store the unused resources for each resource type in the JSON response
 		resourceMap := make(map[string][]string)
