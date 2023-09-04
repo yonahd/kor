@@ -19,6 +19,12 @@ var ingressCmd = &cobra.Command{
 			} else {
 				fmt.Println(jsonResponse)
 			}
+		} else if outputFormat == "yaml" {
+			if yamlResponse, err := kor.GetUnusedIngressesYAML(includeExcludeLists, kubeconfig); err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(yamlResponse)
+			}
 		} else {
 			kor.GetUnusedIngresses(includeExcludeLists, kubeconfig)
 		}

@@ -13,11 +13,11 @@ var stsCmd = &cobra.Command{
 	Short:   "Gets unused statefulsets",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		if outputFormat == "json" {
-			if jsonResponse, err := kor.GetUnusedStatefulsetsJSON(includeExcludeLists, kubeconfig); err != nil {
+		if outputFormat == "yaml" {
+			if yamlResponse, err := kor.GetUnusedStatefulsetsYAML(includeExcludeLists, kubeconfig); err != nil {
 				fmt.Println(err)
 			} else {
-				fmt.Println(jsonResponse)
+				fmt.Println(yamlResponse)
 			}
 		} else {
 			kor.GetUnusedStatefulsets(includeExcludeLists, kubeconfig)

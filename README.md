@@ -39,7 +39,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `deployments`: Gets unused service accounts for the specified namespace or all namespaces.
 - `statefulsets`: Gets unused service accounts for the specified namespace or all namespaces.
 - `role`: Gets unused roles for the specified namespace or all namespaces.
-- `hps`: Gets unused hpa for the specified namespace or all namespaces.
+- `hpa`: Gets unused hpa for the specified namespace or all namespaces.
 - `pvc`: Gets unused pvcs for the specified namespace or all namespaces.
 - `ingress`: Gets unused ingresses for the specified namespace or all namespaces.
 - `pdb`: Gets unused pdbs for the specified namespace or all namespaces.

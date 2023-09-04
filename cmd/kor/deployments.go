@@ -19,6 +19,12 @@ var deployCmd = &cobra.Command{
 			} else {
 				fmt.Println(jsonResponse)
 			}
+		} else if outputFormat == "yaml" {
+			if yamlResponse, err := kor.GetUnusedDeploymentsYAML(includeExcludeLists, kubeconfig); err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(yamlResponse)
+			}
 		} else {
 			kor.GetUnusedDeployments(includeExcludeLists, kubeconfig)
 		}

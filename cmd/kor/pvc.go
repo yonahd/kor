@@ -18,6 +18,12 @@ var pvcCmd = &cobra.Command{
 			} else {
 				fmt.Println(jsonResponse)
 			}
+		} else if outputFormat == "yaml" {
+			if yamlResponse, err := kor.GetUnusedPvcsYAML(includeExcludeLists, kubeconfig); err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(yamlResponse)
+			}
 		} else {
 			kor.GetUnusedPvcs(includeExcludeLists, kubeconfig)
 		}
