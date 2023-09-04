@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"sigs.k8s.io/yaml"
 )
 
 func retrieveUsedRoles(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -111,4 +112,17 @@ func GetUnusedRolesJSON(includeExcludeLists IncludeExcludeLists, kubeconfig stri
 	}
 
 	return string(jsonResponse), nil
+}
+
+func GetUnusedRolesYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+	jsonResponse, err := GetUnusedRolesJSON(includeExcludeLists, kubeconfig)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	yamlResponse, err := yaml.JSONToYAML([]byte(jsonResponse))
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+	return (string(yamlResponse)), nil
 }

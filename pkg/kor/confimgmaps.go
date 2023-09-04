@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"sigs.k8s.io/yaml"
 )
 
 var exceptionconfigmaps = []ExceptionResource{
@@ -151,4 +152,17 @@ func GetUnusedConfigmapsJSON(includeExcludeLists IncludeExcludeLists, kubeconfig
 	}
 
 	return string(jsonResponse), nil
+}
+
+func GetUnusedConfigmapsYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+	jsonResponse, err := GetUnusedConfigmapsJSON(includeExcludeLists, kubeconfig)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	yamlResponse, err := yaml.JSONToYAML([]byte(jsonResponse))
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+	return (string(yamlResponse)), nil
 }

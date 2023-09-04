@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"sigs.k8s.io/yaml"
 )
 
 func validateServiceBackend(kubeClient *kubernetes.Clientset, namespace string, backend *v1.IngressBackend) bool {
@@ -128,4 +129,17 @@ func GetUnusedIngressesJSON(includeExcludeLists IncludeExcludeLists, kubeconfig 
 	}
 
 	return string(jsonResponse), nil
+}
+
+func GetUnusedIngressesYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+	jsonResponse, err := GetUnusedIngressesJSON(includeExcludeLists, kubeconfig)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	yamlResponse, err := yaml.JSONToYAML([]byte(jsonResponse))
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+	return (string(yamlResponse)), nil
 }

@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"sigs.k8s.io/yaml"
 )
 
 func retreiveUsedPvcs(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -98,4 +99,17 @@ func GetUnusedPvcsJson(includeExcludeLists IncludeExcludeLists, kubeconfig strin
 	}
 
 	return string(jsonResponse), nil
+}
+
+func GetUnusedPvcsYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+	jsonResponse, err := GetUnusedPvcsJson(includeExcludeLists, kubeconfig)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	yamlResponse, err := yaml.JSONToYAML([]byte(jsonResponse))
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+	return (string(yamlResponse)), nil
 }

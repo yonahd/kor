@@ -8,6 +8,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
 var exceptionServiceAccounts = []ExceptionResource{
@@ -171,4 +172,17 @@ func GetUnusedServiceAccountsJSON(includeExcludeLists IncludeExcludeLists, kubec
 	}
 
 	return string(jsonResponse), nil
+}
+
+func GetUnusedServiceAccountsYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+	jsonResponse, err := GetUnusedServiceAccountsJSON(includeExcludeLists, kubeconfig)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	yamlResponse, err := yaml.JSONToYAML([]byte(jsonResponse))
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+	return (string(yamlResponse)), nil
 }

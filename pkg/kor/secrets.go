@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/utils/strings/slices"
+	"sigs.k8s.io/yaml"
 )
 
 var exceptionSecretTypes = []string{
@@ -164,4 +165,17 @@ func GetUnusedSecretsJSON(includeExcludeLists IncludeExcludeLists, kubeconfig st
 	}
 
 	return string(jsonResponse), nil
+}
+
+func GetUnusedSecretsYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+	jsonResponse, err := GetUnusedSecretsJSON(includeExcludeLists, kubeconfig)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	yamlResponse, err := yaml.JSONToYAML([]byte(jsonResponse))
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+	return (string(yamlResponse)), nil
 }
