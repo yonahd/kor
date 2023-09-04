@@ -93,7 +93,7 @@ func GetUnusedPdbsJson(includeExcludeLists IncludeExcludeLists, kubeconfig strin
 }
 
 func GetUnusedPdbsYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
-	jsonResponse, err := GetUnusedConfigmapsJSON(includeExcludeLists, kubeconfig)
+	jsonResponse, err := GetUnusedPdbsJson(includeExcludeLists, kubeconfig)
 	if err != nil {
 		fmt.Println(err)
 	}
