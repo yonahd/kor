@@ -4,7 +4,8 @@
 # Kor - Kubernetes Orphaned Resources Finder
 
 Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identify and list unused:
-- ConfigMaps  
+
+- ConfigMaps
 - Secrets.
 - Services
 - ServiceAccounts
@@ -22,6 +23,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 Download the binary for your operating system from the [releases page](https://github.com/yonahd/kor/releases) and add it to your system's PATH.
 
 For MacOS users, you can install Kor using Homebrew:
+
 ```sh
 brew install kor
 ```
@@ -43,6 +45,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `ingress`: Gets unused ingresses for the specified namespace or all namespaces.
 
 ### Supported Flags
+
 ```
 -h, --help                help for role
 -k, --kubeconfig string   Path to kubeconfig file (optional)
@@ -64,22 +67,21 @@ kor [subcommand] --help
 
 ## Supported resources and limitations
 
-| Resource        | What it looks for                                                                                                                                                                                                                  | Known False Positives  ⚠️                                                                                                    |
-|-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| Resource        | What it looks for                                                                                                                                                                                                                  | Known False Positives ⚠️                                                                                                                                  |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Configmaps      | Configmaps not used in the following places:<br/>- Pods<br/>- Containers <br/>- Configmaps used through volumes <br/>- Configmaps used through environment variables                                                               | Configmaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically opa policies fluentd configs |
-| Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers <br/>- Secrets used through volumes <br/>- Secrets used through environment variables<br/>- Secrets used by ingress TLS<br/>-Secrets used by ServiceAccounts |    Secrets used by resources which don't explicitly state them in the config                                                                                                                         |
-| Services        | Services with no endpoints                                                                                                                                                                                                         |                                                                                                                              |
-| Deployments     | Deployments with 0 Replicas                                                                                                                                                                                                        |                                                                                                                              |
-| ServiceAccounts | ServiceAccounts unused by pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                     |                                                                                                                              |
-| Statefulsets    | Statefulsets with 0 Replicas                                                                                                                                                                                                       |                                                                                                                              |
-| Roles           | Roles not used in roleBinding                                                                                                                                                                                                      |                                                                                                                              |
-| Pvcs            | Pvcs not used in pods                                                                                                                                                                                                              |                                                                                                                              |
-| Ingresses            | Ingresses not pointing at any service.                                                                                                                                                                                                              |                                                                                                                              |
-| Hpas            | Hpas not used in Deployments   <br/>    Hpas not used in Statefulsets                                                                                                                                                              |                                                                                                                              |
-
-
+| Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers <br/>- Secrets used through volumes <br/>- Secrets used through environment variables<br/>- Secrets used by ingress TLS<br/>-Secrets used by ServiceAccounts | Secrets used by resources which don't explicitly state them in the config                                                                                 |
+| Services        | Services with no endpoints                                                                                                                                                                                                         |                                                                                                                                                           |
+| Deployments     | Deployments with 0 Replicas                                                                                                                                                                                                        |                                                                                                                                                           |
+| ServiceAccounts | ServiceAccounts unused by pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                     |                                                                                                                                                           |
+| Statefulsets    | Statefulsets with 0 Replicas                                                                                                                                                                                                       |                                                                                                                                                           |
+| Roles           | Roles not used in roleBinding                                                                                                                                                                                                      |                                                                                                                                                           |
+| Pvcs            | Pvcs not used in pods                                                                                                                                                                                                              |                                                                                                                                                           |
+| Ingresses       | Ingresses not pointing at any service.                                                                                                                                                                                             |                                                                                                                                                           |
+| Hpas            | Hpas not used in Deployments <br/> Hpas not used in Statefulsets                                                                                                                                                                   |                                                                                                                                                           |
 
 ## Import Option
+
 You can also use kor as a Go library to programmatically discover unused resources. By importing the github.com/yonahd/kor/pkg/kor package, you can call the relevant functions to retrieve unused resources. The library provides the option to get the results in JSON format by specifying the outputFormat parameter.
 
 ```go
@@ -104,6 +106,17 @@ outputFormat := "json" // Set to "json" for JSON output
 }
 ```
 
+## In Cluster Usage
+
+To use this tool inside the cluster running as a CronJob and sending the results to a slack channel, you can use the following commands:
+
+```sh
+helm upgrade -i kor \
+    --namespace kor \
+    --create-namespace \
+    --set cronJob.slackWebhookUrl=<slack-webhook-url> \
+    ./charts/kor
+```
 
 ## Contributing
 
@@ -112,4 +125,3 @@ Contributions are welcome! If you encounter any bugs or have suggestions for imp
 ## License
 
 This project is open-source and available under the [MIT License](LICENSE). Feel free to use, modify, and distribute it as per the terms of the license.
-

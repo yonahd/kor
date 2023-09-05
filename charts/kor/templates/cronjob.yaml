@@ -1,0 +1,33 @@
+{{- if .Values.cronJob.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  schedule: {{ .Values.cronJob.schedule }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          name: {{ .Release.Name }}
+        spec:
+          serviceAccountName: {{ include "kor.serviceAccountName" . }}
+          containers:
+            - name: {{ .Release.Name }}-container
+              image: {{ .Values.cronJob.image.repository }}:{{ .Values.cronJob.image.tag }}
+              command: ["/bin/sh", "-c"]
+              args: ["{{ .Values.cronJob.korCommand }} > output.txt; curl -X POST -H \"Content-type: application/json\" --data '{\"text\": \"'\"$(cat output.txt)\"'\"}' {{ .Values.cronJob.slackWebhookUrl }}"]
+              {{- if .Values.cronJob.env }}
+              env:
+                {{- toYaml .Values.cronJob.env | nindent 12 }}
+              {{- end }}
+          restartPolicy: {{ .Values.cronJob.restartPolicy }}
+  {{- if .Values.cronJob.successfulJobsHistoryLimit }}
+  successfulJobsHistoryLimit: {{ .Values.cronJob.successfulJobsHistoryLimit }}
+  {{- end }}
+  {{- if .Values.cronJob.failedJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronJob.failedJobsHistoryLimit }}
+  {{- end }}
+{{- end }}

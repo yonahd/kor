@@ -11,6 +11,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
@@ -33,27 +34,56 @@ func RemoveDuplicatesAndSort(slice []string) []string {
 	return uniqueSlice
 }
 
-func GetKubeConfigPath() string {
+func FileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return !os.IsNotExist(err)
+}
+
+func GetKubeConfigPath() (string, bool) {
 	home := homedir.HomeDir()
-	return filepath.Join(home, ".kube", "config")
+	kubeConfigPath := filepath.Join(home, ".kube", "config")
+
+	if FileExists(kubeConfigPath) {
+		return kubeConfigPath, true
+	}
+
+	return "", false
 }
 
 func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 	if kubeconfig == "" {
-		kubeconfig = GetKubeConfigPath()
-	}
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
-		os.Exit(1)
+		kubeconfig, exists := GetKubeConfigPath()
+
+		if !exists {
+			config, err := rest.InClusterConfig()
+			if err != nil {
+				fmt.Printf("Error loading in-cluster config: %v\n", err)
+				os.Exit(1)
+			}
+
+			clientset, err := kubernetes.NewForConfig(config)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+				os.Exit(1)
+			}
+			return clientset
+		} else {
+			config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
+				os.Exit(1)
+			}
+
+			clientset, err := kubernetes.NewForConfig(config)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+				os.Exit(1)
+			}
+			return clientset
+		}
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
-		os.Exit(1)
-	}
-	return clientset
+	return nil
 }
 
 func SetNamespaceList(namespace string, kubeClient *kubernetes.Clientset) []string {
