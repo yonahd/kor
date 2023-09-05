@@ -12,7 +12,7 @@ import (
 	"k8s.io/utils/strings/slices"
 )
 
-func getDeploymentNames(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func getDeploymentNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func getDeploymentNames(clientset *kubernetes.Clientset, namespace string) ([]st
 	return names, nil
 }
 
-func getStatefulSetNames(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func getStatefulSetNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	statefulsets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func getStatefulSetNames(clientset *kubernetes.Clientset, namespace string) ([]s
 	return names, nil
 }
 
-func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func extractUnusedHpas(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	deploymentNames, err := getDeploymentNames(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]str
 	if err != nil {
 		return nil, err
 	}
-	hpas, err := clientset.AutoscalingV1().HorizontalPodAutoscalers(namespace).List(context.TODO(), metav1.ListOptions{})
+	hpas, err := clientset.AutoscalingV2().HorizontalPodAutoscalers(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]str
 	return diff, nil
 }
 
-func processNamespaceHpas(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func processNamespaceHpas(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	unusedHpas, err := extractUnusedHpas(clientset, namespace)
 	if err != nil {
 		return nil, err

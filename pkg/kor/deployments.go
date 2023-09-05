@@ -8,10 +8,11 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
-func getDeploymentsWithoutReplicas(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	deploymentsList, err := kubeClient.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
+func getDeploymentsWithoutReplicas(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	deploymentsList, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -27,13 +28,13 @@ func getDeploymentsWithoutReplicas(kubeClient *kubernetes.Clientset, namespace s
 	return deploymentsWithoutReplicas, nil
 }
 
-func ProcessNamespaceDeployments(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
-	usedServices, err := getDeploymentsWithoutReplicas(clientset, namespace)
+func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	usedDeployments, err := getDeploymentsWithoutReplicas(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	return usedServices, nil
+	return usedDeployments, nil
 
 }
 
@@ -57,7 +58,7 @@ func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, kubeconfig st
 	}
 }
 
-func GetUnusedDeploymentsJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+func GetUnusedDeploymentsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -81,5 +82,14 @@ func GetUnusedDeploymentsJSON(includeExcludeLists IncludeExcludeLists, kubeconfi
 		return "", err
 	}
 
-	return string(jsonResponse), nil
+	if outputFormat == "json" {
+		return string(jsonResponse), nil
+	}
+
+	yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+	return string(yamlResponse), nil
+
 }
