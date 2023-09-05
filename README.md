@@ -39,7 +39,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `deployments`: Gets unused service accounts for the specified namespace or all namespaces.
 - `statefulsets`: Gets unused service accounts for the specified namespace or all namespaces.
 - `role`: Gets unused roles for the specified namespace or all namespaces.
-- `hps`: Gets unused hpa for the specified namespace or all namespaces.
+- `hpa`: Gets unused hpa for the specified namespace or all namespaces.
 - `pvc`: Gets unused pvcs for the specified namespace or all namespaces.
 - `ingress`: Gets unused ingresses for the specified namespace or all namespaces.
 - `pdb`: Gets unused pdbs for the specified namespace or all namespaces.
@@ -49,7 +49,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 -h, --help                help for role
 -k, --kubeconfig string   Path to kubeconfig file (optional)
 -n, --namespace string    Namespace to run on
---output string       Output format (table or json) (default "table")
+--output string       Output format (table, json or yaml) (default "table")
 ```
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.

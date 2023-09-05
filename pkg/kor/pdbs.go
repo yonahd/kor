@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"sigs.k8s.io/yaml"
 )
 
 func processNamespacePdbs(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -60,7 +61,7 @@ func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 
 }
 
-func GetUnusedPdbsJson(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+func GetUnusedPdbsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -88,5 +89,13 @@ func GetUnusedPdbsJson(includeExcludeLists IncludeExcludeLists, kubeconfig strin
 		return "", err
 	}
 
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
 }

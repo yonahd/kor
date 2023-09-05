@@ -12,11 +12,11 @@ var pvcCmd = &cobra.Command{
 	Short: "Gets unused pvcs",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		if outputFormat == "json" {
-			if jsonResponse, err := kor.GetUnusedPvcsJson(includeExcludeLists, kubeconfig); err != nil {
+		if outputFormat == "json" || outputFormat == "yaml" {
+			if response, err := kor.GetUnusedPvcsStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
-				fmt.Println(jsonResponse)
+				fmt.Println(response)
 			}
 		} else {
 			kor.GetUnusedPvcs(includeExcludeLists, kubeconfig)
