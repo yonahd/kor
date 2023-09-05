@@ -127,7 +127,7 @@ func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, kubeconfig str
 	}
 }
 
-func GetUnusedConfigmapsJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+func GetUnusedConfigmapsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -151,18 +151,14 @@ func GetUnusedConfigmapsJSON(includeExcludeLists IncludeExcludeLists, kubeconfig
 		return "", err
 	}
 
-	return string(jsonResponse), nil
-}
-
-func GetUnusedConfigmapsYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
-	jsonResponse, err := GetUnusedConfigmapsJSON(includeExcludeLists, kubeconfig)
-	if err != nil {
-		fmt.Println(err)
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
 	}
 
-	yamlResponse, err := yaml.JSONToYAML([]byte(jsonResponse))
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-	}
-	return (string(yamlResponse)), nil
 }

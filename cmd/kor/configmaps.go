@@ -13,17 +13,11 @@ var configmapCmd = &cobra.Command{
 	Short:   "Gets unused configmaps",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		if outputFormat == "json" {
-			if jsonResponse, err := kor.GetUnusedConfigmapsJSON(includeExcludeLists, kubeconfig); err != nil {
+		if outputFormat == "json" || outputFormat == "yaml" {
+			if response, err := kor.GetUnusedConfigmapsStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
-				fmt.Println(jsonResponse)
-			}
-		} else if outputFormat == "yaml" {
-			if yamlResponse, err := kor.GetUnusedConfigmapsYAML(includeExcludeLists, kubeconfig); err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(yamlResponse)
+				fmt.Println(response)
 			}
 		} else {
 			kor.GetUnusedConfigmaps(includeExcludeLists, kubeconfig)

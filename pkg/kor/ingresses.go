@@ -104,7 +104,7 @@ func GetUnusedIngresses(includeExcludeLists IncludeExcludeLists, kubeconfig stri
 	}
 }
 
-func GetUnusedIngressesJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+func GetUnusedIngressesStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -128,18 +128,13 @@ func GetUnusedIngressesJSON(includeExcludeLists IncludeExcludeLists, kubeconfig 
 		return "", err
 	}
 
-	return string(jsonResponse), nil
-}
-
-func GetUnusedIngressesYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
-	jsonResponse, err := GetUnusedIngressesJSON(includeExcludeLists, kubeconfig)
-	if err != nil {
-		fmt.Println(err)
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
 	}
-
-	yamlResponse, err := yaml.JSONToYAML([]byte(jsonResponse))
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-	}
-	return (string(yamlResponse)), nil
 }

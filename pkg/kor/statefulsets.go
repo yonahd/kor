@@ -58,7 +58,7 @@ func GetUnusedStatefulsets(includeExcludeLists IncludeExcludeLists, kubeconfig s
 	}
 }
 
-func GetUnusedStatefulsetsJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+func GetUnusedStatefulsetsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -82,18 +82,13 @@ func GetUnusedStatefulsetsJSON(includeExcludeLists IncludeExcludeLists, kubeconf
 		return "", err
 	}
 
-	return string(jsonResponse), nil
-}
-
-func GetUnusedStatefulsetsYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
-	jsonResponse, err := GetUnusedStatefulsetsJSON(includeExcludeLists, kubeconfig)
-	if err != nil {
-		fmt.Println(err)
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
 	}
-
-	yamlResponse, err := yaml.JSONToYAML([]byte(jsonResponse))
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-	}
-	return (string(yamlResponse)), nil
 }

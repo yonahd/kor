@@ -61,7 +61,7 @@ func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 
 }
 
-func GetUnusedPdbsJson(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+func GetUnusedPdbsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -89,18 +89,13 @@ func GetUnusedPdbsJson(includeExcludeLists IncludeExcludeLists, kubeconfig strin
 		return "", err
 	}
 
-	return string(jsonResponse), nil
-}
-
-func GetUnusedPdbsYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
-	jsonResponse, err := GetUnusedPdbsJson(includeExcludeLists, kubeconfig)
-	if err != nil {
-		fmt.Println(err)
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
 	}
-
-	yamlResponse, err := yaml.JSONToYAML([]byte(jsonResponse))
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-	}
-	return (string(yamlResponse)), nil
 }

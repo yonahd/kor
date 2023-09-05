@@ -140,7 +140,7 @@ func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, kubeconfig string
 	}
 }
 
-func GetUnusedSecretsJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+func GetUnusedSecretsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -164,18 +164,13 @@ func GetUnusedSecretsJSON(includeExcludeLists IncludeExcludeLists, kubeconfig st
 		return "", err
 	}
 
-	return string(jsonResponse), nil
-}
-
-func GetUnusedSecretsYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
-	jsonResponse, err := GetUnusedSecretsJSON(includeExcludeLists, kubeconfig)
-	if err != nil {
-		fmt.Println(err)
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
 	}
-
-	yamlResponse, err := yaml.JSONToYAML([]byte(jsonResponse))
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-	}
-	return (string(yamlResponse)), nil
 }

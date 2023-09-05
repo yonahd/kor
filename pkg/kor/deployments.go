@@ -58,7 +58,7 @@ func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, kubeconfig st
 	}
 }
 
-func GetUnusedDeploymentsJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+func GetUnusedDeploymentsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -82,18 +82,13 @@ func GetUnusedDeploymentsJSON(includeExcludeLists IncludeExcludeLists, kubeconfi
 		return "", err
 	}
 
-	return string(jsonResponse), nil
-}
-
-func GetUnusedDeploymentsYAML(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
-	jsonResponse, err := GetUnusedDeploymentsJSON(includeExcludeLists, kubeconfig)
-	if err != nil {
-		fmt.Println(err)
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
 	}
-
-	yamlResponse, err := yaml.JSONToYAML([]byte(jsonResponse))
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-	}
-	return (string(yamlResponse)), nil
 }

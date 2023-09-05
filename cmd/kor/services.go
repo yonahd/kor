@@ -13,17 +13,11 @@ var serviceCmd = &cobra.Command{
 	Short:   "Gets unused services",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		if outputFormat == "json" {
-			if jsonResponse, err := kor.GetUnusedServicesJSON(includeExcludeLists, kubeconfig); err != nil {
+		if outputFormat == "json" || outputFormat == "yaml" {
+			if response, err := kor.GetUnusedServicesStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
-				fmt.Println(jsonResponse)
-			}
-		} else if outputFormat == "yaml" {
-			if yamlResponse, err := kor.GetUnusedServicesYAML(includeExcludeLists, kubeconfig); err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(yamlResponse)
+				fmt.Println(response)
 			}
 		} else {
 			kor.GetUnusedServices(includeExcludeLists, kubeconfig)
