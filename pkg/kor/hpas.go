@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/utils/strings/slices"
+	"sigs.k8s.io/yaml"
 )
 
 func getDeploymentNames(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -95,7 +96,7 @@ func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 
 }
 
-func GetUnusedHpasJson(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+func GetUnusedHpasStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -123,5 +124,13 @@ func GetUnusedHpasJson(includeExcludeLists IncludeExcludeLists, kubeconfig strin
 		return "", err
 	}
 
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
 }
