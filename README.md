@@ -46,10 +46,11 @@ Kor provides various subcommands to identify and list unused resources. The avai
 
 ### Supported Flags
 ```
--h, --help                help for role
--k, --kubeconfig string   Path to kubeconfig file (optional)
--n, --namespace string    Namespace to run on
---output string       Output format (table or json) (default "table")
+-e, --exclude-namespaces string   Namespaces to be excluded, splited by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
+-h, --help                        help for kor
+-n, --include-namespaces string   Namespaces to run on, splited by comma. Example: --include-namespace ns1,ns2,ns3. 
+-k, --kubeconfig string           Path to kubeconfig file (optional)
+    --output string               Output format (table or json) (default "table")
 ```
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.
