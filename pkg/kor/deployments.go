@@ -82,14 +82,13 @@ func GetUnusedDeploymentsStructured(includeExcludeLists IncludeExcludeLists, kub
 		return "", err
 	}
 
-	if outputFormat == "json" {
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
 		return string(jsonResponse), nil
 	}
-
-	yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-	}
-	return string(yamlResponse), nil
-
 }

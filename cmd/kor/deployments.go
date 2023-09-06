@@ -14,10 +14,10 @@ var deployCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" || outputFormat == "yaml" {
-			if StructuredResponse, err := kor.GetUnusedDeploymentsStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
+			if response, err := kor.GetUnusedDeploymentsStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
-				fmt.Println(StructuredResponse)
+				fmt.Println(response)
 			}
 		} else {
 			kor.GetUnusedDeployments(includeExcludeLists, kubeconfig)

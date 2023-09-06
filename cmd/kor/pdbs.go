@@ -12,15 +12,16 @@ var pdbCmd = &cobra.Command{
 	Short: "Gets unused pdbs",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		if outputFormat == "json" {
-			if jsonResponse, err := kor.GetUnusedPdbsJson(includeExcludeLists, kubeconfig); err != nil {
+		if outputFormat == "json" || outputFormat == "yaml" {
+			if response, err := kor.GetUnusedPdbsStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
-				fmt.Println(jsonResponse)
+				fmt.Println(response)
 			}
 		} else {
 			kor.GetUnusedPdbs(includeExcludeLists, kubeconfig)
 		}
+
 	},
 }
 

@@ -8,6 +8,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
 func getEndpointsWithoutSubsets(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -57,7 +58,7 @@ func GetUnusedServices(includeExcludeLists IncludeExcludeLists, kubeconfig strin
 	}
 }
 
-func GetUnusedServicesJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+func GetUnusedServicesStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -81,5 +82,13 @@ func GetUnusedServicesJSON(includeExcludeLists IncludeExcludeLists, kubeconfig s
 		return "", err
 	}
 
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
 }

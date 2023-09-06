@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
 type GetUnusedResourceJSONResponse struct {
@@ -154,7 +155,7 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	}
 }
 
-func GetUnusedAllJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string) (string, error) {
+func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -215,5 +216,13 @@ func GetUnusedAllJSON(includeExcludeLists IncludeExcludeLists, kubeconfig string
 		return "", err
 	}
 
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
 }
