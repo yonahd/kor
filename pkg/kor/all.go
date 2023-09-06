@@ -64,12 +64,12 @@ func getUnusedDeployments(kubeClient *kubernetes.Clientset, namespace string) Re
 	return namespaceSADiff
 }
 
-func getUnusedStatefulsets(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
-	stsDiff, err := ProcessNamespaceStatefulsets(kubeClient, namespace)
+func getUnusedStatefulSets(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
+	stsDiff, err := ProcessNamespaceStatefulSets(kubeClient, namespace)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "statefulsets", namespace, err)
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "statefulSets", namespace, err)
 	}
-	namespaceSADiff := ResourceDiff{"Statefulset", stsDiff}
+	namespaceSADiff := ResourceDiff{"StatefulSet", stsDiff}
 	return namespaceSADiff
 }
 
@@ -137,7 +137,7 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 		allDiffs = append(allDiffs, namespaceSADiff)
 		namespaceDeploymentDiff := getUnusedDeployments(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceDeploymentDiff)
-		namespaceStatefulsetDiff := getUnusedStatefulsets(kubeClient, namespace)
+		namespaceStatefulsetDiff := getUnusedStatefulSets(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
 		namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceRoleDiff)
@@ -184,7 +184,7 @@ func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, kubeconfig 
 		namespaceDeploymentDiff := getUnusedDeployments(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceDeploymentDiff)
 
-		namespaceStatefulsetDiff := getUnusedStatefulsets(kubeClient, namespace)
+		namespaceStatefulsetDiff := getUnusedStatefulSets(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
 
 		namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)

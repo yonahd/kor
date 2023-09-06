@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func TestGetDeploymentsWithoutReplicas(t *testing.T) {
+func TestProcessNamespaceDeployments(t *testing.T) {
 	// Create a fake Kubernetes client for testing
 	clientset := fake.NewSimpleClientset()
 
@@ -29,7 +29,7 @@ func TestGetDeploymentsWithoutReplicas(t *testing.T) {
 	}
 
 	// Test the getDeploymentsWithoutReplicas function
-	deploymentsWithoutReplicas, err := getDeploymentsWithoutReplicas(clientset, "test-namespace")
+	deploymentsWithoutReplicas, err := ProcessNamespaceDeployments(clientset, "test-namespace")
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -39,7 +39,7 @@ func TestGetDeploymentsWithoutReplicas(t *testing.T) {
 	}
 
 	if deploymentsWithoutReplicas[0] != "test-deployment1" {
-		t.Errorf("Expected 'test-deployment', got %s", deploymentsWithoutReplicas[0])
+		t.Errorf("Expected 'test-deployment1', got %s", deploymentsWithoutReplicas[0])
 	}
 }
 

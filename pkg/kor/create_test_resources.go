@@ -8,6 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var testNamespace = "test-namespace"
+
 func CreateTestDeployment(namespace, name string, replicas int32) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
@@ -20,12 +22,34 @@ func CreateTestDeployment(namespace, name string, replicas int32) *appsv1.Deploy
 	}
 }
 
+func CreateTestStatefulSet(namespace, name string, replicas int32) *appsv1.StatefulSet {
+	return &appsv1.StatefulSet{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+		Spec: appsv1.StatefulSetSpec{
+			Replicas: &replicas,
+		},
+	}
+}
+
 func CreateTestService(namespace, name string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
 		},
+	}
+}
+
+func CreateTestEndpoint(namespace, name string, endpointSubsetCount int) *corev1.Endpoints {
+	return &corev1.Endpoints{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+		Subsets: make([]corev1.EndpointSubset, endpointSubsetCount),
 	}
 }
 func CreateTestHpa(namespace, name, deploymentName string, minReplicas, maxReplicas int32) *autoscalingv2.HorizontalPodAutoscaler {

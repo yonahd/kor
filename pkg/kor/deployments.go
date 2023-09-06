@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func getDeploymentsWithoutReplicas(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	deploymentsList, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -26,16 +26,6 @@ func getDeploymentsWithoutReplicas(clientset kubernetes.Interface, namespace str
 	}
 
 	return deploymentsWithoutReplicas, nil
-}
-
-func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace string) ([]string, error) {
-	usedDeployments, err := getDeploymentsWithoutReplicas(clientset, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	return usedDeployments, nil
-
 }
 
 func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, kubeconfig string) {

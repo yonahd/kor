@@ -26,13 +26,13 @@ func getDeploymentNames(clientset kubernetes.Interface, namespace string) ([]str
 }
 
 func getStatefulSetNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
-	statefulsets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
+	statefulSets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-	names := make([]string, 0, len(statefulsets.Items))
-	for _, statefulset := range statefulsets.Items {
-		names = append(names, statefulset.Name)
+	names := make([]string, 0, len(statefulSets.Items))
+	for _, statefulSet := range statefulSets.Items {
+		names = append(names, statefulSet.Name)
 	}
 	return names, nil
 }

@@ -27,13 +27,13 @@ func processNamespacePdbs(clientset *kubernetes.Clientset, namespace string) ([]
 		if err != nil {
 			return nil, err
 		}
-		statefulsets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{
+		statefulSets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: metav1.FormatLabelSelector(selector),
 		})
 		if err != nil {
 			return nil, err
 		}
-		if len(deployments.Items) == 0 && len(statefulsets.Items) == 0 {
+		if len(deployments.Items) == 0 && len(statefulSets.Items) == 0 {
 			unusedPdbs = append(unusedPdbs, pdb.Name)
 		}
 	}
