@@ -13,6 +13,8 @@ var serviceAccountCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
 			kor.GetUnusedServiceAccountsJSON(namespace, kubeconfig)
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedServiceAccountsSlack(namespace, kubeconfig, slackWebhookURL)
 		} else {
 			kor.GetUnusedServiceAccounts(namespace, kubeconfig)
 		}

@@ -12,6 +12,8 @@ var allCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
 			kor.GetUnusedAllJSON(namespace, kubeconfig)
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedAllSlack(namespace, kubeconfig, slackWebhookURL)
 		} else {
 			kor.GetUnusedAll(namespace, kubeconfig)
 		}

@@ -12,6 +12,8 @@ var hpaCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
 			kor.GetUnusedHpasJson(namespace, kubeconfig)
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedHpasSlack(namespace, kubeconfig, slackWebhookURL)
 		} else {
 			kor.GetUnusedHpas(namespace, kubeconfig)
 		}

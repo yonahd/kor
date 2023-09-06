@@ -140,6 +140,32 @@ func GetUnusedServiceAccounts(namespace string, kubeconfig string) {
 	}
 }
 
+func GetUnusedServiceAccountsSlack(namespace string, kubeconfig string, slackWebhookURL string) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+
+	namespaces = SetNamespaceList(namespace, kubeClient)
+
+	payload := ""
+
+	for _, namespace := range namespaces {
+		diff, err := processNamespaceSA(kubeClient, namespace)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
+		}
+		output := FormatOutput(namespace, diff, "ServiceAccount")
+
+		payload += output + "\n"
+	}
+
+	if err := sendToSlack(slackWebhookURL, payload); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to send payload to Slack: %v\n", err)
+	}
+}
+
 func GetUnusedServiceAccountsJSON(namespace string, kubeconfig string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string

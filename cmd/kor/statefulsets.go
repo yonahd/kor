@@ -13,6 +13,8 @@ var stsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
 			kor.GetUnusedStatefulsetsJSON(namespace, kubeconfig)
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedStatefulsetsSlack(namespace, kubeconfig, slackWebhookURL)
 		} else {
 			kor.GetUnusedStatefulsets(namespace, kubeconfig)
 		}

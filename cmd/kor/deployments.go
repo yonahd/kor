@@ -13,6 +13,8 @@ var deployCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
 			kor.GetUnusedDeploymentsJSON(namespace, kubeconfig)
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedDeploymentsSlack(namespace, kubeconfig, slackWebhookURL)
 		} else {
 			kor.GetUnusedDeployments(namespace, kubeconfig)
 		}

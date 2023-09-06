@@ -13,6 +13,8 @@ var ingressCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" {
 			kor.GetUnusedIngressesJSON(namespace, kubeconfig)
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedIngressesSlack(namespace, kubeconfig, slackWebhookURL)
 		} else {
 			kor.GetUnusedIngresses(namespace, kubeconfig)
 		}

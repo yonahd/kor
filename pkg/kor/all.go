@@ -143,6 +143,48 @@ func GetUnusedAll(namespace string, kubeconfig string) {
 	}
 }
 
+func GetUnusedAllSlack(namespace string, kubeconfig string, slackWebhookURL string) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+
+	namespaces = SetNamespaceList(namespace, kubeClient)
+
+	payload := ""
+
+	for _, namespace := range namespaces {
+		var allDiffs []ResourceDiff
+		namespaceCMDiff := getUnusedCMs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceCMDiff)
+		namespaceSVCDiff := getUnusedSVCs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceSVCDiff)
+		namespaceSecretDiff := getUnusedSecrets(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceSecretDiff)
+		namespaceSADiff := getUnusedServiceAccounts(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceSADiff)
+		namespaceDeploymentDiff := getUnusedDeployments(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceDeploymentDiff)
+		namespaceStatefulsetDiff := getUnusedStatefulsets(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
+		namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceRoleDiff)
+		namespaceHpaDiff := getUnusedHpas(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceHpaDiff)
+		namespacePvcDiff := getUnusedPvcs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespacePvcDiff)
+		namespaceIngressDiff := getUnusedIngresses(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceIngressDiff)
+		output := FormatOutputAll(namespace, allDiffs)
+
+		payload += output + "\n"
+	}
+
+	if err := sendToSlack(slackWebhookURL, payload); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to send payload to Slack: %v\n", err)
+	}
+}
+
 func GetUnusedAllJSON(namespace string, kubeconfig string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
