@@ -20,6 +20,10 @@ func getEndpointsWithoutSubsets(kubeClient *kubernetes.Clientset, namespace stri
 	var endpointsWithoutSubsets []string
 
 	for _, endpoints := range endpointsList.Items {
+		if endpoints.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		if len(endpoints.Subsets) == 0 {
 			endpointsWithoutSubsets = append(endpointsWithoutSubsets, endpoints.Name)
 		}
@@ -35,7 +39,6 @@ func ProcessNamespaceServices(clientset *kubernetes.Clientset, namespace string)
 	}
 
 	return usedServices, nil
-
 }
 
 func GetUnusedServices(includeExcludeLists IncludeExcludeLists, kubeconfig string) {

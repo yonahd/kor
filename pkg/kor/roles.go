@@ -45,6 +45,10 @@ func retrieveRoleNames(kubeClient *kubernetes.Clientset, namespace string) ([]st
 	}
 	names := make([]string, 0, len(roles.Items))
 	for _, role := range roles.Items {
+		if role.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		names = append(names, role.Name)
 	}
 	return names, nil

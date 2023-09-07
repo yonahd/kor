@@ -79,6 +79,10 @@ func retrieveConfigMapNames(kubeClient *kubernetes.Clientset, namespace string) 
 	}
 	names := make([]string, 0, len(configmaps.Items))
 	for _, configmap := range configmaps.Items {
+		if configmap.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		names = append(names, configmap.Name)
 	}
 	return names, nil

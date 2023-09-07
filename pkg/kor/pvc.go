@@ -37,6 +37,10 @@ func processNamespacePvcs(kubeClient *kubernetes.Clientset, namespace string) ([
 	}
 	pvcNames := make([]string, 0, len(pvcs.Items))
 	for _, pvc := range pvcs.Items {
+		if pvc.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		pvcNames = append(pvcNames, pvc.Name)
 	}
 

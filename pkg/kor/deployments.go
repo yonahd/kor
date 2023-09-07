@@ -20,6 +20,13 @@ func getDeploymentsWithoutReplicas(kubeClient *kubernetes.Clientset, namespace s
 	var deploymentsWithoutReplicas []string
 
 	for _, deployment := range deploymentsList.Items {
+		// Skip deployments that are already marked as used with the label "kor/used"="true"
+		// Should we make this label configurable?
+		// Should we do anything that is not "true"?
+		if deployment.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		if *deployment.Spec.Replicas == 0 {
 			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, deployment.Name)
 		}
@@ -35,7 +42,6 @@ func ProcessNamespaceDeployments(clientset *kubernetes.Clientset, namespace stri
 	}
 
 	return usedServices, nil
-
 }
 
 func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
