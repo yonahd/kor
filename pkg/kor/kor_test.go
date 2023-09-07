@@ -85,7 +85,7 @@ kind: Config
 	return fakeContent
 }
 
-func TestGetKubeClient_fromEnvVar(t *testing.T) {
+func TestGetKubeClientFromEnvVar(t *testing.T) {
 	configFile, err := os.CreateTemp("", "kubeconfig-")
 	if err != nil {
 		t.Error(err)
@@ -105,7 +105,7 @@ func TestGetKubeClient_fromEnvVar(t *testing.T) {
 	}
 }
 
-func TestGetKubeClient_fromInput(t *testing.T) {
+func TestGetKubeClientFromInput(t *testing.T) {
 	configFile, err := os.CreateTemp("", "kubeconfig")
 	if err != nil {
 		t.Error(err)

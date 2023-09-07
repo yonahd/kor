@@ -48,7 +48,6 @@ func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 			kubeconfig = GetKubeConfigPath()
 		}
 	}
-
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
