@@ -3,7 +3,6 @@ package kor
 import (
 	"os"
 	"sort"
-	"strings"
 	"testing"
 )
 
@@ -63,55 +62,61 @@ func TestCalculateResourceDifference(t *testing.T) {
 	}
 }
 
-func TestGetDefaultKubeConfigPath(t *testing.T) {
-	path := getDefaultKubeConfigPath()
-	if !strings.Contains(path, ".kube") || !strings.Contains(path, "config") {
-		t.Errorf("Expected to find '.kube' and 'config' keywords in path, but got %s", path)
+func getFakeConfigContent() string {
+	fakeContent := `
+apiVersion: v1
+clusters:
+- cluster:
+    server: https://localhost:8080
+    extensions:
+    - name: client.authentication.k8s.io/exec
+      extension:
+        audience: foo
+        other: bar
+  name: foo-cluster
+contexts:
+- context:
+    cluster: foo-cluster
+    namespace: bar
+  name: foo-context
+current-context: foo-context
+kind: Config
+`
+	return fakeContent
+}
+
+func TestGetKubeClient_fromEnvVar(t *testing.T) {
+	configFile, err := os.CreateTemp("", "kubeconfig-")
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.Remove(configFile.Name())
+	if err := os.WriteFile(configFile.Name(), []byte(getFakeConfigContent()), 0666); err != nil {
+		t.Error(err)
+	}
+
+	originalKCEnv := os.Getenv("KUBECONFIG")
+	defer os.Setenv("KUBECONFIG", originalKCEnv)
+	os.Setenv("KUBECONFIG", configFile.Name())
+
+	kcs := GetKubeClient("")
+	if kcs == nil {
+		t.Errorf("Expected valid clientSet")
 	}
 }
 
-func TestLoadOrGetKubeConfigPath_ShouldReadEnvvar(t *testing.T) {
-	originalKCEnv := os.Getenv("KUBECONFIG")
-	defer os.Setenv("KUBECONFIG", originalKCEnv)
-
-	testKCPath := "test/kubeconfig.yaml"
-	os.Setenv("KUBECONFIG", testKCPath)
-	kcPath := loadOrGetKubeConfigPath("")
-
-	if kcPath != testKCPath {
-		t.Errorf("Expected kubeconfig path to be %s, but got %s", testKCPath, kcPath)
+func TestGetKubeClient_fromInput(t *testing.T) {
+	configFile, err := os.CreateTemp("", "kubeconfig")
+	if err != nil {
+		t.Error(err)
 	}
-}
-
-func TestLoadOrGetKubeConfigPath_ShouldGetDefaultPath(t *testing.T) {
-	originalKCEnv := os.Getenv("KUBECONFIG")
-	defer os.Setenv("KUBECONFIG", originalKCEnv)
-
-	testKCPath := "test/kubeconfig.yaml"
-	os.Setenv("KUBECONFIG", "")
-	kcPath := loadOrGetKubeConfigPath("")
-
-	if kcPath == testKCPath {
-		t.Errorf("Expected kubeconfig path to be different than %s, but got %s", testKCPath, kcPath)
+	defer os.Remove(configFile.Name())
+	if err := os.WriteFile(configFile.Name(), []byte(getFakeConfigContent()), 0666); err != nil {
+		t.Error(err)
 	}
 
-	if !strings.Contains(kcPath, ".kube") || !strings.Contains(kcPath, "config") {
-		t.Errorf("Expected to find '.kube' and 'config' keywords in path, but got %s", kcPath)
-	}
-
-}
-
-func TestLoadOrGetKubeConfigPath_ShouldReturnSameStringIfNonEmpty(t *testing.T) {
-	originalKCEnv := os.Getenv("KUBECONFIG")
-	defer os.Setenv("KUBECONFIG", originalKCEnv)
-
-	inputKCPath := "test/inputkc.yaml"
-
-	testKCPath := "test/kubeconfig.yaml"
-	os.Setenv("KUBECONFIG", testKCPath)
-	kcPath := loadOrGetKubeConfigPath(inputKCPath)
-
-	if kcPath != inputKCPath {
-		t.Errorf("Expected kubeconfig path to be %s, but got %s", testKCPath, kcPath)
+	kcs := GetKubeClient(configFile.Name())
+	if kcs == nil {
+		t.Errorf("Expected valid clientSet")
 	}
 }
