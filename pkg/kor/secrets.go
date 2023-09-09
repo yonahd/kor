@@ -37,16 +37,17 @@ func retrieveIngressTLS(clientset *kubernetes.Clientset, namespace string) ([]st
 
 }
 
-func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, error) {
-	envSecrets := []string{}
-	envSecrets2 := []string{}
-	volumeSecrets := []string{}
-	pullSecrets := []string{}
+func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
+	var envSecrets []string
+	var envSecrets2 []string
+	var volumeSecrets []string
+	var pullSecrets []string
+	var initContainerEnvSecrets []string
 
 	// Retrieve pods in the specified namespace
 	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Extract volume and environment information from pods
@@ -63,6 +64,15 @@ func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]s
 				}
 			}
 		}
+
+		for _, initContainer := range pod.Spec.InitContainers {
+			for _, env := range initContainer.Env {
+				if env.ValueFrom != nil && env.ValueFrom.SecretKeyRef != nil {
+					initContainerEnvSecrets = append(initContainerEnvSecrets, env.ValueFrom.SecretKeyRef.Name)
+				}
+			}
+		}
+
 		for _, volume := range pod.Spec.Volumes {
 			if volume.Secret != nil {
 				volumeSecrets = append(volumeSecrets, volume.Secret.SecretName)
@@ -77,10 +87,10 @@ func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]s
 
 	tlsSecrets, err := retrieveIngressTLS(kubeClient, namespace)
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, err
 	}
 
-	return envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, nil
+	return envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, nil
 }
 
 func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -98,7 +108,7 @@ func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]
 }
 
 func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(kubeClient, namespace)
+	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(kubeClient, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -106,6 +116,7 @@ func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) 
 	envSecrets = RemoveDuplicatesAndSort(envSecrets)
 	envSecrets2 = RemoveDuplicatesAndSort(envSecrets2)
 	volumeSecrets = RemoveDuplicatesAndSort(volumeSecrets)
+	initContainerEnvSecrets = RemoveDuplicatesAndSort(initContainerEnvSecrets)
 	pullSecrets = RemoveDuplicatesAndSort(pullSecrets)
 	tlsSecrets = RemoveDuplicatesAndSort(tlsSecrets)
 
@@ -114,7 +125,12 @@ func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) 
 		return nil, err
 	}
 
-	usedSecrets := append(append(append(append(envSecrets, envSecrets2...), volumeSecrets...), pullSecrets...), tlsSecrets...)
+	var usedSecrets []string
+	slicesToAppend := [][]string{envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, initContainerEnvSecrets}
+
+	for _, slice := range slicesToAppend {
+		usedSecrets = append(usedSecrets, slice...)
+	}
 	diff := CalculateResourceDifference(usedSecrets, secretNames)
 	return diff, nil
 
