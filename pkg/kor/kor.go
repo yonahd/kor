@@ -43,9 +43,15 @@ func GetKubeConfigPath() string {
 	return filepath.Join(home, ".kube", "config")
 }
 
+// GetKubeClient selects kubeconfig path and returns kubeClient
+// kubeconfig path selection priority: 1) user supplied kubeconfig, 2) KUBECONFIG envvar, 3) default kubeconfig
 func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 	if kubeconfig == "" {
-		kubeconfig = GetKubeConfigPath()
+		if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
+			kubeconfig = configEnv
+		} else {
+			kubeconfig = GetKubeConfigPath()
+		}
 	}
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {

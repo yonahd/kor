@@ -1,6 +1,7 @@
 package kor
 
 import (
+	"os"
 	"sort"
 	"testing"
 )
@@ -58,5 +59,64 @@ func TestCalculateResourceDifference(t *testing.T) {
 		if item != expectedDifference[i] {
 			t.Errorf("Difference item at index %d should be %s, but got %s", i, expectedDifference[i], item)
 		}
+	}
+}
+
+func getFakeConfigContent() string {
+	fakeContent := `
+apiVersion: v1
+clusters:
+- cluster:
+    server: https://localhost:8080
+    extensions:
+    - name: client.authentication.k8s.io/exec
+      extension:
+        audience: foo
+        other: bar
+  name: foo-cluster
+contexts:
+- context:
+    cluster: foo-cluster
+    namespace: bar
+  name: foo-context
+current-context: foo-context
+kind: Config
+`
+	return fakeContent
+}
+
+func TestGetKubeClientFromEnvVar(t *testing.T) {
+	configFile, err := os.CreateTemp("", "kubeconfig-")
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.Remove(configFile.Name())
+	if err := os.WriteFile(configFile.Name(), []byte(getFakeConfigContent()), 0666); err != nil {
+		t.Error(err)
+	}
+
+	originalKCEnv := os.Getenv("KUBECONFIG")
+	defer os.Setenv("KUBECONFIG", originalKCEnv)
+	os.Setenv("KUBECONFIG", configFile.Name())
+
+	kcs := GetKubeClient("")
+	if kcs == nil {
+		t.Errorf("Expected valid clientSet")
+	}
+}
+
+func TestGetKubeClientFromInput(t *testing.T) {
+	configFile, err := os.CreateTemp("", "kubeconfig")
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.Remove(configFile.Name())
+	if err := os.WriteFile(configFile.Name(), []byte(getFakeConfigContent()), 0666); err != nil {
+		t.Error(err)
+	}
+
+	kcs := GetKubeClient(configFile.Name())
+	if kcs == nil {
+		t.Errorf("Expected valid clientSet")
 	}
 }
