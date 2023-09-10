@@ -3,6 +3,7 @@ package kor
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/yonahd/kor/pkg/kor"
@@ -15,6 +16,20 @@ var rootCmd = &cobra.Command{
 	kor can currently discover unused configmaps and secrets`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		resourceNames := args[0]
+
+		// Cheks whether the string contains a comma, indicating that it represents a list of resources
+		if strings.ContainsRune(resourceNames, 44) {
+			if outputFormat == "json" || outputFormat == "yaml" {
+				if response, err := kor.GetUnusedMultiStructured(includeExcludeLists, kubeconfig, outputFormat, resourceNames); err != nil {
+					fmt.Println(err)
+				} else {
+					fmt.Println(response)
+				}
+			} else {
+				kor.GetUnusedMulti(includeExcludeLists, kubeconfig, resourceNames)
+			}
+		}
 	},
 }
 
