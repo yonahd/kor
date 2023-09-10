@@ -28,7 +28,6 @@ func TestGetEndpointsWithoutSubsets(t *testing.T) {
 		t.Fatalf("Error creating fake endpoint: %v", err)
 	}
 
-	// Test the getDeploymentsWithoutReplicas function
 	servicesWithoutEndpoints, err := ProcessNamespaceServices(clientset, "test-namespace")
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)

@@ -5,6 +5,7 @@ import (
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -39,6 +40,71 @@ func CreateTestService(namespace, name string) *corev1.Service {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
+		},
+	}
+}
+
+func CreateTestPod(namespace, name, serviceAccountName string, volumes []corev1.Volume) *corev1.Pod {
+	return &corev1.Pod{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+		Spec: corev1.PodSpec{
+			Volumes:            volumes,
+			InitContainers:     nil,
+			Containers:         nil,
+			ServiceAccountName: serviceAccountName,
+		},
+	}
+}
+
+func CreateTestVolume(name string) *corev1.Volume {
+	return &corev1.Volume{
+		Name:         name,
+		VolumeSource: corev1.VolumeSource{},
+	}
+
+}
+
+func CreateTestServiceAccount(namespace, name string) *corev1.ServiceAccount {
+	return &corev1.ServiceAccount{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+	}
+}
+
+func CreateTestRbacSubject(namespace, serviceAccountName string) *rbacv1.Subject {
+	return &rbacv1.Subject{
+		Kind:      "ServiceAccount",
+		Name:      serviceAccountName,
+		Namespace: namespace,
+	}
+}
+
+func CreateTestRoleBinding(namespace, name, serviceAccountName string) *rbacv1.RoleBinding {
+	rbacSubject := CreateTestRbacSubject(namespace, serviceAccountName)
+	return &rbacv1.RoleBinding{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+		Subjects: []rbacv1.Subject{
+			*rbacSubject,
+		},
+	}
+}
+
+func CreateTestClusterRoleBinding(namespace, name, serviceAccountName string) *rbacv1.ClusterRoleBinding {
+	rbacSubject := CreateTestRbacSubject(namespace, serviceAccountName)
+	return &rbacv1.ClusterRoleBinding{
+		ObjectMeta: v1.ObjectMeta{
+			Name: name,
+		},
+		Subjects: []rbacv1.Subject{
+			*rbacSubject,
 		},
 	}
 }

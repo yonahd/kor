@@ -18,12 +18,12 @@ func TestProcessNamespaceStatefulSets(t *testing.T) {
 	// Create a Deployment without replicas for testing
 	sts1 := CreateTestStatefulSet(testNamespace, "test-sts1", 0)
 	sts2 := CreateTestStatefulSet(testNamespace, "test-sts2", 1)
-	_, err := clientset.AppsV1().StatefulSets("test-namespace").Create(context.TODO(), sts1, v1.CreateOptions{})
+	_, err := clientset.AppsV1().StatefulSets(testNamespace).Create(context.TODO(), sts1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", resourceType, err)
 	}
 
-	_, err = clientset.AppsV1().StatefulSets("test-namespace").Create(context.TODO(), sts2, v1.CreateOptions{})
+	_, err = clientset.AppsV1().StatefulSets(testNamespace).Create(context.TODO(), sts2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", resourceType, err)
 	}
