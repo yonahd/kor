@@ -8,9 +8,10 @@ import (
 )
 
 var roleCmd = &cobra.Command{
-	Use:   "role",
-	Short: "Gets unused roles",
-	Args:  cobra.NoArgs,
+	Use:     "role",
+	Aliases: []string{"roles"},
+	Short:   "Gets unused roles",
+	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" || outputFormat == "yaml" {
 			if response, err := kor.GetUnusedRolesStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {

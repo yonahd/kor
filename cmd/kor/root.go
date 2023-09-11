@@ -29,6 +29,8 @@ var rootCmd = &cobra.Command{
 			} else {
 				kor.GetUnusedMulti(includeExcludeLists, kubeconfig, resourceNames)
 			}
+		} else {
+			fmt.Printf("Subcommand %q was not found, try using 'kor --help' for available subcommands", args[0])
 		}
 	},
 }

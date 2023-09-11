@@ -9,7 +9,7 @@ import (
 
 var configmapCmd = &cobra.Command{
 	Use:     "configmap",
-	Aliases: []string{"cm"},
+	Aliases: []string{"cm", "configmaps"},
 	Short:   "Gets unused configmaps",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {

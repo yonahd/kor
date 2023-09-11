@@ -9,7 +9,7 @@ import (
 
 var ingressCmd = &cobra.Command{
 	Use:     "ingress",
-	Aliases: []string{"ing"},
+	Aliases: []string{"ing", "ingresses"},
 	Short:   "Gets unused ingresses",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {

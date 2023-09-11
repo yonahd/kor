@@ -8,8 +8,8 @@ import (
 )
 
 var stsCmd = &cobra.Command{
-	Use:     "statefulsets",
-	Aliases: []string{"sts"},
+	Use:     "statefulset",
+	Aliases: []string{"sts", "statefulsets"},
 	Short:   "Gets unused statefulsets",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
