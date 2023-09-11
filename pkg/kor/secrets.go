@@ -100,6 +100,10 @@ func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]
 	}
 	names := make([]string, 0, len(secrets.Items))
 	for _, secret := range secrets.Items {
+		if secret.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		if !slices.Contains(exceptionSecretTypes, string(secret.Type)) {
 			names = append(names, secret.Name)
 		}

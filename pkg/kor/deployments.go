@@ -20,6 +20,10 @@ func getDeploymentsWithoutReplicas(kubeClient *kubernetes.Clientset, namespace s
 	var deploymentsWithoutReplicas []string
 
 	for _, deployment := range deploymentsList.Items {
+		if deployment.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		if *deployment.Spec.Replicas == 0 {
 			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, deployment.Name)
 		}
@@ -35,7 +39,6 @@ func ProcessNamespaceDeployments(clientset *kubernetes.Clientset, namespace stri
 	}
 
 	return usedServices, nil
-
 }
 
 func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, kubeconfig string) {

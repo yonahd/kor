@@ -27,7 +27,12 @@ func getServiceAccountsFromClusterRoleBindings(clientset *kubernetes.Clientset, 
 
 	// Extract service account names from the role bindings
 	for _, rb := range roleBindings.Items {
+		if rb.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		for _, subject := range rb.Subjects {
+
 			if subject.Kind == "ServiceAccount" {
 				serviceAccounts = append(serviceAccounts, subject.Name)
 			}
@@ -49,6 +54,10 @@ func getServiceAccountsFromRoleBindings(clientset *kubernetes.Clientset, namespa
 
 	// Extract service account names from the role bindings
 	for _, rb := range roleBindings.Items {
+		if rb.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		for _, subject := range rb.Subjects {
 			if subject.Kind == "ServiceAccount" {
 				serviceAccounts = append(serviceAccounts, subject.Name)
@@ -60,7 +69,6 @@ func getServiceAccountsFromRoleBindings(clientset *kubernetes.Clientset, namespa
 }
 
 func retrieveUsedSA(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, error) {
-
 	var podServiceAccounts []string
 
 	// Retrieve pods in the specified namespace
@@ -100,6 +108,10 @@ func retrieveServiceAccountNames(kubeClient *kubernetes.Clientset, namespace str
 	}
 	names := make([]string, 0, len(serviceaccounts.Items))
 	for _, serviceaccount := range serviceaccounts.Items {
+		if serviceaccount.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		names = append(names, serviceaccount.Name)
 	}
 	return names, nil

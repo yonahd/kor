@@ -34,6 +34,10 @@ func retrieveUsedIngress(kubeClient *kubernetes.Clientset, namespace string) ([]
 	usedIngresses := []string{}
 
 	for _, ingress := range ingresses.Items {
+		if ingress.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		used := true
 
 		if ingress.Spec.DefaultBackend != nil {

@@ -20,6 +20,10 @@ func processNamespacePdbs(clientset *kubernetes.Clientset, namespace string) ([]
 	}
 
 	for _, pdb := range pdbs.Items {
+		if pdb.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		selector := pdb.Spec.Selector
 		deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: metav1.FormatLabelSelector(selector),

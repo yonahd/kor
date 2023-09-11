@@ -53,6 +53,10 @@ func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]str
 
 	var diff []string
 	for _, hpa := range hpas.Items {
+		if hpa.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		switch hpa.Spec.ScaleTargetRef.Kind {
 		case "Deployment":
 			if !slices.Contains(deploymentNames, hpa.Spec.ScaleTargetRef.Name) {

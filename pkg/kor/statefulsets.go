@@ -20,6 +20,10 @@ func getStatefulsetsWithoutReplicas(kubeClient *kubernetes.Clientset, namespace 
 	var statefulsetsWithoutReplicas []string
 
 	for _, statefulset := range statefulsetsList.Items {
+		if statefulset.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		if *statefulset.Spec.Replicas == 0 {
 			statefulsetsWithoutReplicas = append(statefulsetsWithoutReplicas, statefulset.Name)
 		}
@@ -35,7 +39,6 @@ func ProcessNamespaceStatefulsets(clientset *kubernetes.Clientset, namespace str
 	}
 
 	return usedServices, nil
-
 }
 
 func GetUnusedStatefulsets(includeExcludeLists IncludeExcludeLists, kubeconfig string) {

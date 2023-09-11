@@ -82,6 +82,8 @@ kor [subcommand] --help
 | Pdbs            | Pdbs not used in Deployments   <br/>    Pdbs not used in StatefulSets                                                                                                                                                              |                                                                                                                              |
 
 
+## Ignore Resources
+The resources labeled with "kor/used = true" will be ignored by kor even if they are unused. You can add this label to resources you want to ignore.
 
 ## Import Option
 You can also use kor as a Go library to programmatically discover unused resources. By importing the github.com/yonahd/kor/pkg/kor package, you can call the relevant functions to retrieve unused resources. The library provides the option to get the results in JSON format by specifying the outputFormat parameter.
