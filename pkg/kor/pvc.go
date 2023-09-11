@@ -12,8 +12,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func retreiveUsedPvcs(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+func retreiveUsedPvcs(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Printf("Failed to list Pods: %v\n", err)
 		os.Exit(1)
@@ -30,8 +30,8 @@ func retreiveUsedPvcs(kubeClient *kubernetes.Clientset, namespace string) ([]str
 	return usedPvcs, err
 }
 
-func processNamespacePvcs(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	pvcs, err := kubeClient.CoreV1().PersistentVolumeClaims(namespace).List(context.TODO(), metav1.ListOptions{})
+func processNamespacePvcs(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	pvcs, err := clientset.CoreV1().PersistentVolumeClaims(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func processNamespacePvcs(kubeClient *kubernetes.Clientset, namespace string) ([
 		pvcNames = append(pvcNames, pvc.Name)
 	}
 
-	usedPvcs, err := retreiveUsedPvcs(kubeClient, namespace)
+	usedPvcs, err := retreiveUsedPvcs(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}

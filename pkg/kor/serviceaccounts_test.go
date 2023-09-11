@@ -12,8 +12,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-var resourceType = "ServiceAccount"
-
 func createTestServiceAccounts(t *testing.T) *fake.Clientset {
 
 	clientset := fake.NewSimpleClientset()
@@ -23,13 +21,14 @@ func createTestServiceAccounts(t *testing.T) *fake.Clientset {
 	sa2 := CreateTestServiceAccount(testNamespace, "test-sa2")
 	_, err := clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa1, v1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("Error creating fake %s: %v", resourceType, err)
+		t.Fatalf("Error creating fake %s: %v", "ServiceAccount", err)
 	}
 
 	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa2, v1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("Error creating fake %s: %v", resourceType, err)
+		t.Fatalf("Error creating fake %s: %v", "ServiceAccount", err)
 	}
+
 	return clientset
 }
 func TestGetServiceAccountsFromClusterRoleBindings(t *testing.T) {
@@ -59,7 +58,8 @@ func TestGetServiceAccountsFromClusterRoleBindings(t *testing.T) {
 func TestGetServiceAccountsFromRoleBindings(t *testing.T) {
 	clientset := createTestServiceAccounts(t)
 
-	roleBinding1 := CreateTestRoleBinding(testNamespace, "test-crb1", "test-sa1")
+	testRoleRef := CreateTestRoleRef("test-role")
+	roleBinding1 := CreateTestRoleBinding(testNamespace, "test-crb1", "test-sa1", testRoleRef)
 	_, err := clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), roleBinding1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "roleBinding", err)
@@ -83,7 +83,7 @@ func TestRetrieveUsedSA(t *testing.T) {
 	var volumeList []corev1.Volume
 	clientset := createTestServiceAccounts(t)
 
-	testVolume := CreateTestVolume("test-volume1")
+	testVolume := CreateTestVolume("test-volume1", "test-pvc")
 	volumeList = append(volumeList, *testVolume)
 
 	podWithSA := CreateTestPod(testNamespace, "test-pod1", "test-sa1", volumeList)
@@ -121,10 +121,12 @@ func TestProcessNamespaceSA(t *testing.T) {
 	clientset := createTestServiceAccounts(t)
 	var volumeList []corev1.Volume
 
-	testVolume := CreateTestVolume("test-volume1")
+	testVolume := CreateTestVolume("test-volume1", "test-pvc")
 	volumeList = append(volumeList, *testVolume)
 
-	roleBinding1 := CreateTestRoleBinding(testNamespace, "test-crb1", "test-sa1")
+	testRoleRef := CreateTestRoleRef("test-role")
+
+	roleBinding1 := CreateTestRoleBinding(testNamespace, "test-crb1", "test-sa1", testRoleRef)
 	_, err := clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), roleBinding1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "roleBinding", err)

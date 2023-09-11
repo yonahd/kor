@@ -59,10 +59,19 @@ func CreateTestPod(namespace, name, serviceAccountName string, volumes []corev1.
 	}
 }
 
-func CreateTestVolume(name string) *corev1.Volume {
+func CreatePersistentVolumeClaimVolumeSource(name string) *corev1.PersistentVolumeClaimVolumeSource {
+	return &corev1.PersistentVolumeClaimVolumeSource{
+		ClaimName: name,
+	}
+}
+
+func CreateTestVolume(name, pvcName string) *corev1.Volume {
+	pvc := CreatePersistentVolumeClaimVolumeSource(pvcName)
 	return &corev1.Volume{
-		Name:         name,
-		VolumeSource: corev1.VolumeSource{},
+		Name: name,
+		VolumeSource: corev1.VolumeSource{
+			PersistentVolumeClaim: pvc,
+		},
 	}
 
 }
@@ -84,7 +93,14 @@ func CreateTestRbacSubject(namespace, serviceAccountName string) *rbacv1.Subject
 	}
 }
 
-func CreateTestRoleBinding(namespace, name, serviceAccountName string) *rbacv1.RoleBinding {
+func CreateTestRoleRef(roleName string) *rbacv1.RoleRef {
+	return &rbacv1.RoleRef{
+		Kind: "Role",
+		Name: roleName,
+	}
+}
+
+func CreateTestRoleBinding(namespace, name, serviceAccountName string, roleRefName *rbacv1.RoleRef) *rbacv1.RoleBinding {
 	rbacSubject := CreateTestRbacSubject(namespace, serviceAccountName)
 	return &rbacv1.RoleBinding{
 		ObjectMeta: v1.ObjectMeta{
@@ -94,6 +110,7 @@ func CreateTestRoleBinding(namespace, name, serviceAccountName string) *rbacv1.R
 		Subjects: []rbacv1.Subject{
 			*rbacSubject,
 		},
+		RoleRef: *roleRefName,
 	}
 }
 
@@ -106,6 +123,24 @@ func CreateTestClusterRoleBinding(namespace, name, serviceAccountName string) *r
 		Subjects: []rbacv1.Subject{
 			*rbacSubject,
 		},
+	}
+}
+
+func createPolicyRule() *rbacv1.PolicyRule {
+	return &rbacv1.PolicyRule{
+		Verbs:     []string{"get"},
+		Resources: []string{"pods"},
+	}
+}
+
+func CreateTestRole(namespace, name string) *rbacv1.Role {
+	policyRule := createPolicyRule()
+	return &rbacv1.Role{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Rules: []rbacv1.PolicyRule{*policyRule},
 	}
 }
 
@@ -161,6 +196,15 @@ func CreateTestIngress(namespace, name, ServiceName string) *networkingv1.Ingres
 		},
 		Spec: networkingv1.IngressSpec{
 			Rules: []networkingv1.IngressRule{ingressRule},
+		},
+	}
+}
+
+func CreateTestPvc(namespace, name string) *corev1.PersistentVolumeClaim {
+	return &corev1.PersistentVolumeClaim{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
 		},
 	}
 }
