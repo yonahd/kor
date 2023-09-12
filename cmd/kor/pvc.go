@@ -8,9 +8,10 @@ import (
 )
 
 var pvcCmd = &cobra.Command{
-	Use:   "pvc",
-	Short: "Gets unused pvcs",
-	Args:  cobra.NoArgs,
+	Use:     "persistentvolumeclaim",
+	Aliases: []string{"pvc", "persistentvolumeclaims"},
+	Short:   "Gets unused pvcs",
+	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" || outputFormat == "yaml" {
 			if response, err := kor.GetUnusedPvcsStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {

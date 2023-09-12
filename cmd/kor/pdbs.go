@@ -8,9 +8,10 @@ import (
 )
 
 var pdbCmd = &cobra.Command{
-	Use:   "pdb",
-	Short: "Gets unused pdbs",
-	Args:  cobra.NoArgs,
+	Use:     "poddisruptionbudget",
+	Aliases: []string{"pdb", "poddisruptionbudgets"},
+	Short:   "Gets unused pdbs",
+	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if outputFormat == "json" || outputFormat == "yaml" {
 			if response, err := kor.GetUnusedPdbsStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {

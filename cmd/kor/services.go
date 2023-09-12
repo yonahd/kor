@@ -8,8 +8,8 @@ import (
 )
 
 var serviceCmd = &cobra.Command{
-	Use:     "services",
-	Aliases: []string{"svc"},
+	Use:     "service",
+	Aliases: []string{"svc", "services"},
 	Short:   "Gets unused services",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {

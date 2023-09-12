@@ -8,8 +8,8 @@ import (
 )
 
 var deployCmd = &cobra.Command{
-	Use:     "deployments",
-	Aliases: []string{"deploy"},
+	Use:     "deployment",
+	Aliases: []string{"deploy", "deployments"},
 	Short:   "Gets unused deployments",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
