@@ -1,0 +1,37 @@
+{{- if .Values.cronJob.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  schedule: {{ .Values.cronJob.schedule }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          name: {{ .Release.Name }}
+        spec:
+          serviceAccountName: {{ include "kor.serviceAccountName" . }}
+          containers:
+            - name: {{ .Release.Name }}-container
+              image: {{ .Values.cronJob.image.repository }}:{{ .Values.cronJob.image.tag }}
+              command: ["/bin/sh", "-c"]
+              {{- if .Values.cronJob.slackWebhookUrl }}
+              args: ["{{ .Values.cronJob.korCommand }} --slack-webhook-url {{ .Values.cronJob.slackWebhookUrl }}"]
+              {{- else if and .Values.cronJob.slackChannel .Values.cronJob.slackAuthToken }}
+              args: ["{{ .Values.cronJob.korCommand }} --slack-channel {{ .Values.cronJob.slackChannel }} --slack-auth-token {{ .Values.cronJob.slackAuthToken }}"]
+              {{- end }}
+              {{- if .Values.cronJob.env }}
+              env:
+                {{- toYaml .Values.cronJob.env | nindent 12 }}
+              {{- end }}
+          restartPolicy: {{ .Values.cronJob.restartPolicy }}
+  {{- if .Values.cronJob.successfulJobsHistoryLimit }}
+  successfulJobsHistoryLimit: {{ .Values.cronJob.successfulJobsHistoryLimit }}
+  {{- end }}
+  {{- if .Values.cronJob.failedJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronJob.failedJobsHistoryLimit }}
+  {{- end }}
+{{- end }}

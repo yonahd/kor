@@ -1,0 +1,26 @@
+namespace: kor
+
+cronJob:
+  enabled: true
+  name: kor
+  schedule: "0 1 * * 1"
+  image:
+    repository: yonahdissen/kor
+    tag: latest
+  # e.g. kor configmap --include-namespace default,other-ns
+  korCommand: kor all
+  slackWebhookUrl: ""
+  slackChannel: ""
+  slackAuthToken: ""
+  restartPolicy: OnFailure
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 2
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
