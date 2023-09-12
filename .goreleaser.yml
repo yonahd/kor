@@ -18,6 +18,7 @@ builds:
       - darwin
     goarch:
       - amd64
+      - arm64
 
   - id: windows-amd64
     binary: kor

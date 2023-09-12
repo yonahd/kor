@@ -1,6 +1,8 @@
 package kor
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/yonahd/kor/pkg/kor"
 )
@@ -10,14 +12,18 @@ var hpaCmd = &cobra.Command{
 	Short: "Gets unused hpas",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		if outputFormat == "json" {
-			kor.GetUnusedHpasJson(namespace, kubeconfig)
+		if outputFormat == "json" || outputFormat == "yaml" {
+			if response, err := kor.GetUnusedHpasStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(response)
+			}
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedHpasSendToSlackWebhook(namespace, kubeconfig, slackWebhookURL)
+			kor.GetUnusedHpasSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
 		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedHpasSendToSlackAsFile(namespace, kubeconfig, slackChannel, slackAuthToken)
+			kor.GetUnusedHpasSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedHpas(namespace, kubeconfig)
+			kor.GetUnusedHpas(includeExcludeLists, kubeconfig)
 		}
 	},
 }

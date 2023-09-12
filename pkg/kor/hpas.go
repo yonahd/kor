@@ -5,13 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/utils/strings/slices"
+	"sigs.k8s.io/yaml"
 )
 
 func getDeploymentNames(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -54,6 +54,10 @@ func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]str
 
 	var diff []string
 	for _, hpa := range hpas.Items {
+		if hpa.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		switch hpa.Spec.ScaleTargetRef.Kind {
 		case "Deployment":
 			if !slices.Contains(deploymentNames, hpa.Spec.ScaleTargetRef.Name) {
@@ -76,13 +80,13 @@ func processNamespaceHpas(clientset *kubernetes.Clientset, namespace string) ([]
 	return unusedHpas, nil
 }
 
-func GetUnusedHpas(namespace string, kubeconfig string) {
+func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceHpas(kubeClient, namespace)
@@ -97,13 +101,13 @@ func GetUnusedHpas(namespace string, kubeconfig string) {
 
 }
 
-func GetUnusedHpasSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedHpasSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -124,13 +128,13 @@ func GetUnusedHpasSendToSlackWebhook(namespace string, kubeconfig string, slackW
 	}
 }
 
-func GetUnusedHpasSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+func GetUnusedHpasSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -153,13 +157,13 @@ func GetUnusedHpasSendToSlackAsFile(namespace string, kubeconfig string, slackCh
 	}
 }
 
-func GetUnusedHpasJson(namespace string, kubeconfig string) (string, error) {
+func GetUnusedHpasStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
@@ -181,6 +185,13 @@ func GetUnusedHpasJson(namespace string, kubeconfig string) (string, error) {
 		return "", err
 	}
 
-	log.Println(string(jsonResponse))
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
 }

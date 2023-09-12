@@ -5,13 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
-	"path/filepath"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"sigs.k8s.io/yaml"
 )
 
 func retreiveUsedPvcs(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -39,6 +38,10 @@ func processNamespacePvcs(kubeClient *kubernetes.Clientset, namespace string) ([
 	}
 	pvcNames := make([]string, 0, len(pvcs.Items))
 	for _, pvc := range pvcs.Items {
+		if pvc.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		pvcNames = append(pvcNames, pvc.Name)
 	}
 
@@ -51,13 +54,13 @@ func processNamespacePvcs(kubeClient *kubernetes.Clientset, namespace string) ([
 	return diff, nil
 }
 
-func GetUnusedPvcs(namespace string, kubeconfig string) {
+func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespacePvcs(kubeClient, namespace)
@@ -72,13 +75,13 @@ func GetUnusedPvcs(namespace string, kubeconfig string) {
 
 }
 
-func GetUnusedPvcsSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedPvcsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -99,13 +102,13 @@ func GetUnusedPvcsSendToSlackWebhook(namespace string, kubeconfig string, slackW
 	}
 }
 
-func GetUnusedPvcsSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+func GetUnusedPvcsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -121,42 +124,20 @@ func GetUnusedPvcsSendToSlackAsFile(namespace string, kubeconfig string, slackCh
 		outputBuffer.WriteString("\n")
 	}
 
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get user's home directory: %v\n", err)
-		return
-	}
+	outputFilePath, _ := writeOutputToFile(outputBuffer)
 
-	outputFileName := "output.txt"
-	outputFilePath := filepath.Join(homeDir, outputFileName)
-
-	file, err := os.Create(outputFilePath)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create output file: %v\n", err)
-		return
-	}
-	defer file.Close()
-
-	_, err = file.WriteString(outputBuffer.String())
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to write output to file: %v\n", err)
-		return
-	}
-
-	fmt.Printf("Output written to: %s\n", outputFilePath)
-
-	if err := SendFileToSlack(outputFilePath, "Unused PVCs", slackChannel, slackAuthToken); err != nil {
+	if err := SendFileToSlack(outputFilePath, "Unused Ingresses", slackChannel, slackAuthToken); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
 	}
 }
 
-func GetUnusedPvcsJson(namespace string, kubeconfig string) (string, error) {
+func GetUnusedPvcsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
@@ -178,6 +159,13 @@ func GetUnusedPvcsJson(namespace string, kubeconfig string) (string, error) {
 		return "", err
 	}
 
-	log.Println(string(jsonResponse))
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
 }

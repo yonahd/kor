@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
 type GetUnusedResourceJSONResponse struct {
@@ -109,13 +110,22 @@ func getUnusedIngresses(kubeClient *kubernetes.Clientset, namespace string) Reso
 	return namespaceIngressDiff
 }
 
-func GetUnusedAll(namespace string, kubeconfig string) {
+func getUnusedPdbs(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
+	pdbDiff, err := processNamespacePdbs(kubeClient, namespace)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pdbs", namespace, err)
+	}
+	namespacePdbDiff := ResourceDiff{"Pdb", pdbDiff}
+	return namespacePdbDiff
+}
+
+func GetUnusedAll(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	for _, namespace := range namespaces {
 		var allDiffs []ResourceDiff
 		namespaceCMDiff := getUnusedCMs(kubeClient, namespace)
@@ -138,19 +148,21 @@ func GetUnusedAll(namespace string, kubeconfig string) {
 		allDiffs = append(allDiffs, namespacePvcDiff)
 		namespaceIngressDiff := getUnusedIngresses(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceIngressDiff)
+		namespacePdbDiff := getUnusedPdbs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespacePdbDiff)
 		output := FormatOutputAll(namespace, allDiffs)
 		fmt.Println(output)
 		fmt.Println()
 	}
 }
 
-func GetUnusedAllSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedAllSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -187,13 +199,13 @@ func GetUnusedAllSendToSlackWebhook(namespace string, kubeconfig string, slackWe
 	}
 }
 
-func GetUnusedAllSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+func GetUnusedAllSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -232,13 +244,13 @@ func GetUnusedAllSendToSlackAsFile(namespace string, kubeconfig string, slackCha
 	}
 }
 
-func GetUnusedAllJSON(namespace string, kubeconfig string) (string, error) {
+func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	// Create the JSON response object
 	response := make(map[string]map[string][]string)
@@ -276,6 +288,9 @@ func GetUnusedAllJSON(namespace string, kubeconfig string) (string, error) {
 		namespaceIngressDiff := getUnusedIngresses(kubeClient, namespace)
 		allDiffs = append(allDiffs, namespaceIngressDiff)
 
+		namespacePdbDiff := getUnusedPdbs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespacePdbDiff)
+
 		// Store the unused resources for each resource type in the JSON response
 		resourceMap := make(map[string][]string)
 		for _, diff := range allDiffs {
@@ -290,5 +305,13 @@ func GetUnusedAllJSON(namespace string, kubeconfig string) (string, error) {
 		return "", err
 	}
 
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
 }

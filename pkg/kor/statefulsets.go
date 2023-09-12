@@ -9,6 +9,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
 func getStatefulsetsWithoutReplicas(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -20,6 +21,10 @@ func getStatefulsetsWithoutReplicas(kubeClient *kubernetes.Clientset, namespace 
 	var statefulsetsWithoutReplicas []string
 
 	for _, statefulset := range statefulsetsList.Items {
+		if statefulset.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		if *statefulset.Spec.Replicas == 0 {
 			statefulsetsWithoutReplicas = append(statefulsetsWithoutReplicas, statefulset.Name)
 		}
@@ -35,16 +40,15 @@ func ProcessNamespaceStatefulsets(clientset *kubernetes.Clientset, namespace str
 	}
 
 	return usedServices, nil
-
 }
 
-func GetUnusedStatefulsets(namespace string, kubeconfig string) {
+func GetUnusedStatefulsets(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := ProcessNamespaceStatefulsets(kubeClient, namespace)
@@ -58,13 +62,13 @@ func GetUnusedStatefulsets(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedStatefulsetsSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedStatefulsetsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -85,13 +89,13 @@ func GetUnusedStatefulsetsSendToSlackWebhook(namespace string, kubeconfig string
 	}
 }
 
-func GetUnusedStatefulsetsSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+func GetUnusedStatefulsetsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -114,12 +118,12 @@ func GetUnusedStatefulsetsSendToSlackAsFile(namespace string, kubeconfig string,
 	}
 }
 
-func GetUnusedStatefulsetsJSON(namespace string, kubeconfig string) (string, error) {
+func GetUnusedStatefulsetsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
@@ -138,5 +142,13 @@ func GetUnusedStatefulsetsJSON(namespace string, kubeconfig string) (string, err
 		return "", err
 	}
 
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
 }

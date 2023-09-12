@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"sigs.k8s.io/yaml"
 )
 
 func validateServiceBackend(kubeClient *kubernetes.Clientset, namespace string, backend *v1.IngressBackend) bool {
@@ -34,6 +35,10 @@ func retrieveUsedIngress(kubeClient *kubernetes.Clientset, namespace string) ([]
 	usedIngresses := []string{}
 
 	for _, ingress := range ingresses.Items {
+		if ingress.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		used := true
 
 		if ingress.Spec.DefaultBackend != nil {
@@ -84,13 +89,13 @@ func processNamespaceIngresses(kubeClient *kubernetes.Clientset, namespace strin
 
 }
 
-func GetUnusedIngresses(namespace string, kubeconfig string) {
+func GetUnusedIngresses(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceIngresses(kubeClient, namespace)
@@ -104,13 +109,13 @@ func GetUnusedIngresses(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedIngressesSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedIngressesSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -131,13 +136,13 @@ func GetUnusedIngressesSendToSlackWebhook(namespace string, kubeconfig string, s
 	}
 }
 
-func GetUnusedIngressesSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+func GetUnusedIngressesSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -160,12 +165,12 @@ func GetUnusedIngressesSendToSlackAsFile(namespace string, kubeconfig string, sl
 	}
 }
 
-func GetUnusedIngressesJSON(namespace string, kubeconfig string) (string, error) {
+func GetUnusedIngressesStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
@@ -184,5 +189,13 @@ func GetUnusedIngressesJSON(namespace string, kubeconfig string) (string, error)
 		return "", err
 	}
 
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
 }

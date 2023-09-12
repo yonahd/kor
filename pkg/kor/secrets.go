@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/utils/strings/slices"
+	"sigs.k8s.io/yaml"
 )
 
 var exceptionSecretTypes = []string{
@@ -37,16 +38,17 @@ func retrieveIngressTLS(clientset *kubernetes.Clientset, namespace string) ([]st
 
 }
 
-func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, error) {
-	envSecrets := []string{}
-	envSecrets2 := []string{}
-	volumeSecrets := []string{}
-	pullSecrets := []string{}
+func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
+	var envSecrets []string
+	var envSecrets2 []string
+	var volumeSecrets []string
+	var pullSecrets []string
+	var initContainerEnvSecrets []string
 
 	// Retrieve pods in the specified namespace
 	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Extract volume and environment information from pods
@@ -63,6 +65,15 @@ func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]s
 				}
 			}
 		}
+
+		for _, initContainer := range pod.Spec.InitContainers {
+			for _, env := range initContainer.Env {
+				if env.ValueFrom != nil && env.ValueFrom.SecretKeyRef != nil {
+					initContainerEnvSecrets = append(initContainerEnvSecrets, env.ValueFrom.SecretKeyRef.Name)
+				}
+			}
+		}
+
 		for _, volume := range pod.Spec.Volumes {
 			if volume.Secret != nil {
 				volumeSecrets = append(volumeSecrets, volume.Secret.SecretName)
@@ -77,10 +88,10 @@ func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]s
 
 	tlsSecrets, err := retrieveIngressTLS(kubeClient, namespace)
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, err
 	}
 
-	return envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, nil
+	return envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, nil
 }
 
 func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -90,6 +101,10 @@ func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]
 	}
 	names := make([]string, 0, len(secrets.Items))
 	for _, secret := range secrets.Items {
+		if secret.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		if !slices.Contains(exceptionSecretTypes, string(secret.Type)) {
 			names = append(names, secret.Name)
 		}
@@ -98,7 +113,7 @@ func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]
 }
 
 func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(kubeClient, namespace)
+	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(kubeClient, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -106,6 +121,7 @@ func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) 
 	envSecrets = RemoveDuplicatesAndSort(envSecrets)
 	envSecrets2 = RemoveDuplicatesAndSort(envSecrets2)
 	volumeSecrets = RemoveDuplicatesAndSort(volumeSecrets)
+	initContainerEnvSecrets = RemoveDuplicatesAndSort(initContainerEnvSecrets)
 	pullSecrets = RemoveDuplicatesAndSort(pullSecrets)
 	tlsSecrets = RemoveDuplicatesAndSort(tlsSecrets)
 
@@ -114,19 +130,24 @@ func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) 
 		return nil, err
 	}
 
-	usedSecrets := append(append(append(append(envSecrets, envSecrets2...), volumeSecrets...), pullSecrets...), tlsSecrets...)
+	var usedSecrets []string
+	slicesToAppend := [][]string{envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, initContainerEnvSecrets}
+
+	for _, slice := range slicesToAppend {
+		usedSecrets = append(usedSecrets, slice...)
+	}
 	diff := CalculateResourceDifference(usedSecrets, secretNames)
 	return diff, nil
 
 }
 
-func GetUnusedSecrets(namespace string, kubeconfig string) {
+func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceSecret(kubeClient, namespace)
@@ -140,13 +161,13 @@ func GetUnusedSecrets(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedSecretsSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedSecretsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -167,13 +188,13 @@ func GetUnusedSecretsSendToSlackWebhook(namespace string, kubeconfig string, sla
 	}
 }
 
-func GetUnusedSecretsSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+func GetUnusedSecretsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -196,12 +217,12 @@ func GetUnusedSecretsSendToSlackAsFile(namespace string, kubeconfig string, slac
 	}
 }
 
-func GetUnusedSecretsJSON(namespace string, kubeconfig string) (string, error) {
+func GetUnusedSecretsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
@@ -220,5 +241,13 @@ func GetUnusedSecretsJSON(namespace string, kubeconfig string) (string, error) {
 		return "", err
 	}
 
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
 }

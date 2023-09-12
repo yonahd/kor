@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"sigs.k8s.io/yaml"
 )
 
 func retrieveUsedRoles(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -45,6 +46,10 @@ func retrieveRoleNames(kubeClient *kubernetes.Clientset, namespace string) ([]st
 	}
 	names := make([]string, 0, len(roles.Items))
 	for _, role := range roles.Items {
+		if role.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		names = append(names, role.Name)
 	}
 	return names, nil
@@ -68,12 +73,12 @@ func processNamespaceRoles(kubeClient *kubernetes.Clientset, namespace string) (
 
 }
 
-func GetUnusedRoles(namespace string, kubeconfig string) {
+func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceRoles(kubeClient, namespace)
@@ -87,13 +92,13 @@ func GetUnusedRoles(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedRolesSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedRolesSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -114,13 +119,13 @@ func GetUnusedRolesSendToSlackWebhook(namespace string, kubeconfig string, slack
 	}
 }
 
-func GetUnusedRolesSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+func GetUnusedRolesSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -143,12 +148,12 @@ func GetUnusedRolesSendToSlackAsFile(namespace string, kubeconfig string, slackC
 	}
 }
 
-func GetUnusedRolesJSON(namespace string, kubeconfig string) (string, error) {
+func GetUnusedRolesStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
@@ -167,5 +172,13 @@ func GetUnusedRolesJSON(namespace string, kubeconfig string) (string, error) {
 		return "", err
 	}
 
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
 }

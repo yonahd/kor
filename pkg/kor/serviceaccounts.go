@@ -9,6 +9,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
 var exceptionServiceAccounts = []ExceptionResource{
@@ -27,7 +28,12 @@ func getServiceAccountsFromClusterRoleBindings(clientset *kubernetes.Clientset, 
 
 	// Extract service account names from the role bindings
 	for _, rb := range roleBindings.Items {
+		if rb.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		for _, subject := range rb.Subjects {
+
 			if subject.Kind == "ServiceAccount" {
 				serviceAccounts = append(serviceAccounts, subject.Name)
 			}
@@ -49,6 +55,10 @@ func getServiceAccountsFromRoleBindings(clientset *kubernetes.Clientset, namespa
 
 	// Extract service account names from the role bindings
 	for _, rb := range roleBindings.Items {
+		if rb.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		for _, subject := range rb.Subjects {
 			if subject.Kind == "ServiceAccount" {
 				serviceAccounts = append(serviceAccounts, subject.Name)
@@ -60,8 +70,7 @@ func getServiceAccountsFromRoleBindings(clientset *kubernetes.Clientset, namespa
 }
 
 func retrieveUsedSA(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, error) {
-
-	podServiceAccounts := []string{}
+	var podServiceAccounts []string
 
 	// Retrieve pods in the specified namespace
 	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
@@ -83,7 +92,13 @@ func retrieveUsedSA(kubeClient *kubernetes.Clientset, namespace string) ([]strin
 	}
 
 	roleServiceAccounts, err := getServiceAccountsFromRoleBindings(kubeClient, namespace)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	clusterRoleServiceAccounts, err := getServiceAccountsFromClusterRoleBindings(kubeClient, namespace)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	return podServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, nil
 }
 
@@ -94,6 +109,10 @@ func retrieveServiceAccountNames(kubeClient *kubernetes.Clientset, namespace str
 	}
 	names := make([]string, 0, len(serviceaccounts.Items))
 	for _, serviceaccount := range serviceaccounts.Items {
+		if serviceaccount.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		names = append(names, serviceaccount.Name)
 	}
 	return names, nil
@@ -121,13 +140,13 @@ func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) ([]s
 
 }
 
-func GetUnusedServiceAccounts(namespace string, kubeconfig string) {
+func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceSA(kubeClient, namespace)
@@ -141,13 +160,13 @@ func GetUnusedServiceAccounts(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedServiceAccountsSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedServiceAccountsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -168,13 +187,13 @@ func GetUnusedServiceAccountsSendToSlackWebhook(namespace string, kubeconfig str
 	}
 }
 
-func GetUnusedServiceAccountsSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+func GetUnusedServiceAccountsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -197,12 +216,12 @@ func GetUnusedServiceAccountsSendToSlackAsFile(namespace string, kubeconfig stri
 	}
 }
 
-func GetUnusedServiceAccountsJSON(namespace string, kubeconfig string) (string, error) {
+func GetUnusedServiceAccountsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
@@ -221,5 +240,13 @@ func GetUnusedServiceAccountsJSON(namespace string, kubeconfig string) (string, 
 		return "", err
 	}
 
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
 }

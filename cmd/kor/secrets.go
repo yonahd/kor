@@ -1,6 +1,8 @@
 package kor
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/yonahd/kor/pkg/kor"
 )
@@ -11,14 +13,18 @@ var secretCmd = &cobra.Command{
 	Short:   "Gets unused secrets",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		if outputFormat == "json" {
-			kor.GetUnusedSecretsJSON(namespace, kubeconfig)
+		if outputFormat == "json" || outputFormat == "yaml" {
+			if response, err := kor.GetUnusedSecretsStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(response)
+			}
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedSecretsSendToSlackWebhook(namespace, kubeconfig, slackWebhookURL)
+			kor.GetUnusedSecretsSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
 		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedSecretsSendToSlackAsFile(namespace, kubeconfig, slackChannel, slackAuthToken)
+			kor.GetUnusedSecretsSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedSecrets(namespace, kubeconfig)
+			kor.GetUnusedSecrets(includeExcludeLists, kubeconfig)
 		}
 
 	},

@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"sigs.k8s.io/yaml"
 )
 
 var exceptionconfigmaps = []ExceptionResource{
@@ -17,17 +18,18 @@ var exceptionconfigmaps = []ExceptionResource{
 	{ResourceName: "kube-root-ca.crt", Namespace: "*"},
 }
 
-func retrieveUsedCM(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, error) {
-	volumesCM := []string{}
-	volumesProjectedCM := []string{}
-	envCM := []string{}
-	envFromCM := []string{}
-	envFromContainerCM := []string{}
+func retrieveUsedCM(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
+	var volumesCM []string
+	var volumesProjectedCM []string
+	var envCM []string
+	var envFromCM []string
+	var envFromContainerCM []string
+	var envFromInitContainerCM []string
 
 	// Retrieve pods in the specified namespace
 	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Extract volume and environment information from pods
@@ -61,6 +63,18 @@ func retrieveUsedCM(kubeClient *kubernetes.Clientset, namespace string) ([]strin
 				}
 			}
 		}
+		for _, initContainer := range pod.Spec.InitContainers {
+			for _, volume := range initContainer.VolumeMounts {
+				if volume.Name != "" && volume.MountPath != "" {
+					volumesCM = append(volumesCM, volume.Name)
+				}
+			}
+			for _, env := range initContainer.Env {
+				if env.ValueFrom != nil && env.ValueFrom.ConfigMapKeyRef != nil {
+					envFromInitContainerCM = append(envFromInitContainerCM, env.ValueFrom.ConfigMapKeyRef.Name)
+				}
+			}
+		}
 	}
 
 	for _, resource := range exceptionconfigmaps {
@@ -69,7 +83,7 @@ func retrieveUsedCM(kubeClient *kubernetes.Clientset, namespace string) ([]strin
 		}
 	}
 
-	return volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, nil
+	return volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, nil
 }
 
 func retrieveConfigMapNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
@@ -79,13 +93,17 @@ func retrieveConfigMapNames(kubeClient *kubernetes.Clientset, namespace string) 
 	}
 	names := make([]string, 0, len(configmaps.Items))
 	for _, configmap := range configmaps.Items {
+		if configmap.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		names = append(names, configmap.Name)
 	}
 	return names, nil
 }
 
 func processNamespaceCM(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, err := retrieveUsedCM(kubeClient, namespace)
+	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(kubeClient, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -95,25 +113,31 @@ func processNamespaceCM(kubeClient *kubernetes.Clientset, namespace string) ([]s
 	envCM = RemoveDuplicatesAndSort(envCM)
 	envFromCM = RemoveDuplicatesAndSort(envFromCM)
 	envFromContainerCM = RemoveDuplicatesAndSort(envFromContainerCM)
+	envFromInitContainerCM = RemoveDuplicatesAndSort(envFromInitContainerCM)
 
 	configMapNames, err := retrieveConfigMapNames(kubeClient, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	usedConfigMaps := append(append(append(append(volumesCM, volumesProjectedCM...), envCM...), envFromCM...), envFromContainerCM...)
+	var usedConfigMaps []string
+	slicesToAppend := [][]string{volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM}
+
+	for _, slice := range slicesToAppend {
+		usedConfigMaps = append(usedConfigMaps, slice...)
+	}
 	diff := CalculateResourceDifference(usedConfigMaps, configMapNames)
 	return diff, nil
 
 }
 
-func GetUnusedConfigmaps(namespace string, kubeconfig string) {
+func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceCM(kubeClient, namespace)
@@ -127,13 +151,13 @@ func GetUnusedConfigmaps(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedConfigmapsSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedConfigmapsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -154,13 +178,13 @@ func GetUnusedConfigmapsSendToSlackWebhook(namespace string, kubeconfig string, 
 	}
 }
 
-func GetUnusedConfigmapsSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+func GetUnusedConfigmapsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
 
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 
 	var outputBuffer bytes.Buffer
 
@@ -183,12 +207,12 @@ func GetUnusedConfigmapsSendToSlackAsFile(namespace string, kubeconfig string, s
 	}
 }
 
-func GetUnusedConfigmapsJSON(namespace string, kubeconfig string) (string, error) {
+func GetUnusedConfigmapsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
 	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(namespace, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
@@ -207,5 +231,14 @@ func GetUnusedConfigmapsJSON(namespace string, kubeconfig string) (string, error
 		return "", err
 	}
 
-	return string(jsonResponse), nil
+	if outputFormat == "yaml" {
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		return string(yamlResponse), nil
+	} else {
+		return string(jsonResponse), nil
+	}
+
 }

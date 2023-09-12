@@ -1,6 +1,8 @@
 package kor
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/yonahd/kor/pkg/kor"
 )
@@ -10,15 +12,20 @@ var roleCmd = &cobra.Command{
 	Short: "Gets unused roles",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		if outputFormat == "json" {
-			kor.GetUnusedRolesJSON(namespace, kubeconfig)
+		if outputFormat == "json" || outputFormat == "yaml" {
+			if response, err := kor.GetUnusedRolesStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(response)
+			}
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedRolesSendToSlackWebhook(namespace, kubeconfig, slackWebhookURL)
+			kor.GetUnusedRolesSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
 		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedRolesSendToSlackAsFile(namespace, kubeconfig, slackChannel, slackAuthToken)
+			kor.GetUnusedRolesSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedRoles(namespace, kubeconfig)
+			kor.GetUnusedRoles(includeExcludeLists, kubeconfig)
 		}
+
 	},
 }
 
