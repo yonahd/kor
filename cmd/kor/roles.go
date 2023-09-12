@@ -13,7 +13,9 @@ var roleCmd = &cobra.Command{
 		if outputFormat == "json" {
 			kor.GetUnusedRolesJSON(namespace, kubeconfig)
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedRolesSlack(namespace, kubeconfig, slackWebhookURL)
+			kor.GetUnusedRolesSendToSlackWebhook(namespace, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedRolesSendToSlackAsFile(namespace, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedRoles(namespace, kubeconfig)
 		}

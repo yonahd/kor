@@ -127,7 +127,7 @@ func GetUnusedConfigmaps(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedConfigmapsSlack(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedConfigmapsSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -149,7 +149,36 @@ func GetUnusedConfigmapsSlack(namespace string, kubeconfig string, slackWebhookU
 		outputBuffer.WriteString("\n")
 	}
 
-	if err := sendToSlack(slackWebhookURL, outputBuffer.String()); err != nil {
+	if err := SendToSlackWebhook(slackWebhookURL, outputBuffer.String()); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
+	}
+}
+
+func GetUnusedConfigmapsSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+
+	namespaces = SetNamespaceList(namespace, kubeClient)
+
+	var outputBuffer bytes.Buffer
+
+	for _, namespace := range namespaces {
+		diff, err := processNamespaceCM(kubeClient, namespace)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
+		}
+		output := FormatOutput(namespace, diff, "Config Maps")
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	outputFilePath, _ := writeOutputToFile(outputBuffer)
+
+	if err := SendFileToSlack(outputFilePath, "Unused Configmaps", slackChannel, slackAuthToken); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
 	}
 }

@@ -3,12 +3,15 @@ namespace: kor
 cronJob:
   enabled: true
   name: kor
-  schedule: "0 1 * * *"
+  schedule: "0 1 * * 1"
   image:
     repository: patricktoledodea/kor
     tag: latest
+  # e.g. kor configmap --namespace default
   korCommand: kor all
-  slackWebhookUrl: https://hooks.slack.com/services/XXXXXXXXX/XXXXXXXXX/XXXXXXXXXXXXXXXXXXXX
+  slackWebhookUrl: ""
+  slackChannel: ""
+  slackAuthToken: ""
   restartPolicy: OnFailure
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 2

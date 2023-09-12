@@ -14,7 +14,9 @@ var deployCmd = &cobra.Command{
 		if outputFormat == "json" {
 			kor.GetUnusedDeploymentsJSON(namespace, kubeconfig)
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedDeploymentsSlack(namespace, kubeconfig, slackWebhookURL)
+			kor.GetUnusedDeploymentsSendToSlackWebhook(namespace, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedDeploymentsSendToSlackAsFile(namespace, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedDeployments(namespace, kubeconfig)
 		}

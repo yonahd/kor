@@ -1,6 +1,7 @@
 package kor
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -143,7 +144,7 @@ func GetUnusedAll(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedAllSlack(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedAllSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -151,7 +152,7 @@ func GetUnusedAllSlack(namespace string, kubeconfig string, slackWebhookURL stri
 
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
-	payload := ""
+	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
 		var allDiffs []ResourceDiff
@@ -177,11 +178,57 @@ func GetUnusedAllSlack(namespace string, kubeconfig string, slackWebhookURL stri
 		allDiffs = append(allDiffs, namespaceIngressDiff)
 		output := FormatOutputAll(namespace, allDiffs)
 
-		payload += output + "\n"
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
 	}
 
-	if err := sendToSlack(slackWebhookURL, payload); err != nil {
+	if err := SendToSlackWebhook(slackWebhookURL, outputBuffer.String()); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to send payload to Slack: %v\n", err)
+	}
+}
+
+func GetUnusedAllSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+
+	namespaces = SetNamespaceList(namespace, kubeClient)
+
+	var outputBuffer bytes.Buffer
+
+	for _, namespace := range namespaces {
+		var allDiffs []ResourceDiff
+		namespaceCMDiff := getUnusedCMs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceCMDiff)
+		namespaceSVCDiff := getUnusedSVCs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceSVCDiff)
+		namespaceSecretDiff := getUnusedSecrets(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceSecretDiff)
+		namespaceSADiff := getUnusedServiceAccounts(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceSADiff)
+		namespaceDeploymentDiff := getUnusedDeployments(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceDeploymentDiff)
+		namespaceStatefulsetDiff := getUnusedStatefulsets(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
+		namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceRoleDiff)
+		namespaceHpaDiff := getUnusedHpas(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceHpaDiff)
+		namespacePvcDiff := getUnusedPvcs(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespacePvcDiff)
+		namespaceIngressDiff := getUnusedIngresses(kubeClient, namespace)
+		allDiffs = append(allDiffs, namespaceIngressDiff)
+		output := FormatOutputAll(namespace, allDiffs)
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	outputFilePath, _ := writeOutputToFile(outputBuffer)
+
+	if err := SendFileToSlack(outputFilePath, "Unused All", slackChannel, slackAuthToken); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
 	}
 }
 

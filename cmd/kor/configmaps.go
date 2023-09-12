@@ -14,7 +14,9 @@ var configmapCmd = &cobra.Command{
 		if outputFormat == "json" {
 			kor.GetUnusedConfigmapsJSON(namespace, kubeconfig)
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedConfigmapsSlack(namespace, kubeconfig, slackWebhookURL)
+			kor.GetUnusedConfigmapsSendToSlackWebhook(namespace, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedConfigmapsSendToSlackAsFile(namespace, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedConfigmaps(namespace, kubeconfig)
 		}

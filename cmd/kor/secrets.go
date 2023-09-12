@@ -14,7 +14,9 @@ var secretCmd = &cobra.Command{
 		if outputFormat == "json" {
 			kor.GetUnusedSecretsJSON(namespace, kubeconfig)
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedSecretsSlack(namespace, kubeconfig, slackWebhookURL)
+			kor.GetUnusedSecretsSendToSlackWebhook(namespace, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedSecretsSendToSlackAsFile(namespace, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedSecrets(namespace, kubeconfig)
 		}

@@ -14,7 +14,9 @@ var serviceCmd = &cobra.Command{
 		if outputFormat == "json" {
 			kor.GetUnusedServicesJSON(namespace, kubeconfig)
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedServicesSlack(namespace, kubeconfig, slackWebhookURL)
+			kor.GetUnusedServicesSendToSlackWebhook(namespace, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedServicesSendToSlackAsFile(namespace, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedServices(namespace, kubeconfig)
 		}

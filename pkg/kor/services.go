@@ -1,6 +1,7 @@
 package kor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -57,7 +58,7 @@ func GetUnusedServices(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedServicesSlack(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedServicesSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -65,7 +66,7 @@ func GetUnusedServicesSlack(namespace string, kubeconfig string, slackWebhookURL
 
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
-	payload := ""
+	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
 		diff, err := ProcessNamespaceServices(kubeClient, namespace)
@@ -75,11 +76,41 @@ func GetUnusedServicesSlack(namespace string, kubeconfig string, slackWebhookURL
 		}
 		output := FormatOutput(namespace, diff, "Services")
 
-		payload += output + "\n"
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
 	}
 
-	if err := sendToSlack(slackWebhookURL, payload); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to send payload to Slack: %v\n", err)
+	if err := SendToSlackWebhook(slackWebhookURL, outputBuffer.String()); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
+	}
+}
+
+func GetUnusedServicesSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+
+	namespaces = SetNamespaceList(namespace, kubeClient)
+
+	var outputBuffer bytes.Buffer
+
+	for _, namespace := range namespaces {
+		diff, err := ProcessNamespaceServices(kubeClient, namespace)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
+		}
+		output := FormatOutput(namespace, diff, "Services")
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	outputFilePath, _ := writeOutputToFile(outputBuffer)
+
+	if err := SendFileToSlack(outputFilePath, "Unused Services", slackChannel, slackAuthToken); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
 	}
 }
 

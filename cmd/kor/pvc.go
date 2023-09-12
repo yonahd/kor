@@ -13,7 +13,9 @@ var pvcCmd = &cobra.Command{
 		if outputFormat == "json" {
 			kor.GetUnusedPvcsJson(namespace, kubeconfig)
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedPvcsSlack(namespace, kubeconfig, slackWebhookURL)
+			kor.GetUnusedPvcsSendToSlackWebhook(namespace, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedPvcsSendToSlackAsFile(namespace, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedPvcs(namespace, kubeconfig)
 		}

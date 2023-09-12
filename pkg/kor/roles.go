@@ -1,6 +1,7 @@
 package kor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -86,7 +87,7 @@ func GetUnusedRoles(namespace string, kubeconfig string) {
 	}
 }
 
-func GetUnusedRolesSlack(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedRolesSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -94,7 +95,7 @@ func GetUnusedRolesSlack(namespace string, kubeconfig string, slackWebhookURL st
 
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
-	payload := ""
+	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceRoles(kubeClient, namespace)
@@ -104,11 +105,41 @@ func GetUnusedRolesSlack(namespace string, kubeconfig string, slackWebhookURL st
 		}
 		output := FormatOutput(namespace, diff, "Roles")
 
-		payload += output + "\n"
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
 	}
 
-	if err := sendToSlack(slackWebhookURL, payload); err != nil {
+	if err := SendToSlackWebhook(slackWebhookURL, outputBuffer.String()); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to send payload to Slack: %v\n", err)
+	}
+}
+
+func GetUnusedRolesSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+
+	namespaces = SetNamespaceList(namespace, kubeClient)
+
+	var outputBuffer bytes.Buffer
+
+	for _, namespace := range namespaces {
+		diff, err := processNamespaceRoles(kubeClient, namespace)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
+		}
+		output := FormatOutput(namespace, diff, "Roles")
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	outputFilePath, _ := writeOutputToFile(outputBuffer)
+
+	if err := SendFileToSlack(outputFilePath, "Unused Roles", slackChannel, slackAuthToken); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
 	}
 }
 

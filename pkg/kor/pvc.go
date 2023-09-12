@@ -1,11 +1,13 @@
 package kor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -70,7 +72,7 @@ func GetUnusedPvcs(namespace string, kubeconfig string) {
 
 }
 
-func GetUnusedPvcsSlack(namespace string, kubeconfig string, slackWebhookURL string) {
+func GetUnusedPvcsSendToSlackWebhook(namespace string, kubeconfig string, slackWebhookURL string) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
 
@@ -78,7 +80,7 @@ func GetUnusedPvcsSlack(namespace string, kubeconfig string, slackWebhookURL str
 
 	namespaces = SetNamespaceList(namespace, kubeClient)
 
-	payload := ""
+	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespacePvcs(kubeClient, namespace)
@@ -88,11 +90,63 @@ func GetUnusedPvcsSlack(namespace string, kubeconfig string, slackWebhookURL str
 		}
 		output := FormatOutput(namespace, diff, "Pvcs")
 
-		payload += output + "\n"
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
 	}
 
-	if err := sendToSlack(slackWebhookURL, payload); err != nil {
+	if err := SendToSlackWebhook(slackWebhookURL, outputBuffer.String()); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to send payload to Slack: %v\n", err)
+	}
+}
+
+func GetUnusedPvcsSendToSlackAsFile(namespace string, kubeconfig string, slackChannel string, slackAuthToken string) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+
+	namespaces = SetNamespaceList(namespace, kubeClient)
+
+	var outputBuffer bytes.Buffer
+
+	for _, namespace := range namespaces {
+		diff, err := processNamespacePvcs(kubeClient, namespace)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
+		}
+		output := FormatOutput(namespace, diff, "Pvcs")
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get user's home directory: %v\n", err)
+		return
+	}
+
+	outputFileName := "output.txt"
+	outputFilePath := filepath.Join(homeDir, outputFileName)
+
+	file, err := os.Create(outputFilePath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create output file: %v\n", err)
+		return
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(outputBuffer.String())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to write output to file: %v\n", err)
+		return
+	}
+
+	fmt.Printf("Output written to: %s\n", outputFilePath)
+
+	if err := SendFileToSlack(outputFilePath, "Unused PVCs", slackChannel, slackAuthToken); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
 	}
 }
 

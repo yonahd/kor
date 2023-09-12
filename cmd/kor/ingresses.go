@@ -14,11 +14,12 @@ var ingressCmd = &cobra.Command{
 		if outputFormat == "json" {
 			kor.GetUnusedIngressesJSON(namespace, kubeconfig)
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedIngressesSlack(namespace, kubeconfig, slackWebhookURL)
+			kor.GetUnusedIngressesSendToSlackWebhook(namespace, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedIngressesSendToSlackAsFile(namespace, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedIngresses(namespace, kubeconfig)
 		}
-
 	},
 }
 
