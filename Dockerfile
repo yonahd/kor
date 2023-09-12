@@ -1,12 +1,14 @@
-FROM golang:1.20.2-alpine AS builder
+FROM golang:1.21.0-alpine3.18 as builder
 
-WORKDIR /build
+WORKDIR /app
+
 COPY . .
-ENV CGO_ENABLED 0
-RUN go build .
 
-FROM alpine:3.18
+RUN go mod tidy && \
+    go build
 
-COPY --from=builder /build/kor /kor
-ENTRYPOINT [ "/kor" ]
-CMD ["--help"]
+FROM alpine:3.18 as runner
+
+RUN apk add --no-cache curl
+
+COPY --from=builder /app/kor /usr/bin/kor
