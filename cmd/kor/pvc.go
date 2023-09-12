@@ -19,6 +19,10 @@ var pvcCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedPvcsSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedPvcsSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedPvcs(includeExcludeLists, kubeconfig)
 		}

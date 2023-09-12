@@ -19,6 +19,10 @@ var serviceCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedServicesSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedServicesSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedServices(includeExcludeLists, kubeconfig)
 		}

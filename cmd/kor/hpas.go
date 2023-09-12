@@ -19,6 +19,10 @@ var hpaCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedHpasSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedHpasSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedHpas(includeExcludeLists, kubeconfig)
 		}

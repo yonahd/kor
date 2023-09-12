@@ -18,6 +18,10 @@ var allCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
+		} else if slackWebhookURL != "" {
+			kor.GetUnusedAllSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+		} else if slackChannel != "" && slackAuthToken != "" {
+			kor.GetUnusedAllSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedAll(includeExcludeLists, kubeconfig)
 		}

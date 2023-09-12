@@ -1,6 +1,7 @@
 package kor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -157,6 +158,62 @@ func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, kubeconfig string
 		output := FormatOutput(namespace, diff, "Secrets")
 		fmt.Println(output)
 		fmt.Println()
+	}
+}
+
+func GetUnusedSecretsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+
+	var outputBuffer bytes.Buffer
+
+	for _, namespace := range namespaces {
+		diff, err := processNamespaceSecret(kubeClient, namespace)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
+		}
+		output := FormatOutput(namespace, diff, "Secrets")
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	if err := SendToSlackWebhook(slackWebhookURL, outputBuffer.String()); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
+	}
+}
+
+func GetUnusedSecretsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+
+	var outputBuffer bytes.Buffer
+
+	for _, namespace := range namespaces {
+		diff, err := processNamespaceSecret(kubeClient, namespace)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
+		}
+		output := FormatOutput(namespace, diff, "Secrets")
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	outputFilePath, _ := writeOutputToFile(outputBuffer)
+
+	if err := SendFileToSlack(outputFilePath, "Unused Secrets", slackChannel, slackAuthToken); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
 	}
 }
 

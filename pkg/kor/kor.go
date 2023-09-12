@@ -12,6 +12,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
@@ -38,33 +39,56 @@ func RemoveDuplicatesAndSort(slice []string) []string {
 	return uniqueSlice
 }
 
-func GetKubeConfigPath() string {
-	home := homedir.HomeDir()
-	return filepath.Join(home, ".kube", "config")
+func FileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return !os.IsNotExist(err)
 }
 
-// GetKubeClient selects kubeconfig path and returns kubeClient
-// kubeconfig path selection priority: 1) user supplied kubeconfig, 2) KUBECONFIG envvar, 3) default kubeconfig
-func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
-	if kubeconfig == "" {
-		if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
-			kubeconfig = configEnv
-		} else {
-			kubeconfig = GetKubeConfigPath()
-		}
-	}
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
-		os.Exit(1)
+func GetKubeConfigPath() (string, bool) {
+	home := homedir.HomeDir()
+	kubeConfigPath := filepath.Join(home, ".kube", "config")
+
+	if FileExists(kubeConfigPath) {
+		return kubeConfigPath, true
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
-		os.Exit(1)
+	return "", false
+}
+
+func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
+	if kubeconfig == "" {
+		kubeconfig, exists := GetKubeConfigPath()
+
+		if !exists {
+			config, err := rest.InClusterConfig()
+			if err != nil {
+				fmt.Printf("Error loading in-cluster config: %v\n", err)
+				os.Exit(1)
+			}
+
+			clientset, err := kubernetes.NewForConfig(config)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+				os.Exit(1)
+			}
+			return clientset
+		} else {
+			config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
+				os.Exit(1)
+			}
+
+			clientset, err := kubernetes.NewForConfig(config)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+				os.Exit(1)
+			}
+			return clientset
+		}
 	}
-	return clientset
+
+	return nil
 }
 
 func SetNamespaceList(namespaceLists IncludeExcludeLists, kubeClient *kubernetes.Clientset) []string {

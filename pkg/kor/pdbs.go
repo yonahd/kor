@@ -1,6 +1,7 @@
 package kor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -62,7 +63,62 @@ func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 		fmt.Println(output)
 		fmt.Println()
 	}
+}
 
+func GetUnusedPdbsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+
+	var outputBuffer bytes.Buffer
+
+	for _, namespace := range namespaces {
+		diff, err := processNamespacePdbs(kubeClient, namespace)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
+		}
+		output := FormatOutput(namespace, diff, "Pdbs")
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	if err := SendToSlackWebhook(slackWebhookURL, outputBuffer.String()); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to send payload to Slack: %v\n", err)
+	}
+}
+
+func GetUnusedPdbsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
+	var kubeClient *kubernetes.Clientset
+	var namespaces []string
+
+	kubeClient = GetKubeClient(kubeconfig)
+
+	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+
+	var outputBuffer bytes.Buffer
+
+	for _, namespace := range namespaces {
+		diff, err := processNamespacePdbs(kubeClient, namespace)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
+			continue
+		}
+		output := FormatOutput(namespace, diff, "Pdbs")
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	outputFilePath, _ := writeOutputToFile(outputBuffer)
+
+	if err := SendFileToSlack(outputFilePath, "Unused Pdbs", slackChannel, slackAuthToken); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
+	}
 }
 
 func GetUnusedPdbsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
