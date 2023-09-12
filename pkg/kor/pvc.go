@@ -126,7 +126,7 @@ func GetUnusedPvcsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kub
 
 	outputFilePath, _ := writeOutputToFile(outputBuffer)
 
-	if err := SendFileToSlack(outputFilePath, "Unused Ingresses", slackChannel, slackAuthToken); err != nil {
+	if err := SendFileToSlack(outputFilePath, "Unused PVCs", slackChannel, slackAuthToken); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
 	}
 }
