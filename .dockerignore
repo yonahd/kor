@@ -11,3 +11,9 @@ vendor/
 
 # Exclude git history and configuration.
 .gitignore
+
+.github
+*.yml
+kor
+images
+
