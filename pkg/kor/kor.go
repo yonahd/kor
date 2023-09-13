@@ -39,11 +39,6 @@ func RemoveDuplicatesAndSort(slice []string) []string {
 	return uniqueSlice
 }
 
-func FileExists(filePath string) bool {
-	_, err := os.Stat(filePath)
-	return !os.IsNotExist(err)
-}
-
 func GetKubeConfigPath() string {
 	home := homedir.HomeDir()
 	return filepath.Join(home, ".kube", "config")
