@@ -12,12 +12,12 @@ import (
 )
 
 func TestExtractUnusedHpas(t *testing.T) {
-	// Create a fake Kubernetes client for testing
 	clientset := fake.NewSimpleClientset()
 	deploymentName := "test-deployment"
+	appLabels := map[string]string{}
 
 	// Create a Deployment without replicas for testing
-	deployment1 := CreateTestDeployment("test-namespace", deploymentName, 1)
+	deployment1 := CreateTestDeployment("test-namespace", deploymentName, 1, appLabels)
 	hpa1 := CreateTestHpa("test-namespace", "test-hpa1", deploymentName, 1, 1)
 
 	hpa2 := CreateTestHpa("test-namespace", "test-hpa2", "non-existing-deployment", 1, 1)

@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func processNamespacePdbs(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func processNamespacePdbs(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	var unusedPdbs []string
 	pdbs, err := clientset.PolicyV1().PodDisruptionBudgets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -21,6 +21,10 @@ func processNamespacePdbs(clientset *kubernetes.Clientset, namespace string) ([]
 
 	for _, pdb := range pdbs.Items {
 		selector := pdb.Spec.Selector
+		if len(selector.MatchLabels) == 0 {
+			unusedPdbs = append(unusedPdbs, pdb.Name)
+			continue
+		}
 		deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: metav1.FormatLabelSelector(selector),
 		})

@@ -14,10 +14,10 @@ import (
 func TestProcessNamespaceDeployments(t *testing.T) {
 	// Create a fake Kubernetes client for testing
 	clientset := fake.NewSimpleClientset()
-
+	appLabels := map[string]string{}
 	// Create a Deployment without replicas for testing
-	deployment1 := CreateTestDeployment("test-namespace", "test-deployment1", 0)
-	deployment2 := CreateTestDeployment("test-namespace", "test-deployment2", 1)
+	deployment1 := CreateTestDeployment("test-namespace", "test-deployment1", 0, appLabels)
+	deployment2 := CreateTestDeployment("test-namespace", "test-deployment2", 1, appLabels)
 	_, err := clientset.AppsV1().Deployments("test-namespace").Create(context.TODO(), deployment1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake deployment: %v", err)

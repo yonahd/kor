@@ -5,17 +5,19 @@ import (
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	policyv1 "k8s.io/api/policy/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var testNamespace = "test-namespace"
 
-func CreateTestDeployment(namespace, name string, replicas int32) *appsv1.Deployment {
+func CreateTestDeployment(namespace, name string, replicas int32, labels map[string]string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
+			Labels:    labels,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
@@ -23,11 +25,12 @@ func CreateTestDeployment(namespace, name string, replicas int32) *appsv1.Deploy
 	}
 }
 
-func CreateTestStatefulSet(namespace, name string, replicas int32) *appsv1.StatefulSet {
+func CreateTestStatefulSet(namespace, name string, replicas int32, labels map[string]string) *appsv1.StatefulSet {
 	return &appsv1.StatefulSet{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
+			Labels:    labels,
 		},
 		Spec: appsv1.StatefulSetSpec{
 			Replicas: &replicas,
@@ -205,6 +208,21 @@ func CreateTestPvc(namespace, name string) *corev1.PersistentVolumeClaim {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
+		},
+	}
+}
+
+func CreateTestPdb(namespace, name string, matchLabels map[string]string) *policyv1.PodDisruptionBudget {
+	return &policyv1.PodDisruptionBudget{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+		Spec: policyv1.PodDisruptionBudgetSpec{
+			MinAvailable: nil,
+			Selector: &v1.LabelSelector{
+				MatchLabels: matchLabels,
+			},
 		},
 	}
 }
