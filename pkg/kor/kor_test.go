@@ -125,7 +125,7 @@ func TestGetKubeClientFromInput(t *testing.T) {
 		os.Setenv("KUBERNETES_SERVICE_PORT", oldKubeServicePort)
 	}()
 
-	kcs := GetKubeClient("")
+	kcs := GetKubeClient(configFile.Name())
 	if kcs == nil {
 		t.Errorf("Expected valid clientSet")
 	}
