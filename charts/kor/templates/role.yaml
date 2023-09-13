@@ -17,6 +17,8 @@ rules:
       - statefulsets
       - roles
       - rolebindings
+      - clusterroles
+      - clusterrolebindings
       - horizontalpodautoscalers
       - persistentvolumeclaims
       - ingresses
@@ -44,6 +46,8 @@ rules:
       - statefulsets
       - roles
       - rolebindings
+      - clusterroles
+      - clusterrolebindings
       - horizontalpodautoscalers
       - persistentvolumeclaims
       - ingresses
