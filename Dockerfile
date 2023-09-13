@@ -7,6 +7,6 @@ RUN go build .
 
 FROM alpine:3.18
 
-COPY --from=builder /build/kor /kor
-ENTRYPOINT [ "/kor" ]
+COPY --from=builder /build/kor /usr/bin/kor
+ENTRYPOINT [ "/usr/bin/kor" ]
 CMD ["--help"]
