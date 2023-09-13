@@ -73,7 +73,12 @@ func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 			}
 			return clientset
 		} else {
+			if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
+				kubeconfig = configEnv
+			}
+
 			config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
 				os.Exit(1)
