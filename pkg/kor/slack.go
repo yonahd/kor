@@ -35,8 +35,13 @@ func SendFileToSlack(filePath string, initialComment string, channels string, to
 		return err
 	}
 
-	writer.WriteField("initial_comment", initialComment)
-	writer.WriteField("channels", channels)
+	if err := writer.WriteField("initial_comment", initialComment); err != nil {
+		return err
+	}
+
+	if err := writer.WriteField("channels", channels); err != nil {
+		return err
+	}
 
 	writer.Close()
 
