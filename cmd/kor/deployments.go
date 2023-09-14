@@ -13,14 +13,15 @@ var deployCmd = &cobra.Command{
 	Short:   "Gets unused deployments",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
+		clientset := kor.GetKubeClient(kubeconfig)
 		if outputFormat == "json" || outputFormat == "yaml" {
-			if response, err := kor.GetUnusedDeploymentsStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
+			if response, err := kor.GetUnusedDeploymentsStructured(includeExcludeLists, clientset, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedDeployments(includeExcludeLists, kubeconfig)
+			kor.GetUnusedDeployments(includeExcludeLists, clientset)
 		}
 
 	},

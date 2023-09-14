@@ -139,16 +139,11 @@ func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) ([]s
 
 }
 
-func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceSA(kubeClient, namespace)
+		diff, err := processNamespaceSA(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -159,16 +154,12 @@ func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, kubeconfi
 	}
 }
 
-func GetUnusedServiceAccountsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-
-	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedServiceAccountsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceSA(kubeClient, namespace)
+		diff, err := processNamespaceSA(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

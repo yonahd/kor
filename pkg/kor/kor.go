@@ -12,6 +12,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
@@ -43,9 +44,21 @@ func GetKubeConfigPath() string {
 	return filepath.Join(home, ".kube", "config")
 }
 
-// GetKubeClient selects kubeconfig path and returns kubeClient
-// kubeconfig path selection priority: 1) user supplied kubeconfig, 2) KUBECONFIG envvar, 3) default kubeconfig
 func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
+	if _, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount/token"); err == nil {
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
+			os.Exit(1)
+		}
+
+		clientset, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+			os.Exit(1)
+		}
+		return clientset
+	}
 	if kubeconfig == "" {
 		if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
 			kubeconfig = configEnv

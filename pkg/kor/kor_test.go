@@ -115,6 +115,16 @@ func TestGetKubeClientFromInput(t *testing.T) {
 		t.Error(err)
 	}
 
+	oldKubeServiceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
+	oldKubeServicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
+	os.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.1")
+	os.Setenv("KUBERNETES_SERVICE_PORT", "443")
+
+	defer func() {
+		os.Setenv("KUBERNETES_SERVICE_HOST", oldKubeServiceHost)
+		os.Setenv("KUBERNETES_SERVICE_PORT", oldKubeServicePort)
+	}()
+
 	kcs := GetKubeClient(configFile.Name())
 	if kcs == nil {
 		t.Errorf("Expected valid clientSet")
