@@ -120,9 +120,7 @@ func getUnusedPdbs(kubeClient *kubernetes.Clientset, namespace string) ResourceD
 }
 
 func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	for _, namespace := range namespaces {
 		var allDiffs []ResourceDiff
 		namespaceCMDiff := getUnusedCMs(clientset, namespace)
@@ -154,9 +152,7 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset *kubernetes
 }
 
 func GetUnusedAllSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackWebhookURL string) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
@@ -194,9 +190,7 @@ func GetUnusedAllSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, cli
 }
 
 func GetUnusedAllSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackChannel string, slackAuthToken string) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
@@ -236,9 +230,7 @@ func GetUnusedAllSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clie
 }
 
 func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	// Create the JSON response object
 	response := make(map[string]map[string][]string)

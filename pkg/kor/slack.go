@@ -60,7 +60,7 @@ func SendFileToSlack(filePath string, initialComment string, channels string, to
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Slack API returned non-OK status code: %d", resp.StatusCode)
+		return fmt.Errorf("slack api returned non-ok status code: %d", resp.StatusCode)
 	}
 
 	return nil
@@ -69,7 +69,7 @@ func SendFileToSlack(filePath string, initialComment string, channels string, to
 func writeOutputToFile(outputBuffer bytes.Buffer) (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", fmt.Errorf("Failed to get user's home directory: %v", err)
+		return "", fmt.Errorf("failed to get user's home directory: %v", err)
 	}
 
 	outputFileName := "output.txt"
@@ -77,13 +77,13 @@ func writeOutputToFile(outputBuffer bytes.Buffer) (string, error) {
 
 	file, err := os.Create(outputFilePath)
 	if err != nil {
-		return "", fmt.Errorf("Failed to create output file: %v", err)
+		return "", fmt.Errorf("failed to create output file: %v", err)
 	}
 	defer file.Close()
 
 	_, err = file.WriteString(outputBuffer.String())
 	if err != nil {
-		return "", fmt.Errorf("Failed to write output to file: %v", err)
+		return "", fmt.Errorf("failed to write output to file: %v", err)
 	}
 
 	return outputFilePath, nil

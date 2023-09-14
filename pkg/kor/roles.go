@@ -74,9 +74,7 @@ func processNamespaceRoles(kubeClient *kubernetes.Clientset, namespace string) (
 }
 
 func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceRoles(clientset, namespace)
@@ -91,9 +89,7 @@ func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset *kubernet
 }
 
 func GetUnusedRolesSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackWebhookURL string) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
@@ -115,9 +111,7 @@ func GetUnusedRolesSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, c
 }
 
 func GetUnusedRolesSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackChannel string, slackAuthToken string) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
@@ -141,9 +135,7 @@ func GetUnusedRolesSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, cl
 }
 
 func GetUnusedRolesStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

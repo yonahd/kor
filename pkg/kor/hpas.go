@@ -81,9 +81,7 @@ func processNamespaceHpas(clientset *kubernetes.Clientset, namespace string) ([]
 }
 
 func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceHpas(clientset, namespace)
@@ -99,9 +97,7 @@ func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset *kubernete
 }
 
 func GetUnusedHpasSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackWebhookURL string) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
@@ -123,9 +119,7 @@ func GetUnusedHpasSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, cl
 }
 
 func GetUnusedHpasSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackChannel string, slackAuthToken string) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
@@ -149,9 +143,7 @@ func GetUnusedHpasSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, cli
 }
 
 func GetUnusedHpasStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

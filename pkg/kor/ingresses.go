@@ -90,9 +90,7 @@ func processNamespaceIngresses(kubeClient *kubernetes.Clientset, namespace strin
 }
 
 func GetUnusedIngresses(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceIngresses(clientset, namespace)
@@ -107,9 +105,7 @@ func GetUnusedIngresses(includeExcludeLists IncludeExcludeLists, clientset *kube
 }
 
 func GetUnusedIngressesSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackWebhookURL string) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
@@ -131,9 +127,7 @@ func GetUnusedIngressesSendToSlackWebhook(includeExcludeLists IncludeExcludeList
 }
 
 func GetUnusedIngressesSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackChannel string, slackAuthToken string) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
@@ -157,9 +151,7 @@ func GetUnusedIngressesSendToSlackAsFile(includeExcludeLists IncludeExcludeLists
 }
 
 func GetUnusedIngressesStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

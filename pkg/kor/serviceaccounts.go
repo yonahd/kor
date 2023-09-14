@@ -141,9 +141,7 @@ func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) ([]s
 }
 
 func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceSA(clientset, namespace)
@@ -158,9 +156,7 @@ func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset
 }
 
 func GetUnusedServiceAccountsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackWebhookURL string) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
@@ -182,9 +178,7 @@ func GetUnusedServiceAccountsSendToSlackWebhook(includeExcludeLists IncludeExclu
 }
 
 func GetUnusedServiceAccountsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackChannel string, slackAuthToken string) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
@@ -208,9 +202,7 @@ func GetUnusedServiceAccountsSendToSlackAsFile(includeExcludeLists IncludeExclud
 }
 
 func GetUnusedServiceAccountsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

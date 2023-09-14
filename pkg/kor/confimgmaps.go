@@ -132,9 +132,7 @@ func processNamespaceCM(kubeClient *kubernetes.Clientset, namespace string) ([]s
 }
 
 func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceCM(clientset, namespace)
@@ -149,9 +147,7 @@ func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset *kub
 }
 
 func GetUnusedConfigmapsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackWebhookURL string) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
@@ -173,9 +169,7 @@ func GetUnusedConfigmapsSendToSlackWebhook(includeExcludeLists IncludeExcludeLis
 }
 
 func GetUnusedConfigmapsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackChannel string, slackAuthToken string) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
@@ -199,9 +193,7 @@ func GetUnusedConfigmapsSendToSlackAsFile(includeExcludeLists IncludeExcludeList
 }
 
 func GetUnusedConfigmapsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
