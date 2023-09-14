@@ -12,18 +12,19 @@ var allCmd = &cobra.Command{
 	Short: "Gets unused resources",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
+		clientset := kor.GetKubeClient(kubeconfig)
 		if outputFormat == "json" || outputFormat == "yaml" {
-			if response, err := kor.GetUnusedAllStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
+			if response, err := kor.GetUnusedAllStructured(includeExcludeLists, clientset, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(response)
 			}
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedAllSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+			kor.GetUnusedAllSendToSlackWebhook(includeExcludeLists, clientset, slackWebhookURL)
 		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedAllSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
+			kor.GetUnusedAllSendToSlackAsFile(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedAll(includeExcludeLists, kubeconfig)
+			kor.GetUnusedAll(includeExcludeLists, clientset)
 		}
 
 	},

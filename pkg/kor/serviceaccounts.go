@@ -140,16 +140,13 @@ func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) ([]s
 
 }
 
-func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
-	var kubeClient *kubernetes.Clientset
+func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
 	var namespaces []string
 
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceSA(kubeClient, namespace)
+		diff, err := processNamespaceSA(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -160,18 +157,15 @@ func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, kubeconfi
 	}
 }
 
-func GetUnusedServiceAccountsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
-	var kubeClient *kubernetes.Clientset
+func GetUnusedServiceAccountsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackWebhookURL string) {
 	var namespaces []string
 
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceSA(kubeClient, namespace)
+		diff, err := processNamespaceSA(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -187,18 +181,15 @@ func GetUnusedServiceAccountsSendToSlackWebhook(includeExcludeLists IncludeExclu
 	}
 }
 
-func GetUnusedServiceAccountsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
-	var kubeClient *kubernetes.Clientset
+func GetUnusedServiceAccountsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackChannel string, slackAuthToken string) {
 	var namespaces []string
 
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceSA(kubeClient, namespace)
+		diff, err := processNamespaceSA(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -216,16 +207,14 @@ func GetUnusedServiceAccountsSendToSlackAsFile(includeExcludeLists IncludeExclud
 	}
 }
 
-func GetUnusedServiceAccountsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
-	var kubeClient *kubernetes.Clientset
+func GetUnusedServiceAccountsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
 	var namespaces []string
 
-	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceSA(kubeClient, namespace)
+		diff, err := processNamespaceSA(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

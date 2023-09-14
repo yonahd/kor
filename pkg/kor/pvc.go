@@ -54,16 +54,13 @@ func processNamespacePvcs(kubeClient *kubernetes.Clientset, namespace string) ([
 	return diff, nil
 }
 
-func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
-	var kubeClient *kubernetes.Clientset
+func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
 	var namespaces []string
 
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespacePvcs(kubeClient, namespace)
+		diff, err := processNamespacePvcs(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -75,18 +72,15 @@ func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 
 }
 
-func GetUnusedPvcsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackWebhookURL string) {
-	var kubeClient *kubernetes.Clientset
+func GetUnusedPvcsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackWebhookURL string) {
 	var namespaces []string
 
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespacePvcs(kubeClient, namespace)
+		diff, err := processNamespacePvcs(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -102,18 +96,15 @@ func GetUnusedPvcsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, ku
 	}
 }
 
-func GetUnusedPvcsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kubeconfig string, slackChannel string, slackAuthToken string) {
-	var kubeClient *kubernetes.Clientset
+func GetUnusedPvcsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackChannel string, slackAuthToken string) {
 	var namespaces []string
 
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespacePvcs(kubeClient, namespace)
+		diff, err := processNamespacePvcs(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -131,17 +122,14 @@ func GetUnusedPvcsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, kub
 	}
 }
 
-func GetUnusedPvcsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
-	var kubeClient *kubernetes.Clientset
+func GetUnusedPvcsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
 	var namespaces []string
 
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespacePvcs(kubeClient, namespace)
+		diff, err := processNamespacePvcs(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

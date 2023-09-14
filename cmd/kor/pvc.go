@@ -13,18 +13,19 @@ var pvcCmd = &cobra.Command{
 	Short:   "Gets unused pvcs",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
+		clientset := kor.GetKubeClient(kubeconfig)
 		if outputFormat == "json" || outputFormat == "yaml" {
-			if response, err := kor.GetUnusedPvcsStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
+			if response, err := kor.GetUnusedPvcsStructured(includeExcludeLists, clientset, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(response)
 			}
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedPvcsSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+			kor.GetUnusedPvcsSendToSlackWebhook(includeExcludeLists, clientset, slackWebhookURL)
 		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedPvcsSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
+			kor.GetUnusedPvcsSendToSlackAsFile(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedPvcs(includeExcludeLists, kubeconfig)
+			kor.GetUnusedPvcs(includeExcludeLists, clientset)
 		}
 	},
 }

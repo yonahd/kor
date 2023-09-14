@@ -13,18 +13,19 @@ var pdbCmd = &cobra.Command{
 	Short:   "Gets unused pdbs",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
+		clientset := kor.GetKubeClient(kubeconfig)
 		if outputFormat == "json" || outputFormat == "yaml" {
-			if response, err := kor.GetUnusedPdbsStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
+			if response, err := kor.GetUnusedPdbsStructured(includeExcludeLists, clientset, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(response)
 			}
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedPdbsSendToSlackWebhook(includeExcludeLists, kubeconfig, slackWebhookURL)
+			kor.GetUnusedPdbsSendToSlackWebhook(includeExcludeLists, clientset, slackWebhookURL)
 		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedPdbsSendToSlackAsFile(includeExcludeLists, kubeconfig, slackChannel, slackAuthToken)
+			kor.GetUnusedPdbsSendToSlackAsFile(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedPdbs(includeExcludeLists, kubeconfig)
+			kor.GetUnusedPdbs(includeExcludeLists, clientset)
 		}
 
 	},
