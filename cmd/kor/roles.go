@@ -13,14 +13,15 @@ var roleCmd = &cobra.Command{
 	Short:   "Gets unused roles",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
+		clientset := kor.GetKubeClient(kubeconfig)
 		if outputFormat == "json" || outputFormat == "yaml" {
-			if response, err := kor.GetUnusedRolesStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
+			if response, err := kor.GetUnusedRolesStructured(includeExcludeLists, clientset, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedRoles(includeExcludeLists, kubeconfig)
+			kor.GetUnusedRoles(includeExcludeLists, clientset)
 		}
 
 	},
