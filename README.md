@@ -9,7 +9,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - Services
 - ServiceAccounts
 - Deployments
-- Statefulsets
+- StatefulSets
 - Roles
 - Hpas
 - Pvcs
@@ -74,29 +74,35 @@ kor [subcommand] --help
 | Services        | Services with no endpoints                                                                                                                                                                                                         |                                                                                                                              |
 | Deployments     | Deployments with 0 Replicas                                                                                                                                                                                                        |                                                                                                                              |
 | ServiceAccounts | ServiceAccounts unused by pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                     |                                                                                                                              |
-| Statefulsets    | Statefulsets with 0 Replicas                                                                                                                                                                                                       |                                                                                                                              |
+| StatefulSets    | Statefulsets with 0 Replicas                                                                                                                                                                                                       |                                                                                                                              |
 | Roles           | Roles not used in roleBinding                                                                                                                                                                                                      |                                                                                                                              |
 | Pvcs            | Pvcs not used in pods                                                                                                                                                                                                              |                                                                                                                              |
 | Ingresses       | Ingresses not pointing at any service.                                                                                                                                                                                             |                                                                                                                              |
-| Hpas            | Hpas not used in Deployments   <br/>    Hpas not used in Statefulsets                                                                                                                                                              |                                                                                                                              |
-| Pdbs            | Pdbs not used in Deployments   <br/>    Pdbs not used in Statefulsets                                                                                                                                                              |                                                                                                                              |
+| Hpas            | Hpas not used in Deployments   <br/>    Hpas not used in StatefulSets                                                                                                                                                              |                                                                                                                              |
+| Pdbs            | Pdbs not used in Deployments   <br/>    Pdbs not used in StatefulSets                                                                                                                                                              |                                                                                                                              |
 
 
+## Ignore Resources
+The resources labeled with "kor/used = true" will be ignored by kor even if they are unused. You can add this label to resources you want to ignore.
 
 ## Import Option
 You can also use kor as a Go library to programmatically discover unused resources. By importing the github.com/yonahd/kor/pkg/kor package, you can call the relevant functions to retrieve unused resources. The library provides the option to get the results in JSON format by specifying the outputFormat parameter.
 
 ```go
 import (
-"github.com/yonahd/kor/pkg/kor"
+    "github.com/yonahd/kor/pkg/kor"
 )
 
+
+
 func main() {
-namespace := "my-namespace"
-outputFormat := "json" // Set to "json" for JSON output
+    myNamespaces := kor.IncludeExcludeLists{
+        IncludeListStr: "my-namespace1, my-namespace2",
+    }
+    outputFormat := "json" // Set to "json" for JSON output
 
     if outputFormat == "json" {
-        jsonResponse, err := kor.GetUnusedDeploymentsJSON(namespace, kubeconfig)
+        jsonResponse, err := kor.GetUnusedDeploymentsStructured(myNamespaces, kubeconfig, "json")
         if err != nil {
             // Handle error
         }

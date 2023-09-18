@@ -9,20 +9,20 @@ import (
 
 var ingressCmd = &cobra.Command{
 	Use:     "ingress",
-	Aliases: []string{"ing"},
+	Aliases: []string{"ing", "ingresses"},
 	Short:   "Gets unused ingresses",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
+		clientset := kor.GetKubeClient(kubeconfig)
 		if outputFormat == "json" || outputFormat == "yaml" {
-			if response, err := kor.GetUnusedIngressesStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
+			if response, err := kor.GetUnusedIngressesStructured(includeExcludeLists, clientset, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedIngresses(includeExcludeLists, kubeconfig)
+			kor.GetUnusedIngresses(includeExcludeLists, clientset)
 		}
-
 	},
 }
 

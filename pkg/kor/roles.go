@@ -45,6 +45,10 @@ func retrieveRoleNames(kubeClient *kubernetes.Clientset, namespace string) ([]st
 	}
 	names := make([]string, 0, len(roles.Items))
 	for _, role := range roles.Items {
+		if role.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		names = append(names, role.Name)
 	}
 	return names, nil
@@ -68,15 +72,11 @@ func processNamespaceRoles(kubeClient *kubernetes.Clientset, namespace string) (
 
 }
 
-func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-
-	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceRoles(kubeClient, namespace)
+		diff, err := processNamespaceRoles(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -87,16 +87,12 @@ func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, kubeconfig string) 
 	}
 }
 
-func GetUnusedRolesStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-
-	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedRolesStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceRoles(kubeClient, namespace)
+		diff, err := processNamespaceRoles(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
