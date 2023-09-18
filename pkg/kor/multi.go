@@ -9,42 +9,42 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func retrieveNamespaceDiffs(kubeClient *kubernetes.Clientset, namespace string, resourceList []string) []ResourceDiff {
+func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string) []ResourceDiff {
 	var allDiffs []ResourceDiff
 	for _, resource := range resourceList {
 		switch resource {
 		case "cm", "configmap", "configmaps":
-			namespaceCMDiff := getUnusedCMs(kubeClient, namespace)
+			namespaceCMDiff := getUnusedCMs(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceCMDiff)
 		case "svc", "service", "services":
-			namespaceSVCDiff := getUnusedSVCs(kubeClient, namespace)
+			namespaceSVCDiff := getUnusedSVCs(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceSVCDiff)
 		case "scrt", "secret", "secrets":
-			namespaceSecretDiff := getUnusedSecrets(kubeClient, namespace)
+			namespaceSecretDiff := getUnusedSecrets(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceSecretDiff)
 		case "sa", "serviceaccount", "serviceaccounts":
-			namespaceSADiff := getUnusedServiceAccounts(kubeClient, namespace)
+			namespaceSADiff := getUnusedServiceAccounts(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceSADiff)
 		case "deploy", "deployment", "deployments":
-			namespaceDeploymentDiff := getUnusedDeployments(kubeClient, namespace)
+			namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceDeploymentDiff)
 		case "sts", "statefulset", "statefulsets":
-			namespaceStatefulsetDiff := getUnusedStatefulSets(kubeClient, namespace)
+			namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceStatefulsetDiff)
 		case "role", "roles":
-			namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
+			namespaceRoleDiff := getUnusedRoles(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceRoleDiff)
 		case "hpa", "horizontalpodautoscaler", "horizontalpodautoscalers":
-			namespaceHpaDiff := getUnusedHpas(kubeClient, namespace)
+			namespaceHpaDiff := getUnusedHpas(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceHpaDiff)
 		case "pvc", "persistentvolumeclaim", "persistentvolumeclaims":
-			namespacePvcDiff := getUnusedPvcs(kubeClient, namespace)
+			namespacePvcDiff := getUnusedPvcs(clientset, namespace)
 			allDiffs = append(allDiffs, namespacePvcDiff)
 		case "ing", "ingress", "ingresses":
-			namespaceIngressDiff := getUnusedIngresses(kubeClient, namespace)
+			namespaceIngressDiff := getUnusedIngresses(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceIngressDiff)
 		case "pdb", "poddisruptionbudget", "poddisruptionbudgets":
-			namespacePdbDiff := getUnusedPdbs(kubeClient, namespace)
+			namespacePdbDiff := getUnusedPdbs(clientset, namespace)
 			allDiffs = append(allDiffs, namespacePdbDiff)
 		default:
 			fmt.Printf("resource type %q is not supported\n", resource)
@@ -54,16 +54,16 @@ func retrieveNamespaceDiffs(kubeClient *kubernetes.Clientset, namespace string, 
 }
 
 func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, kubeconfig, resourceNames string) {
-	var kubeClient *kubernetes.Clientset
+	var clientset kubernetes.Interface
 	var namespaces []string
 
-	kubeClient = GetKubeClient(kubeconfig)
+	clientset = GetKubeClient(kubeconfig)
 
 	resourceList := strings.Split(resourceNames, ",")
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
-		allDiffs := retrieveNamespaceDiffs(kubeClient, namespace, resourceList)
+		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList)
 		output := FormatOutputAll(namespace, allDiffs)
 		fmt.Println(output)
 		fmt.Println()
@@ -71,19 +71,19 @@ func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, kubeconfig, resourc
 }
 
 func GetUnusedMultiStructured(includeExcludeLists IncludeExcludeLists, kubeconfig, outputFormat, resourceNames string) (string, error) {
-	var kubeClient *kubernetes.Clientset
+	var clientset kubernetes.Interface
 	var namespaces []string
 
-	kubeClient = GetKubeClient(kubeconfig)
+	clientset = GetKubeClient(kubeconfig)
 
 	resourceList := strings.Split(resourceNames, ",")
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, clientset)
 
 	// Create the JSON response object
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		allDiffs := retrieveNamespaceDiffs(kubeClient, namespace, resourceList)
+		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList)
 		// Store the unused resources for each resource type in the JSON response
 		resourceMap := make(map[string][]string)
 		for _, diff := range allDiffs {

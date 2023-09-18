@@ -19,8 +19,8 @@ type ResourceDiff struct {
 	diff         []string
 }
 
-func getUnusedCMs(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
-	cmDiff, err := processNamespaceCM(kubeClient, namespace)
+func getUnusedCMs(clientset kubernetes.Interface, namespace string) ResourceDiff {
+	cmDiff, err := processNamespaceCM(clientset, namespace)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "configmaps", namespace, err)
 	}
@@ -28,8 +28,8 @@ func getUnusedCMs(kubeClient *kubernetes.Clientset, namespace string) ResourceDi
 	return namespaceCMDiff
 }
 
-func getUnusedSVCs(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
-	svcDiff, err := ProcessNamespaceServices(kubeClient, namespace)
+func getUnusedSVCs(clientset kubernetes.Interface, namespace string) ResourceDiff {
+	svcDiff, err := ProcessNamespaceServices(clientset, namespace)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "services", namespace, err)
 	}
@@ -37,8 +37,8 @@ func getUnusedSVCs(kubeClient *kubernetes.Clientset, namespace string) ResourceD
 	return namespaceSVCDiff
 }
 
-func getUnusedSecrets(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
-	secretDiff, err := processNamespaceSecret(kubeClient, namespace)
+func getUnusedSecrets(clientset kubernetes.Interface, namespace string) ResourceDiff {
+	secretDiff, err := processNamespaceSecret(clientset, namespace)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "secrets", namespace, err)
 	}
@@ -46,8 +46,8 @@ func getUnusedSecrets(kubeClient *kubernetes.Clientset, namespace string) Resour
 	return namespaceSecretDiff
 }
 
-func getUnusedServiceAccounts(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
-	saDiff, err := processNamespaceSA(kubeClient, namespace)
+func getUnusedServiceAccounts(clientset kubernetes.Interface, namespace string) ResourceDiff {
+	saDiff, err := processNamespaceSA(clientset, namespace)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "serviceaccounts", namespace, err)
 	}
@@ -55,8 +55,8 @@ func getUnusedServiceAccounts(kubeClient *kubernetes.Clientset, namespace string
 	return namespaceSADiff
 }
 
-func getUnusedDeployments(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
-	deployDiff, err := ProcessNamespaceDeployments(kubeClient, namespace)
+func getUnusedDeployments(clientset kubernetes.Interface, namespace string) ResourceDiff {
+	deployDiff, err := ProcessNamespaceDeployments(clientset, namespace)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "deployments", namespace, err)
 	}
@@ -64,8 +64,8 @@ func getUnusedDeployments(kubeClient *kubernetes.Clientset, namespace string) Re
 	return namespaceSADiff
 }
 
-func getUnusedStatefulSets(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
-	stsDiff, err := ProcessNamespaceStatefulSets(kubeClient, namespace)
+func getUnusedStatefulSets(clientset kubernetes.Interface, namespace string) ResourceDiff {
+	stsDiff, err := ProcessNamespaceStatefulSets(clientset, namespace)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "statefulSets", namespace, err)
 	}
@@ -73,8 +73,8 @@ func getUnusedStatefulSets(kubeClient *kubernetes.Clientset, namespace string) R
 	return namespaceSADiff
 }
 
-func getUnusedRoles(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
-	roleDiff, err := processNamespaceRoles(kubeClient, namespace)
+func getUnusedRoles(clientset kubernetes.Interface, namespace string) ResourceDiff {
+	roleDiff, err := processNamespaceRoles(clientset, namespace)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "roles", namespace, err)
 	}
@@ -82,8 +82,8 @@ func getUnusedRoles(kubeClient *kubernetes.Clientset, namespace string) Resource
 	return namespaceSADiff
 }
 
-func getUnusedHpas(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
-	hpaDiff, err := processNamespaceHpas(kubeClient, namespace)
+func getUnusedHpas(clientset kubernetes.Interface, namespace string) ResourceDiff {
+	hpaDiff, err := processNamespaceHpas(clientset, namespace)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "hpas", namespace, err)
 	}
@@ -91,8 +91,8 @@ func getUnusedHpas(kubeClient *kubernetes.Clientset, namespace string) ResourceD
 	return namespaceHpaDiff
 }
 
-func getUnusedPvcs(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
-	pvcDiff, err := processNamespacePvcs(kubeClient, namespace)
+func getUnusedPvcs(clientset kubernetes.Interface, namespace string) ResourceDiff {
+	pvcDiff, err := processNamespacePvcs(clientset, namespace)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pvcs", namespace, err)
 	}
@@ -100,8 +100,8 @@ func getUnusedPvcs(kubeClient *kubernetes.Clientset, namespace string) ResourceD
 	return namespacePvcDiff
 }
 
-func getUnusedIngresses(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
-	ingressDiff, err := processNamespaceIngresses(kubeClient, namespace)
+func getUnusedIngresses(clientset kubernetes.Interface, namespace string) ResourceDiff {
+	ingressDiff, err := processNamespaceIngresses(clientset, namespace)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "ingresses", namespace, err)
 	}
@@ -109,8 +109,8 @@ func getUnusedIngresses(kubeClient *kubernetes.Clientset, namespace string) Reso
 	return namespaceIngressDiff
 }
 
-func getUnusedPdbs(kubeClient *kubernetes.Clientset, namespace string) ResourceDiff {
-	pdbDiff, err := processNamespacePdbs(kubeClient, namespace)
+func getUnusedPdbs(clientset kubernetes.Interface, namespace string) ResourceDiff {
+	pdbDiff, err := processNamespacePdbs(clientset, namespace)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pdbs", namespace, err)
 	}
@@ -173,7 +173,7 @@ func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, clientset *
 
 		namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceDeploymentDiff)
-		
+
 		namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
 
