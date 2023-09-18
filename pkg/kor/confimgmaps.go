@@ -90,6 +90,10 @@ func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string) ([
 	}
 	names := make([]string, 0, len(configmaps.Items))
 	for _, configmap := range configmaps.Items {
+		if configmap.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		names = append(names, configmap.Name)
 	}
 	return names, nil
@@ -124,16 +128,11 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceCM(kubeClient, namespace)
+		diff, err := processNamespaceCM(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -144,16 +143,12 @@ func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, kubeconfig str
 	}
 }
 
-func GetUnusedConfigmapsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedConfigmapsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceCM(kubeClient, namespace)
+		diff, err := processNamespaceCM(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

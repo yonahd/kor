@@ -13,39 +13,41 @@ func retrieveNamespaceDiffs(kubeClient *kubernetes.Clientset, namespace string, 
 	var allDiffs []ResourceDiff
 	for _, resource := range resourceList {
 		switch resource {
-		case "cm", "configmap":
+		case "cm", "configmap", "configmaps":
 			namespaceCMDiff := getUnusedCMs(kubeClient, namespace)
 			allDiffs = append(allDiffs, namespaceCMDiff)
 		case "svc", "service", "services":
 			namespaceSVCDiff := getUnusedSVCs(kubeClient, namespace)
 			allDiffs = append(allDiffs, namespaceSVCDiff)
-		case "scrt", "secret":
+		case "scrt", "secret", "secrets":
 			namespaceSecretDiff := getUnusedSecrets(kubeClient, namespace)
 			allDiffs = append(allDiffs, namespaceSecretDiff)
-		case "sa", "serviceaccount":
+		case "sa", "serviceaccount", "serviceaccounts":
 			namespaceSADiff := getUnusedServiceAccounts(kubeClient, namespace)
 			allDiffs = append(allDiffs, namespaceSADiff)
-		case "deploy", "deployments":
+		case "deploy", "deployment", "deployments":
 			namespaceDeploymentDiff := getUnusedDeployments(kubeClient, namespace)
 			allDiffs = append(allDiffs, namespaceDeploymentDiff)
-		case "sts", "statefulsets":
+		case "sts", "statefulset", "statefulsets":
 			namespaceStatefulsetDiff := getUnusedStatefulSets(kubeClient, namespace)
 			allDiffs = append(allDiffs, namespaceStatefulsetDiff)
-		case "role":
+		case "role", "roles":
 			namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
 			allDiffs = append(allDiffs, namespaceRoleDiff)
-		case "hpa":
+		case "hpa", "horizontalpodautoscaler", "horizontalpodautoscalers":
 			namespaceHpaDiff := getUnusedHpas(kubeClient, namespace)
 			allDiffs = append(allDiffs, namespaceHpaDiff)
-		case "pvc":
+		case "pvc", "persistentvolumeclaim", "persistentvolumeclaims":
 			namespacePvcDiff := getUnusedPvcs(kubeClient, namespace)
 			allDiffs = append(allDiffs, namespacePvcDiff)
-		case "ing", "ingress":
+		case "ing", "ingress", "ingresses":
 			namespaceIngressDiff := getUnusedIngresses(kubeClient, namespace)
 			allDiffs = append(allDiffs, namespaceIngressDiff)
-		case "pdb":
+		case "pdb", "poddisruptionbudget", "poddisruptionbudgets":
 			namespacePdbDiff := getUnusedPdbs(kubeClient, namespace)
 			allDiffs = append(allDiffs, namespacePdbDiff)
+		default:
+			fmt.Printf("resource type %q is not supported\n", resource)
 		}
 	}
 	return allDiffs

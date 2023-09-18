@@ -118,36 +118,31 @@ func getUnusedPdbs(kubeClient *kubernetes.Clientset, namespace string) ResourceD
 	return namespacePdbDiff
 }
 
-func GetUnusedAll(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	for _, namespace := range namespaces {
 		var allDiffs []ResourceDiff
-		namespaceCMDiff := getUnusedCMs(kubeClient, namespace)
+		namespaceCMDiff := getUnusedCMs(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceCMDiff)
-		namespaceSVCDiff := getUnusedSVCs(kubeClient, namespace)
+		namespaceSVCDiff := getUnusedSVCs(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceSVCDiff)
-		namespaceSecretDiff := getUnusedSecrets(kubeClient, namespace)
+		namespaceSecretDiff := getUnusedSecrets(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceSecretDiff)
-		namespaceSADiff := getUnusedServiceAccounts(kubeClient, namespace)
+		namespaceSADiff := getUnusedServiceAccounts(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceSADiff)
-		namespaceDeploymentDiff := getUnusedDeployments(kubeClient, namespace)
+		namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceDeploymentDiff)
-		namespaceStatefulsetDiff := getUnusedStatefulSets(kubeClient, namespace)
+		namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
-		namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
+		namespaceRoleDiff := getUnusedRoles(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceRoleDiff)
-		namespaceHpaDiff := getUnusedHpas(kubeClient, namespace)
+		namespaceHpaDiff := getUnusedHpas(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceHpaDiff)
-		namespacePvcDiff := getUnusedPvcs(kubeClient, namespace)
+		namespacePvcDiff := getUnusedPvcs(clientset, namespace)
 		allDiffs = append(allDiffs, namespacePvcDiff)
-		namespaceIngressDiff := getUnusedIngresses(kubeClient, namespace)
+		namespaceIngressDiff := getUnusedIngresses(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceIngressDiff)
-		namespacePdbDiff := getUnusedPdbs(kubeClient, namespace)
+		namespacePdbDiff := getUnusedPdbs(clientset, namespace)
 		allDiffs = append(allDiffs, namespacePdbDiff)
 		output := FormatOutputAll(namespace, allDiffs)
 		fmt.Println(output)
@@ -155,13 +150,8 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 	}
 }
 
-func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	// Create the JSON response object
 	response := make(map[string]map[string][]string)
@@ -169,37 +159,37 @@ func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, kubeconfig 
 	for _, namespace := range namespaces {
 		var allDiffs []ResourceDiff
 
-		namespaceCMDiff := getUnusedCMs(kubeClient, namespace)
+		namespaceCMDiff := getUnusedCMs(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceCMDiff)
 
-		namespaceSVCDiff := getUnusedSVCs(kubeClient, namespace)
+		namespaceSVCDiff := getUnusedSVCs(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceSVCDiff)
 
-		namespaceSecretDiff := getUnusedSecrets(kubeClient, namespace)
+		namespaceSecretDiff := getUnusedSecrets(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceSecretDiff)
 
-		namespaceSADiff := getUnusedServiceAccounts(kubeClient, namespace)
+		namespaceSADiff := getUnusedServiceAccounts(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceSADiff)
 
-		namespaceDeploymentDiff := getUnusedDeployments(kubeClient, namespace)
+		namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceDeploymentDiff)
-
-		namespaceStatefulsetDiff := getUnusedStatefulSets(kubeClient, namespace)
+		
+		namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
 
-		namespaceRoleDiff := getUnusedRoles(kubeClient, namespace)
+		namespaceRoleDiff := getUnusedRoles(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceRoleDiff)
 
-		namespaceHpaDiff := getUnusedHpas(kubeClient, namespace)
+		namespaceHpaDiff := getUnusedHpas(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceHpaDiff)
 
-		namespacePvcDiff := getUnusedPvcs(kubeClient, namespace)
+		namespacePvcDiff := getUnusedPvcs(clientset, namespace)
 		allDiffs = append(allDiffs, namespacePvcDiff)
 
-		namespaceIngressDiff := getUnusedIngresses(kubeClient, namespace)
+		namespaceIngressDiff := getUnusedIngresses(clientset, namespace)
 		allDiffs = append(allDiffs, namespaceIngressDiff)
 
-		namespacePdbDiff := getUnusedPdbs(kubeClient, namespace)
+		namespacePdbDiff := getUnusedPdbs(clientset, namespace)
 		allDiffs = append(allDiffs, namespacePdbDiff)
 
 		// Store the unused resources for each resource type in the JSON response

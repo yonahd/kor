@@ -20,6 +20,10 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string) ([]s
 	}
 
 	for _, pdb := range pdbs.Items {
+		if pdb.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		selector := pdb.Spec.Selector
 		if len(selector.MatchLabels) == 0 {
 			unusedPdbs = append(unusedPdbs, pdb.Name)
@@ -44,16 +48,11 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string) ([]s
 	return unusedPdbs, nil
 }
 
-func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespacePdbs(kubeClient, namespace)
+		diff, err := processNamespacePdbs(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -62,20 +61,14 @@ func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
 		fmt.Println(output)
 		fmt.Println()
 	}
-
 }
 
-func GetUnusedPdbsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedPdbsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespacePdbs(kubeClient, namespace)
+		diff, err := processNamespacePdbs(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

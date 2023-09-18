@@ -100,6 +100,10 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string) ([]st
 	}
 	names := make([]string, 0, len(secrets.Items))
 	for _, secret := range secrets.Items {
+		if secret.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		if !slices.Contains(exceptionSecretTypes, string(secret.Type)) {
 			names = append(names, secret.Name)
 		}
@@ -136,16 +140,11 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string) ([
 
 }
 
-func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceSecret(kubeClient, namespace)
+		diff, err := processNamespaceSecret(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -156,16 +155,12 @@ func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, kubeconfig string
 	}
 }
 
-func GetUnusedSecretsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-
-	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedSecretsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceSecret(kubeClient, namespace)
+		diff, err := processNamespaceSecret(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

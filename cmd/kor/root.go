@@ -12,7 +12,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "kor",
 	Short: "kor - a CLI to to discover unused Kubernetes resources",
-	Long: `kor is a CLI to to discover unused Kubernetes resources 
+	Long: `kor is a CLI to to discover unused Kubernetes resources
 	kor can currently discover unused configmaps and secrets`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -29,6 +29,8 @@ var rootCmd = &cobra.Command{
 			} else {
 				kor.GetUnusedMulti(includeExcludeLists, kubeconfig, resourceNames)
 			}
+		} else {
+			fmt.Printf("Subcommand %q was not found, try using 'kor --help' for available subcommands", args[0])
 		}
 	},
 }

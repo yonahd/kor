@@ -8,18 +8,20 @@ import (
 )
 
 var pvcCmd = &cobra.Command{
-	Use:   "pvc",
-	Short: "Gets unused pvcs",
-	Args:  cobra.NoArgs,
+	Use:     "persistentvolumeclaim",
+	Aliases: []string{"pvc", "persistentvolumeclaims"},
+	Short:   "Gets unused pvcs",
+	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
+		clientset := kor.GetKubeClient(kubeconfig)
 		if outputFormat == "json" || outputFormat == "yaml" {
-			if response, err := kor.GetUnusedPvcsStructured(includeExcludeLists, kubeconfig, outputFormat); err != nil {
+			if response, err := kor.GetUnusedPvcsStructured(includeExcludeLists, clientset, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedPvcs(includeExcludeLists, kubeconfig)
+			kor.GetUnusedPvcs(includeExcludeLists, clientset)
 		}
 	},
 }

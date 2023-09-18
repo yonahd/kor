@@ -20,6 +20,10 @@ func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string) 
 	var endpointsWithoutSubsets []string
 
 	for _, endpoints := range endpointsList.Items {
+		if endpoints.Labels["kor/used"] == "true" {
+			continue
+		}
+
 		if len(endpoints.Subsets) == 0 {
 			endpointsWithoutSubsets = append(endpointsWithoutSubsets, endpoints.Name)
 		}
@@ -28,16 +32,13 @@ func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string) 
 	return endpointsWithoutSubsets, nil
 }
 
-func GetUnusedServices(includeExcludeLists IncludeExcludeLists, kubeconfig string) {
-	var kubeClient *kubernetes.Clientset
+func GetUnusedServices(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
 	var namespaces []string
 
-	kubeClient = GetKubeClient(kubeconfig)
-
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+	namespaces = SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceServices(kubeClient, namespace)
+		diff, err := ProcessNamespaceServices(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -48,16 +49,12 @@ func GetUnusedServices(includeExcludeLists IncludeExcludeLists, kubeconfig strin
 	}
 }
 
-func GetUnusedServicesStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
-	var kubeClient *kubernetes.Clientset
-	var namespaces []string
-
-	kubeClient = GetKubeClient(kubeconfig)
-	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
+func GetUnusedServicesStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceServices(kubeClient, namespace)
+		diff, err := ProcessNamespaceServices(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
