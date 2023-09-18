@@ -17,27 +17,27 @@ func TestExtractUnusedHpas(t *testing.T) {
 	appLabels := map[string]string{}
 
 	// Create a Deployment without replicas for testing
-	deployment1 := CreateTestDeployment("test-namespace", deploymentName, 1, appLabels)
-	hpa1 := CreateTestHpa("test-namespace", "test-hpa1", deploymentName, 1, 1)
+	deployment1 := CreateTestDeployment(testNamespace, deploymentName, 1, appLabels)
+	hpa1 := CreateTestHpa(testNamespace, "test-hpa1", deploymentName, 1, 1)
 
-	hpa2 := CreateTestHpa("test-namespace", "test-hpa2", "non-existing-deployment", 1, 1)
-	_, err := clientset.AppsV1().Deployments("test-namespace").Create(context.TODO(), deployment1, v1.CreateOptions{})
+	hpa2 := CreateTestHpa(testNamespace, "test-hpa2", "non-existing-deployment", 1, 1)
+	_, err := clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake deployment: %v", err)
 	}
 
-	_, err = clientset.AutoscalingV2().HorizontalPodAutoscalers("test-namespace").Create(context.TODO(), hpa1, v1.CreateOptions{})
+	_, err = clientset.AutoscalingV2().HorizontalPodAutoscalers(testNamespace).Create(context.TODO(), hpa1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake Hpa: %v", err)
 	}
 
-	_, err = clientset.AutoscalingV2().HorizontalPodAutoscalers("test-namespace").Create(context.TODO(), hpa2, v1.CreateOptions{})
+	_, err = clientset.AutoscalingV2().HorizontalPodAutoscalers(testNamespace).Create(context.TODO(), hpa2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake Hpa: %v", err)
 	}
 
 	// Test the getDeploymentsWithoutReplicas function
-	unusedHpas, err := extractUnusedHpas(clientset, "test-namespace")
+	unusedHpas, err := extractUnusedHpas(clientset, testNamespace)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

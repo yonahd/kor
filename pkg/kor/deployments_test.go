@@ -16,20 +16,20 @@ func TestProcessNamespaceDeployments(t *testing.T) {
 	clientset := fake.NewSimpleClientset()
 	appLabels := map[string]string{}
 	// Create a Deployment without replicas for testing
-	deployment1 := CreateTestDeployment("test-namespace", "test-deployment1", 0, appLabels)
-	deployment2 := CreateTestDeployment("test-namespace", "test-deployment2", 1, appLabels)
-	_, err := clientset.AppsV1().Deployments("test-namespace").Create(context.TODO(), deployment1, v1.CreateOptions{})
+	deployment1 := CreateTestDeployment(testNamespace, "test-deployment1", 0, appLabels)
+	deployment2 := CreateTestDeployment(testNamespace, "test-deployment2", 1, appLabels)
+	_, err := clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake deployment: %v", err)
 	}
 
-	_, err = clientset.AppsV1().Deployments("test-namespace").Create(context.TODO(), deployment2, v1.CreateOptions{})
+	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake deployment: %v", err)
 	}
 
 	// Test the getDeploymentsWithoutReplicas function
-	deploymentsWithoutReplicas, err := ProcessNamespaceDeployments(clientset, "test-namespace")
+	deploymentsWithoutReplicas, err := ProcessNamespaceDeployments(clientset, testNamespace)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

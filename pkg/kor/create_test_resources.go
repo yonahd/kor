@@ -173,7 +173,7 @@ func CreateTestHpa(namespace, name, deploymentName string, minReplicas, maxRepli
 	}
 }
 
-func CreateTestIngress(namespace, name, ServiceName string) *networkingv1.Ingress {
+func CreateTestIngress(namespace, name, ServiceName, secretName string) *networkingv1.Ingress {
 	ingressRule := networkingv1.IngressRule{
 		Host: "test.com",
 		IngressRuleValue: networkingv1.IngressRuleValue{
@@ -191,6 +191,9 @@ func CreateTestIngress(namespace, name, ServiceName string) *networkingv1.Ingres
 			},
 		},
 	}
+	ingressTls := networkingv1.IngressTLS{
+		SecretName: secretName,
+	}
 
 	return &networkingv1.Ingress{
 		ObjectMeta: v1.ObjectMeta{
@@ -199,6 +202,7 @@ func CreateTestIngress(namespace, name, ServiceName string) *networkingv1.Ingres
 		},
 		Spec: networkingv1.IngressSpec{
 			Rules: []networkingv1.IngressRule{ingressRule},
+			TLS:   []networkingv1.IngressTLS{ingressTls},
 		},
 	}
 }
@@ -223,6 +227,24 @@ func CreateTestPdb(namespace, name string, matchLabels map[string]string) *polic
 			Selector: &v1.LabelSelector{
 				MatchLabels: matchLabels,
 			},
+		},
+	}
+}
+
+func CreateTestSecret(namespace, name string) *corev1.Secret {
+	return &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+	}
+}
+
+func CreateTestConfigmap(namespace, name string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
 		},
 	}
 }

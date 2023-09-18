@@ -149,8 +149,8 @@ func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, kubeconfig str
 func GetUnusedConfigmapsStructured(includeExcludeLists IncludeExcludeLists, kubeconfig string, outputFormat string) (string, error) {
 	var kubeClient *kubernetes.Clientset
 	var namespaces []string
-
 	kubeClient = GetKubeClient(kubeconfig)
+
 	namespaces = SetNamespaceList(includeExcludeLists, kubeClient)
 	response := make(map[string]map[string][]string)
 

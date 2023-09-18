@@ -16,19 +16,19 @@ func TestGetEndpointsWithoutSubsets(t *testing.T) {
 	clientset := fake.NewSimpleClientset()
 
 	// Create a Deployment without replicas for testing
-	endpoint1 := CreateTestEndpoint("test-namespace", "test-endpoint1", 0)
-	endpoint2 := CreateTestEndpoint("test-namespace", "test-endpoint2", 1)
-	_, err := clientset.CoreV1().Endpoints("test-namespace").Create(context.TODO(), endpoint1, v1.CreateOptions{})
+	endpoint1 := CreateTestEndpoint(testNamespace, "test-endpoint1", 0)
+	endpoint2 := CreateTestEndpoint(testNamespace, "test-endpoint2", 1)
+	_, err := clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake endpoint: %v", err)
 	}
 
-	_, err = clientset.CoreV1().Endpoints("test-namespace").Create(context.TODO(), endpoint2, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake endpoint: %v", err)
 	}
 
-	servicesWithoutEndpoints, err := ProcessNamespaceServices(clientset, "test-namespace")
+	servicesWithoutEndpoints, err := ProcessNamespaceServices(clientset, testNamespace)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

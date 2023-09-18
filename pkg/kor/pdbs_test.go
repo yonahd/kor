@@ -33,8 +33,8 @@ func TestProcessNamespacePdbs(t *testing.T) {
 		t.Fatalf("Error creating fake %s: %v", "Pdb", err)
 	}
 
-	deployment1 := CreateTestDeployment("test-namespace", "test-deployment2", 1, appLabels1)
-	_, err = clientset.AppsV1().Deployments("test-namespace").Create(context.TODO(), deployment1, v1.CreateOptions{})
+	deployment1 := CreateTestDeployment(testNamespace, "test-deployment2", 1, appLabels1)
+	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake deployment: %v", err)
 	}
