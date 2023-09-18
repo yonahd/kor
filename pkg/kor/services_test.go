@@ -72,7 +72,6 @@ func TestGetUnusedServicesStructured(t *testing.T) {
 		},
 	}
 
-	// Marshal the actual output as JSON
 	var actualOutput map[string]map[string][]string
 	if err := json.Unmarshal([]byte(output), &actualOutput); err != nil {
 		t.Fatalf("Error unmarshaling actual output: %v", err)

@@ -28,8 +28,7 @@ func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 	return statefulSetsWithoutReplicas, nil
 }
 
-
-func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -44,8 +43,7 @@ func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset *k
 	}
 }
 
-
-func GetUnusedStatefulSetsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedStatefulSetsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
