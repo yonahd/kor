@@ -33,9 +33,7 @@ func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string) 
 }
 
 func GetUnusedServices(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
-	var namespaces []string
-
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
 		diff, err := ProcessNamespaceServices(clientset, namespace)
