@@ -32,7 +32,7 @@ func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 	return deploymentsWithoutReplicas, nil
 }
 
-func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -47,7 +47,7 @@ func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset *ku
 	}
 }
 
-func GetUnusedDeploymentsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedDeploymentsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
