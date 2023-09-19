@@ -15,7 +15,7 @@ var exceptionServiceAccounts = []ExceptionResource{
 	{ResourceName: "default", Namespace: "*"},
 }
 
-func getServiceAccountsFromClusterRoleBindings(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func getServiceAccountsFromClusterRoleBindings(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	// Get a list of all role bindings in the specified namespace
 	roleBindings, err := clientset.RbacV1().ClusterRoleBindings().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -42,7 +42,7 @@ func getServiceAccountsFromClusterRoleBindings(clientset *kubernetes.Clientset, 
 	return serviceAccounts, nil
 }
 
-func getServiceAccountsFromRoleBindings(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func getServiceAccountsFromRoleBindings(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	// Get a list of all role bindings in the specified namespace
 	roleBindings, err := clientset.RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -68,11 +68,11 @@ func getServiceAccountsFromRoleBindings(clientset *kubernetes.Clientset, namespa
 	return serviceAccounts, nil
 }
 
-func retrieveUsedSA(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, error) {
+func retrieveUsedSA(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, error) {
+
 	var podServiceAccounts []string
 
-	// Retrieve pods in the specified namespace
-	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -90,19 +90,19 @@ func retrieveUsedSA(kubeClient *kubernetes.Clientset, namespace string) ([]strin
 		}
 	}
 
-	roleServiceAccounts, err := getServiceAccountsFromRoleBindings(kubeClient, namespace)
+	roleServiceAccounts, err := getServiceAccountsFromRoleBindings(clientset, namespace)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	clusterRoleServiceAccounts, err := getServiceAccountsFromClusterRoleBindings(kubeClient, namespace)
+	clusterRoleServiceAccounts, err := getServiceAccountsFromClusterRoleBindings(clientset, namespace)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	return podServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, nil
 }
 
-func retrieveServiceAccountNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	serviceaccounts, err := kubeClient.CoreV1().ServiceAccounts(namespace).List(context.TODO(), metav1.ListOptions{})
+func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	serviceaccounts, err := clientset.CoreV1().ServiceAccounts(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -117,8 +117,8 @@ func retrieveServiceAccountNames(kubeClient *kubernetes.Clientset, namespace str
 	return names, nil
 }
 
-func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	usedServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, err := retrieveUsedSA(kubeClient, namespace)
+func processNamespaceSA(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	usedServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, err := retrieveUsedSA(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) ([]s
 
 	usedServiceAccounts = append(append(usedServiceAccounts, roleServiceAccounts...), clusterRoleServiceAccounts...)
 
-	serviceAccountNames, err := retrieveServiceAccountNames(kubeClient, namespace)
+	serviceAccountNames, err := retrieveServiceAccountNames(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func processNamespaceSA(kubeClient *kubernetes.Clientset, namespace string) ([]s
 
 }
 
-func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -154,7 +154,7 @@ func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset
 	}
 }
 
-func GetUnusedServiceAccountsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedServiceAccountsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 

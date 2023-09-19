@@ -80,7 +80,7 @@ func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 	return clientset
 }
 
-func SetNamespaceList(namespaceLists IncludeExcludeLists, kubeClient *kubernetes.Clientset) []string {
+func SetNamespaceList(namespaceLists IncludeExcludeLists, clientset kubernetes.Interface) []string {
 	namespaces := make([]string, 0)
 	namespacesMap := make(map[string]bool)
 	if namespaceLists.IncludeListStr != "" && namespaceLists.ExcludeListStr != "" {
@@ -89,7 +89,7 @@ func SetNamespaceList(namespaceLists IncludeExcludeLists, kubeClient *kubernetes
 	}
 	includeNamespaces := strings.Split(namespaceLists.IncludeListStr, ",")
 	excludeNamespaces := strings.Split(namespaceLists.ExcludeListStr, ",")
-	namespaceList, err := kubeClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
 		os.Exit(1)

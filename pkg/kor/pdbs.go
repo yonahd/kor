@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func processNamespacePdbs(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func processNamespacePdbs(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	var unusedPdbs []string
 	pdbs, err := clientset.PolicyV1().PodDisruptionBudgets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -25,26 +25,30 @@ func processNamespacePdbs(clientset *kubernetes.Clientset, namespace string) ([]
 		}
 
 		selector := pdb.Spec.Selector
+		if len(selector.MatchLabels) == 0 {
+			unusedPdbs = append(unusedPdbs, pdb.Name)
+			continue
+		}
 		deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: metav1.FormatLabelSelector(selector),
 		})
 		if err != nil {
 			return nil, err
 		}
-		statefulsets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{
+		statefulSets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: metav1.FormatLabelSelector(selector),
 		})
 		if err != nil {
 			return nil, err
 		}
-		if len(deployments.Items) == 0 && len(statefulsets.Items) == 0 {
+		if len(deployments.Items) == 0 && len(statefulSets.Items) == 0 {
 			unusedPdbs = append(unusedPdbs, pdb.Name)
 		}
 	}
 	return unusedPdbs, nil
 }
 
-func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -59,7 +63,7 @@ func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, clientset *kubernete
 	}
 }
 
-func GetUnusedPdbsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedPdbsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 

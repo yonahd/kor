@@ -13,11 +13,11 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func validateServiceBackend(kubeClient *kubernetes.Clientset, namespace string, backend *v1.IngressBackend) bool {
+func validateServiceBackend(clientset kubernetes.Interface, namespace string, backend *v1.IngressBackend) bool {
 	if backend.Service != nil {
 		serviceName := backend.Service.Name
 
-		_, err := kubeClient.CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
+		_, err := clientset.CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
 		if err != nil {
 			return false
 		}
@@ -25,8 +25,8 @@ func validateServiceBackend(kubeClient *kubernetes.Clientset, namespace string, 
 	return true
 }
 
-func retrieveUsedIngress(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	ingresses, err := kubeClient.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
+func retrieveUsedIngress(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	ingresses, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -41,11 +41,11 @@ func retrieveUsedIngress(kubeClient *kubernetes.Clientset, namespace string) ([]
 		used := true
 
 		if ingress.Spec.DefaultBackend != nil {
-			used = validateServiceBackend(kubeClient, namespace, ingress.Spec.DefaultBackend)
+			used = validateServiceBackend(clientset, namespace, ingress.Spec.DefaultBackend)
 		}
 		for _, rule := range ingress.Spec.Rules {
 			for _, path := range rule.HTTP.Paths {
-				used = validateServiceBackend(kubeClient, namespace, &path.Backend)
+				used = validateServiceBackend(clientset, namespace, &path.Backend)
 				if used {
 					break
 				}
@@ -61,8 +61,8 @@ func retrieveUsedIngress(kubeClient *kubernetes.Clientset, namespace string) ([]
 	return usedIngresses, nil
 }
 
-func retrieveIngressNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	ingresses, err := kubeClient.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
+func retrieveIngressNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	ingresses, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -73,12 +73,12 @@ func retrieveIngressNames(kubeClient *kubernetes.Clientset, namespace string) ([
 	return names, nil
 }
 
-func processNamespaceIngresses(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	usedIngresses, err := retrieveUsedIngress(kubeClient, namespace)
+func processNamespaceIngresses(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	usedIngresses, err := retrieveUsedIngress(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
-	ingressNames, err := retrieveIngressNames(kubeClient, namespace)
+	ingressNames, err := retrieveIngressNames(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func processNamespaceIngresses(kubeClient *kubernetes.Clientset, namespace strin
 
 }
 
-func GetUnusedIngresses(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedIngresses(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -103,7 +103,7 @@ func GetUnusedIngresses(includeExcludeLists IncludeExcludeLists, clientset *kube
 	}
 }
 
-func GetUnusedIngressesStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedIngressesStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 

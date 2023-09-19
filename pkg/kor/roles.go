@@ -12,25 +12,19 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func retrieveUsedRoles(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func retrieveUsedRoles(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	// Get a list of all role bindings in the specified namespace
 	roleBindings, err := clientset.RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list role bindings in namespace %s: %v", namespace, err)
 	}
 
-	// Create a map to store role binding names
 	usedRoles := make(map[string]bool)
-
-	// Populate the map with role binding names
 	for _, rb := range roleBindings.Items {
 		usedRoles[rb.RoleRef.Name] = true
 	}
 
-	// Create a slice to store used role names
 	var usedRoleNames []string
-
-	// Extract used role names from the map
 	for role := range usedRoles {
 		usedRoleNames = append(usedRoleNames, role)
 	}
@@ -38,8 +32,8 @@ func retrieveUsedRoles(clientset *kubernetes.Clientset, namespace string) ([]str
 	return usedRoleNames, nil
 }
 
-func retrieveRoleNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	roles, err := kubeClient.RbacV1().Roles(namespace).List(context.TODO(), metav1.ListOptions{})
+func retrieveRoleNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	roles, err := clientset.RbacV1().Roles(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -54,15 +48,15 @@ func retrieveRoleNames(kubeClient *kubernetes.Clientset, namespace string) ([]st
 	return names, nil
 }
 
-func processNamespaceRoles(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	usedRoles, err := retrieveUsedRoles(kubeClient, namespace)
+func processNamespaceRoles(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	usedRoles, err := retrieveUsedRoles(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	usedRoles = RemoveDuplicatesAndSort(usedRoles)
 
-	roleNames, err := retrieveRoleNames(kubeClient, namespace)
+	roleNames, err := retrieveRoleNames(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +66,7 @@ func processNamespaceRoles(kubeClient *kubernetes.Clientset, namespace string) (
 
 }
 
-func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -87,7 +81,7 @@ func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset *kubernet
 	}
 }
 
-func GetUnusedRolesStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedRolesStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 

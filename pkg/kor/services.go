@@ -11,8 +11,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func getEndpointsWithoutSubsets(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	endpointsList, err := kubeClient.CoreV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{})
+func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	endpointsList, err := clientset.CoreV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -32,16 +32,7 @@ func getEndpointsWithoutSubsets(kubeClient *kubernetes.Clientset, namespace stri
 	return endpointsWithoutSubsets, nil
 }
 
-func ProcessNamespaceServices(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
-	usedServices, err := getEndpointsWithoutSubsets(clientset, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	return usedServices, nil
-}
-
-func GetUnusedServices(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedServices(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -56,7 +47,7 @@ func GetUnusedServices(includeExcludeLists IncludeExcludeLists, clientset *kuber
 	}
 }
 
-func GetUnusedServicesStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedServicesStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 

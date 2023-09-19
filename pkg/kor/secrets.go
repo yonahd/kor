@@ -19,7 +19,7 @@ var exceptionSecretTypes = []string{
 	`kubernetes.io/service-account-token`,
 }
 
-func retrieveIngressTLS(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func retrieveIngressTLS(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	secretNames := make([]string, 0)
 	ingressList, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -37,7 +37,7 @@ func retrieveIngressTLS(clientset *kubernetes.Clientset, namespace string) ([]st
 
 }
 
-func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
+func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
 	var envSecrets []string
 	var envSecrets2 []string
 	var volumeSecrets []string
@@ -45,7 +45,7 @@ func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]s
 	var initContainerEnvSecrets []string
 
 	// Retrieve pods in the specified namespace
-	pods, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, err
 	}
@@ -85,7 +85,7 @@ func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]s
 		}
 	}
 
-	tlsSecrets, err := retrieveIngressTLS(kubeClient, namespace)
+	tlsSecrets, err := retrieveIngressTLS(clientset, namespace)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, err
 	}
@@ -93,8 +93,8 @@ func retrieveUsedSecret(kubeClient *kubernetes.Clientset, namespace string) ([]s
 	return envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, nil
 }
 
-func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	secrets, err := kubeClient.CoreV1().Secrets(namespace).List(context.TODO(), metav1.ListOptions{})
+func retrieveSecretNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	secrets, err := clientset.CoreV1().Secrets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -111,8 +111,8 @@ func retrieveSecretNames(kubeClient *kubernetes.Clientset, namespace string) ([]
 	return names, nil
 }
 
-func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(kubeClient, namespace)
+func processNamespaceSecret(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) 
 	pullSecrets = RemoveDuplicatesAndSort(pullSecrets)
 	tlsSecrets = RemoveDuplicatesAndSort(tlsSecrets)
 
-	secretNames, err := retrieveSecretNames(kubeClient, namespace)
+	secretNames, err := retrieveSecretNames(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func processNamespaceSecret(kubeClient *kubernetes.Clientset, namespace string) 
 
 }
 
-func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -155,7 +155,7 @@ func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, clientset *kubern
 	}
 }
 
-func GetUnusedSecretsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedSecretsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
