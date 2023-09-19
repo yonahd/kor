@@ -2,6 +2,8 @@ package kor
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -16,10 +18,13 @@ func createTestServiceAccounts(t *testing.T) *fake.Clientset {
 
 	clientset := fake.NewSimpleClientset()
 
-	// Create a Deployment without replicas for testing
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
 	sa1 := CreateTestServiceAccount(testNamespace, "test-sa1")
 	sa2 := CreateTestServiceAccount(testNamespace, "test-sa2")
-	_, err := clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa1, v1.CreateOptions{})
+	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "ServiceAccount", err)
 	}
@@ -149,6 +154,41 @@ func TestProcessNamespaceSA(t *testing.T) {
 
 	if unusedServiceAccounts[0] != "test-sa2" {
 		t.Errorf("Expected 'test-sa2', got %s", unusedServiceAccounts[0])
+	}
+}
+
+func TestGetUnusedServiceAccountsStructured(t *testing.T) {
+	clientset := createTestServiceAccounts(t)
+
+	clusterRoleBinding1 := CreateTestClusterRoleBinding(testNamespace, "test-crb1", "test-sa1")
+	_, err := clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(), clusterRoleBinding1, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "clusterRoleBinding", err)
+	}
+
+	includeExcludeLists := IncludeExcludeLists{
+		IncludeListStr: "",
+		ExcludeListStr: "",
+	}
+
+	output, err := GetUnusedServiceAccountsStructured(includeExcludeLists, clientset, "json")
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedServiceAccountsStructured: %v", err)
+	}
+
+	expectedOutput := map[string]map[string][]string{
+		testNamespace: {
+			"ServiceAccounts": {"test-sa2"},
+		},
+	}
+
+	var actualOutput map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &actualOutput); err != nil {
+		t.Fatalf("Error unmarshaling actual output: %v", err)
+	}
+
+	if !reflect.DeepEqual(expectedOutput, actualOutput) {
+		t.Errorf("Expected output does not match actual output")
 	}
 }
 

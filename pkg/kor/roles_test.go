@@ -2,9 +2,12 @@ package kor
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
@@ -13,9 +16,14 @@ import (
 
 func createTestRoles(t *testing.T) *fake.Clientset {
 	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
 	role1 := CreateTestRole(testNamespace, "test-role1")
 	role2 := CreateTestRole(testNamespace, "test-role2")
-	_, err := clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role1, v1.CreateOptions{})
+	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Role", err)
 	}
@@ -65,18 +73,47 @@ func TestRetrieveRoleNames(t *testing.T) {
 
 func TestProcessNamespaceRoles(t *testing.T) {
 	clientset := createTestRoles(t)
-	
-	usedRoles, err := processNamespaceRoles(clientset, testNamespace)
+
+	unusedRoles, err := processNamespaceRoles(clientset, testNamespace)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(usedRoles) != 1 {
-		t.Errorf("Expected 1 unused role, got %d", len(usedRoles))
+	if len(unusedRoles) != 1 {
+		t.Errorf("Expected 1 unused role, got %d", len(unusedRoles))
 	}
 
-	if usedRoles[0] != "test-role2" {
-		t.Errorf("Expected 'test-role2', got %s", usedRoles[0])
+	if unusedRoles[0] != "test-role2" {
+		t.Errorf("Expected 'test-role2', got %s", unusedRoles[0])
+	}
+}
+
+func TestGetUnusedRolesStructured(t *testing.T) {
+	clientset := createTestRoles(t)
+
+	includeExcludeLists := IncludeExcludeLists{
+		IncludeListStr: "",
+		ExcludeListStr: "",
+	}
+
+	output, err := GetUnusedRolesStructured(includeExcludeLists, clientset, "json")
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedRolesStructured: %v", err)
+	}
+
+	expectedOutput := map[string]map[string][]string{
+		testNamespace: {
+			"Roles": {"test-role2"},
+		},
+	}
+
+	var actualOutput map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &actualOutput); err != nil {
+		t.Fatalf("Error unmarshaling actual output: %v", err)
+	}
+
+	if !reflect.DeepEqual(expectedOutput, actualOutput) {
+		t.Errorf("Expected output does not match actual output")
 	}
 }
 

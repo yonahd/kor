@@ -48,7 +48,7 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string) ([]s
 	return unusedPdbs, nil
 }
 
-func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -63,7 +63,7 @@ func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, clientset *kubernete
 	}
 }
 
-func GetUnusedPdbsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedPdbsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 

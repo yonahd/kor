@@ -66,7 +66,7 @@ func processNamespaceRoles(clientset kubernetes.Interface, namespace string) ([]
 
 }
 
-func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -81,7 +81,7 @@ func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset *kubernet
 	}
 }
 
-func GetUnusedRolesStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedRolesStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 

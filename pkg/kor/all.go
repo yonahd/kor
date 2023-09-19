@@ -118,7 +118,7 @@ func getUnusedPdbs(clientset kubernetes.Interface, namespace string) ResourceDif
 	return namespacePdbDiff
 }
 
-func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	for _, namespace := range namespaces {
 		var allDiffs []ResourceDiff
@@ -150,7 +150,7 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset *kubernetes
 	}
 }
 
-func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	// Create the JSON response object

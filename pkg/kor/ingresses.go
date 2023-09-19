@@ -88,7 +88,7 @@ func processNamespaceIngresses(clientset kubernetes.Interface, namespace string)
 
 }
 
-func GetUnusedIngresses(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedIngresses(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -103,7 +103,7 @@ func GetUnusedIngresses(includeExcludeLists IncludeExcludeLists, clientset *kube
 	}
 }
 
-func GetUnusedIngressesStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedIngressesStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 

@@ -79,7 +79,7 @@ func processNamespaceHpas(clientset kubernetes.Interface, namespace string) ([]s
 	return unusedHpas, nil
 }
 
-func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -95,7 +95,7 @@ func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset *kubernete
 
 }
 
-func GetUnusedHpasStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedHpasStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 

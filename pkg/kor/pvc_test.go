@@ -2,6 +2,8 @@ package kor
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -16,9 +18,13 @@ func createTestPvcs(t *testing.T) *fake.Clientset {
 	clientset := fake.NewSimpleClientset()
 	var volumeList []corev1.Volume
 
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
 	pvc1 := CreateTestPvc(testNamespace, "test-pvc1")
 	pvc2 := CreateTestPvc(testNamespace, "test-pvc2")
-	_, err := clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc1, v1.CreateOptions{})
+	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pvc", err)
 	}
@@ -69,6 +75,35 @@ func TestProcessNamespacePvcs(t *testing.T) {
 
 	if usedPvcs[0] != "test-pvc2" {
 		t.Errorf("Expected 'test-pvc2', got %s", usedPvcs[0])
+	}
+}
+
+func TestGetUnusedPvcsStructured(t *testing.T) {
+	clientset := createTestPvcs(t)
+
+	includeExcludeLists := IncludeExcludeLists{
+		IncludeListStr: "",
+		ExcludeListStr: "",
+	}
+
+	output, err := GetUnusedPvcsStructured(includeExcludeLists, clientset, "json")
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedPvcsStructured: %v", err)
+	}
+
+	expectedOutput := map[string]map[string][]string{
+		testNamespace: {
+			"Pvc": {"test-pvc2"},
+		},
+	}
+
+	var actualOutput map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &actualOutput); err != nil {
+		t.Fatalf("Error unmarshaling actual output: %v", err)
+	}
+
+	if !reflect.DeepEqual(expectedOutput, actualOutput) {
+		t.Errorf("Expected output does not match actual output")
 	}
 }
 

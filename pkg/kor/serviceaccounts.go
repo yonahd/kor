@@ -139,7 +139,7 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -154,7 +154,7 @@ func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset
 	}
 }
 
-func GetUnusedServiceAccountsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedServiceAccountsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 

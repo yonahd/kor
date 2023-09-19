@@ -2,6 +2,8 @@ package kor
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -14,6 +16,10 @@ import (
 
 func createTestSecrets(t *testing.T) *fake.Clientset {
 	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
 
 	secret1 := CreateTestSecret(testNamespace, "test-secret1")
 	secret2 := CreateTestSecret(testNamespace, "test-secret2")
@@ -60,7 +66,7 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 		{Name: secret2.ObjectMeta.Name},
 	}
 
-	_, err := clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod1, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake pod: %v", err)
 	}
@@ -224,6 +230,35 @@ func TestProcessNamespaceSecret(t *testing.T) {
 		t.Error("Expected specific Secret  in the list")
 	}
 
+}
+
+func TestGetUnusedSecretsStructured(t *testing.T) {
+	clientset := createTestSecrets(t)
+
+	includeExcludeLists := IncludeExcludeLists{
+		IncludeListStr: "",
+		ExcludeListStr: "",
+	}
+
+	output, err := GetUnusedSecretsStructured(includeExcludeLists, clientset, "json")
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedSecretsStructured: %v", err)
+	}
+
+	expectedOutput := map[string]map[string][]string{
+		testNamespace: {
+			"Secrets": {"test-secret3"},
+		},
+	}
+
+	var actualOutput map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &actualOutput); err != nil {
+		t.Fatalf("Error unmarshaling actual output: %v", err)
+	}
+
+	if !reflect.DeepEqual(expectedOutput, actualOutput) {
+		t.Errorf("Expected output does not match actual output")
+	}
 }
 
 func equalSlices(a, b []string) bool {
