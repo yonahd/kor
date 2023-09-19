@@ -5,16 +5,16 @@
 
 Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identify and list unused:
 - ConfigMaps  
-- Secrets.
+- Secrets
 - Services
 - ServiceAccounts
 - Deployments
 - StatefulSets
 - Roles
-- Hpas
-- Pvcs
+- HPAs
+- PVCs
 - Ingresses
-- Pdbs
+- PDBs
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -22,7 +22,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 
 Download the binary for your operating system from the [releases page](https://github.com/yonahd/kor/releases) and add it to your system's PATH.
 
-For MacOS users, you can install Kor using Homebrew:
+For macOS users, you can install Kor using Homebrew:
 ```sh
 brew install kor
 ```
@@ -31,26 +31,26 @@ brew install kor
 
 Kor provides various subcommands to identify and list unused resources. The available commands are:
 
-- `all`: Gets all unused resources for the specified namespace or all namespaces.
-- `configmap`: Gets unused configmaps for the specified namespace or all namespaces.
-- `secret`: Gets unused secrets for the specified namespace or all namespaces.
-- `services`: Gets unused services for the specified namespace or all namespaces.
-- `serviceaccount`: Gets unused service accounts for the specified namespace or all namespaces.
-- `deployments`: Gets unused service accounts for the specified namespace or all namespaces.
-- `statefulsets`: Gets unused service accounts for the specified namespace or all namespaces.
-- `role`: Gets unused roles for the specified namespace or all namespaces.
-- `hpa`: Gets unused hpa for the specified namespace or all namespaces.
-- `pvc`: Gets unused pvcs for the specified namespace or all namespaces.
-- `ingress`: Gets unused ingresses for the specified namespace or all namespaces.
-- `pdb`: Gets unused pdbs for the specified namespace or all namespaces.
+- `all` - Gets all unused resources for the specified namespace or all namespaces.
+- `configmap` - Gets unused ConfigMaps for the specified namespace or all namespaces.
+- `secret` - Gets unused Secrets for the specified namespace or all namespaces.
+- `services` - Gets unused Services for the specified namespace or all namespaces.
+- `serviceaccount` - Gets unused ServiceAccounts for the specified namespace or all namespaces.
+- `deployments` - Gets unused Deployments for the specified namespace or all namespaces.
+- `statefulsets` - Gets unused StatefulSets for the specified namespace or all namespaces.
+- `role` - Gets unused Roles for the specified namespace or all namespaces.
+- `hpa` - Gets unused HPAs for the specified namespace or all namespaces.
+- `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
+- `ingress` - Gets unused Ingresses for the specified namespace or all namespaces.
+- `pdb` - Gets unused PDBs for the specified namespace or all namespaces.
 
 ### Supported Flags
 ```
 -e, --exclude-namespaces string   Namespaces to be excluded, splited by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
 -h, --help                        help for kor
--n, --include-namespaces string   Namespaces to run on, splited by comma. Example: --include-namespace ns1,ns2,ns3. 
+-n, --include-namespaces string   Namespaces to run on, split by comma. Example: --include-namespace ns1,ns2,ns3. 
 -k, --kubeconfig string           Path to kubeconfig file (optional)
-    --output string               Output format (table or json) (default "table")
+    --output string               Output format ("table" or "json") (default "table")
 ```
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.
@@ -67,19 +67,19 @@ kor [subcommand] --help
 
 ## Supported resources and limitations
 
-| Resource        | What it looks for                                                                                                                                                                                                                  | Known False Positives  ⚠️                                                                                                    |
+| Resource        | What it looks for                                                                                                                                                                                                                  | Known False Positives  ⚠️                                                                                                     |
 |-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| Configmaps      | Configmaps not used in the following places:<br/>- Pods<br/>- Containers <br/>- Configmaps used through volumes <br/>- Configmaps used through environment variables                                                               | Configmaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically opa policies fluentd configs |
-| Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers <br/>- Secrets used through volumes <br/>- Secrets used through environment variables<br/>- Secrets used by ingress TLS<br/>-Secrets used by ServiceAccounts |    Secrets used by resources which don't explicitly state them in the config                                                                                                                         |
+| ConfigMaps      | ConfigMaps not used in the following places:<br/>- Pods<br/>- Containers<br/>- ConfigMaps used through Volumes<br/>- ConfigMaps used through environment variables                                                                 | ConfigMaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically OPA policies fluentd configs |
+| Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers<br/>- Secrets used through volumes<br/>- Secrets used through environment variables<br/>- Secrets used by Ingress TLS<br/>- Secrets used by ServiceAccounts |    Secrets used by resources which don't explicitly state them in the config                                                                                                                         |
 | Services        | Services with no endpoints                                                                                                                                                                                                         |                                                                                                                              |
-| Deployments     | Deployments with 0 Replicas                                                                                                                                                                                                        |                                                                                                                              |
-| ServiceAccounts | ServiceAccounts unused by pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                     |                                                                                                                              |
-| StatefulSets    | Statefulsets with 0 Replicas                                                                                                                                                                                                       |                                                                                                                              |
+| Deployments     | Deployments with no Replicas                                                                                                                                                                                                       |                                                                                                                              |
+| ServiceAccounts | ServiceAccounts unused by Pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                     |                                                                                                                              |
+| StatefulSets    | Statefulsets with no Replicas                                                                                                                                                                                                      |                                                                                                                              |
 | Roles           | Roles not used in roleBinding                                                                                                                                                                                                      |                                                                                                                              |
-| Pvcs            | Pvcs not used in pods                                                                                                                                                                                                              |                                                                                                                              |
-| Ingresses       | Ingresses not pointing at any service.                                                                                                                                                                                             |                                                                                                                              |
-| Hpas            | Hpas not used in Deployments   <br/>    Hpas not used in StatefulSets                                                                                                                                                              |                                                                                                                              |
-| Pdbs            | Pdbs not used in Deployments   <br/>    Pdbs not used in StatefulSets                                                                                                                                                              |                                                                                                                              |
+| PVCs            | PVCs not used in Pods                                                                                                                                                                                                              |                                                                                                                              |
+| Ingresses       | Ingresses not pointing at any Service                                                                                                                                                                                              |                                                                                                                              |
+| Hpas            | HPAs not used in Deployments<br/> HPAs not used in StatefulSets                                                                                                                                                                    |                                                                                                                              |
+| Pdbs            | PDBs not used in Deployments<br/> PDBs not used in StatefulSets                                                                                                                                                                    |                                                                                                                              |
 
 
 ## Ignore Resources
@@ -92,8 +92,6 @@ You can also use kor as a Go library to programmatically discover unused resourc
 import (
     "github.com/yonahd/kor/pkg/kor"
 )
-
-
 
 func main() {
     myNamespaces := kor.IncludeExcludeLists{
@@ -121,5 +119,5 @@ Contributions are welcome! If you encounter any bugs or have suggestions for imp
 
 ## License
 
-This project is open-source and available under the [MIT License](LICENSE). Feel free to use, modify, and distribute it as per the terms of the license.
+This open-source project is available under the [MIT License](LICENSE). Feel free to use, modify, and distribute it as per the terms of the license.
 
