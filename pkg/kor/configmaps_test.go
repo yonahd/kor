@@ -21,6 +21,10 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
 	}, metav1.CreateOptions{})
 
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
 	configmap1 := CreateTestConfigmap(testNamespace, "configmap-1")
 	configmap2 := CreateTestConfigmap(testNamespace, "configmap-2")
 	configmap3 := CreateTestConfigmap(testNamespace, "configmap-3")

@@ -21,6 +21,10 @@ func createTestStatefulSets(t *testing.T) *fake.Clientset {
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
 	}, v1.CreateOptions{})
 
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
 	appLabels := map[string]string{}
 
 	sts1 := CreateTestStatefulSet(testNamespace, "test-sts1", 0, appLabels)

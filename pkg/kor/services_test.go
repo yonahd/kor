@@ -21,6 +21,10 @@ func createTestServices(t *testing.T) *fake.Clientset {
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
 	}, v1.CreateOptions{})
 
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
 	endpoint1 := CreateTestEndpoint(testNamespace, "test-endpoint1", 0)
 	endpoint2 := CreateTestEndpoint(testNamespace, "test-endpoint2", 1)
 	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint1, v1.CreateOptions{})
