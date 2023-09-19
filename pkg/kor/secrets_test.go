@@ -21,6 +21,10 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
 	}, v1.CreateOptions{})
 
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
 	secret1 := CreateTestSecret(testNamespace, "test-secret1")
 	secret2 := CreateTestSecret(testNamespace, "test-secret2")
 	secret3 := CreateTestSecret(testNamespace, "test-secret3")

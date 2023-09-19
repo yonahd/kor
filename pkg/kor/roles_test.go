@@ -21,6 +21,10 @@ func createTestRoles(t *testing.T) *fake.Clientset {
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
 	}, v1.CreateOptions{})
 
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
 	role1 := CreateTestRole(testNamespace, "test-role1")
 	role2 := CreateTestRole(testNamespace, "test-role2")
 	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role1, v1.CreateOptions{})

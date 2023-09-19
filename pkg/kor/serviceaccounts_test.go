@@ -22,6 +22,10 @@ func createTestServiceAccounts(t *testing.T) *fake.Clientset {
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
 	}, v1.CreateOptions{})
 
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
 	sa1 := CreateTestServiceAccount(testNamespace, "test-sa1")
 	sa2 := CreateTestServiceAccount(testNamespace, "test-sa2")
 	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa1, v1.CreateOptions{})
