@@ -8,7 +8,7 @@ cronJob:
     repository: yonahdissen/kor
     tag: latest
   # e.g. kor configmap --include-namespace default,other-ns
-  korCommand: kor all
+  command: kor all
   slackWebhookUrl: ""
   slackChannel: ""
   slackAuthToken: ""

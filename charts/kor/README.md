@@ -12,7 +12,7 @@ A Helm chart to deploy Kor as into a Kubernetes cluster.
 | cronJob.failedJobsHistoryLimit     | int    | `2`                 |             |
 | cronJob.image.repository           | string | `"yonahdissen/kor"` |             |
 | cronJob.image.tag                  | string | `"latest"`          |             |
-| cronJob.korCommand                 | string | `"kor all"`         |             |
+| cronJob.command                    | string | `"kor all"`         |             |
 | cronJob.name                       | string | `"kor"`             |             |
 | cronJob.restartPolicy              | string | `"OnFailure"`       |             |
 | cronJob.schedule                   | string | `"0 1 * * 1"`       |             |
