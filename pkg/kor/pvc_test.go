@@ -22,6 +22,10 @@ func createTestPvcs(t *testing.T) *fake.Clientset {
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
 	}, v1.CreateOptions{})
 
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
 	pvc1 := CreateTestPvc(testNamespace, "test-pvc1")
 	pvc2 := CreateTestPvc(testNamespace, "test-pvc2")
 	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc1, v1.CreateOptions{})

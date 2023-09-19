@@ -21,6 +21,10 @@ func createTestIngresses(t *testing.T) *fake.Clientset {
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
 	}, v1.CreateOptions{})
 
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
 	service1 := CreateTestService(testNamespace, "my-service-1")
 	ingress1 := CreateTestIngress(testNamespace, "test-ingress-1", "my-service-1", "test-secret")
 	ingress2 := CreateTestIngress(testNamespace, "test-ingress-2", "my-service-2", "test-secret")

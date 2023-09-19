@@ -18,6 +18,10 @@ func createTestPdbs(t *testing.T) *fake.Clientset {
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
 	}, v1.CreateOptions{})
 
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
 	appLabels1 := map[string]string{
 		"app": "my-app",
 	}
