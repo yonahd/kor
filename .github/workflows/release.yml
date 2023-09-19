@@ -39,4 +39,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: yonahdissen/kor:${{ github.ref }}
+          tags: yonahdissen/my-image:${{ github.event.release.tag_name }}
