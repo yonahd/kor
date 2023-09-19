@@ -29,7 +29,7 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, err
 	}
-	
+
 	for _, pod := range pods.Items {
 		for _, volume := range pod.Spec.Volumes {
 			if volume.ConfigMap != nil {
@@ -128,7 +128,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -143,7 +143,7 @@ func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset *kub
 	}
 }
 
-func GetUnusedConfigmapsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedConfigmapsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 

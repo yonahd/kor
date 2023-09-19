@@ -2,6 +2,8 @@ package kor
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -14,6 +16,10 @@ import (
 
 func createTestConfigmaps(t *testing.T) *fake.Clientset {
 	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
+	}, metav1.CreateOptions{})
 
 	configmap1 := CreateTestConfigmap(testNamespace, "configmap-1")
 	configmap2 := CreateTestConfigmap(testNamespace, "configmap-2")
@@ -50,7 +56,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 		},
 	}
 
-	_, err := clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap1, metav1.CreateOptions{})
+	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake configmap: %v", err)
 	}
@@ -156,6 +162,35 @@ func TestRetrieveUsedCM(t *testing.T) {
 		t.Errorf("Expected initContainer env configmaps %v, got %v", expectedEnvFromInitContainerCM, envFromInitContainerCM)
 	}
 
+}
+
+func TestGetUnusedConfigmapsStructured(t *testing.T) {
+	clientset := createTestConfigmaps(t)
+
+	includeExcludeLists := IncludeExcludeLists{
+		IncludeListStr: "",
+		ExcludeListStr: "",
+	}
+
+	output, err := GetUnusedConfigmapsStructured(includeExcludeLists, clientset, "json")
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedConfigmapsStructured: %v", err)
+	}
+
+	expectedOutput := map[string]map[string][]string{
+		testNamespace: {
+			"ConfigMap": {"configmap-3"},
+		},
+	}
+
+	var actualOutput map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &actualOutput); err != nil {
+		t.Fatalf("Error unmarshaling actual output: %v", err)
+	}
+
+	if !reflect.DeepEqual(expectedOutput, actualOutput) {
+		t.Errorf("Expected output does not match actual output")
+	}
 }
 
 func init() {
