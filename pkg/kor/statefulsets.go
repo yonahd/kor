@@ -12,58 +12,45 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func getStatefulsetsWithoutReplicas(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	statefulsetsList, err := kubeClient.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
+func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	statefulSetsList, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	var statefulsetsWithoutReplicas []string
+	var statefulSetsWithoutReplicas []string
 
-	for _, statefulset := range statefulsetsList.Items {
-		if statefulset.Labels["kor/used"] == "true" {
-			continue
-		}
-
-		if *statefulset.Spec.Replicas == 0 {
-			statefulsetsWithoutReplicas = append(statefulsetsWithoutReplicas, statefulset.Name)
+	for _, statefulSet := range statefulSetsList.Items {
+		if *statefulSet.Spec.Replicas == 0 {
+			statefulSetsWithoutReplicas = append(statefulSetsWithoutReplicas, statefulSet.Name)
 		}
 	}
 
-	return statefulsetsWithoutReplicas, nil
+	return statefulSetsWithoutReplicas, nil
 }
 
-func ProcessNamespaceStatefulsets(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
-	usedServices, err := getStatefulsetsWithoutReplicas(clientset, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	return usedServices, nil
-}
-
-func GetUnusedStatefulsets(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceStatefulsets(clientset, namespace)
+		diff, err := ProcessNamespaceStatefulSets(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-		output := FormatOutput(namespace, diff, "Statefulsets")
+		output := FormatOutput(namespace, diff, "StatefulSets")
 		fmt.Println(output)
 		fmt.Println()
 	}
 }
 
-func GetUnusedStatefulsetsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackWebhookURL string) {
+func GetUnusedStatefulsetsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackWebhookURL string) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceStatefulsets(clientset, namespace)
+		diff, err := ProcessNamespaceStatefulSets(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -85,7 +72,7 @@ func GetUnusedStatefulsetsSendToSlackAsFile(includeExcludeLists IncludeExcludeLi
 	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceStatefulsets(clientset, namespace)
+		diff, err := ProcessNamespaceStatefulSets(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -103,12 +90,12 @@ func GetUnusedStatefulsetsSendToSlackAsFile(includeExcludeLists IncludeExcludeLi
 	}
 }
 
-func GetUnusedStatefulsetsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedStatefulSetsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceStatefulsets(clientset, namespace)
+		diff, err := ProcessNamespaceStatefulSets(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

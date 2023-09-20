@@ -10,12 +10,12 @@ import (
 var stsCmd = &cobra.Command{
 	Use:     "statefulset",
 	Aliases: []string{"sts", "statefulsets"},
-	Short:   "Gets unused statefulsets",
+	Short:   "Gets unused statefulSets",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
 		if outputFormat == "json" || outputFormat == "yaml" {
-			if response, err := kor.GetUnusedStatefulsetsStructured(includeExcludeLists, clientset, outputFormat); err != nil {
+			if response, err := kor.GetUnusedStatefulSetsStructured(includeExcludeLists, clientset, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(response)
@@ -25,7 +25,7 @@ var stsCmd = &cobra.Command{
 		} else if slackChannel != "" && slackAuthToken != "" {
 			kor.GetUnusedStatefulsetsSendToSlackAsFile(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedStatefulsets(includeExcludeLists, clientset)
+			kor.GetUnusedStatefulSets(includeExcludeLists, clientset)
 		}
 
 	},

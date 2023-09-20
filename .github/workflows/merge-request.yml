@@ -1,6 +1,9 @@
 name: build-lint-test
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     types:
       - opened
@@ -28,9 +31,15 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: latest
+          skip-pkg-cache: true
 
       - name: Build
         run: go build -v ./...
 
       - name: Test
-        run: go test -v ./...
+        run: go test -v ./... -coverprofile=coverage.txt
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

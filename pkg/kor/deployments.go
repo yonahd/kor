@@ -12,8 +12,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func getDeploymentsWithoutReplicas(kubeClient *kubernetes.Clientset, namespace string) ([]string, error) {
-	deploymentsList, err := kubeClient.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
+func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	deploymentsList, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -33,16 +33,7 @@ func getDeploymentsWithoutReplicas(kubeClient *kubernetes.Clientset, namespace s
 	return deploymentsWithoutReplicas, nil
 }
 
-func ProcessNamespaceDeployments(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
-	usedServices, err := getDeploymentsWithoutReplicas(clientset, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	return usedServices, nil
-}
-
-func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -57,7 +48,7 @@ func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset *ku
 	}
 }
 
-func GetUnusedDeploymentsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackWebhookURL string) {
+func GetUnusedDeploymentsSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackWebhookURL string) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
@@ -79,7 +70,7 @@ func GetUnusedDeploymentsSendToSlackWebhook(includeExcludeLists IncludeExcludeLi
 	}
 }
 
-func GetUnusedDeploymentsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackChannel string, slackAuthToken string) {
+func GetUnusedDeploymentsSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackChannel string, slackAuthToken string) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
@@ -103,7 +94,7 @@ func GetUnusedDeploymentsSendToSlackAsFile(includeExcludeLists IncludeExcludeLis
 	}
 }
 
-func GetUnusedDeploymentsStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedDeploymentsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 

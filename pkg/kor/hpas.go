@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func getDeploymentNames(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func getDeploymentNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -26,19 +26,19 @@ func getDeploymentNames(clientset *kubernetes.Clientset, namespace string) ([]st
 	return names, nil
 }
 
-func getStatefulSetNames(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
-	statefulsets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
+func getStatefulSetNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	statefulSets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-	names := make([]string, 0, len(statefulsets.Items))
-	for _, statefulset := range statefulsets.Items {
-		names = append(names, statefulset.Name)
+	names := make([]string, 0, len(statefulSets.Items))
+	for _, statefulSet := range statefulSets.Items {
+		names = append(names, statefulSet.Name)
 	}
 	return names, nil
 }
 
-func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func extractUnusedHpas(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	deploymentNames, err := getDeploymentNames(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]str
 	if err != nil {
 		return nil, err
 	}
-	hpas, err := clientset.AutoscalingV1().HorizontalPodAutoscalers(namespace).List(context.TODO(), metav1.ListOptions{})
+	hpas, err := clientset.AutoscalingV2().HorizontalPodAutoscalers(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func extractUnusedHpas(clientset *kubernetes.Clientset, namespace string) ([]str
 	return diff, nil
 }
 
-func processNamespaceHpas(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+func processNamespaceHpas(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	unusedHpas, err := extractUnusedHpas(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func processNamespaceHpas(clientset *kubernetes.Clientset, namespace string) ([]
 	return unusedHpas, nil
 }
 
-func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset) {
+func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
@@ -96,7 +96,7 @@ func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset *kubernete
 
 }
 
-func GetUnusedHpasSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackWebhookURL string) {
+func GetUnusedHpasSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackWebhookURL string) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
@@ -118,7 +118,7 @@ func GetUnusedHpasSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, cl
 	}
 }
 
-func GetUnusedHpasSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, slackChannel string, slackAuthToken string) {
+func GetUnusedHpasSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackChannel string, slackAuthToken string) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
@@ -142,7 +142,7 @@ func GetUnusedHpasSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, cli
 	}
 }
 
-func GetUnusedHpasStructured(includeExcludeLists IncludeExcludeLists, clientset *kubernetes.Clientset, outputFormat string) (string, error) {
+func GetUnusedHpasStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
