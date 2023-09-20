@@ -113,6 +113,40 @@ func main() {
 }
 ```
 
+## In Cluster Usage
+
+To use this tool inside the cluster running as a CronJob and sending the results to a Slack Webhook as raw text(has characters limits of 4000) or to a Slack channel by uploading a file(recommended), you can use the following commands:
+
+```sh
+# Send to a Slack webhook as raw text
+helm upgrade -i kor \
+    --namespace kor \
+    --create-namespace \
+    --set cronJob.slackWebhookUrl=<slack-webhook-url> \
+    ./charts/kor
+```
+
+```sh
+# Send to a Slack channel by uploading a file
+helm upgrade -i kor \
+    --namespace kor \
+    --create-namespace \
+    --set cronJob.slackChannel=<slack-channel> \
+    --set cronJob.slackToken=<slack-token> \
+    ./charts/kor
+```
+
+It's set to run every Monday at 1 a.m. by default. You can change the schedule by setting the `cronJob.schedule` value.
+
+```sh
+helm upgrade -i kor \
+    --namespace kor \
+    --create-namespace \
+    --set cronJob.slackChannel=<slack-channel> \
+    --set cronJob.slackToken=<slack-token> \
+    --set cronJob.schedule="0 1 * * 1" \
+    ./charts/kor
+```
 
 ## Contributing
 

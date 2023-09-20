@@ -1,0 +1,58 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "kor.serviceAccountName" . }}-read-resources-role
+rules:
+  - apiGroups: ["*"]
+    resources:
+      - pods
+      - configmaps
+      - namespaces
+      - secrets
+      - services
+      - serviceaccounts
+      - deployments
+      - statefulsets
+      - roles
+      - rolebindings
+      - clusterroles
+      - clusterrolebindings
+      - horizontalpodautoscalers
+      - persistentvolumeclaims
+      - ingresses
+      - poddisruptionbudgets
+      - endpoints
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "kor.serviceAccountName" . }}-read-resources-clusterrole
+rules:
+  - apiGroups: ["*"]
+    resources:
+      - pods
+      - configmaps
+      - namespaces
+      - secrets
+      - services
+      - serviceaccounts
+      - deployments
+      - statefulsets
+      - roles
+      - rolebindings
+      - clusterroles
+      - clusterrolebindings
+      - horizontalpodautoscalers
+      - persistentvolumeclaims
+      - ingresses
+      - poddisruptionbudgets
+      - endpoints
+    verbs:
+      - get
+      - list
+      - watch
