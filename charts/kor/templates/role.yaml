@@ -3,7 +3,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: {{ include "kor.serviceAccountName" . }}-read-resources-role
-  namespace: {{ .Values.namespace }}
 rules:
   - apiGroups: ["*"]
     resources:

@@ -22,6 +22,8 @@ spec:
               args: ["{{ .Values.cronJob.command }} --slack-webhook-url {{ .Values.cronJob.slackWebhookUrl }}"]
               {{- else if and .Values.cronJob.slackChannel .Values.cronJob.slackAuthToken }}
               args: ["{{ .Values.cronJob.command }} --slack-channel {{ .Values.cronJob.slackChannel }} --slack-auth-token {{ .Values.cronJob.slackAuthToken }}"]
+              {{- else }}
+              args: ["{{ .Values.cronJob.command }}"]
               {{- end }}
               {{- if .Values.cronJob.env }}
               env:
