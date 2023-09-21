@@ -1,5 +1,5 @@
 cronJob:
-  enabled: true
+  enabled: false
   name: kor
   schedule: "0 1 * * 1"
   image:
@@ -13,6 +13,45 @@ cronJob:
   restartPolicy: OnFailure
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 2
+
+prometheusExporter:
+  enabled: true
+  name: kor-exporter
+  # time in minutes, default is 10 minutes
+  exporterInterval: ""
+  deployment:
+    image:
+      repository: yonahdissen/kor
+      tag: latest
+    command: kor exporter
+    restartPolicy: Always
+    imagePullPolicy: Always
+    imagePullSecrets: []
+    podSecurityContext: {}
+    replicaCount: 1
+    resources: {}
+      # limits:
+      #   cpu: 100m
+      #   memory: 128Mi
+      # requests:
+      #   cpu: 100m
+      #   memory: 128Mi
+
+    securityContext: {}
+      # capabilities:
+      #   drop:
+      #   - ALL
+      # readOnlyRootFilesystem: true
+      # runAsNonRoot: true
+      # runAsUser: 1000
+
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+
+  service:
+    type: ClusterIP
+    port: 8080
 
 serviceAccount:
   # Specifies whether a service account should be created
