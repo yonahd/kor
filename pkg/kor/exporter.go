@@ -31,8 +31,10 @@ func Exporter(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Inte
 	http.Handle("/metrics", promhttp.Handler())
 
 	go exportMetrics(includeExcludeLists, clientset, outputFormat) // Start exporting metrics in the background
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		fmt.Println(err)
+	}
 	fmt.Println("Server listening on :8080")
-	http.ListenAndServe(":8080", nil)
 	// exportMetrics(includeExcludeLists, kubeconfig, outputFormat)
 }
 
@@ -50,11 +52,9 @@ func exportMetrics(includeExcludeLists IncludeExcludeLists, clientset kubernetes
 
 			for namespace, resources := range data {
 				for kind, resourceList := range resources {
-					if resourceList != nil {
-						for _, resourceName := range resourceList {
-							// orphanedResourcesCounter.WithLabelValues(kind, namespace, resourceName).Inc()
-							orphanedResourcesCounter.WithLabelValues(kind, namespace, resourceName)
-						}
+					for _, resourceName := range resourceList {
+						// orphanedResourcesCounter.WithLabelValues(kind, namespace, resourceName).Inc()
+						orphanedResourcesCounter.WithLabelValues(kind, namespace, resourceName)
 					}
 				}
 			}
