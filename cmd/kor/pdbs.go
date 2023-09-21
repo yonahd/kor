@@ -21,9 +21,9 @@ var pdbCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedPdbsSendToSlackWebhook(includeExcludeLists, clientset, slackWebhookURL)
+			kor.GetUnusedPdbs(includeExcludeLists, clientset, slackWebhookURL)
 		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedPdbsSendToSlackAsFile(includeExcludeLists, clientset, slackChannel, slackAuthToken)
+			kor.GetUnusedPdbs(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedPdbs(includeExcludeLists, clientset)
 		}

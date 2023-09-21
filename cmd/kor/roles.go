@@ -21,9 +21,9 @@ var roleCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedRolesSendToSlackWebhook(includeExcludeLists, clientset, slackWebhookURL)
+			kor.GetUnusedRoles(includeExcludeLists, clientset, slackWebhookURL)
 		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedRolesSendToSlackAsFile(includeExcludeLists, clientset, slackChannel, slackAuthToken)
+			kor.GetUnusedRoles(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedRoles(includeExcludeLists, clientset)
 		}

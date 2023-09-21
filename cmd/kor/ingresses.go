@@ -21,9 +21,9 @@ var ingressCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedIngressesSendToSlackWebhook(includeExcludeLists, clientset, slackWebhookURL)
+			kor.GetUnusedIngresses(includeExcludeLists, clientset, slackWebhookURL)
 		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedIngressesSendToSlackAsFile(includeExcludeLists, clientset, slackChannel, slackAuthToken)
+			kor.GetUnusedIngresses(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedIngresses(includeExcludeLists, clientset)
 		}

@@ -21,9 +21,9 @@ var pvcCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedPvcsSendToSlackWebhook(includeExcludeLists, clientset, slackWebhookURL)
+			kor.GetUnusedPvcs(includeExcludeLists, clientset, slackWebhookURL)
 		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedPvcsSendToSlackAsFile(includeExcludeLists, clientset, slackChannel, slackAuthToken)
+			kor.GetUnusedPvcs(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedPvcs(includeExcludeLists, clientset)
 		}

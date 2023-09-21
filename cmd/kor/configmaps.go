@@ -21,9 +21,9 @@ var configmapCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else if slackWebhookURL != "" {
-			kor.GetUnusedConfigmapsSendToSlackWebhook(includeExcludeLists, clientset, slackWebhookURL)
+			kor.GetUnusedConfigmaps(includeExcludeLists, clientset, slackWebhookURL)
 		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedConfigmapsSendToSlackAsFile(includeExcludeLists, clientset, slackChannel, slackAuthToken)
+			kor.GetUnusedConfigmaps(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
 			kor.GetUnusedConfigmaps(includeExcludeLists, clientset)
 		}
