@@ -119,8 +119,11 @@ func getUnusedPdbs(clientset kubernetes.Interface, namespace string) ResourceDif
 	return namespacePdbDiff
 }
 
-func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
+func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackParams ...string) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+
+	var outputBuffer bytes.Buffer
+
 	for _, namespace := range namespaces {
 		var allDiffs []ResourceDiff
 		namespaceCMDiff := getUnusedCMs(clientset, namespace)
@@ -145,87 +148,25 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.
 		allDiffs = append(allDiffs, namespaceIngressDiff)
 		namespacePdbDiff := getUnusedPdbs(clientset, namespace)
 		allDiffs = append(allDiffs, namespacePdbDiff)
-		output := FormatOutputAll(namespace, allDiffs)
-		fmt.Println(output)
-		fmt.Println()
-	}
-}
 
-func GetUnusedAllSendToSlackWebhook(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackWebhookURL string) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-
-	var outputBuffer bytes.Buffer
-
-	for _, namespace := range namespaces {
-		var allDiffs []ResourceDiff
-		namespaceCMDiff := getUnusedCMs(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceCMDiff)
-		namespaceSVCDiff := getUnusedSVCs(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceSVCDiff)
-		namespaceSecretDiff := getUnusedSecrets(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceSecretDiff)
-		namespaceSADiff := getUnusedServiceAccounts(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceSADiff)
-		namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceDeploymentDiff)
-		namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
-		namespaceRoleDiff := getUnusedRoles(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceRoleDiff)
-		namespaceHpaDiff := getUnusedHpas(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceHpaDiff)
-		namespacePvcDiff := getUnusedPvcs(clientset, namespace)
-		allDiffs = append(allDiffs, namespacePvcDiff)
-		namespaceIngressDiff := getUnusedIngresses(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceIngressDiff)
 		output := FormatOutputAll(namespace, allDiffs)
 
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
 	}
 
-	if err := SendToSlackWebhook(slackWebhookURL, outputBuffer.String()); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to send payload to Slack: %v\n", err)
-	}
-}
+	if len(slackParams) == 1 {
+		if err := SendToSlackWebhook(slackParams[0], outputBuffer.String()); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
+		}
+	} else if len(slackParams) == 2 {
+		outputFilePath, _ := writeOutputToFile(outputBuffer)
 
-func GetUnusedAllSendToSlackAsFile(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackChannel string, slackAuthToken string) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-
-	var outputBuffer bytes.Buffer
-
-	for _, namespace := range namespaces {
-		var allDiffs []ResourceDiff
-		namespaceCMDiff := getUnusedCMs(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceCMDiff)
-		namespaceSVCDiff := getUnusedSVCs(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceSVCDiff)
-		namespaceSecretDiff := getUnusedSecrets(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceSecretDiff)
-		namespaceSADiff := getUnusedServiceAccounts(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceSADiff)
-		namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceDeploymentDiff)
-		namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
-		namespaceRoleDiff := getUnusedRoles(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceRoleDiff)
-		namespaceHpaDiff := getUnusedHpas(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceHpaDiff)
-		namespacePvcDiff := getUnusedPvcs(clientset, namespace)
-		allDiffs = append(allDiffs, namespacePvcDiff)
-		namespaceIngressDiff := getUnusedIngresses(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceIngressDiff)
-		output := FormatOutputAll(namespace, allDiffs)
-
-		outputBuffer.WriteString(output)
-		outputBuffer.WriteString("\n")
-	}
-
-	outputFilePath, _ := writeOutputToFile(outputBuffer)
-
-	if err := SendFileToSlack(outputFilePath, "Unused All", slackChannel, slackAuthToken); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
+		if err := SendFileToSlack(outputFilePath, "Unused All", slackParams[0], slackParams[1]); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
+		}
+	} else {
+		fmt.Println(outputBuffer.String())
 	}
 }
 
