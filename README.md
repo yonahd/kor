@@ -44,6 +44,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
 - `ingress` - Gets unused Ingresses for the specified namespace or all namespaces.
 - `pdb` - Gets unused PDBs for the specified namespace or all namespaces.
+- `exporter` - Export Prometheus metrics.
 
 ### Supported Flags
 ```

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,16 +30,24 @@ func init() {
 // TODO: add option to change port / url !?
 func Exporter(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) {
 	http.Handle("/metrics", promhttp.Handler())
-
+	fmt.Println("Server listening on :8080")
 	go exportMetrics(includeExcludeLists, clientset, outputFormat) // Start exporting metrics in the background
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("Server listening on :8080")
-	// exportMetrics(includeExcludeLists, kubeconfig, outputFormat)
 }
 
 func exportMetrics(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) {
+	exporterInterval := os.Getenv("exporterInterval")
+	if exporterInterval == "" {
+		exporterInterval = "10"
+	}
+	exporterIntervalValue, err := strconv.Atoi(exporterInterval)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	for {
 		if korOutput, err := GetUnusedAllStructured(includeExcludeLists, clientset, outputFormat); err != nil {
 			fmt.Println(err)
@@ -58,8 +67,7 @@ func exportMetrics(includeExcludeLists IncludeExcludeLists, clientset kubernetes
 					}
 				}
 			}
-			// TODO: interval
-			time.Sleep(1 * time.Minute)
+			time.Sleep(time.Duration(exporterIntervalValue) * time.Minute)
 		}
 	}
 }
