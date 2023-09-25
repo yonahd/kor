@@ -20,12 +20,8 @@ var pdbCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
-		} else if slackWebhookURL != "" {
-			kor.GetUnusedPdbs(includeExcludeLists, clientset, slackWebhookURL)
-		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedPdbs(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedPdbs(includeExcludeLists, clientset)
+			kor.GetUnusedPdbs(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

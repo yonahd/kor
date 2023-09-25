@@ -140,7 +140,7 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackParams ...string) {
+func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
@@ -157,15 +157,9 @@ func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset
 		outputBuffer.WriteString("\n")
 	}
 
-	if len(slackParams) == 1 {
-		if err := SendToSlackWebhook(slackParams[0], outputBuffer.String()); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
-		}
-	} else if len(slackParams) == 2 {
-		outputFilePath, _ := writeOutputToFile(outputBuffer)
-
-		if err := SendFileToSlack(outputFilePath, "Unused ServiceAccounts", slackParams[0], slackParams[1]); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to send output to Slack: %v\n", err)
+	if slackOpts != (SlackOpts{}) {
+		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
 		}
 	} else {
 		fmt.Println(outputBuffer.String())

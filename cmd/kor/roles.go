@@ -20,12 +20,8 @@ var roleCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
-		} else if slackWebhookURL != "" {
-			kor.GetUnusedRoles(includeExcludeLists, clientset, slackWebhookURL)
-		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedRoles(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedRoles(includeExcludeLists, clientset)
+			kor.GetUnusedRoles(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

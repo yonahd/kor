@@ -20,12 +20,8 @@ var hpaCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
-		} else if slackWebhookURL != "" {
-			kor.GetUnusedHpas(includeExcludeLists, clientset, slackWebhookURL)
-		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedHpas(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedHpas(includeExcludeLists, clientset)
+			kor.GetUnusedHpas(includeExcludeLists, clientset, slackOpts)
 		}
 	},
 }

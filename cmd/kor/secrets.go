@@ -20,12 +20,8 @@ var secretCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
-		} else if slackWebhookURL != "" {
-			kor.GetUnusedSecrets(includeExcludeLists, clientset, slackWebhookURL)
-		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedSecrets(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedSecrets(includeExcludeLists, clientset)
+			kor.GetUnusedSecrets(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

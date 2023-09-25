@@ -19,12 +19,8 @@ var allCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
-		} else if slackWebhookURL != "" {
-			kor.GetUnusedAll(includeExcludeLists, clientset, slackWebhookURL)
-		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedAll(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedAll(includeExcludeLists, clientset)
+			kor.GetUnusedAll(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

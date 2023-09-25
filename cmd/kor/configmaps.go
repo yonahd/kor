@@ -20,12 +20,8 @@ var configmapCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
-		} else if slackWebhookURL != "" {
-			kor.GetUnusedConfigmaps(includeExcludeLists, clientset, slackWebhookURL)
-		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedConfigmaps(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedConfigmaps(includeExcludeLists, clientset)
+			kor.GetUnusedConfigmaps(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

@@ -20,12 +20,8 @@ var ingressCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
-		} else if slackWebhookURL != "" {
-			kor.GetUnusedIngresses(includeExcludeLists, clientset, slackWebhookURL)
-		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedIngresses(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedIngresses(includeExcludeLists, clientset)
+			kor.GetUnusedIngresses(includeExcludeLists, clientset, slackOpts)
 		}
 	},
 }

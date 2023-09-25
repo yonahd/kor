@@ -10,63 +10,83 @@ import (
 	"path/filepath"
 )
 
-func SendToSlackWebhook(webhookURL string, message string) error {
-	payload := []byte(`{"text": "` + message + `"}`)
-
-	_, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(payload))
-	return err
+type SendMessageToSlack interface {
+	SendToSlack(slackOpts SlackOpts, outputBuffer string) error
 }
 
-func SendFileToSlack(filePath string, initialComment string, channels string, token string) error {
-	var formData bytes.Buffer
-	writer := multipart.NewWriter(&formData)
+type SlackOpts struct {
+	WebhookURL string
+	Channel    string
+	Token      string
+}
 
-	fileWriter, err := writer.CreateFormFile("file", filePath)
-	if err != nil {
-		return err
-	}
-	file, err := os.Open(filePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	_, err = io.Copy(fileWriter, file)
-	if err != nil {
-		return err
-	}
+type SlackMessage struct {
+}
 
-	if err := writer.WriteField("initial_comment", initialComment); err != nil {
-		return err
-	}
+func SendToSlack(sm SendMessageToSlack, slackOpts SlackOpts, outputBuffer string) error {
+	return sm.SendToSlack(slackOpts, outputBuffer)
+}
 
-	if err := writer.WriteField("channels", channels); err != nil {
-		return err
-	}
+func (sm SlackMessage) SendToSlack(slackOpts SlackOpts, outputBuffer string) error {
+	if slackOpts.WebhookURL != "" {
+		payload := []byte(`{"text": "` + outputBuffer + `"}`)
+		_, err := http.Post(slackOpts.WebhookURL, "application/json", bytes.NewBuffer(payload))
 
-	writer.Close()
+		if err != nil {
+			return err
+		}
+		return nil
+	} else if slackOpts.Channel != "" && slackOpts.Token != "" {
+		outputFilePath, _ := writeOutputToFile(outputBuffer)
 
-	req, err := http.NewRequest("POST", "https://slack.com/api/files.upload", &formData)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
+		var formData bytes.Buffer
+		writer := multipart.NewWriter(&formData)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+		fileWriter, err := writer.CreateFormFile("file", outputFilePath)
+		if err != nil {
+			return err
+		}
+		file, err := os.Open(outputFilePath)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		_, err = io.Copy(fileWriter, file)
+		if err != nil {
+			return err
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("slack api returned non-ok status code: %d", resp.StatusCode)
+		if err := writer.WriteField("channels", slackOpts.Channel); err != nil {
+			return err
+		}
+
+		writer.Close()
+
+		req, err := http.NewRequest("POST", "https://slack.com/api/files.upload", &formData)
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Authorization", "Bearer "+slackOpts.Token)
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("slack API returned non-OK status code: %d", resp.StatusCode)
+		}
+
+		return nil
 	}
 
 	return nil
 }
 
-func writeOutputToFile(outputBuffer bytes.Buffer) (string, error) {
+func writeOutputToFile(outputBuffer string) (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get user's home directory: %v", err)
@@ -81,7 +101,7 @@ func writeOutputToFile(outputBuffer bytes.Buffer) (string, error) {
 	}
 	defer file.Close()
 
-	_, err = file.WriteString(outputBuffer.String())
+	_, err = file.WriteString(outputBuffer)
 	if err != nil {
 		return "", fmt.Errorf("failed to write output to file: %v", err)
 	}

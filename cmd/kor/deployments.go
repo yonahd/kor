@@ -20,12 +20,8 @@ var deployCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
-		} else if slackWebhookURL != "" {
-			kor.GetUnusedDeployments(includeExcludeLists, clientset, slackWebhookURL)
-		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedDeployments(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedDeployments(includeExcludeLists, clientset)
+			kor.GetUnusedDeployments(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

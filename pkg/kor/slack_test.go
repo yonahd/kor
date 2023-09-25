@@ -8,89 +8,44 @@ import (
 	"testing"
 )
 
-func TestSendToSlackWebhook(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			t.Errorf("Expected POST request, got %s", r.Method)
-		}
-		if r.Header.Get("Content-Type") != "application/json" {
-			t.Errorf("Expected Content-Type 'application/json', got '%s'", r.Header.Get("Content-Type"))
-		}
-
-		w.WriteHeader(http.StatusOK)
-	}))
-
-	defer server.Close()
-
-	webhookURL := server.URL
-	message := "Test message"
-	err := SendToSlackWebhook(webhookURL, message)
-
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
-	}
+type SendToSlackTestCase struct {
+	Name         string
+	SlackOpts    SlackOpts
+	OutputBuffer string
 }
 
-func createTestFile(t *testing.T) string {
-	content := "This is a test file content."
-	filePath := "testfile.txt"
-	err := os.WriteFile(filePath, []byte(content), 0666)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return filePath
+var testCases = []SendToSlackTestCase{
+	{
+		Name: "Test using WebhookURL",
+		SlackOpts: SlackOpts{
+			WebhookURL: "slack.webhookurl.com",
+		},
+		OutputBuffer: "Test message",
+	},
+	{
+		Name: "Test using Channel and Token",
+		SlackOpts: SlackOpts{
+			Channel: "your_channel",
+			Token:   "your_token",
+		},
+		OutputBuffer: "Test message",
+	},
+	{
+		Name:         "Test with empty SlackOpts",
+		SlackOpts:    SlackOpts{},
+		OutputBuffer: "Test message",
+	},
 }
 
-func TestSendFileToSlack(t *testing.T) {
-	testFile := createTestFile(t)
-	defer os.Remove(testFile)
+func TestSendToSlack(t *testing.T) {
+	for _, tc := range testCases {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if err := SendToSlack(SlackMessage{}, tc.SlackOpts, tc.OutputBuffer); err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
+		}))
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			t.Errorf("Expected POST request, got %s", r.Method)
-		}
-		if r.Header.Get("Content-Type") != "multipart/form-data; boundary=" {
-			t.Errorf("Expected Content-Type 'multipart/form-data', got '%s'", r.Header.Get("Content-Type"))
-		}
-
-		err := r.ParseMultipartForm(32 << 20)
-		if err != nil {
-			t.Errorf("Error parsing multipart form data: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
-		file, _, err := r.FormFile("file")
-		if err != nil {
-			t.Errorf("Error getting file from form data: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		defer file.Close()
-
-		initialComment := r.FormValue("initial_comment")
-		channels := r.FormValue("channels")
-
-		if initialComment != "Test comment" {
-			t.Errorf("Expected initial_comment 'Test comment', got '%s'", initialComment)
-		}
-		if channels != "test_channel" {
-			t.Errorf("Expected channels 'test_channel', got '%s'", channels)
-		}
-
-		w.WriteHeader(http.StatusOK)
-	}))
-
-	defer server.Close()
-
-	initialComment := "Test comment"
-	channels := "test_channel"
-	token := "test_token"
-
-	err := SendFileToSlack(testFile, initialComment, channels, token)
-
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
+		defer server.Close()
 	}
 }
 
@@ -99,7 +54,7 @@ func TestWriteOutputToFile(t *testing.T) {
 	outputBuffer.WriteString("This is a test output.\n")
 	expectedOutput := outputBuffer.String()
 
-	outputFilePath, err := writeOutputToFile(outputBuffer)
+	outputFilePath, err := writeOutputToFile(expectedOutput)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

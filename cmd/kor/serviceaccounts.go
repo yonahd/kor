@@ -20,12 +20,8 @@ var serviceAccountCmd = &cobra.Command{
 			} else {
 				fmt.Println(response)
 			}
-		} else if slackWebhookURL != "" {
-			kor.GetUnusedServiceAccounts(includeExcludeLists, clientset, slackWebhookURL)
-		} else if slackChannel != "" && slackAuthToken != "" {
-			kor.GetUnusedServiceAccounts(includeExcludeLists, clientset, slackChannel, slackAuthToken)
 		} else {
-			kor.GetUnusedServiceAccounts(includeExcludeLists, clientset)
+			kor.GetUnusedServiceAccounts(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},
