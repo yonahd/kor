@@ -53,6 +53,22 @@ prometheusExporter:
     type: ClusterIP
     port: 8080
 
+  serviceMonitor:
+    enabled: true
+    # Set the namespace the ServiceMonitor should be deployed, if empty namespace will be .Release.Namespace
+    namespace: ""
+    # Service monitor labels
+    labels: {}
+    # Set how frequently Prometheus should scrape
+    interval: 30s
+    telemetryPath: /metrics
+    # Set timeout for scrape
+    timeout: 10s
+    relabelings: []
+    # Set of labels to transfer on the Kubernetes Service onto the target.
+    targetLabels: []
+    metricRelabelings: []
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
