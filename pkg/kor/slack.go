@@ -2,6 +2,7 @@ package kor
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -37,6 +38,7 @@ func (sm SlackMessage) SendToSlack(slackOpts SlackOpts, outputBuffer string) err
 		}
 		return nil
 	} else if slackOpts.Channel != "" && slackOpts.Token != "" {
+		fmt.Printf("Sending message to Slack channel %s...", slackOpts.Channel)
 		outputFilePath, _ := writeOutputToFile(outputBuffer)
 
 		var formData bytes.Buffer
@@ -81,9 +83,9 @@ func (sm SlackMessage) SendToSlack(slackOpts SlackOpts, outputBuffer string) err
 		}
 
 		return nil
+	} else {
+		return errors.New("SlackOpts must contain either WebhookURL or Channel and Token")
 	}
-
-	return nil
 }
 
 func writeOutputToFile(outputBuffer string) (string, error) {
@@ -92,7 +94,7 @@ func writeOutputToFile(outputBuffer string) (string, error) {
 		return "", fmt.Errorf("failed to get user's home directory: %v", err)
 	}
 
-	outputFileName := "output.txt"
+	outputFileName := "kor-scan-results.txt"
 	outputFilePath := filepath.Join(homeDir, outputFileName)
 
 	file, err := os.Create(outputFilePath)

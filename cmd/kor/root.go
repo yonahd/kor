@@ -27,7 +27,7 @@ var rootCmd = &cobra.Command{
 					fmt.Println(response)
 				}
 			} else {
-				kor.GetUnusedMulti(includeExcludeLists, kubeconfig, resourceNames)
+				kor.GetUnusedMulti(includeExcludeLists, kubeconfig, resourceNames, slackOpts)
 			}
 		} else {
 			fmt.Printf("Subcommand %q was not found, try using 'kor --help' for available subcommands", args[0])
@@ -48,8 +48,8 @@ func Execute() {
 	rootCmd.PersistentFlags().StringVarP(&includeExcludeLists.ExcludeListStr, "exclude-namespaces", "e", "", "Namespaces to be excluded, splited by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.")
 	rootCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table or json)")
 	rootCmd.PersistentFlags().StringVar(&slackOpts.WebhookURL, "slack-webhook-url", "", "Slack webhook URL to send notifications to")
-	rootCmd.PersistentFlags().StringVar(&slackOpts.Channel, "slack-channel", "", "Slack channel to send notifications to")
-	rootCmd.PersistentFlags().StringVar(&slackOpts.Token, "slack-auth-token", "", "Slack auth token to send notifications to")
+	rootCmd.PersistentFlags().StringVar(&slackOpts.Channel, "slack-channel", "", "Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.")
+	rootCmd.PersistentFlags().StringVar(&slackOpts.Token, "slack-auth-token", "", "Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while executing your CLI '%s'", err)
 		os.Exit(1)

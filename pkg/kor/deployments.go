@@ -53,6 +53,7 @@ func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset kub
 	if slackOpts != (SlackOpts{}) {
 		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
+			os.Exit(1)
 		}
 	} else {
 		fmt.Println(outputBuffer.String())
