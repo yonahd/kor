@@ -38,7 +38,7 @@ func Exporter(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Inte
 }
 
 func exportMetrics(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) {
-	exporterInterval := os.Getenv("exporterInterval")
+	exporterInterval := os.Getenv("EXPORTER_INTERVAL")
 	if exporterInterval == "" {
 		exporterInterval = "10"
 	}
