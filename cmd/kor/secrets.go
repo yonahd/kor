@@ -21,7 +21,7 @@ var secretCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedSecrets(includeExcludeLists, clientset)
+			kor.GetUnusedSecrets(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

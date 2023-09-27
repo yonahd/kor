@@ -61,11 +61,14 @@ Kor provides various subcommands to identify and list unused resources. The avai
 
 ### Supported Flags
 ```
--e, --exclude-namespaces string   Namespaces to be excluded, splited by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
+-e, --exclude-namespaces string   Namespaces to be excluded, split by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
 -h, --help                        help for kor
--n, --include-namespaces string   Namespaces to run on, split by comma. Example: --include-namespace ns1,ns2,ns3. 
+-n, --include-namespaces string   Namespaces to run on, split by comma. Example: --include-namespace ns1,ns2,ns3.
 -k, --kubeconfig string           Path to kubeconfig file (optional)
-    --output string               Output format ("table" or "json") (default "table")
+    --output string               Output format (table or json) (default "table")
+    --slack-auth-token string     Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.
+    --slack-channel string        Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.
+    --slack-webhook-url string    Slack webhook URL to send notifications to
 ```
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.
@@ -149,6 +152,7 @@ helm upgrade -i kor \
     --set cronJob.slackToken=<slack-token> \
     ./charts/kor
 ```
+> Note: To send it to Slack as a file it's required to set the `slackToken` and `slackChannel` values.
 
 It's set to run every Monday at 1 a.m. by default. You can change the schedule by setting the `cronJob.schedule` value.
 

@@ -21,7 +21,7 @@ var pdbCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedPdbs(includeExcludeLists, clientset)
+			kor.GetUnusedPdbs(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

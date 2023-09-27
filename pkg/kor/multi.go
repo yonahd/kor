@@ -1,8 +1,10 @@
 package kor
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"k8s.io/client-go/kubernetes"
@@ -53,9 +55,11 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 	return allDiffs
 }
 
-func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, kubeconfig, resourceNames string) {
+func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, kubeconfig, resourceNames string, slackOpts SlackOpts) {
 	var clientset kubernetes.Interface
 	var namespaces []string
+
+	var outputBuffer bytes.Buffer
 
 	clientset = GetKubeClient(kubeconfig)
 
@@ -65,8 +69,18 @@ func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, kubeconfig, resourc
 	for _, namespace := range namespaces {
 		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList)
 		output := FormatOutputAll(namespace, allDiffs)
-		fmt.Println(output)
-		fmt.Println()
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	if slackOpts != (SlackOpts{}) {
+		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println(outputBuffer.String())
 	}
 }
 

@@ -1,6 +1,7 @@
 package kor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -32,8 +33,10 @@ func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string) 
 	return endpointsWithoutSubsets, nil
 }
 
-func GetUnusedServices(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
+func GetUnusedServices(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+
+	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
 		diff, err := ProcessNamespaceServices(clientset, namespace)
@@ -42,8 +45,18 @@ func GetUnusedServices(includeExcludeLists IncludeExcludeLists, clientset kubern
 			continue
 		}
 		output := FormatOutput(namespace, diff, "Services")
-		fmt.Println(output)
-		fmt.Println()
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	if slackOpts != (SlackOpts{}) {
+		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println(outputBuffer.String())
 	}
 }
 

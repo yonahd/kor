@@ -21,7 +21,7 @@ var deployCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedDeployments(includeExcludeLists, clientset)
+			kor.GetUnusedDeployments(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

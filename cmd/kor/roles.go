@@ -21,7 +21,7 @@ var roleCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedRoles(includeExcludeLists, clientset)
+			kor.GetUnusedRoles(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

@@ -21,7 +21,7 @@ var ingressCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedIngresses(includeExcludeLists, clientset)
+			kor.GetUnusedIngresses(includeExcludeLists, clientset, slackOpts)
 		}
 	},
 }

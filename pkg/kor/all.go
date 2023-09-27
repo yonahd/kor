@@ -1,6 +1,7 @@
 package kor
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -118,8 +119,11 @@ func getUnusedPdbs(clientset kubernetes.Interface, namespace string) ResourceDif
 	return namespacePdbDiff
 }
 
-func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
+func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+
+	var outputBuffer bytes.Buffer
+
 	for _, namespace := range namespaces {
 		var allDiffs []ResourceDiff
 		namespaceCMDiff := getUnusedCMs(clientset, namespace)
@@ -144,9 +148,20 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.
 		allDiffs = append(allDiffs, namespaceIngressDiff)
 		namespacePdbDiff := getUnusedPdbs(clientset, namespace)
 		allDiffs = append(allDiffs, namespacePdbDiff)
+
 		output := FormatOutputAll(namespace, allDiffs)
-		fmt.Println(output)
-		fmt.Println()
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	if slackOpts != (SlackOpts{}) {
+		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println(outputBuffer.String())
 	}
 }
 

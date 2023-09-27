@@ -1,6 +1,7 @@
 package kor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -28,8 +29,10 @@ func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 	return statefulSetsWithoutReplicas, nil
 }
 
-func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
+func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+
+	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
 		diff, err := ProcessNamespaceStatefulSets(clientset, namespace)
@@ -37,9 +40,19 @@ func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset ku
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-		output := FormatOutput(namespace, diff, "StatefulSets")
-		fmt.Println(output)
-		fmt.Println()
+		output := FormatOutput(namespace, diff, "Statefulsets")
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
+
+	if slackOpts != (SlackOpts{}) {
+		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println(outputBuffer.String())
 	}
 }
 

@@ -21,7 +21,7 @@ var serviceAccountCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedServiceAccounts(includeExcludeLists, clientset)
+			kor.GetUnusedServiceAccounts(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

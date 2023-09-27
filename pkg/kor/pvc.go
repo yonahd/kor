@@ -1,6 +1,7 @@
 package kor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -53,8 +54,10 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string) ([]s
 	return diff, nil
 }
 
-func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface) {
+func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+
+	var outputBuffer bytes.Buffer
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespacePvcs(clientset, namespace)
@@ -63,10 +66,19 @@ func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, clientset kubernetes
 			continue
 		}
 		output := FormatOutput(namespace, diff, "Pvcs")
-		fmt.Println(output)
-		fmt.Println()
+
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
 	}
 
+	if slackOpts != (SlackOpts{}) {
+		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println(outputBuffer.String())
+	}
 }
 
 func GetUnusedPvcsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {

@@ -21,7 +21,7 @@ var configmapCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedConfigmaps(includeExcludeLists, clientset)
+			kor.GetUnusedConfigmaps(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

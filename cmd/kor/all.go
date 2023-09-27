@@ -20,7 +20,7 @@ var allCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedAll(includeExcludeLists, clientset)
+			kor.GetUnusedAll(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

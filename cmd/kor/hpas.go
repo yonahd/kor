@@ -21,7 +21,7 @@ var hpaCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedHpas(includeExcludeLists, clientset)
+			kor.GetUnusedHpas(includeExcludeLists, clientset, slackOpts)
 		}
 	},
 }

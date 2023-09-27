@@ -21,7 +21,7 @@ var stsCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedStatefulSets(includeExcludeLists, clientset)
+			kor.GetUnusedStatefulSets(includeExcludeLists, clientset, slackOpts)
 		}
 
 	},

@@ -21,7 +21,7 @@ var pvcCmd = &cobra.Command{
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedPvcs(includeExcludeLists, clientset)
+			kor.GetUnusedPvcs(includeExcludeLists, clientset, slackOpts)
 		}
 	},
 }
