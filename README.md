@@ -42,6 +42,17 @@ docker run --rm -i yonahdissen/kor
 docker run --rm -i -v "/path/to/.kube/config:/root/.kube/config" yonahdissen/kor all
 ```
 
+### Helm
+Run as a cronjob in your Cluster
+```sh
+helm upgrade -i kor \
+    --namespace kor \
+    --create-namespace \
+    ./charts/kor
+```
+
+For more information see [in cluster usage](#in-cluster-usage) 
+
 ## Usage
 
 Kor provides various subcommands to identify and list unused resources. The available commands are:
