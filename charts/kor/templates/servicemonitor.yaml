@@ -1,0 +1,44 @@
+{{- if and ( .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" ) ( .Values.prometheusExporter.serviceMonitor.enabled ) }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: {{ .Values.prometheusExporter.name }}
+  name: {{ .Values.prometheusExporter.name }}
+{{- if .Values.prometheusExporter.serviceMonitor.namespace }}
+  namespace: {{ .Values.prometheusExporter.serviceMonitor.namespace }}
+{{- end }}
+spec:
+  endpoints:
+  - targetPort: 8080
+{{- if .Values.prometheusExporter.serviceMonitor.interval }}
+    interval: {{ .Values.prometheusExporter.serviceMonitor.interval }}
+{{- end }}
+{{- if .Values.prometheusExporter.serviceMonitor.telemetryPath }}
+    path: {{ .Values.prometheusExporter.serviceMonitor.telemetryPath }}
+{{- end }}
+{{- if .Values.prometheusExporter.serviceMonitor.timeout }}
+    scrapeTimeout: {{ .Values.prometheusExporter.serviceMonitor.timeout }}
+{{- end }}
+{{- if .Values.prometheusExporter.serviceMonitor.metricRelabelings }}
+    metricRelabelings:
+{{ toYaml .Values.prometheusExporter.serviceMonitor.metricRelabelings | indent 4 }}
+{{- end }}
+{{- if .Values.prometheusExporter.serviceMonitor.relabelings }}
+    relabelings:
+{{ toYaml .Values.prometheusExporter.serviceMonitor.relabelings | indent 4 }}
+{{- end }}
+  jobLabel: {{ .Values.prometheusExporter.name }}
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      app: {{ .Values.prometheusExporter.name }}
+{{- if .Values.prometheusExporter.serviceMonitor.targetLabels }}
+  targetLabels:
+{{- range .Values.prometheusExporter.serviceMonitor.targetLabels }}
+    - {{ . }}
+{{- end }}
+{{- end }}
+{{- end }}

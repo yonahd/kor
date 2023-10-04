@@ -1,0 +1,66 @@
+{{- if .Values.prometheusExporter.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.prometheusExporter.name }}
+  labels:
+    app: {{ .Values.prometheusExporter.name }}
+spec:
+  {{- with .Values.prometheusExporter.deployment.imagePullSecrets }}
+  imagePullSecrets:
+    {{- toYaml . | nindent }}
+  {{- end }}
+  replicas: {{ .Values.prometheusExporter.deployment.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ .Values.prometheusExporter.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.prometheusExporter.name }}
+    spec: 
+      serviceAccountName: {{ include "kor.serviceAccountName" . }}
+      containers:
+        - name: "{{ .Values.prometheusExporter.name }}-container"
+          {{- with .Values.prometheusExporter.deployment.securityContext }}
+          securityContext:
+            {{ toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.prometheusExporter.deployment.image.repository }}:{{ .Values.prometheusExporter.deployment.image.tag }}"
+          command: ["/bin/sh", "-c"]
+          args: ["{{ .Values.prometheusExporter.deployment.command }}"]
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          {{- with .Values.prometheusExporter.deployment.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.prometheusExporter.exporterInterval }}
+          env:
+          - name: EXPORTER_INTERVAL
+            value: {{ .Values.prometheusExporter.exporterInterval }}
+          {{- end}}
+      {{- with .Values.prometheusExporter.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.prometheusExporter.deployment.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.prometheusExporter.deployment.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+          terminationMessagePath: "/dev/termination-log"
+          imagePullPolicy: {{ .Values.prometheusExporter.deployment.imagePullPolicy }}
+      restartPolicy: {{ .Values.prometheusExporter.deployment.restartPolicy }}
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      {{- with .Values.prometheusExporter.deployment.podSecurityContext }}
+      securityContext: 
+        {{- toYaml . | nindent 8}}
+      {{- end }}
+{{- end }}
