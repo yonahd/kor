@@ -16,7 +16,7 @@ import (
 var (
 	orphanedResourcesCounter = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "Kubernetes_Orphaned_Resources",
+			Name: "kubernetes_orphaned_resources",
 			Help: "Orphaned resources in Kubernetes",
 		},
 		[]string{"kind", "namespace", "resourceName"},
