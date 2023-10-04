@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	orphanedResourcesCounter = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
+	orphanedResourcesCounter = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
 			Name: "Kubernetes_Orphaned_Resources",
 			Help: "Orphaned resources in Kubernetes",
 		},
@@ -62,8 +62,7 @@ func exportMetrics(includeExcludeLists IncludeExcludeLists, clientset kubernetes
 			for namespace, resources := range data {
 				for kind, resourceList := range resources {
 					for _, resourceName := range resourceList {
-						// orphanedResourcesCounter.WithLabelValues(kind, namespace, resourceName).Inc()
-						orphanedResourcesCounter.WithLabelValues(kind, namespace, resourceName)
+						orphanedResourcesCounter.WithLabelValues(kind, namespace, resourceName).Set(1)
 					}
 				}
 			}
