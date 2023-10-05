@@ -2,6 +2,8 @@
 ![GitHub release (with filter)](https://img.shields.io/github/v/release/yonahd/kor?color=green&link=https://github.com/yonahd/kor/releases)
 [![codecov](https://codecov.io/gh/yonahd/kor/branch/main/graph/badge.svg?token=tNKcOjlxLo)](https://codecov.io/gh/yonahd/kor)
 
+![Kor Logo](/images/kor_logo.png)
+
 # Kor - Kubernetes Orphaned Resources Finder
 
 Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identify and list unused:
