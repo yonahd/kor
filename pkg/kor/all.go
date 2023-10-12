@@ -119,6 +119,15 @@ func getUnusedPdbs(clientset kubernetes.Interface, namespace string) ResourceDif
 	return namespacePdbDiff
 }
 
+func getUnusedNSs(clientset kubernetes.Interface, namespace string) ResourceDiff {
+	nsDiff, err := processNamespaceNS(clientset, namespace)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get namespace %s: %v\n", namespace, err)
+	}
+	namespaceNsDiff := ResourceDiff{"Namespace", nsDiff}
+	return namespaceNsDiff
+}
+
 func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
@@ -148,6 +157,8 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.
 		allDiffs = append(allDiffs, namespaceIngressDiff)
 		namespacePdbDiff := getUnusedPdbs(clientset, namespace)
 		allDiffs = append(allDiffs, namespacePdbDiff)
+		namespaceNsDiff := getUnusedNSs(clientset, namespace)
+		allDiffs = append(allDiffs, namespaceNsDiff)
 
 		output := FormatOutputAll(namespace, allDiffs)
 
@@ -206,6 +217,9 @@ func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, clientset k
 
 		namespacePdbDiff := getUnusedPdbs(clientset, namespace)
 		allDiffs = append(allDiffs, namespacePdbDiff)
+
+		namespaceNSDiff := getUnusedNSs(clientset, namespace)
+		allDiffs = append(allDiffs, namespaceNSDiff)
 
 		// Store the unused resources for each resource type in the JSON response
 		resourceMap := make(map[string][]string)
