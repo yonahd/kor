@@ -19,6 +19,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - PVCs
 - Ingresses
 - PDBs
+- Namespaces
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -72,6 +73,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
 - `ingress` - Gets unused Ingresses for the specified namespace or all namespaces.
 - `pdb` - Gets unused PDBs for the specified namespace or all namespaces.
+- `namespace` - Gets unused Namespaces for the specified namespace or all namespaces.
 - `exporter` - Export Prometheus metrics.
 
 ### Supported Flags
