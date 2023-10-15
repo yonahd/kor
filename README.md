@@ -46,13 +46,23 @@ docker run --rm -i -v "/path/to/.kube/config:/root/.kube/config" yonahdissen/kor
 ```
 
 ### Helm
-Run as a cronjob in your Cluster
+Run as a cronjob in your Cluster (with an option for sending slack updates)
+```sh
+helm upgrade -i kor \
+    --namespace kor \
+    --create-namespace \
+    --set cronJob.enabled=true
+    ./charts/kor
+```
+
+Run as a deployment in your Cluster exposing prometheus metrics
 ```sh
 helm upgrade -i kor \
     --namespace kor \
     --create-namespace \
     ./charts/kor
 ```
+
 
 For more information see [in cluster usage](#in-cluster-usage) 
 
