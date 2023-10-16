@@ -8,7 +8,8 @@
 ![Kor Logo](/images/kor_logo.png)
 
 Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identify and list unused:
-- ConfigMaps  
+
+- ConfigMaps
 - Secrets
 - Services
 - ServiceAccounts
@@ -19,6 +20,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - PVCs
 - Ingresses
 - PDBs
+- CRDs
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -64,7 +66,7 @@ helm upgrade -i kor \
 ```
 
 
-For more information see [in cluster usage](#in-cluster-usage) 
+For more information see [in cluster usage](#in-cluster-usage)
 
 ## Usage
 
@@ -82,6 +84,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
 - `ingress` - Gets unused Ingresses for the specified namespace or all namespaces.
 - `pdb` - Gets unused PDBs for the specified namespace or all namespaces.
+- `crd` - Gets unused CRDs in the cluster
 - `exporter` - Export Prometheus metrics.
 
 ### Supported Flags
@@ -198,4 +201,3 @@ Contributions are welcome! If you encounter any bugs or have suggestions for imp
 ## License
 
 This open-source project is available under the [MIT License](LICENSE). Feel free to use, modify, and distribute it as per the terms of the license.
-

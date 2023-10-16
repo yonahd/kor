@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/yaml"
 )
@@ -119,7 +121,16 @@ func getUnusedPdbs(clientset kubernetes.Interface, namespace string) ResourceDif
 	return namespacePdbDiff
 }
 
-func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
+func getUnusedCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface) ResourceDiff {
+	crdDiff, err := processCrds(apiExtClient, dynamicClient)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get crds: %v\n", err)
+	}
+	namespaceCrdDiff := ResourceDiff{"Crd", crdDiff} // This is only named namespaceCrd for inconsistency
+	return namespaceCrdDiff
+}
+
+func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, slackOpts SlackOpts) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
@@ -155,6 +166,16 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.
 		outputBuffer.WriteString("\n")
 	}
 
+	// cluster scope diffs
+	var allDiffs []ResourceDiff
+	crdDiff := getUnusedCrds(apiExtClient, dynamicClient)
+	allDiffs = append(allDiffs, crdDiff)
+
+	output := FormatOutputAll("", allDiffs)
+
+	outputBuffer.WriteString(output)
+	outputBuffer.WriteString("\n")
+
 	if slackOpts != (SlackOpts{}) {
 		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
@@ -165,7 +186,7 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.
 	}
 }
 
-func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
+func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	// Create the JSON response object
