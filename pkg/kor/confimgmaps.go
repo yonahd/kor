@@ -129,7 +129,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func GetUnusedConfigmapsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)

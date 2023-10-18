@@ -80,10 +80,11 @@ func processNamespaceHpas(clientset kubernetes.Interface, namespace string) ([]s
 	return unusedHpas, nil
 }
 
-func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-
+func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
+
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceHpas(clientset, namespace)
@@ -95,34 +96,10 @@ func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset kubernetes
 
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
-	}
 
-	if slackOpts != (SlackOpts{}) {
-		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		fmt.Println(outputBuffer.String())
-	}
-}
-
-func GetUnusedHpasStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-	response := make(map[string]map[string][]string)
-
-	for _, namespace := range namespaces {
-		diff, err := processNamespaceHpas(clientset, namespace)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
-			continue
-		}
-		if len(diff) > 0 {
-			if response[namespace] == nil {
-				response[namespace] = make(map[string][]string)
-			}
-			response[namespace]["Hpa"] = diff
-		}
+		resourceMap := make(map[string][]string)
+		resourceMap["Hpa"] = diff
+		response[namespace] = resourceMap
 	}
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")
@@ -130,13 +107,24 @@ func GetUnusedHpasStructured(includeExcludeLists IncludeExcludeLists, clientset 
 		return "", err
 	}
 
-	if outputFormat == "yaml" {
-		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-		if err != nil {
-			fmt.Printf("err: %v\n", err)
+	if outputFormat == "table" {
+
+		if slackOpts != (SlackOpts{}) {
+			if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
+				os.Exit(1)
+			}
+		} else {
+			return outputBuffer.String(), nil
 		}
-		return string(yamlResponse), nil
 	} else {
-		return string(jsonResponse), nil
+		if outputFormat == "yaml" {
+			yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+			if err != nil {
+				fmt.Printf("err: %v\n", err)
+			}
+			return string(yamlResponse), nil
+		}
 	}
+	return string(jsonResponse), nil
 }

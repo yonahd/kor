@@ -33,10 +33,11 @@ func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 	return deploymentsWithoutReplicas, nil
 }
 
-func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-
+func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
+
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
 		diff, err := ProcessNamespaceDeployments(clientset, namespace)
@@ -48,28 +49,7 @@ func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset kub
 
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
-	}
 
-	if slackOpts != (SlackOpts{}) {
-		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		fmt.Println(outputBuffer.String())
-	}
-}
-
-func GetUnusedDeploymentsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-	response := make(map[string]map[string][]string)
-
-	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceDeployments(clientset, namespace)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
-			continue
-		}
 		resourceMap := make(map[string][]string)
 		resourceMap["Deployments"] = diff
 		response[namespace] = resourceMap
@@ -80,13 +60,24 @@ func GetUnusedDeploymentsStructured(includeExcludeLists IncludeExcludeLists, cli
 		return "", err
 	}
 
-	if outputFormat == "yaml" {
-		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-		if err != nil {
-			fmt.Printf("err: %v\n", err)
+	if outputFormat == "table" {
+
+		if slackOpts != (SlackOpts{}) {
+			if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
+				os.Exit(1)
+			}
+		} else {
+			return outputBuffer.String(), nil
 		}
-		return string(yamlResponse), nil
 	} else {
-		return string(jsonResponse), nil
+		if outputFormat == "yaml" {
+			yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+			if err != nil {
+				fmt.Printf("err: %v\n", err)
+			}
+			return string(yamlResponse), nil
+		}
 	}
+	return string(jsonResponse), nil
 }
