@@ -11,7 +11,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/utils/strings/slices"
-	"sigs.k8s.io/yaml"
 )
 
 func getDeploymentNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
@@ -107,24 +106,10 @@ func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset kubernetes
 		return "", err
 	}
 
-	if outputFormat == "table" {
-
-		if slackOpts != (SlackOpts{}) {
-			if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-				os.Exit(1)
-			}
-		} else {
-			return outputBuffer.String(), nil
-		}
-	} else {
-		if outputFormat == "yaml" {
-			yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-			if err != nil {
-				fmt.Printf("err: %v\n", err)
-			}
-			return string(yamlResponse), nil
-		}
+	unusedHpas, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
 	}
-	return string(jsonResponse), nil
+
+	return unusedHpas, nil
 }

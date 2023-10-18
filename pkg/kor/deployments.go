@@ -9,7 +9,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/yaml"
 )
 
 func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace string) ([]string, error) {
@@ -60,24 +59,10 @@ func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset kub
 		return "", err
 	}
 
-	if outputFormat == "table" {
-
-		if slackOpts != (SlackOpts{}) {
-			if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-				os.Exit(1)
-			}
-		} else {
-			return outputBuffer.String(), nil
-		}
-	} else {
-		if outputFormat == "yaml" {
-			yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-			if err != nil {
-				fmt.Printf("err: %v\n", err)
-			}
-			return string(yamlResponse), nil
-		}
+	unusedDeployments, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
 	}
-	return string(jsonResponse), nil
+
+	return unusedDeployments, nil
 }

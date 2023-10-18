@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	"sigs.k8s.io/yaml"
 )
 
 type ExceptionResource struct {
@@ -188,4 +189,27 @@ func CalculateResourceDifference(usedResourceNames []string, allResourceNames []
 		}
 	}
 	return difference
+}
+
+func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, slackOpts SlackOpts, jsonResponse []byte) (string, error) {
+	if outputFormat == "table" {
+
+		if slackOpts != (SlackOpts{}) {
+			if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
+				os.Exit(1)
+			}
+		} else {
+			return outputBuffer.String(), nil
+		}
+	} else {
+		if outputFormat == "yaml" {
+			yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+			if err != nil {
+				fmt.Printf("err: %v\n", err)
+			}
+			return string(yamlResponse), nil
+		}
+	}
+	return string(jsonResponse), nil
 }

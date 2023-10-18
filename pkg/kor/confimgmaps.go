@@ -10,7 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
-	"sigs.k8s.io/yaml"
 )
 
 var exceptionconfigmaps = []ExceptionResource{
@@ -156,24 +155,10 @@ func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset kube
 		return "", err
 	}
 
-	if outputFormat == "table" {
-
-		if slackOpts != (SlackOpts{}) {
-			if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-				os.Exit(1)
-			}
-		} else {
-			return outputBuffer.String(), nil
-		}
-	} else {
-		if outputFormat == "yaml" {
-			yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-			if err != nil {
-				fmt.Printf("err: %v\n", err)
-			}
-			return string(yamlResponse), nil
-		}
+	unusedCMs, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
 	}
-	return string(jsonResponse), nil
+
+	return unusedCMs, nil
 }
