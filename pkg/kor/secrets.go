@@ -11,7 +11,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/utils/strings/slices"
-	"sigs.k8s.io/yaml"
 )
 
 var exceptionSecretTypes = []string{
@@ -141,10 +140,11 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string) ([
 
 }
 
-func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-
+func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
+
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceSecret(clientset, namespace)
@@ -156,28 +156,7 @@ func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, clientset kuberne
 
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
-	}
 
-	if slackOpts != (SlackOpts{}) {
-		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		fmt.Println(outputBuffer.String())
-	}
-}
-
-func GetUnusedSecretsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-	response := make(map[string]map[string][]string)
-
-	for _, namespace := range namespaces {
-		diff, err := processNamespaceSecret(clientset, namespace)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
-			continue
-		}
 		resourceMap := make(map[string][]string)
 		resourceMap["Secrets"] = diff
 		response[namespace] = resourceMap
@@ -188,13 +167,10 @@ func GetUnusedSecretsStructured(includeExcludeLists IncludeExcludeLists, clients
 		return "", err
 	}
 
-	if outputFormat == "yaml" {
-		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-		if err != nil {
-			fmt.Printf("err: %v\n", err)
-		}
-		return string(yamlResponse), nil
-	} else {
-		return string(jsonResponse), nil
+	unusedSecrets, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
 	}
+
+	return unusedSecrets, nil
 }

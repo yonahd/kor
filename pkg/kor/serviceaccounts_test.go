@@ -175,7 +175,13 @@ func TestGetUnusedServiceAccountsStructured(t *testing.T) {
 		ExcludeListStr: "",
 	}
 
-	output, err := GetUnusedServiceAccountsStructured(includeExcludeLists, clientset, "json")
+	slackopts := SlackOpts{
+		WebhookURL: "",
+		Channel:    "",
+		Token:      "",
+	}
+
+	output, err := GetUnusedServiceAccounts(includeExcludeLists, clientset, "json", slackopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedServiceAccountsStructured: %v", err)
 	}

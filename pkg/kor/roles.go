@@ -73,7 +73,7 @@ func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernete
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespacePdbs(clientset, namespace)
+		diff, err := processNamespaceRoles(clientset, namespace)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
