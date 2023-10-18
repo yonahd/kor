@@ -48,7 +48,7 @@ func Execute() {
 	rootCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
 	rootCmd.PersistentFlags().StringVarP(&includeExcludeLists.IncludeListStr, "include-namespaces", "n", "", "Namespaces to run on, splited by comma. Example: --include-namespace ns1,ns2,ns3. ")
 	rootCmd.PersistentFlags().StringVarP(&includeExcludeLists.ExcludeListStr, "exclude-namespaces", "e", "", "Namespaces to be excluded, splited by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.")
-	rootCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table or json)")
+	rootCmd.PersistentFlags().StringVar(&outputFormat, "output", "table", "Output format (table, json or yaml)")
 	rootCmd.PersistentFlags().StringVar(&slackOpts.WebhookURL, "slack-webhook-url", "", "Slack webhook URL to send notifications to")
 	rootCmd.PersistentFlags().StringVar(&slackOpts.Channel, "slack-channel", "", "Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.")
 	rootCmd.PersistentFlags().StringVar(&slackOpts.Token, "slack-auth-token", "", "Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.")

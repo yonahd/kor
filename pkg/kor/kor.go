@@ -125,7 +125,7 @@ func SetNamespaceList(namespaceLists IncludeExcludeLists, clientset kubernetes.I
 
 func FormatOutput(namespace string, resources []string, resourceType string) string {
 	if len(resources) == 0 {
-		return fmt.Sprintf("No unused %s found in the namespace: %s", resourceType, namespace)
+		return fmt.Sprintf("No unused %s found in the namespace: %s \n", resourceType, namespace)
 	}
 
 	var buf bytes.Buffer
