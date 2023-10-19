@@ -10,7 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
-	"sigs.k8s.io/yaml"
 )
 
 func retreiveUsedPvcs(clientset kubernetes.Interface, namespace string) ([]string, error) {
@@ -54,10 +53,11 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string) ([]s
 	return diff, nil
 }
 
-func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-
+func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
+
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespacePvcs(clientset, namespace)
@@ -69,34 +69,10 @@ func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, clientset kubernetes
 
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
-	}
 
-	if slackOpts != (SlackOpts{}) {
-		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		fmt.Println(outputBuffer.String())
-	}
-}
-
-func GetUnusedPvcsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-	response := make(map[string]map[string][]string)
-
-	for _, namespace := range namespaces {
-		diff, err := processNamespacePvcs(clientset, namespace)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
-			continue
-		}
-		if len(diff) > 0 {
-			if response[namespace] == nil {
-				response[namespace] = make(map[string][]string)
-			}
-			response[namespace]["Pvc"] = diff
-		}
+		resourceMap := make(map[string][]string)
+		resourceMap["Pvc"] = diff
+		response[namespace] = resourceMap
 	}
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")
@@ -104,13 +80,10 @@ func GetUnusedPvcsStructured(includeExcludeLists IncludeExcludeLists, clientset 
 		return "", err
 	}
 
-	if outputFormat == "yaml" {
-		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-		if err != nil {
-			fmt.Printf("err: %v\n", err)
-		}
-		return string(yamlResponse), nil
-	} else {
-		return string(jsonResponse), nil
+	unusedPvcs, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
 	}
+
+	return unusedPvcs, nil
 }

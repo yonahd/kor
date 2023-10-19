@@ -100,7 +100,13 @@ func TestGetUnusedRolesStructured(t *testing.T) {
 		ExcludeListStr: "",
 	}
 
-	output, err := GetUnusedRolesStructured(includeExcludeLists, clientset, "json")
+	slackopts := SlackOpts{
+		WebhookURL: "",
+		Channel:    "",
+		Token:      "",
+	}
+
+	output, err := GetUnusedRoles(includeExcludeLists, clientset, "json", slackopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedRolesStructured: %v", err)
 	}

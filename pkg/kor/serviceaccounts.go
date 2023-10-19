@@ -9,7 +9,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/yaml"
 )
 
 var exceptionServiceAccounts = []ExceptionResource{
@@ -140,10 +139,11 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-
+func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
+
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceSA(clientset, namespace)
@@ -155,28 +155,7 @@ func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset
 
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
-	}
 
-	if slackOpts != (SlackOpts{}) {
-		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		fmt.Println(outputBuffer.String())
-	}
-}
-
-func GetUnusedServiceAccountsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-	response := make(map[string]map[string][]string)
-
-	for _, namespace := range namespaces {
-		diff, err := processNamespaceSA(clientset, namespace)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
-			continue
-		}
 		resourceMap := make(map[string][]string)
 		resourceMap["ServiceAccounts"] = diff
 		response[namespace] = resourceMap
@@ -187,13 +166,10 @@ func GetUnusedServiceAccountsStructured(includeExcludeLists IncludeExcludeLists,
 		return "", err
 	}
 
-	if outputFormat == "yaml" {
-		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-		if err != nil {
-			fmt.Printf("err: %v\n", err)
-		}
-		return string(yamlResponse), nil
-	} else {
-		return string(jsonResponse), nil
+	unusedServiceAccounts, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
 	}
+
+	return unusedServiceAccounts, nil
 }

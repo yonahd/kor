@@ -10,7 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
-	"sigs.k8s.io/yaml"
 )
 
 func retrieveUsedRoles(clientset kubernetes.Interface, namespace string) ([]string, error) {
@@ -67,10 +66,11 @@ func processNamespaceRoles(clientset kubernetes.Interface, namespace string) ([]
 
 }
 
-func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-
+func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
+
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespaceRoles(clientset, namespace)
@@ -82,28 +82,7 @@ func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernete
 
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
-	}
 
-	if slackOpts != (SlackOpts{}) {
-		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		fmt.Println(outputBuffer.String())
-	}
-}
-
-func GetUnusedRolesStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-	response := make(map[string]map[string][]string)
-
-	for _, namespace := range namespaces {
-		diff, err := processNamespaceRoles(clientset, namespace)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
-			continue
-		}
 		resourceMap := make(map[string][]string)
 		resourceMap["Roles"] = diff
 		response[namespace] = resourceMap
@@ -114,13 +93,10 @@ func GetUnusedRolesStructured(includeExcludeLists IncludeExcludeLists, clientset
 		return "", err
 	}
 
-	if outputFormat == "yaml" {
-		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-		if err != nil {
-			fmt.Printf("err: %v\n", err)
-		}
-		return string(yamlResponse), nil
-	} else {
-		return string(jsonResponse), nil
+	unusedRoles, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
 	}
+
+	return unusedRoles, nil
 }

@@ -9,7 +9,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/yaml"
 )
 
 func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace string) ([]string, error) {
@@ -29,10 +28,11 @@ func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 	return statefulSetsWithoutReplicas, nil
 }
 
-func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-
+func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
+
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
 		diff, err := ProcessNamespaceStatefulSets(clientset, namespace)
@@ -44,28 +44,7 @@ func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset ku
 
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
-	}
 
-	if slackOpts != (SlackOpts{}) {
-		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		fmt.Println(outputBuffer.String())
-	}
-}
-
-func GetUnusedStatefulSetsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-	response := make(map[string]map[string][]string)
-
-	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceStatefulSets(clientset, namespace)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
-			continue
-		}
 		resourceMap := make(map[string][]string)
 		resourceMap["Statefulsets"] = diff
 		response[namespace] = resourceMap
@@ -76,13 +55,10 @@ func GetUnusedStatefulSetsStructured(includeExcludeLists IncludeExcludeLists, cl
 		return "", err
 	}
 
-	if outputFormat == "yaml" {
-		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-		if err != nil {
-			fmt.Printf("err: %v\n", err)
-		}
-		return string(yamlResponse), nil
-	} else {
-		return string(jsonResponse), nil
+	unusedStatefulsets, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
 	}
+
+	return unusedStatefulsets, nil
 }

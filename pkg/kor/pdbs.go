@@ -10,7 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
-	"sigs.k8s.io/yaml"
 )
 
 func processNamespacePdbs(clientset kubernetes.Interface, namespace string) ([]string, error) {
@@ -49,10 +48,11 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string) ([]s
 	return unusedPdbs, nil
 }
 
-func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-
+func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
+
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
 		diff, err := processNamespacePdbs(clientset, namespace)
@@ -64,34 +64,10 @@ func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, clientset kubernetes
 
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
-	}
 
-	if slackOpts != (SlackOpts{}) {
-		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		fmt.Println(outputBuffer.String())
-	}
-}
-
-func GetUnusedPdbsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-	response := make(map[string]map[string][]string)
-
-	for _, namespace := range namespaces {
-		diff, err := processNamespacePdbs(clientset, namespace)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
-			continue
-		}
-		if len(diff) > 0 {
-			if response[namespace] == nil {
-				response[namespace] = make(map[string][]string)
-			}
-			response[namespace]["Pdb"] = diff
-		}
+		resourceMap := make(map[string][]string)
+		resourceMap["Pdb"] = diff
+		response[namespace] = resourceMap
 	}
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")
@@ -99,13 +75,10 @@ func GetUnusedPdbsStructured(includeExcludeLists IncludeExcludeLists, clientset 
 		return "", err
 	}
 
-	if outputFormat == "yaml" {
-		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-		if err != nil {
-			fmt.Printf("err: %v\n", err)
-		}
-		return string(yamlResponse), nil
-	} else {
-		return string(jsonResponse), nil
+	unusedPdbs, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
 	}
+
+	return unusedPdbs, nil
 }

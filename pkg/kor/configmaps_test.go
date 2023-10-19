@@ -176,7 +176,13 @@ func TestGetUnusedConfigmapsStructured(t *testing.T) {
 		ExcludeListStr: "",
 	}
 
-	output, err := GetUnusedConfigmapsStructured(includeExcludeLists, clientset, "json")
+	slackopts := SlackOpts{
+		WebhookURL: "",
+		Channel:    "",
+		Token:      "",
+	}
+
+	output, err := GetUnusedConfigmaps(includeExcludeLists, clientset, "json", slackopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedConfigmapsStructured: %v", err)
 	}

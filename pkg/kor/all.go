@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/yaml"
 )
 
 type GetUnusedResourceJSONResponse struct {
@@ -119,10 +118,11 @@ func getUnusedPdbs(clientset kubernetes.Interface, namespace string) ResourceDif
 	return namespacePdbDiff
 }
 
-func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-
+func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
+
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
 		var allDiffs []ResourceDiff
@@ -153,61 +153,7 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, clientset kubernetes.
 
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
-	}
 
-	if slackOpts != (SlackOpts{}) {
-		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		fmt.Println(outputBuffer.String())
-	}
-}
-
-func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
-
-	// Create the JSON response object
-	response := make(map[string]map[string][]string)
-
-	for _, namespace := range namespaces {
-		var allDiffs []ResourceDiff
-
-		namespaceCMDiff := getUnusedCMs(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceCMDiff)
-
-		namespaceSVCDiff := getUnusedSVCs(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceSVCDiff)
-
-		namespaceSecretDiff := getUnusedSecrets(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceSecretDiff)
-
-		namespaceSADiff := getUnusedServiceAccounts(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceSADiff)
-
-		namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceDeploymentDiff)
-
-		namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
-
-		namespaceRoleDiff := getUnusedRoles(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceRoleDiff)
-
-		namespaceHpaDiff := getUnusedHpas(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceHpaDiff)
-
-		namespacePvcDiff := getUnusedPvcs(clientset, namespace)
-		allDiffs = append(allDiffs, namespacePvcDiff)
-
-		namespaceIngressDiff := getUnusedIngresses(clientset, namespace)
-		allDiffs = append(allDiffs, namespaceIngressDiff)
-
-		namespacePdbDiff := getUnusedPdbs(clientset, namespace)
-		allDiffs = append(allDiffs, namespacePdbDiff)
-
-		// Store the unused resources for each resource type in the JSON response
 		resourceMap := make(map[string][]string)
 		for _, diff := range allDiffs {
 			resourceMap[diff.resourceType] = diff.diff
@@ -215,19 +161,15 @@ func GetUnusedAllStructured(includeExcludeLists IncludeExcludeLists, clientset k
 		response[namespace] = resourceMap
 	}
 
-	// Convert the response object to JSON
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
 		return "", err
 	}
 
-	if outputFormat == "yaml" {
-		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-		if err != nil {
-			fmt.Printf("err: %v\n", err)
-		}
-		return string(yamlResponse), nil
-	} else {
-		return string(jsonResponse), nil
+	unusedAll, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
 	}
+
+	return unusedAll, nil
 }
