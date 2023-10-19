@@ -44,6 +44,10 @@ func retrieveUsedIngress(clientset kubernetes.Interface, namespace string) ([]st
 			used = validateServiceBackend(clientset, namespace, ingress.Spec.DefaultBackend)
 		}
 		for _, rule := range ingress.Spec.Rules {
+			if rule.HTTP == nil {
+				used = true
+				break
+			}
 			for _, path := range rule.HTTP.Paths {
 				used = validateServiceBackend(clientset, namespace, &path.Backend)
 				if used {
