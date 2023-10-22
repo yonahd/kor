@@ -18,7 +18,7 @@ var exceptionconfigmaps = []ExceptionResource{
 	{ResourceName: "kube-root-ca.crt", Namespace: "*"},
 }
 
-func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
+func retrieveUsedCM(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, []string, []string, []string, []string, []string, error) {
 	var volumesCM []string
 	var volumesProjectedCM []string
 	var envCM []string
@@ -32,6 +32,10 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 	}
 
 	for _, pod := range pods.Items {
+		if HasExcludedLxxxxabel(pod.Size(), opts.ExcludeLabels) {
+			continue
+		}
+
 		for _, volume := range pod.Spec.Volumes {
 			if volume.ConfigMap != nil {
 				volumesCM = append(volumesCM, volume.ConfigMap.Name)
@@ -100,8 +104,8 @@ func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string) ([
 	return names, nil
 }
 
-func processNamespaceCM(clientset kubernetes.Interface, namespace string) ([]string, error) {
-	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, namespace)
+func processNamespaceCM(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
+	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, namespace, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +133,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, slackOpts SlackOpts) {
+func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, filterOptions *FilterOptions, clientset kubernetes.Interface, slackOpts SlackOpts) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 
 	var outputBuffer bytes.Buffer
@@ -156,12 +160,12 @@ func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset kube
 	}
 }
 
-func GetUnusedConfigmapsStructured(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string) (string, error) {
+func GetUnusedConfigmapsStructured(includeExcludeLists IncludeExcludeLists, opts *FilterOptions, clientset kubernetes.Interface, outputFormat string) (string, error) {
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceCM(clientset, namespace)
+		diff, err := processNamespaceCM(clientset, namespace, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

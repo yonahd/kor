@@ -15,13 +15,13 @@ var configmapCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
 		if outputFormat == "json" || outputFormat == "yaml" {
-			if response, err := kor.GetUnusedConfigmapsStructured(includeExcludeLists, clientset, outputFormat); err != nil {
+			if response, err := kor.GetUnusedConfigmapsStructured(includeExcludeLists, filterOptions, clientset, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedConfigmaps(includeExcludeLists, clientset, slackOpts)
+			kor.GetUnusedConfigmaps(includeExcludeLists, filterOptions, clientset, slackOpts)
 		}
 
 	},

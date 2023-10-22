@@ -14,13 +14,13 @@ var allCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
 		if outputFormat == "json" || outputFormat == "yaml" {
-			if response, err := kor.GetUnusedAllStructured(includeExcludeLists, clientset, outputFormat); err != nil {
+			if response, err := kor.GetUnusedAllStructured(includeExcludeLists, filterOptions, clientset, outputFormat); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(response)
 			}
 		} else {
-			kor.GetUnusedAll(includeExcludeLists, clientset, slackOpts)
+			kor.GetUnusedAll(includeExcludeLists, filterOptions, clientset, slackOpts)
 		}
 
 	},
