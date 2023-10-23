@@ -41,6 +41,7 @@ var (
 	kubeconfig          string
 	includeExcludeLists kor.IncludeExcludeLists
 	slackOpts           kor.SlackOpts
+	filterOptions       = kor.NewFilterOptions()
 )
 
 func Execute() {
@@ -52,8 +53,22 @@ func Execute() {
 	rootCmd.PersistentFlags().StringVar(&slackOpts.WebhookURL, "slack-webhook-url", "", "Slack webhook URL to send notifications to")
 	rootCmd.PersistentFlags().StringVar(&slackOpts.Channel, "slack-channel", "", "Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.")
 	rootCmd.PersistentFlags().StringVar(&slackOpts.Token, "slack-auth-token", "", "Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.")
+	addFilterOptionsFlag(rootCmd, filterOptions)
+
+	if err := filterOptions.Validate(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error while validating filter options '%s'", err)
+		os.Exit(1)
+	}
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while executing your CLI '%s'", err)
 		os.Exit(1)
 	}
+}
+
+func addFilterOptionsFlag(cmd *cobra.Command, opts *kor.FilterOptions) {
+	cmd.PersistentFlags().StringVarP(&opts.ExcludeLabels, "exclude-labels", "l", opts.ExcludeLabels, "Selector to filter out, e.g. -l key1=value1,key2=value2.")
+	cmd.PersistentFlags().Uint64Var(&opts.MaxSize, "max-size", opts.MaxSize, "The maximum size of the resources to be considered unused. The size is measured in bytes. If zero, no size limit is applied.")
+	cmd.PersistentFlags().Uint64Var(&opts.MinSize, "min-size", opts.MinSize, "The minimum size of the resources to be considered unused. The size is measured in bytes. If zero, no size limit is applied.")
+	cmd.PersistentFlags().DurationVar(&opts.MaxAge, "max-age", opts.MaxAge, "The maximum age of the resources to be considered unused. The age is measured from the last modified time of the resource. If zero, no age limit is applied.")
+	cmd.PersistentFlags().DurationVar(&opts.MinAge, "min-age", opts.MinAge, "The minimum age of the resources to be considered unused. The age is measured from the last modified time of the resource. If zero, no age limit is applied.")
 }
