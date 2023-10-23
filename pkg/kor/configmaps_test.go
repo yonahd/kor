@@ -116,7 +116,7 @@ func TestRetrieveConfigMapNames(t *testing.T) {
 func TestProcessNamespaceCM(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 
-	diff, err := processNamespaceCM(clientset, testNamespace)
+	diff, err := processNamespaceCM(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Fatalf("Error processing namespace CM: %v", err)
 	}
@@ -130,7 +130,7 @@ func TestProcessNamespaceCM(t *testing.T) {
 func TestRetrieveUsedCM(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 
-	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, testNamespace)
+	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, testNamespace, &FilterOptions{})
 
 	if err != nil {
 		t.Fatalf("Error retrieving used ConfigMaps: %v", err)
@@ -182,7 +182,7 @@ func TestGetUnusedConfigmapsStructured(t *testing.T) {
 		Token:      "",
 	}
 
-	output, err := GetUnusedConfigmaps(includeExcludeLists, clientset, "json", slackopts)
+	output, err := GetUnusedConfigmaps(includeExcludeLists, &FilterOptions{}, clientset, "json", slackopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedConfigmapsStructured: %v", err)
 	}

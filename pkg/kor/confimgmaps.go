@@ -17,7 +17,7 @@ var exceptionconfigmaps = []ExceptionResource{
 	{ResourceName: "kube-root-ca.crt", Namespace: "*"},
 }
 
-func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
+func retrieveUsedCM(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, []string, []string, []string, []string, []string, error) {
 	var volumesCM []string
 	var volumesProjectedCM []string
 	var envCM []string
@@ -31,6 +31,22 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 	}
 
 	for _, pod := range pods.Items {
+		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
+		// If it does, the resource is skipped.
+		if excluded, _ := HasExcludedLabel(pod.Labels, opts.ExcludeLabels); excluded {
+			continue
+		}
+		// checks if the resource’s age (measured from its creation time) falls within the range specified by opts.MinAge
+		// and opts.MaxAge. If it doesn’t, the resource is skipped.
+		if !HasIncludedAge(pod.CreationTimestamp, opts) {
+			continue
+		}
+		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.
+		// If it doesn’t, the resource is skipped.
+		if included, _ := HasIncludedSize(pod, opts); !included {
+			continue
+		}
+
 		for _, volume := range pod.Spec.Volumes {
 			if volume.ConfigMap != nil {
 				volumesCM = append(volumesCM, volume.ConfigMap.Name)
@@ -99,8 +115,8 @@ func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string) ([
 	return names, nil
 }
 
-func processNamespaceCM(clientset kubernetes.Interface, namespace string) ([]string, error) {
-	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, namespace)
+func processNamespaceCM(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
+	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, namespace, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -128,14 +144,13 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, opts *FilterOptions, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
-
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceCM(clientset, namespace)
+		diff, err := processNamespaceCM(clientset, namespace, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

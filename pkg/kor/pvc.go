@@ -30,7 +30,7 @@ func retreiveUsedPvcs(clientset kubernetes.Interface, namespace string) ([]strin
 	return usedPvcs, err
 }
 
-func processNamespacePvcs(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func processNamespacePvcs(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
 	pvcs, err := clientset.CoreV1().PersistentVolumeClaims(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -38,6 +38,22 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string) ([]s
 	pvcNames := make([]string, 0, len(pvcs.Items))
 	for _, pvc := range pvcs.Items {
 		if pvc.Labels["kor/used"] == "true" {
+			continue
+		}
+
+		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
+		// If it does, the resource is skipped.
+		if excluded, _ := HasExcludedLabel(pvc.Labels, opts.ExcludeLabels); excluded {
+			continue
+		}
+		// checks if the resource’s age (measured from its creation time) falls within the range specified by opts.MinAge
+		// and opts.MaxAge. If it doesn’t, the resource is skipped.
+		if !HasIncludedAge(pvc.CreationTimestamp, opts) {
+			continue
+		}
+		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.
+		// If it doesn’t, the resource is skipped.
+		if included, _ := HasIncludedSize(pvc, opts); !included {
 			continue
 		}
 
@@ -53,14 +69,13 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string) ([]s
 	return diff, nil
 }
 
-func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, opts *FilterOptions, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
-
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespacePvcs(clientset, namespace)
+		diff, err := processNamespacePvcs(clientset, namespace, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

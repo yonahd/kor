@@ -49,7 +49,7 @@ func createTestRoles(t *testing.T) *fake.Clientset {
 func TestRetrieveUsedRoles(t *testing.T) {
 	clientset := createTestRoles(t)
 
-	usedRoles, err := retrieveUsedRoles(clientset, testNamespace)
+	usedRoles, err := retrieveUsedRoles(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -78,7 +78,7 @@ func TestRetrieveRoleNames(t *testing.T) {
 func TestProcessNamespaceRoles(t *testing.T) {
 	clientset := createTestRoles(t)
 
-	unusedRoles, err := processNamespaceRoles(clientset, testNamespace)
+	unusedRoles, err := processNamespaceRoles(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -106,7 +106,7 @@ func TestGetUnusedRolesStructured(t *testing.T) {
 		Token:      "",
 	}
 
-	output, err := GetUnusedRoles(includeExcludeLists, clientset, "json", slackopts)
+	output, err := GetUnusedRoles(includeExcludeLists, &FilterOptions{}, clientset, "json", slackopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedRolesStructured: %v", err)
 	}

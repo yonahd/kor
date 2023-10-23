@@ -12,7 +12,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
 
-func retrieveUsedRoles(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
 	// Get a list of all role bindings in the specified namespace
 	roleBindings, err := clientset.RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -21,6 +21,21 @@ func retrieveUsedRoles(clientset kubernetes.Interface, namespace string) ([]stri
 
 	usedRoles := make(map[string]bool)
 	for _, rb := range roleBindings.Items {
+		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
+		// If it does, the resource is skipped.
+		if excluded, _ := HasExcludedLabel(rb.Labels, opts.ExcludeLabels); excluded {
+			continue
+		}
+		// checks if the resource’s age (measured from its creation time) falls within the range specified by opts.MinAge
+		// and opts.MaxAge. If it doesn’t, the resource is skipped.
+		if !HasIncludedAge(rb.CreationTimestamp, opts) {
+			continue
+		}
+		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.
+		// If it doesn’t, the resource is skipped.
+		if included, _ := HasIncludedSize(rb, opts); !included {
+			continue
+		}
 		usedRoles[rb.RoleRef.Name] = true
 	}
 
@@ -48,8 +63,8 @@ func retrieveRoleNames(clientset kubernetes.Interface, namespace string) ([]stri
 	return names, nil
 }
 
-func processNamespaceRoles(clientset kubernetes.Interface, namespace string) ([]string, error) {
-	usedRoles, err := retrieveUsedRoles(clientset, namespace)
+func processNamespaceRoles(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
+	usedRoles, err := retrieveUsedRoles(clientset, namespace, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -66,14 +81,13 @@ func processNamespaceRoles(clientset kubernetes.Interface, namespace string) ([]
 
 }
 
-func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, opts *FilterOptions, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
-
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceRoles(clientset, namespace)
+		diff, err := processNamespaceRoles(clientset, namespace, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

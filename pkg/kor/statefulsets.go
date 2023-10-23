@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
 	statefulSetsList, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -20,6 +20,22 @@ func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 	var statefulSetsWithoutReplicas []string
 
 	for _, statefulSet := range statefulSetsList.Items {
+		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
+		// If it does, the resource is skipped.
+		if excluded, _ := HasExcludedLabel(statefulSet.Labels, opts.ExcludeLabels); excluded {
+			continue
+		}
+		// checks if the resource’s age (measured from its creation time) falls within the range specified by opts.MinAge
+		// and opts.MaxAge. If it doesn’t, the resource is skipped.
+		if !HasIncludedAge(statefulSet.CreationTimestamp, opts) {
+			continue
+		}
+		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.
+		// If it doesn’t, the resource is skipped.
+		if included, _ := HasIncludedSize(statefulSet, opts); !included {
+			continue
+		}
+
 		if *statefulSet.Spec.Replicas == 0 {
 			statefulSetsWithoutReplicas = append(statefulSetsWithoutReplicas, statefulSet.Name)
 		}
@@ -28,14 +44,13 @@ func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 	return statefulSetsWithoutReplicas, nil
 }
 
-func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, opts *FilterOptions, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
-
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceStatefulSets(clientset, namespace)
+		diff, err := ProcessNamespaceStatefulSets(clientset, namespace, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

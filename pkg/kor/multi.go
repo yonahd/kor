@@ -16,37 +16,37 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 	for _, resource := range resourceList {
 		switch resource {
 		case "cm", "configmap", "configmaps":
-			namespaceCMDiff := getUnusedCMs(clientset, namespace)
+			namespaceCMDiff := getUnusedCMs(clientset, namespace, nil)
 			allDiffs = append(allDiffs, namespaceCMDiff)
 		case "svc", "service", "services":
 			namespaceSVCDiff := getUnusedSVCs(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceSVCDiff)
 		case "scrt", "secret", "secrets":
-			namespaceSecretDiff := getUnusedSecrets(clientset, namespace)
+			namespaceSecretDiff := getUnusedSecrets(clientset, namespace, nil)
 			allDiffs = append(allDiffs, namespaceSecretDiff)
 		case "sa", "serviceaccount", "serviceaccounts":
 			namespaceSADiff := getUnusedServiceAccounts(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceSADiff)
 		case "deploy", "deployment", "deployments":
-			namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace)
+			namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace, nil)
 			allDiffs = append(allDiffs, namespaceDeploymentDiff)
 		case "sts", "statefulset", "statefulsets":
-			namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace)
+			namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace, nil)
 			allDiffs = append(allDiffs, namespaceStatefulsetDiff)
 		case "role", "roles":
-			namespaceRoleDiff := getUnusedRoles(clientset, namespace)
+			namespaceRoleDiff := getUnusedRoles(clientset, namespace, nil)
 			allDiffs = append(allDiffs, namespaceRoleDiff)
 		case "hpa", "horizontalpodautoscaler", "horizontalpodautoscalers":
-			namespaceHpaDiff := getUnusedHpas(clientset, namespace)
+			namespaceHpaDiff := getUnusedHpas(clientset, namespace, nil)
 			allDiffs = append(allDiffs, namespaceHpaDiff)
 		case "pvc", "persistentvolumeclaim", "persistentvolumeclaims":
-			namespacePvcDiff := getUnusedPvcs(clientset, namespace)
+			namespacePvcDiff := getUnusedPvcs(clientset, namespace, nil)
 			allDiffs = append(allDiffs, namespacePvcDiff)
 		case "ing", "ingress", "ingresses":
-			namespaceIngressDiff := getUnusedIngresses(clientset, namespace)
+			namespaceIngressDiff := getUnusedIngresses(clientset, namespace, nil)
 			allDiffs = append(allDiffs, namespaceIngressDiff)
 		case "pdb", "poddisruptionbudget", "poddisruptionbudgets":
-			namespacePdbDiff := getUnusedPdbs(clientset, namespace)
+			namespacePdbDiff := getUnusedPdbs(clientset, namespace, nil)
 			allDiffs = append(allDiffs, namespacePdbDiff)
 		default:
 			fmt.Printf("resource type %q is not supported\n", resource)

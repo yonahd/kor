@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
 	deploymentsList, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -24,6 +24,22 @@ func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 			continue
 		}
 
+		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
+		// If it does, the resource is skipped.
+		if excluded, _ := HasExcludedLabel(deployment.Labels, opts.ExcludeLabels); excluded {
+			continue
+		}
+		// checks if the resource’s age (measured from its creation time) falls within the range specified by opts.MinAge
+		// and opts.MaxAge. If it doesn’t, the resource is skipped.
+		if !HasIncludedAge(deployment.CreationTimestamp, opts) {
+			continue
+		}
+		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.
+		// If it doesn’t, the resource is skipped.
+		if included, _ := HasIncludedSize(deployment, opts); !included {
+			continue
+		}
+
 		if *deployment.Spec.Replicas == 0 {
 			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, deployment.Name)
 		}
@@ -32,14 +48,13 @@ func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 	return deploymentsWithoutReplicas, nil
 }
 
-func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, opts *FilterOptions, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
-
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceDeployments(clientset, namespace)
+		diff, err := ProcessNamespaceDeployments(clientset, namespace, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
