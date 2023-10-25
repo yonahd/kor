@@ -17,6 +17,33 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 		"Secret": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.CoreV1().Secrets(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
+		"Service": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.CoreV1().Services(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
+		"Deployment": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.AppsV1().Deployments(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
+		"HPA": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.AutoscalingV1().HorizontalPodAutoscalers(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
+		"Ingress": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.NetworkingV1beta1().Ingresses(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
+		"PDB": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.PolicyV1beta1().PodDisruptionBudgets(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
+		"Roles": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.RbacV1().Roles(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
+		"PVC": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.CoreV1().PersistentVolumeClaims(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
+		"StatefulSet": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.AppsV1().StatefulSets(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
+		"ServiceAccount": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.CoreV1().ServiceAccounts(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
 	}
 
 	return deleteResourceApiMap
