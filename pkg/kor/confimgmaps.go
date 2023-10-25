@@ -128,7 +128,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts, deleteFlag bool) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
@@ -140,10 +140,20 @@ func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset kube
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-		output := FormatOutput(namespace, diff, "Config Maps")
 
-		outputBuffer.WriteString(output)
-		outputBuffer.WriteString("\n")
+		resourceDeleted := false
+		if deleteFlag {
+			if err := DeleteResource(diff, clientset, namespace, "ConfigMap"); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete ConfigMap %s in namespace %s: %v\n", diff, namespace, err)
+			} else {
+				resourceDeleted = true
+			}
+		}
+		if !resourceDeleted {
+			output := FormatOutput(namespace, diff, "Config Maps")
+			outputBuffer.WriteString(output)
+			outputBuffer.WriteString("\n")
+		}
 
 		resourceMap := make(map[string][]string)
 		resourceMap["ConfigMap"] = diff

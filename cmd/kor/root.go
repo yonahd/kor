@@ -41,6 +41,7 @@ var (
 	kubeconfig          string
 	includeExcludeLists kor.IncludeExcludeLists
 	slackOpts           kor.SlackOpts
+	deleteFlag          bool
 )
 
 func Execute() {
@@ -52,6 +53,7 @@ func Execute() {
 	rootCmd.PersistentFlags().StringVar(&slackOpts.WebhookURL, "slack-webhook-url", "", "Slack webhook URL to send notifications to")
 	rootCmd.PersistentFlags().StringVar(&slackOpts.Channel, "slack-channel", "", "Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.")
 	rootCmd.PersistentFlags().StringVar(&slackOpts.Token, "slack-auth-token", "", "Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.")
+	rootCmd.PersistentFlags().BoolVar(&deleteFlag, "delete", false, "Delete unused resources")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while executing your CLI '%s'", err)
 		os.Exit(1)
