@@ -142,7 +142,7 @@ func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset kube
 		}
 
 		if deleteFlag {
-			if err := DeleteResource(diff, clientset, namespace, "ConfigMap"); err != nil {
+			if diff = DeleteResource(diff, clientset, namespace, "ConfigMap"); diff != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete ConfigMap %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}

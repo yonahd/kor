@@ -49,7 +49,9 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 	return deleteResourceApiMap
 }
 
-func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, resourceType string) error {
+func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, resourceType string) []string {
+	deletedDiff := []string{}
+
 	for _, cm := range diff {
 		deleteFunc, exists := DeleteResourceCmd()[resourceType]
 		if !exists {
@@ -71,8 +73,11 @@ func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, re
 				fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", resourceType, cm, namespace, err)
 				continue
 			}
+			deletedDiff = append(deletedDiff, cm+"-DELETED")
+			continue
 		}
+		deletedDiff = append(deletedDiff, cm)
 	}
 
-	return nil
+	return deletedDiff
 }
