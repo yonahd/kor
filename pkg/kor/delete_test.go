@@ -3,17 +3,11 @@ package kor
 import (
 	"testing"
 
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestDeleteResource(t *testing.T) {
-	clientset := kubernetes.NewForConfigOrDie(&rest.Config{
-		Host: "https://localhost:6443",
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: true,
-		},
-	})
+	clientset := fake.NewSimpleClientset()
 
 	tests := []struct {
 		name          string
@@ -33,7 +27,7 @@ func TestDeleteResource(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			deletedDiff := DeleteResource(test.diff, clientset, "namespace", test.resourceType)
+			deletedDiff, _ := DeleteResource(test.diff, clientset, "namespace", test.resourceType, true)
 
 			for i, deleted := range deletedDiff {
 				if deleted != test.expectedDiff[i] {
