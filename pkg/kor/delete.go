@@ -9,6 +9,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+type DeleteOpts struct {
+	DeleteFlag    bool
+	NoInteractive bool
+}
+
 func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespace, name string) error {
 	var deleteResourceApiMap = map[string]func(clientset kubernetes.Interface, namespace, name string) error{
 		"ConfigMap": func(clientset kubernetes.Interface, namespace, name string) error {
@@ -49,7 +54,7 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 	return deleteResourceApiMap
 }
 
-func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, resourceType string) []string {
+func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, resourceType string, noInteractive bool) ([]string, error) {
 	deletedDiff := []string{}
 
 	for _, resourceName := range diff {
@@ -59,25 +64,28 @@ func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, re
 			continue
 		}
 
-		fmt.Printf("Do you want to delete %s %s in namespace %s? (Y/N): ", resourceType, resourceName, namespace)
-		var confirmation string
-		_, err := fmt.Scanf("%s", &confirmation)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to read input: %v\n", err)
-			continue
-		}
-
-		if confirmation == "y" || confirmation == "Y" || confirmation == "yes" {
-			fmt.Printf("Deleting %s %s in namespace %s\n", resourceType, resourceName, namespace)
-			if err := deleteFunc(clientset, namespace, resourceName); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", resourceType, resourceName, namespace, err)
+		if !noInteractive {
+			fmt.Printf("Do you want to delete %s %s in namespace %s? (Y/N): ", resourceType, resourceName, namespace)
+			var confirmation string
+			_, err := fmt.Scanf("%s", &confirmation)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to read input: %v\n", err)
 				continue
 			}
-			deletedDiff = append(deletedDiff, resourceName+"-DELETED")
+
+			if confirmation != "y" && confirmation != "Y" && confirmation != "yes" {
+				deletedDiff = append(deletedDiff, resourceName)
+				continue
+			}
+		}
+
+		fmt.Printf("Deleting %s %s in namespace %s\n", resourceType, resourceName, namespace)
+		if err := deleteFunc(clientset, namespace, resourceName); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", resourceType, resourceName, namespace, err)
 			continue
 		}
-		deletedDiff = append(deletedDiff, resourceName)
+		deletedDiff = append(deletedDiff, resourceName+"-DELETED")
 	}
 
-	return deletedDiff
+	return deletedDiff, nil
 }
