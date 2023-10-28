@@ -146,7 +146,7 @@ func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset kube
 				fmt.Fprintf(os.Stderr, "Failed to delete ConfigMap %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
-		output := FormatOutput(namespace, diff, "Config Maps")
+		output := FormatOutput(namespace, diff, "Configmaps")
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
 

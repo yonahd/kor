@@ -52,14 +52,14 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, resourceType string) []string {
 	deletedDiff := []string{}
 
-	for _, cm := range diff {
+	for _, resourceName := range diff {
 		deleteFunc, exists := DeleteResourceCmd()[resourceType]
 		if !exists {
-			fmt.Printf("Resource type '%s' is not supported\n", cm)
+			fmt.Printf("Resource type '%s' is not supported\n", resourceName)
 			continue
 		}
 
-		fmt.Printf("Do you want to delete %s %s in namespace %s? (Y/N): ", resourceType, cm, namespace)
+		fmt.Printf("Do you want to delete %s %s in namespace %s? (Y/N): ", resourceType, resourceName, namespace)
 		var confirmation string
 		_, err := fmt.Scanf("%s", &confirmation)
 		if err != nil {
@@ -68,15 +68,15 @@ func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, re
 		}
 
 		if confirmation == "y" || confirmation == "Y" || confirmation == "yes" {
-			fmt.Printf("Deleting %s %s in namespace %s\n", resourceType, cm, namespace)
-			if err := deleteFunc(clientset, namespace, cm); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", resourceType, cm, namespace, err)
+			fmt.Printf("Deleting %s %s in namespace %s\n", resourceType, resourceName, namespace)
+			if err := deleteFunc(clientset, namespace, resourceName); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", resourceType, resourceName, namespace, err)
 				continue
 			}
-			deletedDiff = append(deletedDiff, cm+"-DELETED")
+			deletedDiff = append(deletedDiff, resourceName+"-DELETED")
 			continue
 		}
-		deletedDiff = append(deletedDiff, cm)
+		deletedDiff = append(deletedDiff, resourceName)
 	}
 
 	return deletedDiff
