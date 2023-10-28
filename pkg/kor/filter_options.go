@@ -85,7 +85,7 @@ func HasIncludedAge(creationTime metav1.Time, opts *FilterOptions) bool {
 	if opts.MinAge > 0 {
 		return time.Since(creationTime.Time) > opts.MinAge
 	}
-	if opts.MaxSize > 0 {
+	if opts.MaxAge > 0 {
 		return time.Since(creationTime.Time) < opts.MaxAge
 	}
 
