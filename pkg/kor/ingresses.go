@@ -43,9 +43,9 @@ func retrieveUsedIngress(clientset kubernetes.Interface, namespace string, opts 
 		if excluded, _ := HasExcludedLabel(ingress.Labels, opts.ExcludeLabels); excluded {
 			continue
 		}
-		// checks if the resource’s age (measured from its creation time) falls within the range specified by opts.MinAge
-		// and opts.MaxAge. If it doesn’t, the resource is skipped.
-		if !HasIncludedAge(ingress.CreationTimestamp, opts) {
+		// checks if the resource's age (measured from its last modified time) matches the included criteria
+		// specified by the filter options.
+		if included, _ := HasIncludedAge(ingress.CreationTimestamp, opts); !included {
 			continue
 		}
 		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.

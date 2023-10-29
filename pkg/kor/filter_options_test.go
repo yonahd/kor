@@ -10,41 +10,38 @@ import (
 )
 
 func TestHasIncludedAge(t *testing.T) {
-	opts := &FilterOptions{
-		MinAge: 10 * time.Minute,
-		MaxAge: 20 * time.Minute,
-	}
-
 	tests := []struct {
-		name string
-		age  time.Duration
-		want bool
+		name         string
+		creationTime time.Time // resource creation time
+		opts         *FilterOptions
+		want         bool
 	}{
 		{
-			name: "age is less than MinAge",
-			age:  5 * time.Minute,
-			want: false,
-		},
-		{
-			name: "age is greater than MaxAge",
-			age:  25 * time.Minute,
-			want: false,
-		},
-		{
-			name: "age is between MinAge and MaxAge",
-			age:  15 * time.Minute,
-			want: true,
+			name:         "The resource is not older than 20 minutes",
+			creationTime: metav1.Now().Time,
+			opts:         &FilterOptions{NewerThan: "20m"},
+			want:         true,
+		}, {
+			name:         "The resource age is more than 10 second",
+			creationTime: metav1.Now().Add(-12 * time.Second),
+			opts:         &FilterOptions{OlderThan: "10s"},
+			want:         true,
+		}, {
+			name:         "Two flags are provided",
+			creationTime: metav1.Now().Time,
+			opts:         &FilterOptions{OlderThan: "20m", NewerThan: "10m"},
+			want:         false,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			now := time.Now()
-			past := metav1.NewTime(now.Add(-tt.age))
-			got := HasIncludedAge(past, opts)
-			assert.Equal(t, tt.want, got)
-		})
+		got, _ := HasIncludedAge(
+			metav1.NewTime(tt.creationTime),
+			tt.opts,
+		)
+		assert.Equal(t, tt.want, got)
 	}
+
 }
 
 func TestHasExcludedLabel(t *testing.T) {

@@ -17,7 +17,7 @@ var exceptionconfigmaps = []ExceptionResource{
 	{ResourceName: "kube-root-ca.crt", Namespace: "*"},
 }
 
-func retrieveUsedCM(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, []string, []string, []string, []string, []string, error) {
+func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
 	var volumesCM []string
 	var volumesProjectedCM []string
 	var envCM []string
@@ -31,22 +31,6 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string, opts *Filt
 	}
 
 	for _, pod := range pods.Items {
-		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
-		// If it does, the resource is skipped.
-		if excluded, _ := HasExcludedLabel(pod.Labels, opts.ExcludeLabels); excluded {
-			continue
-		}
-		// checks if the resource’s age (measured from its creation time) falls within the range specified by opts.MinAge
-		// and opts.MaxAge. If it doesn’t, the resource is skipped.
-		if !HasIncludedAge(pod.CreationTimestamp, opts) {
-			continue
-		}
-		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.
-		// If it doesn’t, the resource is skipped.
-		if included, _ := HasIncludedSize(pod, opts); !included {
-			continue
-		}
-
 		for _, volume := range pod.Spec.Volumes {
 			if volume.ConfigMap != nil {
 				volumesCM = append(volumesCM, volume.ConfigMap.Name)
@@ -99,13 +83,29 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string, opts *Filt
 	return volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, nil
 }
 
-func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
 	configmaps, err := clientset.CoreV1().ConfigMaps(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 	names := make([]string, 0, len(configmaps.Items))
 	for _, configmap := range configmaps.Items {
+		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
+		// If it does, the resource is skipped.
+		if excluded, _ := HasExcludedLabel(configmap.Labels, opts.ExcludeLabels); excluded {
+			continue
+		}
+		// checks if the resource's age (measured from its last modified time) matches the included criteria
+		// specified by the filter options.
+		if included, _ := HasIncludedAge(configmap.CreationTimestamp, opts); !included {
+			continue
+		}
+		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.
+		// If it doesn’t, the resource is skipped.
+		if included, _ := HasIncludedSize(configmap, opts); !included {
+			continue
+		}
+
 		if configmap.Labels["kor/used"] == "true" {
 			continue
 		}
@@ -116,7 +116,7 @@ func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string) ([
 }
 
 func processNamespaceCM(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
-	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, namespace, opts)
+	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, opts *
 	envFromContainerCM = RemoveDuplicatesAndSort(envFromContainerCM)
 	envFromInitContainerCM = RemoveDuplicatesAndSort(envFromInitContainerCM)
 
-	configMapNames, err := retrieveConfigMapNames(clientset, namespace)
+	configMapNames, err := retrieveConfigMapNames(clientset, namespace, opts)
 	if err != nil {
 		return nil, err
 	}

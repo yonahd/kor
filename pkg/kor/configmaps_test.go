@@ -101,7 +101,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 func TestRetrieveConfigMapNames(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 
-	configMapNames, err := retrieveConfigMapNames(clientset, testNamespace)
+	configMapNames, err := retrieveConfigMapNames(clientset, testNamespace, &FilterOptions{})
 
 	if err != nil {
 		t.Fatalf("Error retrieving configmap names: %v", err)
@@ -130,7 +130,7 @@ func TestProcessNamespaceCM(t *testing.T) {
 func TestRetrieveUsedCM(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 
-	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, testNamespace, &FilterOptions{})
+	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, testNamespace)
 
 	if err != nil {
 		t.Fatalf("Error retrieving used ConfigMaps: %v", err)
