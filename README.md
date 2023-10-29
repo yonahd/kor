@@ -127,34 +127,11 @@ kor [subcommand] --help
 
 
 ## Ignore Resources
-The resources labeled with "kor/used = true" will be ignored by kor even if they are unused. You can add this label to resources you want to ignore.
-
-## Import Option
-You can also use kor as a Go library to programmatically discover unused resources. By importing the github.com/yonahd/kor/pkg/kor package, you can call the relevant functions to retrieve unused resources. The library provides the option to get the results in JSON format by specifying the outputFormat parameter.
-
-```go
-import (
-    "github.com/yonahd/kor/pkg/kor"
-)
-
-func main() {
-    myNamespaces := kor.IncludeExcludeLists{
-        IncludeListStr: "my-namespace1, my-namespace2",
-    }
-    outputFormat := "json" // Set to "json" for JSON output
-
-    if outputFormat == "json" {
-        jsonResponse, err := kor.GetUnusedDeploymentsStructured(myNamespaces, kubeconfig, "json")
-        if err != nil {
-            // Handle error
-        }
-        // Process the JSON response
-        // ...
-    } else {
-        kor.GetUnusedDeployments(namespace)
-    }
-}
+The resources labeled with: 
+```sh
+kor/used=true
 ```
+will be ignored by kor even if they are unused. You can add this label to resources you want to ignore.
 
 ## In Cluster Usage
 
@@ -191,6 +168,10 @@ helm upgrade -i kor \
     --set cronJob.schedule="0 1 * * 1" \
     ./charts/kor
 ```
+
+## Grafana Dashboard
+Dashboard can be found [here](https://grafana.com/grafana/dashboards/19863-kor-dashboard/).
+![Grafana Dashboard](/grafana/dashboard-screenshot-1.png)
 
 ## Contributing
 
