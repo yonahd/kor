@@ -32,7 +32,7 @@ func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 	return deploymentsWithoutReplicas, nil
 }
 
-func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts, deleteOpts DeleteOpts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
@@ -44,8 +44,13 @@ func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, clientset kub
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-		output := FormatOutput(namespace, diff, "Deployments")
 
+		if deleteOpts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "Deployment", deleteOpts.NoInteractive); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete Deployment %s in namespace %s: %v\n", diff, namespace, err)
+			}
+		}
+		output := FormatOutput(namespace, diff, "Deployments")
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
 

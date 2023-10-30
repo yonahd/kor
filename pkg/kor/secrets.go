@@ -140,7 +140,7 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string) ([
 
 }
 
-func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts, deleteOpts DeleteOpts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
@@ -152,8 +152,13 @@ func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, clientset kuberne
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-		output := FormatOutput(namespace, diff, "Secrets")
 
+		if deleteOpts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "Secret", deleteOpts.NoInteractive); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete Secret %s in namespace %s: %v\n", diff, namespace, err)
+			}
+		}
+		output := FormatOutput(namespace, diff, "Secrets")
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
 

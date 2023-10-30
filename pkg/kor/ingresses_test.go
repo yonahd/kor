@@ -85,7 +85,12 @@ func TestGetUnusedIngressesStructured(t *testing.T) {
 		Token:      "",
 	}
 
-	output, err := GetUnusedIngresses(includeExcludeLists, clientset, "json", slackopts)
+	deleteopts := DeleteOpts{
+		DeleteFlag:    false,
+		NoInteractive: false,
+	}
+
+	output, err := GetUnusedIngresses(includeExcludeLists, clientset, "json", slackopts, deleteopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedIngressesStructured: %v", err)
 	}

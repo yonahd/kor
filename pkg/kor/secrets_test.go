@@ -250,7 +250,12 @@ func TestGetUnusedSecretsStructured(t *testing.T) {
 		Token:      "",
 	}
 
-	output, err := GetUnusedSecrets(includeExcludeLists, clientset, "json", slackopts)
+	deleteopts := DeleteOpts{
+		DeleteFlag:    false,
+		NoInteractive: false,
+	}
+
+	output, err := GetUnusedSecrets(includeExcludeLists, clientset, "json", slackopts, deleteopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedSecretsStructured: %v", err)
 	}

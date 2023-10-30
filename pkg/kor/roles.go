@@ -66,7 +66,7 @@ func processNamespaceRoles(clientset kubernetes.Interface, namespace string) ([]
 
 }
 
-func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts, deleteOpts DeleteOpts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
@@ -78,8 +78,13 @@ func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernete
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-		output := FormatOutput(namespace, diff, "Roles")
 
+		if deleteOpts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "Role", deleteOpts.NoInteractive); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete Role %s in namespace %s: %v\n", diff, namespace, err)
+			}
+		}
+		output := FormatOutput(namespace, diff, "Roles")
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
 

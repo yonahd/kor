@@ -73,7 +73,12 @@ func TestGetUnusedDeploymentsStructured(t *testing.T) {
 		Token:      "",
 	}
 
-	output, err := GetUnusedDeployments(includeExcludeLists, clientset, "json", slackopts)
+	deleteopts := DeleteOpts{
+		DeleteFlag:    false,
+		NoInteractive: false,
+	}
+
+	output, err := GetUnusedDeployments(includeExcludeLists, clientset, "json", slackopts, deleteopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedDeploymentsStructured: %v", err)
 	}

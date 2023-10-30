@@ -81,7 +81,12 @@ func TestGetUnusedHpasStructured(t *testing.T) {
 		Token:      "",
 	}
 
-	output, err := GetUnusedHpas(includeExcludeLists, clientset, "json", slackopts)
+	deleteopts := DeleteOpts{
+		DeleteFlag:    false,
+		NoInteractive: false,
+	}
+
+	output, err := GetUnusedHpas(includeExcludeLists, clientset, "json", slackopts, deleteopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedHpasStructured: %v", err)
 	}

@@ -184,7 +184,7 @@ func TestGetUnusedConfigmapsStructured(t *testing.T) {
 
 	deleteOpts := DeleteOpts{
 		DeleteFlag:    false,
-		NoInteractive: false,
+		NoInteractive: true,
 	}
 
 	output, err := GetUnusedConfigmaps(includeExcludeLists, clientset, "json", slackopts, deleteOpts)

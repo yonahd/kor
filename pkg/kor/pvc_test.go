@@ -96,7 +96,12 @@ func TestGetUnusedPvcsStructured(t *testing.T) {
 		Token:      "",
 	}
 
-	output, err := GetUnusedPvcs(includeExcludeLists, clientset, "json", slackopts)
+	deleteopts := DeleteOpts{
+		DeleteFlag:    false,
+		NoInteractive: false,
+	}
+
+	output, err := GetUnusedPvcs(includeExcludeLists, clientset, "json", slackopts, deleteopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedPvcsStructured: %v", err)
 	}

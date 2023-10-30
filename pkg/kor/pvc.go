@@ -53,7 +53,7 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string) ([]s
 	return diff, nil
 }
 
-func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts, deleteOpts DeleteOpts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
@@ -65,8 +65,13 @@ func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, clientset kubernetes
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-		output := FormatOutput(namespace, diff, "Pvcs")
 
+		if deleteOpts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "PVC", deleteOpts.NoInteractive); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete PVC %s in namespace %s: %v\n", diff, namespace, err)
+			}
+		}
+		output := FormatOutput(namespace, diff, "PVCs")
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
 

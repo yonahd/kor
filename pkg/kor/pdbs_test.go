@@ -91,7 +91,12 @@ func TestGetUnusedPdbsStructured(t *testing.T) {
 		Token:      "",
 	}
 
-	output, err := GetUnusedPdbs(includeExcludeLists, clientset, "json", slackopts)
+	deleteopts := DeleteOpts{
+		DeleteFlag:    false,
+		NoInteractive: false,
+	}
+
+	output, err := GetUnusedPdbs(includeExcludeLists, clientset, "json", slackopts, deleteopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedPdbsStructured: %v", err)
 	}

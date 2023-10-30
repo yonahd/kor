@@ -73,7 +73,12 @@ func TestGetUnusedStatefulSetsStructured(t *testing.T) {
 		Token:      "",
 	}
 
-	output, err := GetUnusedStatefulSets(includeExcludeLists, clientset, "json", slackopts)
+	deleteopts := DeleteOpts{
+		DeleteFlag:    false,
+		NoInteractive: false,
+	}
+
+	output, err := GetUnusedStatefulSets(includeExcludeLists, clientset, "json", slackopts, deleteopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedStatefulSetsStructured: %v", err)
 	}

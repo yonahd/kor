@@ -71,7 +71,12 @@ func TestGetUnusedServicesStructured(t *testing.T) {
 		Token:      "",
 	}
 
-	output, err := GetUnusedServices(includeExcludeLists, clientset, "json", slackopts)
+	deleteopts := DeleteOpts{
+		DeleteFlag:    false,
+		NoInteractive: false,
+	}
+
+	output, err := GetUnusedServices(includeExcludeLists, clientset, "json", slackopts, deleteopts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedServicesStructured: %v", err)
 	}
