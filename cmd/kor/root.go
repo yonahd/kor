@@ -66,9 +66,7 @@ func Execute() {
 }
 
 func addFilterOptionsFlag(cmd *cobra.Command, opts *kor.FilterOptions) {
-	cmd.PersistentFlags().StringVarP(&opts.ExcludeLabels, "exclude-labels", "l", opts.ExcludeLabels, "Selector to filter out, e.g. -l key1=value1,key2=value2.")
-	cmd.PersistentFlags().Uint64Var(&opts.MaxSize, "max-size", opts.MaxSize, "The maximum size of the resources to be considered unused. The size is measured in bytes. If zero, no size limit is applied.")
-	cmd.PersistentFlags().Uint64Var(&opts.MinSize, "min-size", opts.MinSize, "The minimum size of the resources to be considered unused. The size is measured in bytes. If zero, no size limit is applied.")
-	cmd.PersistentFlags().StringVar(&opts.NewerThan, "newer-than", opts.NewerThan, "The maximum age of the resources to be considered unused. The age is measured from the last modified time of the resource. If empty, no age limit is applied. This flag cannot be used together with older-than flag.")
-	cmd.PersistentFlags().StringVar(&opts.OlderThan, "older-than", opts.OlderThan, "The minimum age of the resources to be considered unused. The age is measured from the last modified time of the resource. If empty, no age limit is applied. This flag cannot be used together with newer-than flag.")
+	cmd.PersistentFlags().StringVarP(&opts.ExcludeLabels, "exclude-labels", "l", opts.ExcludeLabels, "Selector to filter out, Example: --exclude-labels key1=value1,key2=value2.")
+	cmd.PersistentFlags().StringVar(&opts.NewerThan, "newer-than", opts.NewerThan, "The maximum age of the resources to be considered unused. This flag cannot be used together with older-than flag. Example: --newer-than=1h2m")
+	cmd.PersistentFlags().StringVar(&opts.OlderThan, "older-than", opts.OlderThan, "The minimum age of the resources to be considered unused. This flag cannot be used together with newer-than flag. Example: --older-than=1h2m")
 }

@@ -31,11 +31,7 @@ func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, opts *F
 		if included, _ := HasIncludedAge(rb.CreationTimestamp, opts); !included {
 			continue
 		}
-		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.
-		// If it doesn’t, the resource is skipped.
-		if included, _ := HasIncludedSize(rb, opts); !included {
-			continue
-		}
+
 		usedRoles[rb.RoleRef.Name] = true
 	}
 

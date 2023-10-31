@@ -100,11 +100,6 @@ func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, op
 		if included, _ := HasIncludedAge(configmap.CreationTimestamp, opts); !included {
 			continue
 		}
-		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.
-		// If it doesn’t, the resource is skipped.
-		if included, _ := HasIncludedSize(configmap, opts); !included {
-			continue
-		}
 
 		if configmap.Labels["kor/used"] == "true" {
 			continue

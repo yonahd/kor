@@ -51,11 +51,6 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string, opts
 		if included, _ := HasIncludedAge(pvc.CreationTimestamp, opts); !included {
 			continue
 		}
-		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.
-		// If it doesn’t, the resource is skipped.
-		if included, _ := HasIncludedSize(pvc, opts); !included {
-			continue
-		}
 
 		pvcNames = append(pvcNames, pvc.Name)
 	}

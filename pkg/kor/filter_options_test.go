@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -75,42 +74,6 @@ func TestHasExcludedLabel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
 			got, err := HasExcludedLabel(tt.resourcelabels, tt.excludeSelector)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestHasIncludedSize(t *testing.T) {
-	resource1 := &v1.ConfigMap{Data: map[string]string{"key1": "val1"}}
-
-	tests := []struct {
-		resource interface{}
-		opts     *FilterOptions
-		want     bool
-	}{
-		{
-			resource: resource1,
-			opts:     &FilterOptions{MaxSize: uint64(5)},
-			want:     true,
-		}, {
-			resource: resource1,
-			opts:     &FilterOptions{MinSize: uint64(3)},
-			want:     true,
-		}, {
-			resource: resource1,
-			opts:     &FilterOptions{MinSize: uint64(3), MaxSize: uint64(5)},
-			want:     true,
-		}, {
-			resource: resource1,
-			opts:     &FilterOptions{MinSize: uint64(4), MaxSize: uint64(5)},
-			want:     false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run("", func(t *testing.T) {
-			got, err := HasIncludedSize(tt.resource, tt.opts)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})

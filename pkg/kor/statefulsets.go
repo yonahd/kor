@@ -30,11 +30,6 @@ func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 		if included, _ := HasIncludedAge(statefulSet.CreationTimestamp, opts); !included {
 			continue
 		}
-		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.
-		// If it doesn’t, the resource is skipped.
-		if included, _ := HasIncludedSize(statefulSet, opts); !included {
-			continue
-		}
 
 		if *statefulSet.Spec.Replicas == 0 {
 			statefulSetsWithoutReplicas = append(statefulSetsWithoutReplicas, statefulSet.Name)

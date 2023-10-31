@@ -34,11 +34,6 @@ func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 		if included, _ := HasIncludedAge(deployment.CreationTimestamp, opts); !included {
 			continue
 		}
-		// checks if the resource’s size falls within the range specified by opts.MinSize and opts.MaxSize.
-		// If it doesn’t, the resource is skipped.
-		if included, _ := HasIncludedSize(deployment, opts); !included {
-			continue
-		}
 
 		if *deployment.Spec.Replicas == 0 {
 			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, deployment.Name)

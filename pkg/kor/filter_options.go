@@ -22,10 +22,6 @@ type FilterOptions struct {
 	OlderThan string
 	// NewerThan is the maximum age of the resources to be considered unused
 	NewerThan string
-	// MinSize is the minimum size of the resources to be considered unused
-	MinSize uint64
-	// MaxSize is the maximum size of the resources to be considered unused
-	MaxSize uint64
 	// ExcludeLabels is a label selector to exclude resources with matching labels
 	ExcludeLabels string
 }
@@ -35,8 +31,6 @@ func NewFilterOptions() *FilterOptions {
 	return &FilterOptions{
 		OlderThan:     "",
 		NewerThan:     "",
-		MinSize:       0,
-		MaxSize:       0,
 		ExcludeLabels: "",
 	}
 }
@@ -48,21 +42,25 @@ func (o *FilterOptions) Validate() error {
 	}
 
 	// Parse the older-than flag value into a time.Duration value
-	olderThan, err := time.ParseDuration(o.OlderThan)
-	if err != nil {
-		return err
-	}
-	if olderThan < 0 {
-		return errors.New("OlderThan must be a non-negative duration")
+	if o.OlderThan != "" {
+		olderThan, err := time.ParseDuration(o.OlderThan)
+		if err != nil {
+			return err
+		}
+		if olderThan < 0 {
+			return errors.New("OlderThan must be a non-negative duration")
+		}
 	}
 
 	// Parse the newer-than flag value into a time.Duration value
-	newerThan, err := time.ParseDuration(o.NewerThan)
-	if err != nil {
-		return err
-	}
-	if newerThan < 0 {
-		return errors.New("NewerThan must be a non-negative duration")
+	if o.NewerThan != "" {
+		newerThan, err := time.ParseDuration(o.NewerThan)
+		if err != nil {
+			return err
+		}
+		if newerThan < 0 {
+			return errors.New("NewerThan must be a non-negative duration")
+		}
 	}
 
 	return nil
@@ -115,39 +113,6 @@ func HasIncludedAge(creationTime metav1.Time, opts *FilterOptions) (bool, error)
 			return false, err
 		}
 		return time.Since(creationTime.Time) < newerThan, nil
-	}
-
-	return true, nil
-}
-
-// HasIncludedSize checks if resource has a size that matches the included criteria specified by the filter options
-// A resource is considered to have an included size if its size, is within the
-// range specified by MinSize and MaxSize flags.
-//
-// This function currently only checks the IntValue of the size. If we want to also check the
-// QuantityValues (for CPU and memory), we would need to add additional logic.
-func HasIncludedSize(resource interface{}, opts *FilterOptions) (bool, error) {
-	// early exit
-	if opts.MaxSize == 0 && opts.MinSize == 0 {
-		return true, nil
-	}
-
-	size, err := GetSize(resource)
-	if err != nil {
-		return false, err
-	}
-
-	if size.IntValue > 0 {
-		if opts.MaxSize > 0 && opts.MinSize > 0 {
-			return opts.MinSize < uint64(size.IntValue) && uint64(size.IntValue) < opts.MaxSize, nil
-		}
-		if opts.MaxSize > 0 {
-			return uint64(size.IntValue) < opts.MaxSize, nil
-		}
-		if opts.MinSize > 0 {
-			return opts.MinSize < uint64(size.IntValue), nil
-		}
-
 	}
 
 	return true, nil
