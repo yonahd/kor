@@ -37,7 +37,7 @@ func getStatefulSetNames(clientset kubernetes.Interface, namespace string) ([]st
 	return names, nil
 }
 
-func extractUnusedHpas(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func extractUnusedHpas(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
 	deploymentNames, err := getDeploymentNames(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -57,6 +57,17 @@ func extractUnusedHpas(clientset kubernetes.Interface, namespace string) ([]stri
 			continue
 		}
 
+		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
+		// If it does, the resource is skipped.
+		if excluded, _ := HasExcludedLabel(hpa.Labels, opts.ExcludeLabels); excluded {
+			continue
+		}
+		// checks if the resource's age (measured from its last modified time) matches the included criteria
+		// specified by the filter options.
+		if included, _ := HasIncludedAge(hpa.CreationTimestamp, opts); !included {
+			continue
+		}
+
 		switch hpa.Spec.ScaleTargetRef.Kind {
 		case "Deployment":
 			if !slices.Contains(deploymentNames, hpa.Spec.ScaleTargetRef.Name) {
@@ -71,22 +82,21 @@ func extractUnusedHpas(clientset kubernetes.Interface, namespace string) ([]stri
 	return diff, nil
 }
 
-func processNamespaceHpas(clientset kubernetes.Interface, namespace string) ([]string, error) {
-	unusedHpas, err := extractUnusedHpas(clientset, namespace)
+func processNamespaceHpas(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
+	unusedHpas, err := extractUnusedHpas(clientset, namespace, opts)
 	if err != nil {
 		return nil, err
 	}
 	return unusedHpas, nil
 }
 
-func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, opts *FilterOptions, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
-
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceHpas(clientset, namespace)
+		diff, err := processNamespaceHpas(clientset, namespace, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

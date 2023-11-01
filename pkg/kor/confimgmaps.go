@@ -83,13 +83,24 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 	return volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, nil
 }
 
-func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
 	configmaps, err := clientset.CoreV1().ConfigMaps(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 	names := make([]string, 0, len(configmaps.Items))
 	for _, configmap := range configmaps.Items {
+		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
+		// If it does, the resource is skipped.
+		if excluded, _ := HasExcludedLabel(configmap.Labels, opts.ExcludeLabels); excluded {
+			continue
+		}
+		// checks if the resource's age (measured from its last modified time) matches the included criteria
+		// specified by the filter options.
+		if included, _ := HasIncludedAge(configmap.CreationTimestamp, opts); !included {
+			continue
+		}
+
 		if configmap.Labels["kor/used"] == "true" {
 			continue
 		}
@@ -99,7 +110,7 @@ func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string) ([
 	return names, nil
 }
 
-func processNamespaceCM(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func processNamespaceCM(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
 	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -112,7 +123,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string) ([]str
 	envFromContainerCM = RemoveDuplicatesAndSort(envFromContainerCM)
 	envFromInitContainerCM = RemoveDuplicatesAndSort(envFromInitContainerCM)
 
-	configMapNames, err := retrieveConfigMapNames(clientset, namespace)
+	configMapNames, err := retrieveConfigMapNames(clientset, namespace, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -128,14 +139,13 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, opts *FilterOptions, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
 	var outputBuffer bytes.Buffer
-
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceCM(clientset, namespace)
+		diff, err := processNamespaceCM(clientset, namespace, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

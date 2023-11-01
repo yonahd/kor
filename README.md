@@ -87,14 +87,17 @@ Kor provides various subcommands to identify and list unused resources. The avai
 
 ### Supported Flags
 ```
--e, --exclude-namespaces string   Namespaces to be excluded, split by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
--h, --help                        help for kor
--n, --include-namespaces string   Namespaces to run on, split by comma. Example: --include-namespace ns1,ns2,ns3.
--k, --kubeconfig string           Path to kubeconfig file (optional)
-    --output string               Output format (table or json) (default "table")
-    --slack-auth-token string     Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.
-    --slack-channel string        Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.
-    --slack-webhook-url string    Slack webhook URL to send notifications to
+  -l, --exclude-labels string       Selector to filter out, Example: --exclude-labels key1=value1,key2=value2.
+  -e, --exclude-namespaces string   Namespaces to be excluded, splited by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
+  -h, --help                        help for kor
+  -n, --include-namespaces string   Namespaces to run on, splited by comma. Example: --include-namespace ns1,ns2,ns3. 
+  -k, --kubeconfig string           Path to kubeconfig file (optional)
+      --newer-than string           The maximum age of the resources to be considered unused. This flag cannot be used together with older-than flag. Example: --newer-than=1h2m
+      --older-than string           The minimum age of the resources to be considered unused. This flag cannot be used together with newer-than flag. Example: --older-than=1h2m
+      --output string               Output format (table, json or yaml) (default "table")
+      --slack-auth-token string     Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.
+      --slack-channel string        Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.
+      --slack-webhook-url string    Slack webhook URL to send notifications to
 ```
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.
