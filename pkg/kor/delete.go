@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -73,7 +74,7 @@ func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, re
 				continue
 			}
 
-			if confirmation != "y" && confirmation != "Y" && confirmation != "yes" {
+			if strings.ToLower(confirmation) != "y" && strings.ToLower(confirmation) != "yes" {
 				deletedDiff = append(deletedDiff, resourceName)
 				continue
 			}
