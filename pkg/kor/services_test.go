@@ -65,13 +65,15 @@ func TestGetUnusedServicesStructured(t *testing.T) {
 		ExcludeListStr: "",
 	}
 
-	slackopts := SlackOpts{
-		WebhookURL: "",
-		Channel:    "",
-		Token:      "",
+	opts := Opts{
+		WebhookURL:    "",
+		Channel:       "",
+		Token:         "",
+		DeleteFlag:    false,
+		NoInteractive: true,
 	}
 
-	output, err := GetUnusedServices(includeExcludeLists, clientset, "json", slackopts)
+	output, err := GetUnusedServices(includeExcludeLists, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedServicesStructured: %v", err)
 	}

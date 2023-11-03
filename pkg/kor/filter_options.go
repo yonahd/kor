@@ -85,21 +85,21 @@ func HasExcludedLabel(resourcelabels map[string]string, excludeSelector string) 
 // range specified by older-than and newer-than flags.
 // If older-than or newer-than is zero, no age limit is applied.
 // If both flags are set, an error is returned.
-func HasIncludedAge(creationTime metav1.Time, opts *FilterOptions) (bool, error) {
-	if opts.OlderThan == "" && opts.NewerThan == "" {
+func HasIncludedAge(creationTime metav1.Time, filterOpts *FilterOptions) (bool, error) {
+	if filterOpts.OlderThan == "" && filterOpts.NewerThan == "" {
 		return true, nil
 	}
 	// The function returns an error if both flags are set is because it does not make sense to
 	// query for resources that are both older than and newer than a certain duration.
 	// For example, if you set --older-than=1h and --newer-than=30m, you are asking for resources
 	// that are older than 1 hour and newer than 30 minutes, which is impossible!
-	if opts.OlderThan != "" && opts.NewerThan != "" {
+	if filterOpts.OlderThan != "" && filterOpts.NewerThan != "" {
 		return false, errors.New("invalid flags: older-than and newer-than cannot be used together")
 	}
 
 	// Parse the older-than flag value into a time.Duration value
-	if opts.OlderThan != "" {
-		olderThan, err := time.ParseDuration(opts.OlderThan)
+	if filterOpts.OlderThan != "" {
+		olderThan, err := time.ParseDuration(filterOpts.OlderThan)
 		if err != nil {
 			return false, err
 		}
@@ -107,8 +107,8 @@ func HasIncludedAge(creationTime metav1.Time, opts *FilterOptions) (bool, error)
 	}
 
 	// Parse the newer-than flag value into a time.Duration value
-	if opts.NewerThan != "" {
-		newerThan, err := time.ParseDuration(opts.NewerThan)
+	if filterOpts.NewerThan != "" {
+		newerThan, err := time.ParseDuration(filterOpts.NewerThan)
 		if err != nil {
 			return false, err
 		}

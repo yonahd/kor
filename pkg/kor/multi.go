@@ -55,7 +55,7 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 	return allDiffs
 }
 
-func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, kubeconfig, resourceNames string, slackOpts SlackOpts) {
+func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, kubeconfig, resourceNames string, opts Opts) {
 	var clientset kubernetes.Interface
 	var namespaces []string
 
@@ -74,8 +74,8 @@ func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, kubeconfig, resourc
 		outputBuffer.WriteString("\n")
 	}
 
-	if slackOpts != (SlackOpts{}) {
-		if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
+	if opts.WebhookURL != "" || opts.Channel != "" && opts.Token != "" {
+		if err := SendToSlack(SlackMessage{}, opts, outputBuffer.String()); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
 			os.Exit(1)
 		}

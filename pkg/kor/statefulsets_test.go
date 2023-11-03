@@ -67,13 +67,15 @@ func TestGetUnusedStatefulSetsStructured(t *testing.T) {
 		ExcludeListStr: "",
 	}
 
-	slackopts := SlackOpts{
-		WebhookURL: "",
-		Channel:    "",
-		Token:      "",
+	opts := Opts{
+		WebhookURL:    "",
+		Channel:       "",
+		Token:         "",
+		DeleteFlag:    false,
+		NoInteractive: true,
 	}
 
-	output, err := GetUnusedStatefulSets(includeExcludeLists, &FilterOptions{}, clientset, "json", slackopts)
+	output, err := GetUnusedStatefulSets(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedStatefulSetsStructured: %v", err)
 	}

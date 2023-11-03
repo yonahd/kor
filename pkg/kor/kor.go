@@ -27,6 +27,14 @@ type IncludeExcludeLists struct {
 	ExcludeListStr string
 }
 
+type Opts struct {
+	DeleteFlag    bool
+	NoInteractive bool
+	WebhookURL    string
+	Channel       string
+	Token         string
+}
+
 func RemoveDuplicatesAndSort(slice []string) []string {
 	uniqueSet := make(map[string]bool)
 	for _, item := range slice {
@@ -191,11 +199,11 @@ func CalculateResourceDifference(usedResourceNames []string, allResourceNames []
 	return difference
 }
 
-func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, slackOpts SlackOpts, jsonResponse []byte) (string, error) {
+func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opts Opts, jsonResponse []byte) (string, error) {
 	if outputFormat == "table" {
 
-		if slackOpts != (SlackOpts{}) {
-			if err := SendToSlack(SlackMessage{}, slackOpts, outputBuffer.String()); err != nil {
+		if opts.WebhookURL != "" || opts.Channel != "" && opts.Token != "" {
+			if err := SendToSlack(SlackMessage{}, opts, outputBuffer.String()); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
 				os.Exit(1)
 			}

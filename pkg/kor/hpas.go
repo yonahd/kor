@@ -37,7 +37,7 @@ func getStatefulSetNames(clientset kubernetes.Interface, namespace string) ([]st
 	return names, nil
 }
 
-func extractUnusedHpas(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
+func extractUnusedHpas(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
 	deploymentNames, err := getDeploymentNames(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -59,12 +59,12 @@ func extractUnusedHpas(clientset kubernetes.Interface, namespace string, opts *F
 
 		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
 		// If it does, the resource is skipped.
-		if excluded, _ := HasExcludedLabel(hpa.Labels, opts.ExcludeLabels); excluded {
+		if excluded, _ := HasExcludedLabel(hpa.Labels, filterOpts.ExcludeLabels); excluded {
 			continue
 		}
 		// checks if the resource's age (measured from its last modified time) matches the included criteria
 		// specified by the filter options.
-		if included, _ := HasIncludedAge(hpa.CreationTimestamp, opts); !included {
+		if included, _ := HasIncludedAge(hpa.CreationTimestamp, filterOpts); !included {
 			continue
 		}
 
@@ -82,27 +82,32 @@ func extractUnusedHpas(clientset kubernetes.Interface, namespace string, opts *F
 	return diff, nil
 }
 
-func processNamespaceHpas(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
-	unusedHpas, err := extractUnusedHpas(clientset, namespace, opts)
+func processNamespaceHpas(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
+	unusedHpas, err := extractUnusedHpas(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
 	return unusedHpas, nil
 }
 
-func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, opts *FilterOptions, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceHpas(clientset, namespace, opts)
+		diff, err := processNamespaceHpas(clientset, namespace, filterOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-		output := FormatOutput(namespace, diff, "Hpas")
 
+		if opts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "HPA", opts.NoInteractive); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete HPA %s in namespace %s: %v\n", diff, namespace, err)
+			}
+		}
+		output := FormatOutput(namespace, diff, "HPAs")
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
 
@@ -116,7 +121,7 @@ func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, opts *FilterOptions,
 		return "", err
 	}
 
-	unusedHpas, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	unusedHpas, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

@@ -11,7 +11,7 @@ var exporterCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
-		kor.Exporter(includeExcludeLists, clientset, "json", slackOpts)
+		kor.Exporter(includeExcludeLists, clientset, "json", opts)
 
 	},
 }

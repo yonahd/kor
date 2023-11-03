@@ -12,7 +12,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
 
-func processNamespacePdbs(clientset kubernetes.Interface, namespace string, opts *FilterOptions) ([]string, error) {
+func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
 	var unusedPdbs []string
 	pdbs, err := clientset.PolicyV1().PodDisruptionBudgets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -26,12 +26,12 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, opts
 
 		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
 		// If it does, the resource is skipped.
-		if excluded, _ := HasExcludedLabel(pdb.Labels, opts.ExcludeLabels); excluded {
+		if excluded, _ := HasExcludedLabel(pdb.Labels, filterOpts.ExcludeLabels); excluded {
 			continue
 		}
 		// checks if the resource's age (measured from its last modified time) matches the included criteria
 		// specified by the filter options.
-		if included, _ := HasIncludedAge(pdb.CreationTimestamp, opts); !included {
+		if included, _ := HasIncludedAge(pdb.CreationTimestamp, filterOpts); !included {
 			continue
 		}
 
@@ -59,19 +59,24 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, opts
 	return unusedPdbs, nil
 }
 
-func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, opts *FilterOptions, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts) (string, error) {
+func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespacePdbs(clientset, namespace, opts)
+		diff, err := processNamespacePdbs(clientset, namespace, filterOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-		output := FormatOutput(namespace, diff, "Pdbs")
 
+		if opts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "PDB", opts.NoInteractive); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete PDB %s in namespace %s: %v\n", diff, namespace, err)
+			}
+		}
+		output := FormatOutput(namespace, diff, "PDBs")
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
 
@@ -85,7 +90,7 @@ func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, opts *FilterOptions,
 		return "", err
 	}
 
-	unusedPdbs, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	unusedPdbs, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
