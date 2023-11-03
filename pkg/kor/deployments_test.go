@@ -45,7 +45,7 @@ func createTestDeployments(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceDeployments(t *testing.T) {
 	clientset := createTestDeployments(t)
 
-	deploymentsWithoutReplicas, err := ProcessNamespaceDeployments(clientset, testNamespace)
+	deploymentsWithoutReplicas, err := ProcessNamespaceDeployments(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -75,7 +75,7 @@ func TestGetUnusedDeploymentsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedDeployments(includeExcludeLists, clientset, "json", opts)
+	output, err := GetUnusedDeployments(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedDeploymentsStructured: %v", err)
 	}

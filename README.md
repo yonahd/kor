@@ -87,14 +87,17 @@ Kor provides various subcommands to identify and list unused resources. The avai
 
 ### Supported Flags
 ```
--e, --exclude-namespaces string   Namespaces to be excluded, split by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
--h, --help                        help for kor
--n, --include-namespaces string   Namespaces to run on, split by comma. Example: --include-namespace ns1,ns2,ns3.
--k, --kubeconfig string           Path to kubeconfig file (optional)
-    --output string               Output format (table or json) (default "table")
-    --slack-auth-token string     Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.
-    --slack-channel string        Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.
-    --slack-webhook-url string    Slack webhook URL to send notifications to
+  -l, --exclude-labels string       Selector to filter out, Example: --exclude-labels key1=value1,key2=value2.
+  -e, --exclude-namespaces string   Namespaces to be excluded, splited by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
+  -h, --help                        help for kor
+  -n, --include-namespaces string   Namespaces to run on, splited by comma. Example: --include-namespace ns1,ns2,ns3. 
+  -k, --kubeconfig string           Path to kubeconfig file (optional)
+      --newer-than string           The maximum age of the resources to be considered unused. This flag cannot be used together with older-than flag. Example: --newer-than=1h2m
+      --older-than string           The minimum age of the resources to be considered unused. This flag cannot be used together with newer-than flag. Example: --older-than=1h2m
+      --output string               Output format (table, json or yaml) (default "table")
+      --slack-auth-token string     Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.
+      --slack-channel string        Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.
+      --slack-webhook-url string    Slack webhook URL to send notifications to
 ```
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.
@@ -127,34 +130,11 @@ kor [subcommand] --help
 
 
 ## Ignore Resources
-The resources labeled with "kor/used = true" will be ignored by kor even if they are unused. You can add this label to resources you want to ignore.
-
-## Import Option
-You can also use kor as a Go library to programmatically discover unused resources. By importing the github.com/yonahd/kor/pkg/kor package, you can call the relevant functions to retrieve unused resources. The library provides the option to get the results in JSON format by specifying the outputFormat parameter.
-
-```go
-import (
-    "github.com/yonahd/kor/pkg/kor"
-)
-
-func main() {
-    myNamespaces := kor.IncludeExcludeLists{
-        IncludeListStr: "my-namespace1, my-namespace2",
-    }
-    outputFormat := "json" // Set to "json" for JSON output
-
-    if outputFormat == "json" {
-        jsonResponse, err := kor.GetUnusedDeploymentsStructured(myNamespaces, kubeconfig, "json")
-        if err != nil {
-            // Handle error
-        }
-        // Process the JSON response
-        // ...
-    } else {
-        kor.GetUnusedDeployments(namespace)
-    }
-}
+The resources labeled with: 
+```sh
+kor/used=true
 ```
+will be ignored by kor even if they are unused. You can add this label to resources you want to ignore.
 
 ## In Cluster Usage
 
@@ -191,6 +171,10 @@ helm upgrade -i kor \
     --set cronJob.schedule="0 1 * * 1" \
     ./charts/kor
 ```
+
+## Grafana Dashboard
+Dashboard can be found [here](https://grafana.com/grafana/dashboards/19863-kor-dashboard/).
+![Grafana Dashboard](/grafana/dashboard-screenshot-1.png)
 
 ## Contributing
 

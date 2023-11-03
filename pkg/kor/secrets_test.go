@@ -158,7 +158,7 @@ func TestRetrieveIngressTLS(t *testing.T) {
 func TestRetrieveUsedSecret(t *testing.T) {
 	clientset := createTestSecrets(t)
 
-	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, _, err := retrieveUsedSecret(clientset, testNamespace)
+	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, _, err := retrieveUsedSecret(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Fatalf("Error retrieving used secrets: %v", err)
 	}
@@ -206,7 +206,7 @@ func TestRetrieveSecretNames(t *testing.T) {
 		t.Fatalf("Error creating fake secret: %v", err)
 	}
 
-	secretNames, err := retrieveSecretNames(clientset, testNamespace)
+	secretNames, err := retrieveSecretNames(clientset, testNamespace, &FilterOptions{})
 
 	if err != nil {
 		t.Fatalf("Error retrieving secret names: %v", err)
@@ -221,7 +221,7 @@ func TestRetrieveSecretNames(t *testing.T) {
 func TestProcessNamespaceSecret(t *testing.T) {
 	clientset := createTestSecrets(t)
 
-	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace)
+	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Fatalf("Error retrieving unused secrets: %v", err)
 	}
@@ -252,7 +252,7 @@ func TestGetUnusedSecretsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedSecrets(includeExcludeLists, clientset, "json", opts)
+	output, err := GetUnusedSecrets(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedSecretsStructured: %v", err)
 	}

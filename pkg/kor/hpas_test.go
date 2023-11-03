@@ -53,7 +53,7 @@ func createTestHpas(t *testing.T) *fake.Clientset {
 func TestExtractUnusedHpas(t *testing.T) {
 	clientset := createTestHpas(t)
 
-	unusedHpas, err := extractUnusedHpas(clientset, testNamespace)
+	unusedHpas, err := extractUnusedHpas(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -83,7 +83,7 @@ func TestGetUnusedHpasStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedHpas(includeExcludeLists, clientset, "json", opts)
+	output, err := GetUnusedHpas(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedHpasStructured: %v", err)
 	}

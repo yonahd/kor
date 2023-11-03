@@ -25,7 +25,7 @@ func validateServiceBackend(clientset kubernetes.Interface, namespace string, ba
 	return true
 }
 
-func retrieveUsedIngress(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func retrieveUsedIngress(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
 	ingresses, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -35,6 +35,17 @@ func retrieveUsedIngress(clientset kubernetes.Interface, namespace string) ([]st
 
 	for _, ingress := range ingresses.Items {
 		if ingress.Labels["kor/used"] == "true" {
+			continue
+		}
+
+		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
+		// If it does, the resource is skipped.
+		if excluded, _ := HasExcludedLabel(ingress.Labels, filterOpts.ExcludeLabels); excluded {
+			continue
+		}
+		// checks if the resource's age (measured from its last modified time) matches the included criteria
+		// specified by the filter options.
+		if included, _ := HasIncludedAge(ingress.CreationTimestamp, filterOpts); !included {
 			continue
 		}
 
@@ -77,8 +88,8 @@ func retrieveIngressNames(clientset kubernetes.Interface, namespace string) ([]s
 	return names, nil
 }
 
-func processNamespaceIngresses(clientset kubernetes.Interface, namespace string) ([]string, error) {
-	usedIngresses, err := retrieveUsedIngress(clientset, namespace)
+func processNamespaceIngresses(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
+	usedIngresses, err := retrieveUsedIngress(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -92,14 +103,13 @@ func processNamespaceIngresses(clientset kubernetes.Interface, namespace string)
 
 }
 
-func GetUnusedIngresses(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedIngresses(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
-
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceIngresses(clientset, namespace)
+		diff, err := processNamespaceIngresses(clientset, namespace, filterOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

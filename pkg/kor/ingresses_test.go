@@ -48,7 +48,7 @@ func createTestIngresses(t *testing.T) *fake.Clientset {
 func TestRetrieveUsedIngress(t *testing.T) {
 	clientset := createTestIngresses(t)
 
-	usedIngresses, err := retrieveUsedIngress(clientset, testNamespace)
+	usedIngresses, err := retrieveUsedIngress(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -87,7 +87,7 @@ func TestGetUnusedIngressesStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedIngresses(includeExcludeLists, clientset, "json", opts)
+	output, err := GetUnusedIngresses(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedIngressesStructured: %v", err)
 	}

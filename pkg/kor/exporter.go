@@ -49,7 +49,7 @@ func exportMetrics(includeExcludeLists IncludeExcludeLists, clientset kubernetes
 	}
 
 	for {
-		if korOutput, err := GetUnusedAll(includeExcludeLists, clientset, outputFormat, opts); err != nil {
+		if korOutput, err := GetUnusedAll(includeExcludeLists, nil, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		} else {

@@ -37,7 +37,7 @@ func retrieveIngressTLS(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
+func retrieveUsedSecret(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, []string, []string, []string, []string, []string, error) {
 	var envSecrets []string
 	var envSecrets2 []string
 	var volumeSecrets []string
@@ -93,7 +93,7 @@ func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]str
 	return envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, nil
 }
 
-func retrieveSecretNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
 	secrets, err := clientset.CoreV1().Secrets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -104,6 +104,17 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string) ([]st
 			continue
 		}
 
+		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
+		// If it does, the resource is skipped.
+		if excluded, _ := HasExcludedLabel(secret.Labels, filterOpts.ExcludeLabels); excluded {
+			continue
+		}
+		// checks if the resource's age (measured from its last modified time) matches the included criteria
+		// specified by the filter options.
+		if included, _ := HasIncludedAge(secret.CreationTimestamp, filterOpts); !included {
+			continue
+		}
+
 		if !slices.Contains(exceptionSecretTypes, string(secret.Type)) {
 			names = append(names, secret.Name)
 		}
@@ -111,8 +122,8 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string) ([]st
 	return names, nil
 }
 
-func processNamespaceSecret(clientset kubernetes.Interface, namespace string) ([]string, error) {
-	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(clientset, namespace)
+func processNamespaceSecret(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
+	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +135,7 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string) ([
 	pullSecrets = RemoveDuplicatesAndSort(pullSecrets)
 	tlsSecrets = RemoveDuplicatesAndSort(tlsSecrets)
 
-	secretNames, err := retrieveSecretNames(clientset, namespace)
+	secretNames, err := retrieveSecretNames(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -140,14 +151,13 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string) ([
 
 }
 
-func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
-
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceSecret(clientset, namespace)
+		diff, err := processNamespaceSecret(clientset, namespace, filterOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

@@ -63,7 +63,7 @@ func createTestPdbs(t *testing.T) *fake.Clientset {
 func TestProcessNamespacePdbs(t *testing.T) {
 	clientset := createTestPdbs(t)
 
-	unusedPdbs, err := processNamespacePdbs(clientset, testNamespace)
+	unusedPdbs, err := processNamespacePdbs(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -93,7 +93,7 @@ func TestGetUnusedPdbsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedPdbs(includeExcludeLists, clientset, "json", opts)
+	output, err := GetUnusedPdbs(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedPdbsStructured: %v", err)
 	}

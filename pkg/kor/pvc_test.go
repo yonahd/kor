@@ -68,7 +68,7 @@ func TestRetreiveUsedPvcs(t *testing.T) {
 
 func TestProcessNamespacePvcs(t *testing.T) {
 	clientset := createTestPvcs(t)
-	usedPvcs, err := processNamespacePvcs(clientset, testNamespace)
+	usedPvcs, err := processNamespacePvcs(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -98,7 +98,7 @@ func TestGetUnusedPvcsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedPvcs(includeExcludeLists, clientset, "json", opts)
+	output, err := GetUnusedPvcs(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedPvcsStructured: %v", err)
 	}

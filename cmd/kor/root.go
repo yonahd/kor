@@ -41,6 +41,7 @@ var (
 	kubeconfig          string
 	includeExcludeLists kor.IncludeExcludeLists
 	opts                kor.Opts
+	filterOptions       = kor.NewFilterOptions()
 )
 
 func Execute() {
@@ -54,8 +55,23 @@ func Execute() {
 	rootCmd.PersistentFlags().StringVar(&opts.Token, "slack-auth-token", "", "Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.")
 	rootCmd.PersistentFlags().BoolVar(&opts.DeleteFlag, "delete", false, "Delete unused resources")
 	rootCmd.PersistentFlags().BoolVar(&opts.NoInteractive, "no-interactive", false, "Do not prompt for confirmation when deleting resources. Be careful using this flag!")
+	rootCmd.PersistentFlags().StringVar(&opts.WebhookURL, "slack-webhook-url", "", "Slack webhook URL to send notifications to")
+	rootCmd.PersistentFlags().StringVar(&opts.Channel, "slack-channel", "", "Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.")
+	rootCmd.PersistentFlags().StringVar(&opts.Token, "slack-auth-token", "", "Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.")
+	addFilterOptionsFlag(rootCmd, filterOptions)
+
+	if err := filterOptions.Validate(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error while validating filter options '%s'", err)
+		os.Exit(1)
+	}
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while executing your CLI '%s'", err)
 		os.Exit(1)
 	}
+}
+
+func addFilterOptionsFlag(cmd *cobra.Command, opts *kor.FilterOptions) {
+	cmd.PersistentFlags().StringVarP(&opts.ExcludeLabels, "exclude-labels", "l", opts.ExcludeLabels, "Selector to filter out, Example: --exclude-labels key1=value1,key2=value2.")
+	cmd.PersistentFlags().StringVar(&opts.NewerThan, "newer-than", opts.NewerThan, "The maximum age of the resources to be considered unused. This flag cannot be used together with older-than flag. Example: --newer-than=1h2m")
+	cmd.PersistentFlags().StringVar(&opts.OlderThan, "older-than", opts.OlderThan, "The minimum age of the resources to be considered unused. This flag cannot be used together with newer-than flag. Example: --older-than=1h2m")
 }
