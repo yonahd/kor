@@ -66,7 +66,7 @@ func processNamespaceRoles(clientset kubernetes.Interface, namespace string) ([]
 
 }
 
-func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts, deleteOpts DeleteOpts) (string, error) {
+func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
@@ -79,8 +79,8 @@ func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernete
 			continue
 		}
 
-		if deleteOpts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Role", deleteOpts.NoInteractive); err != nil {
+		if opts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "Role", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Role %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
@@ -98,7 +98,7 @@ func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, clientset kubernete
 		return "", err
 	}
 
-	unusedRoles, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	unusedRoles, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

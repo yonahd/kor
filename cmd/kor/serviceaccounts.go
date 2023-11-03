@@ -15,7 +15,7 @@ var serviceAccountCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
 
-		if response, err := kor.GetUnusedServiceAccounts(includeExcludeLists, clientset, outputFormat, slackOpts, deleteOpts); err != nil {
+		if response, err := kor.GetUnusedServiceAccounts(includeExcludeLists, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			fmt.Println(response)

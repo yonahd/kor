@@ -10,11 +10,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type DeleteOpts struct {
-	DeleteFlag    bool
-	NoInteractive bool
-}
-
 func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespace, name string) error {
 	var deleteResourceApiMap = map[string]func(clientset kubernetes.Interface, namespace, name string) error{
 		"ConfigMap": func(clientset kubernetes.Interface, namespace, name string) error {

@@ -12,33 +12,27 @@ import (
 )
 
 type SendMessageToSlack interface {
-	SendToSlack(slackOpts SlackOpts, outputBuffer string) error
-}
-
-type SlackOpts struct {
-	WebhookURL string
-	Channel    string
-	Token      string
+	SendToSlack(opts Opts, outputBuffer string) error
 }
 
 type SlackMessage struct {
 }
 
-func SendToSlack(sm SendMessageToSlack, slackOpts SlackOpts, outputBuffer string) error {
-	return sm.SendToSlack(slackOpts, outputBuffer)
+func SendToSlack(sm SendMessageToSlack, opts Opts, outputBuffer string) error {
+	return sm.SendToSlack(opts, outputBuffer)
 }
 
-func (sm SlackMessage) SendToSlack(slackOpts SlackOpts, outputBuffer string) error {
-	if slackOpts.WebhookURL != "" {
+func (sm SlackMessage) SendToSlack(opts Opts, outputBuffer string) error {
+	if opts.WebhookURL != "" {
 		payload := []byte(`{"text": "` + outputBuffer + `"}`)
-		_, err := http.Post(slackOpts.WebhookURL, "application/json", bytes.NewBuffer(payload))
+		_, err := http.Post(opts.WebhookURL, "application/json", bytes.NewBuffer(payload))
 
 		if err != nil {
 			return err
 		}
 		return nil
-	} else if slackOpts.Channel != "" && slackOpts.Token != "" {
-		fmt.Printf("Sending message to Slack channel %s...", slackOpts.Channel)
+	} else if opts.Channel != "" && opts.Token != "" {
+		fmt.Printf("Sending message to Slack channel %s...", opts.Channel)
 		outputFilePath, _ := writeOutputToFile(outputBuffer)
 
 		var formData bytes.Buffer
@@ -58,7 +52,7 @@ func (sm SlackMessage) SendToSlack(slackOpts SlackOpts, outputBuffer string) err
 			return err
 		}
 
-		if err := writer.WriteField("channels", slackOpts.Channel); err != nil {
+		if err := writer.WriteField("channels", opts.Channel); err != nil {
 			return err
 		}
 
@@ -68,7 +62,7 @@ func (sm SlackMessage) SendToSlack(slackOpts SlackOpts, outputBuffer string) err
 		if err != nil {
 			return err
 		}
-		req.Header.Set("Authorization", "Bearer "+slackOpts.Token)
+		req.Header.Set("Authorization", "Bearer "+opts.Token)
 		req.Header.Set("Content-Type", writer.FormDataContentType())
 
 		client := &http.Client{}

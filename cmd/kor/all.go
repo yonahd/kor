@@ -14,7 +14,7 @@ var allCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
 
-		if response, err := kor.GetUnusedAll(includeExcludeLists, clientset, outputFormat, slackOpts); err != nil {
+		if response, err := kor.GetUnusedAll(includeExcludeLists, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			fmt.Println(response)

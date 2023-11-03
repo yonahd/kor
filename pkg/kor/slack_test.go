@@ -10,29 +10,29 @@ import (
 
 type SendToSlackTestCase struct {
 	Name         string
-	SlackOpts    SlackOpts
+	Opts         Opts
 	OutputBuffer string
 }
 
 var testCases = []SendToSlackTestCase{
 	{
 		Name: "Test using WebhookURL",
-		SlackOpts: SlackOpts{
+		Opts: Opts{
 			WebhookURL: "slack.webhookurl.com",
 		},
 		OutputBuffer: "Test message",
 	},
 	{
 		Name: "Test using Channel and Token",
-		SlackOpts: SlackOpts{
+		Opts: Opts{
 			Channel: "your_channel",
 			Token:   "your_token",
 		},
 		OutputBuffer: "Test message",
 	},
 	{
-		Name:         "Test with empty SlackOpts",
-		SlackOpts:    SlackOpts{},
+		Name:         "Test with empty Opts",
+		Opts:         Opts{},
 		OutputBuffer: "Test message",
 	},
 }
@@ -40,7 +40,7 @@ var testCases = []SendToSlackTestCase{
 func TestSendToSlack(t *testing.T) {
 	for _, tc := range testCases {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if err := SendToSlack(SlackMessage{}, tc.SlackOpts, tc.OutputBuffer); err != nil {
+			if err := SendToSlack(SlackMessage{}, tc.Opts, tc.OutputBuffer); err != nil {
 				t.Errorf("Expected no error, got %v", err)
 			}
 		}))

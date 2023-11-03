@@ -139,7 +139,7 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts, deleteOpts DeleteOpts) (string, error) {
+func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
@@ -152,8 +152,8 @@ func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset
 			continue
 		}
 
-		if deleteOpts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Serviceaccount", deleteOpts.NoInteractive); err != nil {
+		if opts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "Serviceaccount", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Serviceaccount %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
@@ -171,7 +171,7 @@ func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset
 		return "", err
 	}
 
-	unusedServiceAccounts, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	unusedServiceAccounts, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

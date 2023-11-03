@@ -75,18 +75,15 @@ func TestGetUnusedHpasStructured(t *testing.T) {
 		ExcludeListStr: "",
 	}
 
-	slackopts := SlackOpts{
-		WebhookURL: "",
-		Channel:    "",
-		Token:      "",
-	}
-
-	deleteopts := DeleteOpts{
+	opts := Opts{
+		WebhookURL:    "",
+		Channel:       "",
+		Token:         "",
 		DeleteFlag:    false,
-		NoInteractive: false,
+		NoInteractive: true,
 	}
 
-	output, err := GetUnusedHpas(includeExcludeLists, clientset, "json", slackopts, deleteopts)
+	output, err := GetUnusedHpas(includeExcludeLists, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedHpasStructured: %v", err)
 	}

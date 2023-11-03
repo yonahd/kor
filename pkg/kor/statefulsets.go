@@ -28,7 +28,7 @@ func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 	return statefulSetsWithoutReplicas, nil
 }
 
-func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, slackOpts SlackOpts, deleteOpts DeleteOpts) (string, error) {
+func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
@@ -40,8 +40,8 @@ func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset ku
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-		if deleteOpts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Statefulset", deleteOpts.NoInteractive); err != nil {
+		if opts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "Statefulset", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Statefulset %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
@@ -59,7 +59,7 @@ func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, clientset ku
 		return "", err
 	}
 
-	unusedStatefulsets, err := unusedResourceFormatter(outputFormat, outputBuffer, slackOpts, jsonResponse)
+	unusedStatefulsets, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
