@@ -87,17 +87,20 @@ Kor provides various subcommands to identify and list unused resources. The avai
 
 ### Supported Flags
 ```
+      --delete                      Delete unused resources
   -l, --exclude-labels string       Selector to filter out, Example: --exclude-labels key1=value1,key2=value2.
   -e, --exclude-namespaces string   Namespaces to be excluded, splited by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
   -h, --help                        help for kor
   -n, --include-namespaces string   Namespaces to run on, splited by comma. Example: --include-namespace ns1,ns2,ns3. 
   -k, --kubeconfig string           Path to kubeconfig file (optional)
       --newer-than string           The maximum age of the resources to be considered unused. This flag cannot be used together with older-than flag. Example: --newer-than=1h2m
+      --no-interactive              Do not prompt for confirmation when deleting resources. Be careful using this flag!
       --older-than string           The minimum age of the resources to be considered unused. This flag cannot be used together with newer-than flag. Example: --older-than=1h2m
       --output string               Output format (table, json or yaml) (default "table")
       --slack-auth-token string     Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.
       --slack-channel string        Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.
       --slack-webhook-url string    Slack webhook URL to send notifications to
+
 ```
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.
@@ -128,6 +131,21 @@ kor [subcommand] --help
 | Hpas            | HPAs not used in Deployments<br/> HPAs not used in StatefulSets                                                                                                                                                                    |                                                                                                                              |
 | Pdbs            | PDBs not used in Deployments<br/> PDBs not used in StatefulSets                                                                                                                                                                    |                                                                                                                              |
 
+
+## Deleting Unused resources
+If you want to delete resources in an interactive way using Kor you can run:
+```sh
+kor configmap --namespace my-namespace --delete
+```
+You will be prompted with:
+```sh
+Do you want to delete ConfigMap test-configmap in namespace my-namespace? (Y/N):
+```
+
+To delete with no prompt ( ⚠️ use with caution):
+```sh
+kor configmap --namespace my-namespace --delete --no-interactive
+```
 
 ## Ignore Resources
 The resources labeled with: 
