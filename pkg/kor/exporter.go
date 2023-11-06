@@ -28,16 +28,16 @@ func init() {
 }
 
 // TODO: add option to change port / url !?
-func Exporter(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, opts Opts) {
+func Exporter(includeExcludeLists IncludeExcludeLists, filterOptions *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) {
 	http.Handle("/metrics", promhttp.Handler())
 	fmt.Println("Server listening on :8080")
-	go exportMetrics(includeExcludeLists, clientset, outputFormat, opts) // Start exporting metrics in the background
+	go exportMetrics(includeExcludeLists, filterOptions, clientset, outputFormat, opts) // Start exporting metrics in the background
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Println(err)
 	}
 }
 
-func exportMetrics(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, opts Opts) {
+func exportMetrics(includeExcludeLists IncludeExcludeLists, filterOptions *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) {
 	exporterInterval := os.Getenv("EXPORTER_INTERVAL")
 	if exporterInterval == "" {
 		exporterInterval = "10"
@@ -49,7 +49,7 @@ func exportMetrics(includeExcludeLists IncludeExcludeLists, clientset kubernetes
 	}
 
 	for {
-		if korOutput, err := GetUnusedAll(includeExcludeLists, nil, clientset, outputFormat, opts); err != nil {
+		if korOutput, err := GetUnusedAll(includeExcludeLists, filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		} else {
