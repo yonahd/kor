@@ -49,7 +49,8 @@ func exportMetrics(includeExcludeLists IncludeExcludeLists, filterOptions *Filte
 	}
 
 	for {
-		if korOutput, err := GetUnusedAll(includeExcludeLists, filterOptions, clientset, outputFormat, opts); err != nil {
+		fmt.Println("collecting unused resources")
+		if korOutput, err := GetUnusedConfigmaps(includeExcludeLists, filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		} else {
@@ -58,6 +59,8 @@ func exportMetrics(includeExcludeLists IncludeExcludeLists, filterOptions *Filte
 				fmt.Println("Error parsing JSON:", err)
 				return
 			}
+
+			orphanedResourcesCounter.Reset()
 
 			for namespace, resources := range data {
 				for kind, resourceList := range resources {
