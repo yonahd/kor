@@ -50,7 +50,7 @@ func exportMetrics(includeExcludeLists IncludeExcludeLists, filterOptions *Filte
 
 	for {
 		fmt.Println("collecting unused resources")
-		if korOutput, err := GetUnusedConfigmaps(includeExcludeLists, filterOptions, clientset, outputFormat, opts); err != nil {
+		if korOutput, err := GetUnusedAll(includeExcludeLists, filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		} else {
