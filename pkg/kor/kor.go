@@ -10,7 +10,9 @@ import (
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -53,21 +55,11 @@ func GetKubeConfigPath() string {
 	return filepath.Join(home, ".kube", "config")
 }
 
-func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
+func GetConfig(kubeconfig string) (*rest.Config, error) {
 	if _, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount/token"); err == nil {
-		config, err := rest.InClusterConfig()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
-			os.Exit(1)
-		}
-
-		clientset, err := kubernetes.NewForConfig(config)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
-			os.Exit(1)
-		}
-		return clientset
+		return rest.InClusterConfig()
 	}
+
 	if kubeconfig == "" {
 		if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
 			kubeconfig = configEnv
@@ -75,13 +67,48 @@ func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 			kubeconfig = GetKubeConfigPath()
 		}
 	}
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+
+	return clientcmd.BuildConfigFromFlags("", kubeconfig)
+}
+
+func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
+	config, err := GetConfig(kubeconfig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
 		os.Exit(1)
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+		os.Exit(1)
+	}
+	return clientset
+}
+
+func GetAPIExtensionsClient(kubeconfig string) *apiextensionsclientset.Clientset {
+	config, err := GetConfig(kubeconfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
+		os.Exit(1)
+	}
+
+	clientset, err := apiextensionsclientset.NewForConfig(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+		os.Exit(1)
+	}
+	return clientset
+}
+
+func GetDynamicClient(kubeconfig string) *dynamic.DynamicClient {
+	config, err := GetConfig(kubeconfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
+		os.Exit(1)
+	}
+
+	clientset, err := dynamic.NewForConfig(config)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
 		os.Exit(1)
@@ -177,6 +204,9 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff) string {
 	}
 
 	table.Render()
+	if namespace == "" {
+		return fmt.Sprintf("Unused CRDs: \n%s", buf.String())
+	}
 	return fmt.Sprintf("Unused Resources in Namespace: %s\n%s", namespace, buf.String())
 }
 

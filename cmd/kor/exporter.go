@@ -11,7 +11,10 @@ var exporterCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
-		kor.Exporter(includeExcludeLists, filterOptions, clientset, "json", opts)
+		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
+		dynamicClient := kor.GetDynamicClient(kubeconfig)
+
+		kor.Exporter(includeExcludeLists, filterOptions, clientset, apiExtClient, dynamicClient, "json", opts)
 
 	},
 }
