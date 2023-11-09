@@ -4,50 +4,53 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/yaml"
 )
 
-func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string) []ResourceDiff {
+func retrieveNamespaceDiffs(clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, namespace string, resourceList []string, filterOpts *FilterOptions) []ResourceDiff {
 	var allDiffs []ResourceDiff
 	for _, resource := range resourceList {
 		switch resource {
 		case "cm", "configmap", "configmaps":
-			namespaceCMDiff := getUnusedCMs(clientset, namespace, nil)
+			namespaceCMDiff := getUnusedCMs(clientset, namespace, filterOpts)
 			allDiffs = append(allDiffs, namespaceCMDiff)
 		case "svc", "service", "services":
 			namespaceSVCDiff := getUnusedSVCs(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceSVCDiff)
 		case "scrt", "secret", "secrets":
-			namespaceSecretDiff := getUnusedSecrets(clientset, namespace, nil)
+			namespaceSecretDiff := getUnusedSecrets(clientset, namespace, filterOpts)
 			allDiffs = append(allDiffs, namespaceSecretDiff)
 		case "sa", "serviceaccount", "serviceaccounts":
 			namespaceSADiff := getUnusedServiceAccounts(clientset, namespace)
 			allDiffs = append(allDiffs, namespaceSADiff)
 		case "deploy", "deployment", "deployments":
-			namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace, nil)
+			namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace, filterOpts)
 			allDiffs = append(allDiffs, namespaceDeploymentDiff)
 		case "sts", "statefulset", "statefulsets":
-			namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace, nil)
+			namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace, filterOpts)
 			allDiffs = append(allDiffs, namespaceStatefulsetDiff)
 		case "role", "roles":
-			namespaceRoleDiff := getUnusedRoles(clientset, namespace, nil)
+			namespaceRoleDiff := getUnusedRoles(clientset, namespace, filterOpts)
 			allDiffs = append(allDiffs, namespaceRoleDiff)
 		case "hpa", "horizontalpodautoscaler", "horizontalpodautoscalers":
-			namespaceHpaDiff := getUnusedHpas(clientset, namespace, nil)
+			namespaceHpaDiff := getUnusedHpas(clientset, namespace, filterOpts)
 			allDiffs = append(allDiffs, namespaceHpaDiff)
 		case "pvc", "persistentvolumeclaim", "persistentvolumeclaims":
-			namespacePvcDiff := getUnusedPvcs(clientset, namespace, nil)
+			namespacePvcDiff := getUnusedPvcs(clientset, namespace, filterOpts)
 			allDiffs = append(allDiffs, namespacePvcDiff)
 		case "ing", "ingress", "ingresses":
-			namespaceIngressDiff := getUnusedIngresses(clientset, namespace, nil)
+			namespaceIngressDiff := getUnusedIngresses(clientset, namespace, filterOpts)
 			allDiffs = append(allDiffs, namespaceIngressDiff)
 		case "pdb", "poddisruptionbudget", "poddisruptionbudgets":
-			namespacePdbDiff := getUnusedPdbs(clientset, namespace, nil)
+			namespacePdbDiff := getUnusedPdbs(clientset, namespace, filterOpts)
 			allDiffs = append(allDiffs, namespacePdbDiff)
+		case "crd", "customresourcedefinition", "customresourcedefinitions":
+			namespaceCrdDiff := getUnusedCrds(apiExtClient, dynamicClient)
+			allDiffs = append(allDiffs, namespaceCrdDiff)
 		default:
 			fmt.Printf("resource type %q is not supported\n", resource)
 		}
@@ -55,50 +58,21 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 	return allDiffs
 }
 
-func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, kubeconfig, resourceNames string, opts Opts) {
-	var clientset kubernetes.Interface
-	var namespaces []string
-
+func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, resourceNames, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
-
-	clientset = GetKubeClient(kubeconfig)
+	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	response := make(map[string]map[string][]string)
 
 	resourceList := strings.Split(resourceNames, ",")
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
 
 	for _, namespace := range namespaces {
-		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList)
+		allDiffs := retrieveNamespaceDiffs(clientset, apiExtClient, dynamicClient, namespace, resourceList, filterOpts)
+
 		output := FormatOutputAll(namespace, allDiffs)
 
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
-	}
 
-	if opts.WebhookURL != "" || opts.Channel != "" && opts.Token != "" {
-		if err := SendToSlack(SlackMessage{}, opts, outputBuffer.String()); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		fmt.Println(outputBuffer.String())
-	}
-}
-
-func GetUnusedMultiStructured(includeExcludeLists IncludeExcludeLists, kubeconfig, outputFormat, resourceNames string) (string, error) {
-	var clientset kubernetes.Interface
-	var namespaces []string
-
-	clientset = GetKubeClient(kubeconfig)
-
-	resourceList := strings.Split(resourceNames, ",")
-	namespaces = SetNamespaceList(includeExcludeLists, clientset)
-
-	// Create the JSON response object
-	response := make(map[string]map[string][]string)
-
-	for _, namespace := range namespaces {
-		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList)
-		// Store the unused resources for each resource type in the JSON response
 		resourceMap := make(map[string][]string)
 		for _, diff := range allDiffs {
 			resourceMap[diff.resourceType] = diff.diff
@@ -106,19 +80,15 @@ func GetUnusedMultiStructured(includeExcludeLists IncludeExcludeLists, kubeconfi
 		response[namespace] = resourceMap
 	}
 
-	// Convert the response object to JSON
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
 		return "", err
 	}
 
-	if outputFormat == "yaml" {
-		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-		if err != nil {
-			fmt.Printf("err: %v\n", err)
-		}
-		return string(yamlResponse), nil
-	} else {
-		return string(jsonResponse), nil
+	unusedMulti, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
 	}
+
+	return unusedMulti, nil
 }
