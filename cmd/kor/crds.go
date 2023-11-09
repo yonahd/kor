@@ -7,23 +7,23 @@ import (
 	"github.com/yonahd/kor/pkg/kor"
 )
 
-var allCmd = &cobra.Command{
-	Use:   "all",
-	Short: "Gets unused resources",
-	Args:  cobra.ExactArgs(0),
+var crdCmd = &cobra.Command{
+	Use:     "customresourcedefinition",
+	Aliases: []string{"crd", "customresourcedefinitions"},
+	Short:   "Gets unused crds",
+	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		clientset := kor.GetKubeClient(kubeconfig)
 		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
-
-		if response, err := kor.GetUnusedAll(includeExcludeLists, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedCrds(apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			fmt.Println(response)
 		}
+
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(allCmd)
+	rootCmd.AddCommand(crdCmd)
 }

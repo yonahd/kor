@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -118,7 +120,16 @@ func getUnusedPdbs(clientset kubernetes.Interface, namespace string, filterOpts 
 	return namespacePdbDiff
 }
 
-func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func getUnusedCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface) ResourceDiff {
+	pdbDiff, err := processCrds(apiExtClient, dynamicClient)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "Crds", err)
+	}
+	namespacePdbDiff := ResourceDiff{"Crd", pdbDiff}
+	return namespacePdbDiff
+}
+
+func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
@@ -160,6 +171,15 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOpt
 		}
 		response[namespace] = resourceMap
 	}
+
+	var allDiffs []ResourceDiff
+	crdDiff := getUnusedCrds(apiExtClient, dynamicClient)
+	allDiffs = append(allDiffs, crdDiff)
+
+	output := FormatOutputAll("", allDiffs)
+
+	outputBuffer.WriteString(output)
+	outputBuffer.WriteString("\n")
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
