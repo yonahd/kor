@@ -1,7 +1,7 @@
 project_name: kor
 
 builds:
-  - id: linux-amd64
+  - id: linux
     binary: kor
     main: ./main.go
     env:
@@ -10,17 +10,20 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm64
 
-  - id: darwin-amd64
+  - id: darwin
     binary: kor
     main: ./main.go
+    env:
+      - CGO_ENABLED=0
     goos:
       - darwin
     goarch:
       - amd64
       - arm64
 
-  - id: windows-amd64
+  - id: windows
     binary: kor
     main: ./main.go
     goos:
