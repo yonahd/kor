@@ -21,14 +21,12 @@ var rootCmd = &cobra.Command{
 
 		// Cheks whether the string contains a comma, indicating that it represents a list of resources
 		if strings.ContainsRune(resourceNames, 44) {
-			if outputFormat == "json" || outputFormat == "yaml" {
-				if response, err := kor.GetUnusedMultiStructured(includeExcludeLists, kubeconfig, outputFormat, resourceNames); err != nil {
-					fmt.Println(err)
-				} else {
-					fmt.Println(response)
-				}
+			clientset := kor.GetKubeClient(kubeconfig)
+
+			if response, err := kor.GetUnusedMulti(includeExcludeLists, resourceNames, filterOptions, clientset, outputFormat, opts); err != nil {
+				fmt.Println(err)
 			} else {
-				kor.GetUnusedMulti(includeExcludeLists, kubeconfig, resourceNames, opts)
+				fmt.Println(response)
 			}
 		} else {
 			fmt.Printf("Subcommand %q was not found, try using 'kor --help' for available subcommands", args[0])
