@@ -19,11 +19,13 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		resourceNames := args[0]
 
-		// Cheks whether the string contains a comma, indicating that it represents a list of resources
+		// Checks whether the string contains a comma, indicating that it represents a list of resources
 		if strings.ContainsRune(resourceNames, 44) {
 			clientset := kor.GetKubeClient(kubeconfig)
+			apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
+			dynamicClient := kor.GetDynamicClient(kubeconfig)
 
-			if response, err := kor.GetUnusedMulti(includeExcludeLists, resourceNames, filterOptions, clientset, outputFormat, opts); err != nil {
+			if response, err := kor.GetUnusedMulti(includeExcludeLists, resourceNames, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(response)
