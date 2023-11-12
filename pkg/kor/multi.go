@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
-	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
-func retrieveNamespaceDiffs(clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, namespace string, resourceList []string, filterOpts *FilterOptions) []ResourceDiff {
+func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *FilterOptions) []ResourceDiff {
 	var allDiffs []ResourceDiff
 	for _, resource := range resourceList {
 		switch resource {
@@ -48,9 +47,6 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, apiExtClient apiexte
 		case "pdb", "poddisruptionbudget", "poddisruptionbudgets":
 			namespacePdbDiff := getUnusedPdbs(clientset, namespace, filterOpts)
 			allDiffs = append(allDiffs, namespacePdbDiff)
-		case "crd", "customresourcedefinition", "customresourcedefinitions":
-			namespaceCrdDiff := getUnusedCrds(apiExtClient, dynamicClient)
-			allDiffs = append(allDiffs, namespaceCrdDiff)
 		default:
 			fmt.Printf("resource type %q is not supported\n", resource)
 		}
@@ -58,18 +54,25 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, apiExtClient apiexte
 	return allDiffs
 }
 
-func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, resourceNames, outputFormat string, opts Opts) (string, error) {
+func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, resourceNames string, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
+	resourceList := strings.Split(resourceNames, ",")
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
-
-	resourceList := strings.Split(resourceNames, ",")
+	var err error
 
 	for _, namespace := range namespaces {
-		allDiffs := retrieveNamespaceDiffs(clientset, apiExtClient, dynamicClient, namespace, resourceList, filterOpts)
+		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList, filterOpts)
 
+		if opts.DeleteFlag {
+			for _, diff := range allDiffs {
+				if diff.diff, err = DeleteResource(diff.diff, clientset, namespace, diff.resourceType, opts.NoInteractive); err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", diff.resourceType, diff.diff, namespace, err)
+				}
+			}
+
+		}
 		output := FormatOutputAll(namespace, allDiffs)
-
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
 
