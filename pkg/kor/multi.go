@@ -7,8 +7,26 @@ import (
 	"os"
 	"strings"
 
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
+
+func retrieveNoNamespaceDiff(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts, resourceList []string) ([]ResourceDiff, []string) {
+	var noNamespaceDiff []ResourceDiff
+	for counter, resource := range resourceList {
+		if resource == "crd" || resource == "customresourcedefinition" || resource == "customresourcedefinitions" {
+			crdDiff := getUnusedCrds(apiExtClient, dynamicClient)
+			noNamespaceDiff = append(noNamespaceDiff, crdDiff)
+			updatedResourceList := append(resourceList[:counter], resourceList[counter+1:]...)
+			return noNamespaceDiff, updatedResourceList
+		} else {
+			resourceList[counter] = resource
+		}
+	}
+	return noNamespaceDiff, resourceList
+
+}
 
 func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *FilterOptions) []ResourceDiff {
 	var allDiffs []ResourceDiff
@@ -54,15 +72,31 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 	return allDiffs
 }
 
-func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, resourceNames string, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, resourceNames string, filterOpts *FilterOptions, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+	var allDiffs []ResourceDiff
 	var outputBuffer bytes.Buffer
+	var unusedMulti string
 	resourceList := strings.Split(resourceNames, ",")
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 	var err error
 
+	crdDiff, resourceList := retrieveNoNamespaceDiff(apiExtClient, dynamicClient, outputFormat, opts, resourceList)
+	if len(crdDiff) != 0 {
+		output := FormatOutputAll("", crdDiff)
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+
+		resourceMap := make(map[string][]string)
+		for _, diff := range crdDiff {
+			resourceMap[diff.resourceType] = diff.diff
+		}
+		response[""] = resourceMap
+
+	}
+
 	for _, namespace := range namespaces {
-		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList, filterOpts)
+		allDiffs = retrieveNamespaceDiffs(clientset, namespace, resourceList, filterOpts)
 
 		if opts.DeleteFlag {
 			for _, diff := range allDiffs {
@@ -88,7 +122,7 @@ func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, resourceNames strin
 		return "", err
 	}
 
-	unusedMulti, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedMulti, err = unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
