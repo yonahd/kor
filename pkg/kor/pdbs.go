@@ -80,11 +80,11 @@ func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOp
 		if output != "" {
 			outputBuffer.WriteString(output)
 			outputBuffer.WriteString("\n")
-		}
 
-		resourceMap := make(map[string][]string)
-		resourceMap["Pdb"] = diff
-		response[namespace] = resourceMap
+			resourceMap := make(map[string][]string)
+			resourceMap["Pdb"] = diff
+			response[namespace] = resourceMap
+		}
 	}
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")

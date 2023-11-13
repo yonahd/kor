@@ -160,11 +160,11 @@ func GetUnusedConfigmaps(includeExcludeLists IncludeExcludeLists, filterOpts *Fi
 		if output != "" {
 			outputBuffer.WriteString(output)
 			outputBuffer.WriteString("\n")
-		}
 
-		resourceMap := make(map[string][]string)
-		resourceMap["ConfigMap"] = diff
-		response[namespace] = resourceMap
+			resourceMap := make(map[string][]string)
+			resourceMap["ConfigMap"] = diff
+			response[namespace] = resourceMap
+		}
 	}
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")

@@ -98,11 +98,11 @@ func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, filterOpts *FilterO
 		if output != "" {
 			outputBuffer.WriteString(output)
 			outputBuffer.WriteString("\n")
-		}
 
-		resourceMap := make(map[string][]string)
-		resourceMap["Roles"] = diff
-		response[namespace] = resourceMap
+			resourceMap := make(map[string][]string)
+			resourceMap["Roles"] = diff
+			response[namespace] = resourceMap
+		}
 	}
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")

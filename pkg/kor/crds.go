@@ -65,10 +65,10 @@ func GetUnusedCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient 
 	if output != "" {
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
-	}
 
-	resourceMap := make(map[string][]string)
-	resourceMap["Crd"] = diff
+		resourceMap := make(map[string][]string)
+		resourceMap["Crd"] = diff
+	}
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {

@@ -172,11 +172,11 @@ func GetUnusedSecrets(includeExcludeLists IncludeExcludeLists, filterOpts *Filte
 		if output != "" {
 			outputBuffer.WriteString(output)
 			outputBuffer.WriteString("\n")
-		}
 
-		resourceMap := make(map[string][]string)
-		resourceMap["Secrets"] = diff
-		response[namespace] = resourceMap
+			resourceMap := make(map[string][]string)
+			resourceMap["Secrets"] = diff
+			response[namespace] = resourceMap
+		}
 	}
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")
