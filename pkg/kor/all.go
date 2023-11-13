@@ -30,8 +30,8 @@ func getUnusedCMs(clientset kubernetes.Interface, namespace string, filterOpts *
 	return namespaceCMDiff
 }
 
-func getUnusedSVCs(clientset kubernetes.Interface, namespace string) ResourceDiff {
-	svcDiff, err := ProcessNamespaceServices(clientset, namespace)
+func getUnusedSVCs(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+	svcDiff, err := ProcessNamespaceServices(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "services", namespace, err)
 	}
@@ -48,8 +48,8 @@ func getUnusedSecrets(clientset kubernetes.Interface, namespace string, filterOp
 	return namespaceSecretDiff
 }
 
-func getUnusedServiceAccounts(clientset kubernetes.Interface, namespace string) ResourceDiff {
-	saDiff, err := processNamespaceSA(clientset, namespace)
+func getUnusedServiceAccounts(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+	saDiff, err := processNamespaceSA(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "serviceaccounts", namespace, err)
 	}
@@ -139,11 +139,11 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOpt
 		var allDiffs []ResourceDiff
 		namespaceCMDiff := getUnusedCMs(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceCMDiff)
-		namespaceSVCDiff := getUnusedSVCs(clientset, namespace)
+		namespaceSVCDiff := getUnusedSVCs(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceSVCDiff)
 		namespaceSecretDiff := getUnusedSecrets(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceSecretDiff)
-		namespaceSADiff := getUnusedServiceAccounts(clientset, namespace)
+		namespaceSADiff := getUnusedServiceAccounts(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceSADiff)
 		namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceDeploymentDiff)

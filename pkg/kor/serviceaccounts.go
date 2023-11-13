@@ -101,7 +101,7 @@ func retrieveUsedSA(clientset kubernetes.Interface, namespace string) ([]string,
 	return podServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, nil
 }
 
-func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
 	serviceaccounts, err := clientset.CoreV1().ServiceAccounts(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -112,12 +112,20 @@ func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace strin
 			continue
 		}
 
+		if excluded, _ := HasExcludedLabel(serviceaccount.Labels, filterOpts.ExcludeLabels); excluded {
+			continue
+		}
+
+		if included, _ := HasIncludedAge(serviceaccount.CreationTimestamp, filterOpts); !included {
+			continue
+		}
+
 		names = append(names, serviceaccount.Name)
 	}
 	return names, nil
 }
 
-func processNamespaceSA(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func processNamespaceSA(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
 	usedServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, err := retrieveUsedSA(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -129,7 +137,7 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string) ([]str
 
 	usedServiceAccounts = append(append(usedServiceAccounts, roleServiceAccounts...), clusterRoleServiceAccounts...)
 
-	serviceAccountNames, err := retrieveServiceAccountNames(clientset, namespace)
+	serviceAccountNames, err := retrieveServiceAccountNames(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -139,14 +147,14 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := processNamespaceSA(clientset, namespace)
+		diff, err := processNamespaceSA(clientset, namespace, filterOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
