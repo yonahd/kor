@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
 	endpointsList, err := clientset.CoreV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -24,6 +24,14 @@ func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string) 
 			continue
 		}
 
+		if excluded, _ := HasExcludedLabel(endpoints.Labels, filterOpts.ExcludeLabels); excluded {
+			continue
+		}
+
+		if included, _ := HasIncludedAge(endpoints.CreationTimestamp, filterOpts); !included {
+			continue
+		}
+
 		if len(endpoints.Subsets) == 0 {
 			endpointsWithoutSubsets = append(endpointsWithoutSubsets, endpoints.Name)
 		}
@@ -32,14 +40,14 @@ func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string) 
 	return endpointsWithoutSubsets, nil
 }
 
-func GetUnusedServices(includeExcludeLists IncludeExcludeLists, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedServices(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := SetNamespaceList(includeExcludeLists, clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceServices(clientset, namespace)
+		diff, err := ProcessNamespaceServices(clientset, namespace, filterOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

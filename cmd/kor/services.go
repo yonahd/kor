@@ -15,7 +15,7 @@ var serviceCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
 
-		if response, err := kor.GetUnusedServices(includeExcludeLists, clientset, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedServices(includeExcludeLists, filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			fmt.Println(response)
