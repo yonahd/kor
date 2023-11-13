@@ -117,7 +117,7 @@ func TestRetrieveUsedSA(t *testing.T) {
 
 func TestRetrieveServiceAccountNames(t *testing.T) {
 	clientset := createTestServiceAccounts(t)
-	serviceAccountNames, err := retrieveServiceAccountNames(clientset, testNamespace)
+	serviceAccountNames, err := retrieveServiceAccountNames(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -147,7 +147,7 @@ func TestProcessNamespaceSA(t *testing.T) {
 		t.Fatalf("Error creating fake %s: %v", "Pod", err)
 	}
 
-	unusedServiceAccounts, err := processNamespaceSA(clientset, testNamespace)
+	unusedServiceAccounts, err := processNamespaceSA(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -183,7 +183,7 @@ func TestGetUnusedServiceAccountsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedServiceAccounts(includeExcludeLists, clientset, "json", opts)
+	output, err := GetUnusedServiceAccounts(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedServiceAccountsStructured: %v", err)
 	}

@@ -43,7 +43,7 @@ func createTestServices(t *testing.T) *fake.Clientset {
 func TestGetEndpointsWithoutSubsets(t *testing.T) {
 	clientset := createTestServices(t)
 
-	servicesWithoutEndpoints, err := ProcessNamespaceServices(clientset, testNamespace)
+	servicesWithoutEndpoints, err := ProcessNamespaceServices(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -73,7 +73,7 @@ func TestGetUnusedServicesStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedServices(includeExcludeLists, clientset, "json", opts)
+	output, err := GetUnusedServices(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedServicesStructured: %v", err)
 	}
