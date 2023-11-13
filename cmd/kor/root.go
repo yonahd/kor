@@ -3,7 +3,6 @@ package kor
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/yonahd/kor/pkg/kor"
@@ -18,20 +17,14 @@ var rootCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		resourceNames := args[0]
+		clientset := kor.GetKubeClient(kubeconfig)
+		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
+		dynamicClient := kor.GetDynamicClient(kubeconfig)
 
-		// Checks whether the string contains a comma, indicating that it represents a list of resources
-		if strings.ContainsRune(resourceNames, 44) {
-			clientset := kor.GetKubeClient(kubeconfig)
-			apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
-			dynamicClient := kor.GetDynamicClient(kubeconfig)
-
-			if response, err := kor.GetUnusedMulti(includeExcludeLists, resourceNames, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(response)
-			}
+		if response, err := kor.GetUnusedMulti(includeExcludeLists, resourceNames, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
+			fmt.Println(err)
 		} else {
-			fmt.Printf("Subcommand %q was not found, try using 'kor --help' for available subcommands", args[0])
+			fmt.Println(response)
 		}
 	},
 }

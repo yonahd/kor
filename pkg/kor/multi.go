@@ -31,43 +31,34 @@ func retrieveNoNamespaceDiff(apiExtClient apiextensionsclientset.Interface, dyna
 func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *FilterOptions) []ResourceDiff {
 	var allDiffs []ResourceDiff
 	for _, resource := range resourceList {
+		var diffResult ResourceDiff
 		switch resource {
 		case "cm", "configmap", "configmaps":
-			namespaceCMDiff := getUnusedCMs(clientset, namespace, filterOpts)
-			allDiffs = append(allDiffs, namespaceCMDiff)
+			diffResult = getUnusedCMs(clientset, namespace, filterOpts)
 		case "svc", "service", "services":
-			namespaceSVCDiff := getUnusedSVCs(clientset, namespace)
-			allDiffs = append(allDiffs, namespaceSVCDiff)
+			diffResult = getUnusedSVCs(clientset, namespace)
 		case "scrt", "secret", "secrets":
-			namespaceSecretDiff := getUnusedSecrets(clientset, namespace, filterOpts)
-			allDiffs = append(allDiffs, namespaceSecretDiff)
+			diffResult = getUnusedSecrets(clientset, namespace, filterOpts)
 		case "sa", "serviceaccount", "serviceaccounts":
-			namespaceSADiff := getUnusedServiceAccounts(clientset, namespace)
-			allDiffs = append(allDiffs, namespaceSADiff)
+			diffResult = getUnusedServiceAccounts(clientset, namespace)
 		case "deploy", "deployment", "deployments":
-			namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace, filterOpts)
-			allDiffs = append(allDiffs, namespaceDeploymentDiff)
+			diffResult = getUnusedDeployments(clientset, namespace, filterOpts)
 		case "sts", "statefulset", "statefulsets":
-			namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace, filterOpts)
-			allDiffs = append(allDiffs, namespaceStatefulsetDiff)
+			diffResult = getUnusedStatefulSets(clientset, namespace, filterOpts)
 		case "role", "roles":
-			namespaceRoleDiff := getUnusedRoles(clientset, namespace, filterOpts)
-			allDiffs = append(allDiffs, namespaceRoleDiff)
+			diffResult = getUnusedRoles(clientset, namespace, filterOpts)
 		case "hpa", "horizontalpodautoscaler", "horizontalpodautoscalers":
-			namespaceHpaDiff := getUnusedHpas(clientset, namespace, filterOpts)
-			allDiffs = append(allDiffs, namespaceHpaDiff)
+			diffResult = getUnusedHpas(clientset, namespace, filterOpts)
 		case "pvc", "persistentvolumeclaim", "persistentvolumeclaims":
-			namespacePvcDiff := getUnusedPvcs(clientset, namespace, filterOpts)
-			allDiffs = append(allDiffs, namespacePvcDiff)
+			diffResult = getUnusedPvcs(clientset, namespace, filterOpts)
 		case "ing", "ingress", "ingresses":
-			namespaceIngressDiff := getUnusedIngresses(clientset, namespace, filterOpts)
-			allDiffs = append(allDiffs, namespaceIngressDiff)
+			diffResult = getUnusedIngresses(clientset, namespace, filterOpts)
 		case "pdb", "poddisruptionbudget", "poddisruptionbudgets":
-			namespacePdbDiff := getUnusedPdbs(clientset, namespace, filterOpts)
-			allDiffs = append(allDiffs, namespacePdbDiff)
+			diffResult = getUnusedPdbs(clientset, namespace, filterOpts)
 		default:
 			fmt.Printf("resource type %q is not supported\n", resource)
 		}
+		allDiffs = append(allDiffs, diffResult)
 	}
 	return allDiffs
 }
