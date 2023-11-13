@@ -60,9 +60,11 @@ func GetUnusedDeployments(includeExcludeLists IncludeExcludeLists, filterOpts *F
 				fmt.Fprintf(os.Stderr, "Failed to delete Deployment %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
-		output := FormatOutput(namespace, diff, "Deployments")
-		outputBuffer.WriteString(output)
-		outputBuffer.WriteString("\n")
+		output := FormatOutput(namespace, diff, "Deployments", opts)
+		if output != "" {
+			outputBuffer.WriteString(output)
+			outputBuffer.WriteString("\n")
+		}
 
 		resourceMap := make(map[string][]string)
 		resourceMap["Deployments"] = diff

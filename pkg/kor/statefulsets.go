@@ -55,9 +55,11 @@ func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, filterOpts *
 				fmt.Fprintf(os.Stderr, "Failed to delete Statefulset %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
-		output := FormatOutput(namespace, diff, "Statefulsets")
-		outputBuffer.WriteString(output)
-		outputBuffer.WriteString("\n")
+		output := FormatOutput(namespace, diff, "Statefulsets", opts)
+		if output != "" {
+			outputBuffer.WriteString(output)
+			outputBuffer.WriteString("\n")
+		}
 
 		resourceMap := make(map[string][]string)
 		resourceMap["Statefulsets"] = diff

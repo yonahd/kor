@@ -61,10 +61,11 @@ func GetUnusedCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient 
 		}
 		response[""]["Crd"] = diff
 	}
-	output := FormatOutput("", diff, "Crds")
-
-	outputBuffer.WriteString(output)
-	outputBuffer.WriteString("\n")
+	output := FormatOutput("", diff, "Crds", opts)
+	if output != "" {
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+	}
 
 	resourceMap := make(map[string][]string)
 	resourceMap["Crd"] = diff

@@ -76,9 +76,11 @@ func GetUnusedPdbs(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOp
 				fmt.Fprintf(os.Stderr, "Failed to delete PDB %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
-		output := FormatOutput(namespace, diff, "PDBs")
-		outputBuffer.WriteString(output)
-		outputBuffer.WriteString("\n")
+		output := FormatOutput(namespace, diff, "PDBs", opts)
+		if output != "" {
+			outputBuffer.WriteString(output)
+			outputBuffer.WriteString("\n")
+		}
 
 		resourceMap := make(map[string][]string)
 		resourceMap["Pdb"] = diff

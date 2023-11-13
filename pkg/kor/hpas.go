@@ -107,9 +107,11 @@ func GetUnusedHpas(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOp
 				fmt.Fprintf(os.Stderr, "Failed to delete HPA %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
-		output := FormatOutput(namespace, diff, "HPAs")
-		outputBuffer.WriteString(output)
-		outputBuffer.WriteString("\n")
+		output := FormatOutput(namespace, diff, "HPAs", opts)
+		if output != "" {
+			outputBuffer.WriteString(output)
+			outputBuffer.WriteString("\n")
+		}
 
 		resourceMap := make(map[string][]string)
 		resourceMap["Hpa"] = diff

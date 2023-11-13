@@ -81,9 +81,11 @@ func GetUnusedPvcs(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOp
 				fmt.Fprintf(os.Stderr, "Failed to delete PVC %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
-		output := FormatOutput(namespace, diff, "PVCs")
-		outputBuffer.WriteString(output)
-		outputBuffer.WriteString("\n")
+		output := FormatOutput(namespace, diff, "PVCs", opts)
+		if output != "" {
+			outputBuffer.WriteString(output)
+			outputBuffer.WriteString("\n")
+		}
 
 		resourceMap := make(map[string][]string)
 		resourceMap["Pvc"] = diff
