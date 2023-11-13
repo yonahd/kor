@@ -32,6 +32,7 @@ type IncludeExcludeLists struct {
 type Opts struct {
 	DeleteFlag    bool
 	NoInteractive bool
+	Verbose       bool
 	WebhookURL    string
 	Channel       string
 	Token         string
@@ -159,9 +160,11 @@ func SetNamespaceList(namespaceLists IncludeExcludeLists, clientset kubernetes.I
 	return namespaces
 }
 
-func FormatOutput(namespace string, resources []string, resourceType string) string {
-	if len(resources) == 0 {
+func FormatOutput(namespace string, resources []string, resourceType string, opts Opts) string {
+	if opts.Verbose && len(resources) == 0 {
 		return fmt.Sprintf("No unused %s found in the namespace: %s \n", resourceType, namespace)
+	} else if len(resources) == 0 {
+		return ""
 	}
 
 	var buf bytes.Buffer
