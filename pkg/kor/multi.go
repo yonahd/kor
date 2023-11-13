@@ -74,7 +74,7 @@ func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, resourceNames strin
 
 	crdDiff, resourceList := retrieveNoNamespaceDiff(apiExtClient, dynamicClient, outputFormat, opts, resourceList)
 	if len(crdDiff) != 0 {
-		output := FormatOutputAll("", crdDiff)
+		output := FormatOutputAll("", crdDiff, opts)
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
 
@@ -97,15 +97,18 @@ func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, resourceNames strin
 			}
 
 		}
-		output := FormatOutputAll(namespace, allDiffs)
-		outputBuffer.WriteString(output)
-		outputBuffer.WriteString("\n")
+		output := FormatOutputAll(namespace, allDiffs, opts)
+		if output != "" {
+			outputBuffer.WriteString(output)
+			outputBuffer.WriteString("\n")
 
-		resourceMap := make(map[string][]string)
-		for _, diff := range allDiffs {
-			resourceMap[diff.resourceType] = diff.diff
+			resourceMap := make(map[string][]string)
+			for _, diff := range allDiffs {
+				resourceMap[diff.resourceType] = diff.diff
+			}
+			response[namespace] = resourceMap
 		}
-		response[namespace] = resourceMap
+
 	}
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")

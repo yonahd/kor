@@ -160,7 +160,7 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOpt
 		namespacePdbDiff := getUnusedPdbs(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespacePdbDiff)
 
-		output := FormatOutputAll(namespace, allDiffs)
+		output := FormatOutputAll(namespace, allDiffs, opts)
 
 		outputBuffer.WriteString(output)
 		outputBuffer.WriteString("\n")
@@ -176,7 +176,7 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOpt
 	crdDiff := getUnusedCrds(apiExtClient, dynamicClient)
 	allDiffs = append(allDiffs, crdDiff)
 
-	output := FormatOutputAll("", allDiffs)
+	output := FormatOutputAll("", allDiffs, opts)
 
 	outputBuffer.WriteString(output)
 	outputBuffer.WriteString("\n")

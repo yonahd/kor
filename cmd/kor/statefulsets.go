@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/yonahd/kor/pkg/kor"
+	"github.com/yonahd/kor/pkg/utils"
 )
 
 var stsCmd = &cobra.Command{
@@ -18,6 +19,7 @@ var stsCmd = &cobra.Command{
 		if response, err := kor.GetUnusedStatefulSets(includeExcludeLists, filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
+			utils.PrintLogo(outputFormat)
 			fmt.Println(response)
 		}
 	},
