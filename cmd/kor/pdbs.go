@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/yonahd/kor/pkg/kor"
+	"github.com/yonahd/kor/pkg/utils"
 )
 
 var pdbCmd = &cobra.Command{
@@ -18,6 +19,7 @@ var pdbCmd = &cobra.Command{
 		if response, err := kor.GetUnusedPdbs(includeExcludeLists, filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
+			utils.PrintLogo(outputFormat)
 			fmt.Println(response)
 		}
 	},

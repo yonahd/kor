@@ -24,6 +24,7 @@ var rootCmd = &cobra.Command{
 		if response, err := kor.GetUnusedMulti(includeExcludeLists, resourceNames, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
+			utils.PrintLogo(outputFormat)
 			fmt.Println(response)
 		}
 	},
@@ -38,7 +39,6 @@ var (
 )
 
 func Execute() {
-	utils.PrintLogo()
 	rootCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
 	rootCmd.PersistentFlags().StringVarP(&includeExcludeLists.IncludeListStr, "include-namespaces", "n", "", "Namespaces to run on, splited by comma. Example: --include-namespace ns1,ns2,ns3. ")
 	rootCmd.PersistentFlags().StringVarP(&includeExcludeLists.ExcludeListStr, "exclude-namespaces", "e", "", "Namespaces to be excluded, splited by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.")

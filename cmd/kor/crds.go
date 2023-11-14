@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/yonahd/kor/pkg/kor"
+	"github.com/yonahd/kor/pkg/utils"
 )
 
 var crdCmd = &cobra.Command{
@@ -18,6 +19,7 @@ var crdCmd = &cobra.Command{
 		if response, err := kor.GetUnusedCrds(apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
+			utils.PrintLogo(outputFormat)
 			fmt.Println(response)
 		}
 

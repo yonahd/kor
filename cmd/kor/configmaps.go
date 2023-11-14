@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/yonahd/kor/pkg/kor"
+	"github.com/yonahd/kor/pkg/utils"
 )
 
 var configmapCmd = &cobra.Command{
@@ -17,6 +18,7 @@ var configmapCmd = &cobra.Command{
 		if response, err := kor.GetUnusedConfigmaps(includeExcludeLists, filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
+			utils.PrintLogo(outputFormat)
 			fmt.Println(response)
 		}
 	},

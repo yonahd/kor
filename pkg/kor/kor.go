@@ -180,7 +180,7 @@ func FormatOutput(namespace string, resources []string, resourceType string, opt
 	return fmt.Sprintf("Unused %s in Namespace: %s\n%s", resourceType, namespace, buf.String())
 }
 
-func FormatOutputAll(namespace string, allDiffs []ResourceDiff) string {
+func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) string {
 	i := 0
 	var buf bytes.Buffer
 	table := tablewriter.NewWriter(&buf)
@@ -202,8 +202,10 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff) string {
 		}
 	}
 
-	if allEmpty {
+	if opts.Verbose && allEmpty {
 		return fmt.Sprintf("No unused resources found in the namespace: %s", namespace)
+	} else if allEmpty {
+		return ""
 	}
 
 	table.Render()
