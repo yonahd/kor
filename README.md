@@ -108,7 +108,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 To use a specific subcommand, run `kor [subcommand] [flags]`.
 
 ```sh
-kor all --namespace my-namespace
+kor all --include-namespaces my-namespace
 ```
 
 For more information about each subcommand and its available flags, you can use the `--help` flag.
@@ -138,7 +138,7 @@ kor [subcommand] --help
 ## Deleting Unused resources
 If you want to delete resources in an interactive way using Kor you can run:
 ```sh
-kor configmap --namespace my-namespace --delete
+kor configmap --include-namespaces my-namespace --delete
 ```
 You will be prompted with:
 ```sh
@@ -147,7 +147,7 @@ Do you want to delete ConfigMap test-configmap in namespace my-namespace? (Y/N):
 
 To delete with no prompt ( ⚠️ use with caution):
 ```sh
-kor configmap --namespace my-namespace --delete --no-interactive
+kor configmap --include-namespaces my-namespace --delete --no-interactive
 ```
 
 ## Ignore Resources
