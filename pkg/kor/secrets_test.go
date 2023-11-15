@@ -158,7 +158,7 @@ func TestRetrieveIngressTLS(t *testing.T) {
 func TestRetrieveUsedSecret(t *testing.T) {
 	clientset := createTestSecrets(t)
 
-	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, _, err := retrieveUsedSecret(clientset, testNamespace, &FilterOptions{})
+	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, _, err := retrieveUsedSecret(clientset, testNamespace)
 	if err != nil {
 		t.Fatalf("Error retrieving used secrets: %v", err)
 	}
