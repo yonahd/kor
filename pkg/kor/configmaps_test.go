@@ -130,7 +130,7 @@ func TestProcessNamespaceCM(t *testing.T) {
 func TestRetrieveUsedCM(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 
-	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, testNamespace)
+	volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, testNamespace)
 
 	if err != nil {
 		t.Fatalf("Error retrieving used ConfigMaps: %v", err)
@@ -139,11 +139,6 @@ func TestRetrieveUsedCM(t *testing.T) {
 	expectedVolumesCM := []string{"configmap-1", "kube-root-ca.crt"}
 	if !equalSlices(volumesCM, expectedVolumesCM) {
 		t.Errorf("Expected volume configmaps %v, got %v", expectedVolumesCM, volumesCM)
-	}
-
-	var expectedVolumesProjectedCM []string
-	if !equalSlices(volumesProjectedCM, expectedVolumesProjectedCM) {
-		t.Errorf("Expected volume configmaps %v, got %v", expectedVolumesProjectedCM, volumesProjectedCM)
 	}
 
 	expectedEnvCM := []string{"configmap-1"}
