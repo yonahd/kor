@@ -37,7 +37,7 @@ func retrieveIngressTLS(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func retrieveUsedSecret(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, []string, []string, []string, []string, []string, error) {
+func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
 	var envSecrets []string
 	var envSecrets2 []string
 	var volumeSecrets []string
@@ -77,7 +77,15 @@ func retrieveUsedSecret(clientset kubernetes.Interface, namespace string, filter
 			if volume.Secret != nil {
 				volumeSecrets = append(volumeSecrets, volume.Secret.SecretName)
 			}
+			if volume.Projected != nil && volume.Projected.Sources != nil {
+				for _, projectedResource := range volume.Projected.Sources {
+					if projectedResource.Secret != nil {
+						volumeSecrets = append(volumeSecrets, projectedResource.Secret.Name)
+					}
+				}
+			}
 		}
+
 		if pod.Spec.ImagePullSecrets != nil {
 			for _, secret := range pod.Spec.ImagePullSecrets {
 				pullSecrets = append(pullSecrets, secret.Name)
@@ -123,7 +131,7 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 }
 
 func processNamespaceSecret(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
-	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(clientset, namespace, filterOpts)
+	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}

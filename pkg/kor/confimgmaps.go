@@ -17,9 +17,8 @@ var exceptionconfigmaps = []ExceptionResource{
 	{ResourceName: "kube-root-ca.crt", Namespace: "*"},
 }
 
-func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
+func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, error) {
 	var volumesCM []string
-	var volumesProjectedCM []string
 	var envCM []string
 	var envFromCM []string
 	var envFromContainerCM []string
@@ -27,7 +26,7 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 
 	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	for _, pod := range pods.Items {
@@ -38,7 +37,7 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 			if volume.Projected != nil {
 				for _, source := range volume.Projected.Sources {
 					if source.ConfigMap != nil {
-						volumesProjectedCM = append(volumesProjectedCM, source.ConfigMap.Name)
+						volumesCM = append(volumesCM, source.ConfigMap.Name)
 					}
 				}
 			}
@@ -80,7 +79,7 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 		}
 	}
 
-	return volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, nil
+	return volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, nil
 }
 
 func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
@@ -111,13 +110,12 @@ func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, fi
 }
 
 func processNamespaceCM(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
-	volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, namespace)
+	volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	volumesCM = RemoveDuplicatesAndSort(volumesCM)
-	volumesProjectedCM = RemoveDuplicatesAndSort(volumesProjectedCM)
 	envCM = RemoveDuplicatesAndSort(envCM)
 	envFromCM = RemoveDuplicatesAndSort(envFromCM)
 	envFromContainerCM = RemoveDuplicatesAndSort(envFromContainerCM)
@@ -129,7 +127,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 	}
 
 	var usedConfigMaps []string
-	slicesToAppend := [][]string{volumesCM, volumesProjectedCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM}
+	slicesToAppend := [][]string{volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM}
 
 	for _, slice := range slicesToAppend {
 		usedConfigMaps = append(usedConfigMaps, slice...)
