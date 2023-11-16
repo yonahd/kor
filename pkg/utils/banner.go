@@ -1,8 +1,12 @@
 package utils
 
 import (
+	"fmt"
+
 	"github.com/fatih/color"
 )
+
+var Version = "dev"
 
 func PrintLogo(outputFormat string) {
 	boldBlue := color.New(color.FgHiBlue, color.Bold)
@@ -15,7 +19,7 @@ func PrintLogo(outputFormat string) {
 `
 	// processing of the `outputFormat` happens inside of the rootCmd so this requires a pretty large change
 	// to keep the banner. Instead just loop through os args and find if the format was set and handle it there
-
+	fmt.Printf("version: v%s\n", Version)
 	if outputFormat != "yaml" && outputFormat != "json" {
 		boldBlue.Println(asciiLogo)
 	}
