@@ -216,6 +216,17 @@ func CreateTestPvc(namespace, name string) *corev1.PersistentVolumeClaim {
 	}
 }
 
+func CreateTestPv(name, phase string) *corev1.PersistentVolume {
+	return &corev1.PersistentVolume{
+		ObjectMeta: v1.ObjectMeta{
+			Name: name,
+		},
+		Status: corev1.PersistentVolumeStatus{
+			Phase: corev1.PersistentVolumePhase(phase),
+		},
+	}
+}
+
 func CreateTestPdb(namespace, name string, matchLabels map[string]string) *policyv1.PodDisruptionBudget {
 	return &policyv1.PodDisruptionBudget{
 		ObjectMeta: v1.ObjectMeta{
