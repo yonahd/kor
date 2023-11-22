@@ -6,6 +6,8 @@ builds:
     main: ./main.go
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -X github.com/yonahd/kor/pkg/utils.Version={{.Version}}
     goos:
       - linux
     goarch:
@@ -17,6 +19,8 @@ builds:
     main: ./main.go
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -X github.com/yonahd/kor/pkg/utils.Version={{.Version}}
     goos:
       - darwin
     goarch:
@@ -32,7 +36,7 @@ builds:
       - amd64
     ldflags:
       - -buildmode=exe
-
+      - -X github.com/yonahd/kor/pkg/utils.Version={{.Version}}
 archives:
   - format: tar.gz
     name_template: >-
@@ -57,3 +61,5 @@ changelog:
       - 'README'
       - Merge pull request
       - Merge branch
+snapshot:
+  name_template: "{{ .Version }}"
