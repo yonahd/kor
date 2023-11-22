@@ -21,6 +21,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - Ingresses
 - PDBs
 - CRDs
+- PVs
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -82,9 +83,10 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `role` - Gets unused Roles for the specified namespace or all namespaces.
 - `hpa` - Gets unused HPAs for the specified namespace or all namespaces.
 - `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
+- `pv` - Gets unused PVs in the cluster(non namespaced resource).
 - `ingress` - Gets unused Ingresses for the specified namespace or all namespaces.
 - `pdb` - Gets unused PDBs for the specified namespace or all namespaces.
-- `crd` - Gets unused CRDs in the cluster.
+- `crd` - Gets unused CRDs in the cluster(non namespaced resource).
 - `exporter` - Export Prometheus metrics.
 
 ### Supported Flags
@@ -133,6 +135,7 @@ kor [subcommand] --help
 | Ingresses       | Ingresses not pointing at any Service                                                                                                                                                                                             |                                                                                                                              |
 | Hpas            | HPAs not used in Deployments<br/> HPAs not used in StatefulSets                                                                                                                                                                   |                                                                                                                              |
 | CRDs            | CRDs not used the cluster                                                                                                                                                                                                         |                                                                                                                              |
+| Pvs             | PVs not bound to a PVC                                                                                                                                                                                                            |                                                                                                                              |
 | Pdbs            | PDBs not used in Deployments<br/> PDBs not used in StatefulSets                                                                                                                                                                   |                                                                                                                              |
 
 

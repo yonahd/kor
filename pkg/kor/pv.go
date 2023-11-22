@@ -60,13 +60,12 @@ func GetUnusedPvs(filterOpts *FilterOptions, clientset kubernetes.Interface, out
 		response[""]["Pv"] = diff
 	}
 
-	/*
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, "PV", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete PVC %s in namespace %s: %v\n", diff, namespace, err)
-			}
+	if opts.DeleteFlag {
+		if diff, err = DeleteResource(diff, clientset, "", "PV", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete PV %s: %v\n", diff, err)
 		}
-	*/
+	}
+
 	output := FormatOutput("", diff, "PVs", opts)
 	if output != "" {
 		outputBuffer.WriteString(output)
