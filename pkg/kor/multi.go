@@ -12,20 +12,33 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func retrieveNoNamespaceDiff(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts, resourceList []string) ([]ResourceDiff, []string) {
+func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, resourceList []string, filterOpts *FilterOptions) ([]ResourceDiff, []string) {
 	var noNamespaceDiff []ResourceDiff
+	markedForRemoval := make([]bool, len(resourceList))
+	updatedResourceList := resourceList
+
 	for counter, resource := range resourceList {
-		if resource == "crd" || resource == "customresourcedefinition" || resource == "customresourcedefinitions" {
+		switch resource {
+		case "crd", "customresourcedefinition", "customresourcedefinitions":
 			crdDiff := getUnusedCrds(apiExtClient, dynamicClient)
 			noNamespaceDiff = append(noNamespaceDiff, crdDiff)
-			updatedResourceList := append(resourceList[:counter], resourceList[counter+1:]...)
-			return noNamespaceDiff, updatedResourceList
-		} else {
-			resourceList[counter] = resource
+			markedForRemoval[counter] = true
+		case "pv", "persistentvolume", "persistentvolumes":
+			pvDiff := getUnusedPvs(clientset, filterOpts)
+			noNamespaceDiff = append(noNamespaceDiff, pvDiff)
+			markedForRemoval[counter] = true
 		}
 	}
-	return noNamespaceDiff, resourceList
 
+	// Remove elements marked for removal
+	var clearedResourceList []string
+	for i, marked := range markedForRemoval {
+		if !marked {
+			clearedResourceList = append(clearedResourceList, updatedResourceList[i])
+		}
+	}
+
+	return noNamespaceDiff, clearedResourceList
 }
 
 func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *FilterOptions) []ResourceDiff {
@@ -72,14 +85,22 @@ func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, resourceNames strin
 	response := make(map[string]map[string][]string)
 	var err error
 
-	crdDiff, resourceList := retrieveNoNamespaceDiff(apiExtClient, dynamicClient, outputFormat, opts, resourceList)
-	if len(crdDiff) != 0 {
-		output := FormatOutputAll("", crdDiff, opts)
-		outputBuffer.WriteString(output)
-		outputBuffer.WriteString("\n")
+	noNamespaceDiff, resourceList := retrieveNoNamespaceDiff(clientset, apiExtClient, dynamicClient, resourceList, filterOpts)
+	if len(noNamespaceDiff) != 0 {
+		for _, diff := range noNamespaceDiff {
+			if len(diff.diff) != 0 {
+				output := FormatOutputAll("", []ResourceDiff{diff}, opts)
+				outputBuffer.WriteString(output)
+				outputBuffer.WriteString("\n")
+
+				resourceMap := make(map[string][]string)
+				resourceMap[diff.resourceType] = diff.diff
+				response[""] = resourceMap
+			}
+		}
 
 		resourceMap := make(map[string][]string)
-		for _, diff := range crdDiff {
+		for _, diff := range noNamespaceDiff {
 			resourceMap[diff.resourceType] = diff.diff
 		}
 		response[""] = resourceMap

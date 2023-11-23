@@ -121,12 +121,21 @@ func getUnusedPdbs(clientset kubernetes.Interface, namespace string, filterOpts 
 }
 
 func getUnusedCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface) ResourceDiff {
-	pdbDiff, err := processCrds(apiExtClient, dynamicClient)
+	crdDiff, err := processCrds(apiExtClient, dynamicClient)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "Crds", err)
 	}
-	namespacePdbDiff := ResourceDiff{"Crd", pdbDiff}
-	return namespacePdbDiff
+	allCrdDiff := ResourceDiff{"Crd", crdDiff}
+	return allCrdDiff
+}
+
+func getUnusedPvs(clientset kubernetes.Interface, filterOpts *FilterOptions) ResourceDiff {
+	pvDiff, err := processPvs(clientset, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "Pvs", err)
+	}
+	allPvDiff := ResourceDiff{"Pv", pvDiff}
+	return allPvDiff
 }
 
 func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
@@ -173,13 +182,24 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOpt
 	}
 
 	var allDiffs []ResourceDiff
+	noNamespaceResourceMap := make(map[string][]string)
 	crdDiff := getUnusedCrds(apiExtClient, dynamicClient)
-	allDiffs = append(allDiffs, crdDiff)
+	crdOutput := FormatOutputAll("", []ResourceDiff{crdDiff}, opts)
+	outputBuffer.WriteString(crdOutput)
+	outputBuffer.WriteString("\n")
+	noNamespaceResourceMap[crdDiff.resourceType] = crdDiff.diff
+
+	pvDiff := getUnusedPvs(clientset, filterOpts)
+	pvOutput := FormatOutputAll("", []ResourceDiff{pvDiff}, opts)
+	outputBuffer.WriteString(pvOutput)
+	outputBuffer.WriteString("\n")
+	noNamespaceResourceMap[pvDiff.resourceType] = pvDiff.diff
 
 	output := FormatOutputAll("", allDiffs, opts)
 
 	outputBuffer.WriteString(output)
 	outputBuffer.WriteString("\n")
+	response[""] = noNamespaceResourceMap
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
