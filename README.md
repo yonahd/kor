@@ -2,6 +2,8 @@
 ![GitHub release (with filter)](https://img.shields.io/github/v/release/yonahd/kor?color=green&link=https://github.com/yonahd/kor/releases)
 ![Docker Pulls](https://img.shields.io/docker/pulls/yonahdissen/kor)
 [![codecov](https://codecov.io/gh/yonahd/kor/branch/main/graph/badge.svg?token=tNKcOjlxLo)](https://codecov.io/gh/yonahd/kor)
+[![Discord](https://discord.com/api/guilds/1159544275722321990/embed.png)](https://discord.gg/ajptYPwcJY)
+ 
 
 
 # Kor - Kubernetes Orphaned Resources Finder
