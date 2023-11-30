@@ -33,7 +33,7 @@ func createTestJobs(t *testing.T) *fake.Clientset {
 	job2 := CreateTestJob(testNamespace, "test-job2", &batchv1.JobStatus{
 		Succeeded:      1,
 		Failed:         0,
-		CompletionTime: &v1.Time{time.Now()},
+		CompletionTime: &v1.Time{Time: time.Now()},
 	})
 
 	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job1, v1.CreateOptions{})
