@@ -7,7 +7,8 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var testNamespace = "test-namespace"
@@ -256,6 +257,20 @@ func CreateTestConfigmap(namespace, name string) *corev1.ConfigMap {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
+		},
+	}
+}
+
+func CreateTestUnstuctered(kind, apiVersion, namespace, name string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"kind":       kind,
+			"apiVersion": apiVersion,
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+			},
+			"spec": map[string]interface{}{},
 		},
 	}
 }

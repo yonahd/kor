@@ -10,7 +10,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1beta1 "k8s.io/api/networking/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,7 +38,7 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 			return clientset.AutoscalingV1().HorizontalPodAutoscalers(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
 		"Ingress": func(clientset kubernetes.Interface, namespace, name string) error {
-			return clientset.NetworkingV1beta1().Ingresses(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+			return clientset.NetworkingV1().Ingresses(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
 		"PDB": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.PolicyV1beta1().PodDisruptionBudgets(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
@@ -117,7 +117,7 @@ func updateResource(clientset kubernetes.Interface, namespace, resourceType stri
 	case "HPA":
 		return clientset.AutoscalingV1().HorizontalPodAutoscalers(namespace).Update(context.TODO(), resource.(*autoscalingv1.HorizontalPodAutoscaler), metav1.UpdateOptions{})
 	case "Ingress":
-		return clientset.NetworkingV1beta1().Ingresses(namespace).Update(context.TODO(), resource.(*networkingv1beta1.Ingress), metav1.UpdateOptions{})
+		return clientset.NetworkingV1().Ingresses(namespace).Update(context.TODO(), resource.(*networkingv1.Ingress), metav1.UpdateOptions{})
 	case "PDB":
 		return clientset.PolicyV1beta1().PodDisruptionBudgets(namespace).Update(context.TODO(), resource.(*policyv1beta1.PodDisruptionBudget), metav1.UpdateOptions{})
 	case "Roles":
@@ -145,7 +145,7 @@ func getResource(clientset kubernetes.Interface, namespace, resourceType, resour
 	case "HPA":
 		return clientset.AutoscalingV1().HorizontalPodAutoscalers(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "Ingress":
-		return clientset.NetworkingV1beta1().Ingresses(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
+		return clientset.NetworkingV1().Ingresses(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "PDB":
 		return clientset.PolicyV1beta1().PodDisruptionBudgets(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "Roles":
