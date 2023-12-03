@@ -245,7 +245,7 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) strin
 
 	table.Render()
 	if namespace == "" {
-		return fmt.Sprintf("Unused CRDs: \n%s", buf.String())
+		return fmt.Sprintf("Unused %ss: \n%s", allDiffs[0].resourceType, buf.String())
 	}
 	return fmt.Sprintf("Unused Resources in Namespace: %s\n%s", namespace, buf.String())
 }
