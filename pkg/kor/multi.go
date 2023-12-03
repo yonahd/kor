@@ -68,6 +68,8 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 			diffResult = getUnusedIngresses(clientset, namespace, filterOpts)
 		case "pdb", "poddisruptionbudget", "poddisruptionbudgets":
 			diffResult = getUnusedPdbs(clientset, namespace, filterOpts)
+		case "po", "pod", "pods":
+			diffResult = getUnusedPods(clientset, namespace, filterOpts)
 		default:
 			fmt.Printf("resource type %q is not supported\n", resource)
 		}

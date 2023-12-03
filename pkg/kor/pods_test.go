@@ -51,7 +51,23 @@ func createTestPods(t *testing.T) *fake.Clientset {
 		Message: "",
 	}
 
-	pods := []*corev1.Pod{pod1, pod2, pod3, pod4}
+	pod5 := CreateTestPod(testNamespace, "pod-5", "", nil)
+	pod5.Labels = map[string]string{"kor/used": "true"}
+	pod5.Status = corev1.PodStatus{
+		Phase:   corev1.PodFailed,
+		Reason:  "Evicted",
+		Message: "",
+	}
+
+	pod6 := CreateTestPod(testNamespace, "pod-6", "", nil)
+	pod6.Labels = map[string]string{"kor/used": "false"}
+	pod6.Status = corev1.PodStatus{
+		Phase:   corev1.PodFailed,
+		Reason:  "Evicted",
+		Message: "",
+	}
+
+	pods := []*corev1.Pod{pod1, pod2, pod3, pod4, pod5, pod6}
 
 	// Add test pods to the clientset
 	for _, pod := range pods {
@@ -71,7 +87,7 @@ func TestProcessNamespacePods(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	expectedEvictedPods := []string{"pod-2"}
+	expectedEvictedPods := []string{"pod-2", "pod-6"}
 
 	if len(evictedPods) != len(expectedEvictedPods) {
 		t.Errorf("Expected %d evicted pods, got %d", len(expectedEvictedPods), len(evictedPods))
@@ -107,7 +123,7 @@ func TestGetUnusedPodsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Pods": {"pod-2"},
+			"Pods": {"pod-2", "pod-6"},
 		},
 	}
 
@@ -118,5 +134,12 @@ func TestGetUnusedPodsStructured(t *testing.T) {
 
 	if !reflect.DeepEqual(expectedOutput, actualOutput) {
 		t.Errorf("Expected output does not match actual output")
+		t.Errorf("Expected: %v", expectedOutput)
+		t.Errorf("Actual: %v", actualOutput)
 	}
 }
+
+// func init() {
+// 	scheme.Scheme = runtime.NewScheme()
+// 	_ = corev1.AddToScheme(scheme.Scheme)
+// }

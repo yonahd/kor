@@ -55,6 +55,9 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 		"PV": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.CoreV1().PersistentVolumes().Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
+		"Pod": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.CoreV1().Pods(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
 	}
 
 	return deleteResourceApiMap

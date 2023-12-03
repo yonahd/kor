@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +36,7 @@ func ProcessNamespacePods(clientset kubernetes.Interface, namespace string, filt
 			continue
 		}
 
-		if pod.Status.Phase == corev1.PodFailed && strings.Contains(pod.Status.Reason, "Evicted") {
+		if pod.Status.Phase == corev1.PodFailed && pod.Status.Reason == "Evicted" {
 			evictedPods = append(evictedPods, pod.Name)
 		}
 

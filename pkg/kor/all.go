@@ -138,6 +138,15 @@ func getUnusedPvs(clientset kubernetes.Interface, filterOpts *FilterOptions) Res
 	return allPvDiff
 }
 
+func getUnusedPods(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+	podDiff, err := ProcessNamespacePods(clientset, namespace, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pods", namespace, err)
+	}
+	namespacePodDiff := ResourceDiff{"Pod", podDiff}
+	return namespacePodDiff
+}
+
 func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 

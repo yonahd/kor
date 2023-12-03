@@ -25,6 +25,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - CRDs
 - PVs
 - Pods
+
 ![Kor Screenshot](/images/screenshot.png)
 
 ## Installation
