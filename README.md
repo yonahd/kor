@@ -24,7 +24,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - PDBs
 - CRDs
 - PVs
-
+- Pods
 ![Kor Screenshot](/images/screenshot.png)
 
 ## Installation
@@ -84,6 +84,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `statefulsets` - Gets unused StatefulSets for the specified namespace or all namespaces.
 - `role` - Gets unused Roles for the specified namespace or all namespaces.
 - `hpa` - Gets unused HPAs for the specified namespace or all namespaces.
+- `pods` - Gets unused Pods for the specified namespace or all namespaces.
 - `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
 - `pv` - Gets unused PVs in the cluster(non namespaced resource).
 - `ingress` - Gets unused Ingresses for the specified namespace or all namespaces.
@@ -139,7 +140,7 @@ kor [subcommand] --help
 | CRDs            | CRDs not used the cluster                                                                                                                                                                                                         |                                                                                                                              |
 | Pvs             | PVs not bound to a PVC                                                                                                                                                                                                            |                                                                                                                              |
 | Pdbs            | PDBs not used in Deployments<br/> PDBs not used in StatefulSets                                                                                                                                                                   |                                                                                                                              |
-
+| Pods            | Pods being evicted                                                                                                                                                                   |                                                                                                                              |
 
 ## Deleting Unused resources
 If you want to delete resources in an interactive way using Kor you can run:
