@@ -1,7 +1,6 @@
 package kor
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -91,7 +90,6 @@ func TestRetrievePendingDeletionResources(t *testing.T) {
 				t.Errorf("Expected error: %v, Got: %v", test.expectedError, err)
 			}
 			if deletedResources, ok := result[testNamespace][gvr.GroupVersion().WithResource("testresources")]; ok {
-				fmt.Println("resources: ", deletedResources)
 				if !slices.Equal(deletedResources, test.expectedResult) {
 					t.Errorf("Expected result: %v, Got: %v", test.expectedResult, deletedResources)
 				}
