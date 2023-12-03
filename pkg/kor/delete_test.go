@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	dynamicFake "k8s.io/client-go/dynamic/fake"
+	fakedynamic "k8s.io/client-go/dynamic/fake"
 	fake "k8s.io/client-go/kubernetes/fake"
 )
 
@@ -48,10 +48,10 @@ func TestDeleteDeleteResourceWithFinalizer(t *testing.T) {
 	scheme := runtime.NewScheme()
 	gvr := schema.GroupVersionResource{Group: "testgroup", Version: "v1", Resource: "TestResource"}
 	testResource := CreateTestUnstuctered(gvr.Resource, gvr.GroupVersion().String(), testNamespace, "test-resource")
-	dynamicClient := dynamicFake.NewSimpleDynamicClient(scheme, testResource)
+	dynamicClient := fakedynamic.NewSimpleDynamicClient(scheme, testResource)
 
 	_, err := dynamicClient.Resource(gvr).
-		Namespace("test-namespace").
+		Namespace(testNamespace).
 		Create(context.TODO(), testResource, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating test resource: %v", err)
@@ -111,13 +111,13 @@ func TestFlagDynamicResource(t *testing.T) {
 	gvr := schema.GroupVersionResource{Group: "testgroup", Version: "v1", Resource: "TestResource"}
 	testResource := CreateTestUnstuctered(gvr.Resource, gvr.GroupVersion().String(), testNamespace, "test-resource")
 	testResourceWithLabel := CreateTestUnstuctered(gvr.Resource, gvr.GroupVersion().String(), testNamespace, "test-resource-with-label")
-	dynamicClient := dynamicFake.NewSimpleDynamicClient(scheme, testResource, testResourceWithLabel)
+	dynamicClient := fakedynamic.NewSimpleDynamicClient(scheme, testResource, testResourceWithLabel)
 	testResourceWithLabel.SetLabels(map[string]string{
 		"test": "true",
 	})
 
 	_, err := dynamicClient.Resource(gvr).
-		Namespace("test-namespace").
+		Namespace(testNamespace).
 		Create(context.TODO(), testResource, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating test resource: %v", err)
