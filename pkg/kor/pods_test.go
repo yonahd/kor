@@ -9,8 +9,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	fake "k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 func createTestPods(t *testing.T) *fake.Clientset {
@@ -139,7 +141,7 @@ func TestGetUnusedPodsStructured(t *testing.T) {
 	}
 }
 
-// func init() {
-// 	scheme.Scheme = runtime.NewScheme()
-// 	_ = corev1.AddToScheme(scheme.Scheme)
-// }
+func init() {
+	scheme.Scheme = runtime.NewScheme()
+	_ = corev1.AddToScheme(scheme.Scheme)
+}
