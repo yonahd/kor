@@ -16,7 +16,7 @@ func ProcessNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 		return nil, err
 	}
 
-	var jobNames []string
+	var unusedJobNames []string
 
 	for _, job := range jobsList.Items {
 		if job.Labels["kor/used"] == "true" {
@@ -36,11 +36,11 @@ func ProcessNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 
 		// if the job has completionTime and succeeded count greater than zero, think the job is completed
 		if job.Status.CompletionTime != nil && job.Status.Succeeded > 0 {
-			jobNames = append(jobNames, job.Name)
+			unusedJobNames = append(unusedJobNames, job.Name)
 		}
 	}
 
-	return jobNames, nil
+	return unusedJobNames, nil
 }
 
 func GetUnusedJobs(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
