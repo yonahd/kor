@@ -3,6 +3,7 @@ package kor
 import (
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	policyv1 "k8s.io/api/policy/v1"
@@ -257,5 +258,28 @@ func CreateTestConfigmap(namespace, name string) *corev1.ConfigMap {
 			Namespace: namespace,
 			Name:      name,
 		},
+	}
+}
+
+func CreateTestJob(namespace, name string, status *batchv1.JobStatus) *batchv1.Job {
+	return &batchv1.Job{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: batchv1.JobSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "test",
+						},
+					},
+					RestartPolicy: corev1.RestartPolicyNever,
+				},
+			},
+		},
+		Status: *status,
 	}
 }
