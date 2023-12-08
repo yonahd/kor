@@ -4,6 +4,7 @@ kind: Deployment
 metadata:
   name: {{ .Values.prometheusExporter.name }}
   labels:
+    {{- include "kor.labels" . | nindent 4 }}
     app: {{ .Values.prometheusExporter.name }}
 spec:
   {{- with .Values.prometheusExporter.deployment.imagePullSecrets }}
