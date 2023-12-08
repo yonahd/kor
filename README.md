@@ -24,6 +24,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - PDBs
 - CRDs
 - PVs
+- Jobs
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -89,6 +90,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `ingress` - Gets unused Ingresses for the specified namespace or all namespaces.
 - `pdb` - Gets unused PDBs for the specified namespace or all namespaces.
 - `crd` - Gets unused CRDs in the cluster(non namespaced resource).
+- `jobs` - Gets unused jobs for the specified namespace or all namespaces.
 - `exporter` - Export Prometheus metrics.
 
 ### Supported Flags
@@ -124,10 +126,10 @@ kor [subcommand] --help
 
 ## Supported resources and limitations
 
-| Resource        | What it looks for                                                                                                                                                                                                                 | Known False Positives  ⚠️                                                                                                     |
+| Resource        | What it looks for                                                                                                                                                                                                                 | Known False Positives  ⚠️                                                                                                    |
 |-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
 | ConfigMaps      | ConfigMaps not used in the following places:<br/>- Pods<br/>- Containers<br/>- ConfigMaps used through Volumes<br/>- ConfigMaps used through environment variables                                                                | ConfigMaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically OPA policies fluentd configs |
-| Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers<br/>- Secrets used through volumes<br/>- Secrets used through environment variables<br/>- Secrets used by Ingress TLS<br/>- Secrets used by ServiceAccounts |    Secrets used by resources which don't explicitly state them in the config                                                                                                                         |
+| Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers<br/>- Secrets used through volumes<br/>- Secrets used through environment variables<br/>- Secrets used by Ingress TLS<br/>- Secrets used by ServiceAccounts |    Secrets used by resources which don't explicitly state them in the config                                                                                                                        |
 | Services        | Services with no endpoints                                                                                                                                                                                                        |                                                                                                                              |
 | Deployments     | Deployments with no Replicas                                                                                                                                                                                                      |                                                                                                                              |
 | ServiceAccounts | ServiceAccounts unused by Pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                    |                                                                                                                              |
@@ -139,7 +141,7 @@ kor [subcommand] --help
 | CRDs            | CRDs not used the cluster                                                                                                                                                                                                         |                                                                                                                              |
 | Pvs             | PVs not bound to a PVC                                                                                                                                                                                                            |                                                                                                                              |
 | Pdbs            | PDBs not used in Deployments<br/> PDBs not used in StatefulSets                                                                                                                                                                   |                                                                                                                              |
-
+| Jobs            | Jobs status is completed                                                                                                                                                                                                          |                                                                                                                              |
 
 ## Deleting Unused resources
 If you want to delete resources in an interactive way using Kor you can run:
