@@ -27,8 +27,10 @@ spec:
             {{ toYaml . | nindent 12 }}
           {{- end }}
           image: "{{ .Values.prometheusExporter.deployment.image.repository }}:{{ .Values.prometheusExporter.deployment.image.tag }}"
-          command: ["/bin/sh", "-c"]
-          args: ["{{ .Values.prometheusExporter.deployment.command }}"]
+          command:
+            {{- toYaml .Values.prometheusExporter.command | nindent 12 }}
+          args:
+            {{- toYaml .Values.prometheusExporter.args | nindent 12 }}
           ports:
           - containerPort: 8080
             name: http

@@ -6,7 +6,10 @@ cronJob:
     repository: yonahdissen/kor
     tag: latest
   # e.g. kor configmap --include-namespace default,other-ns
-  command: kor all
+  command:
+    - kor
+  args:
+    - all
   slackWebhookUrl: ""
   slackChannel: ""
   slackAuthToken: ""
@@ -19,11 +22,14 @@ prometheusExporter:
   name: kor-exporter
   # time in minutes, default is 10 minutes
   exporterInterval: ""
+  command:
+    - kor
+  args:
+    - exporter
   deployment:
     image:
       repository: yonahdissen/kor
       tag: latest
-    command: kor exporter
     restartPolicy: Always
     imagePullPolicy: Always
     imagePullSecrets: []
