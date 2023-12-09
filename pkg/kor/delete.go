@@ -111,6 +111,8 @@ func updateResource(clientset kubernetes.Interface, namespace, resourceType stri
 		return clientset.CoreV1().ServiceAccounts(namespace).Update(context.TODO(), resource.(*corev1.ServiceAccount), metav1.UpdateOptions{})
 	case "PV":
 		return clientset.CoreV1().PersistentVolumes().Update(context.TODO(), resource.(*corev1.PersistentVolume), metav1.UpdateOptions{})
+	case "Pod":
+		return clientset.CoreV1().Pods(namespace).Update(context.TODO(), resource.(*corev1.Pod), metav1.UpdateOptions{})
 	}
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }
@@ -141,6 +143,8 @@ func getResource(clientset kubernetes.Interface, namespace, resourceType, resour
 		return clientset.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "PV":
 		return clientset.CoreV1().PersistentVolumes().Get(context.TODO(), resourceName, metav1.GetOptions{})
+	case "Pod":
+		return clientset.CoreV1().Pods(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	}
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }
