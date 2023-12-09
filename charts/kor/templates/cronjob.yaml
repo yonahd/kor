@@ -4,6 +4,7 @@ kind: CronJob
 metadata:
   name: {{ .Release.Name }}
   labels:
+    {{- include "kor.labels" . | nindent 4 }}
     app: {{ .Release.Name }}
 spec:
   schedule: {{ .Values.cronJob.schedule }}

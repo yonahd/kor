@@ -8,6 +8,7 @@ metadata:
     prometheus.io/path: /metrics
     prometheus.io/port: "8080"
   labels:
+    {{- include "kor.labels" . | nindent 4 }}
     app: {{ .Values.prometheusExporter.name }}
 spec:
   type: {{ .Values.prometheusExporter.service.type }}
