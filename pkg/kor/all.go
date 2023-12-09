@@ -147,6 +147,15 @@ func getUnusedPods(clientset kubernetes.Interface, namespace string, filterOpts 
 	return namespacePodDiff
 }
 
+func getUnusedJobs(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+	jobDiff, err := ProcessNamespaceJobs(clientset, namespace, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "jobs", namespace, err)
+	}
+	namespaceSADiff := ResourceDiff{"Job", jobDiff}
+	return namespaceSADiff
+}
+
 func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
@@ -177,6 +186,8 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOpt
 		allDiffs = append(allDiffs, namespaceIngressDiff)
 		namespacePdbDiff := getUnusedPdbs(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespacePdbDiff)
+		namespaceJobDiff := getUnusedJobs(clientset, namespace, filterOpts)
+		allDiffs = append(allDiffs, namespaceJobDiff)
 
 		output := FormatOutputAll(namespace, allDiffs, opts)
 

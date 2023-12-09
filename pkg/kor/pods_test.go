@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -73,7 +72,7 @@ func createTestPods(t *testing.T) *fake.Clientset {
 
 	// Add test pods to the clientset
 	for _, pod := range pods {
-		_, err = clientset.CoreV1().Pods(pod.Namespace).Create(context.TODO(), pod, metav1.CreateOptions{})
+		_, err = clientset.CoreV1().Pods(pod.Namespace).Create(context.TODO(), pod, v1.CreateOptions{})
 		if err != nil {
 			t.Fatalf("Error creating fake pod: %v", err)
 		}
