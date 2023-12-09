@@ -143,11 +143,7 @@ kor [subcommand] --help
 | CRDs            | CRDs not used the cluster                                                                                                                                                                                                         |                                                                                                                              |
 | Pvs             | PVs not bound to a PVC                                                                                                                                                                                                            |                                                                                                                              |
 | Pdbs            | PDBs not used in Deployments<br/> PDBs not used in StatefulSets                                                                                                                                                                   |                                                                                                                              |
-<<<<<<< HEAD
-| Pods            | Pods in evicted state                                                                                                                                                                  |                                                                                                                              |
-=======
 | Jobs            | Jobs status is completed                                                                                                                                                                                                          |                                                                                                                              |
->>>>>>> main
 
 ## Deleting Unused resources
 If you want to delete resources in an interactive way using Kor you can run:
