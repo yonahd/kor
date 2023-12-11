@@ -3,6 +3,8 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: {{ include "kor.serviceAccountName" . }}-read-resources-role-binding
+  labels:
+    {{- include "kor.labels" . | nindent 4 }}
 subjects:
   - kind: ServiceAccount
     name: {{ include "kor.serviceAccountName" . }}
@@ -15,6 +17,8 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: {{ include "kor.serviceAccountName" . }}-read-resources-clusterrolebinding
+  labels:
+    {{- include "kor.labels" . | nindent 4 }}
 subjects:
   - kind: ServiceAccount
     name: {{ include "kor.serviceAccountName" . }}

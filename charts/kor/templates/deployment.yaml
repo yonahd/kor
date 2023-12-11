@@ -4,6 +4,7 @@ kind: Deployment
 metadata:
   name: {{ .Values.prometheusExporter.name }}
   labels:
+    {{- include "kor.labels" . | nindent 4 }}
     app: {{ .Values.prometheusExporter.name }}
 spec:
   {{- with .Values.prometheusExporter.deployment.imagePullSecrets }}
@@ -27,8 +28,10 @@ spec:
             {{ toYaml . | nindent 12 }}
           {{- end }}
           image: "{{ .Values.prometheusExporter.deployment.image.repository }}:{{ .Values.prometheusExporter.deployment.image.tag }}"
-          command: ["/bin/sh", "-c"]
-          args: ["{{ .Values.prometheusExporter.deployment.command }}"]
+          command:
+            {{- toYaml .Values.prometheusExporter.command | nindent 12 }}
+          args:
+            {{- toYaml .Values.prometheusExporter.args | nindent 12 }}
           ports:
           - containerPort: 8080
             name: http
@@ -40,7 +43,7 @@ spec:
           {{- if .Values.prometheusExporter.exporterInterval }}
           env:
           - name: EXPORTER_INTERVAL
-            value: {{ .Values.prometheusExporter.exporterInterval }}
+            value: {{ .Values.prometheusExporter.exporterInterval | quote}}
           {{- end}}
       {{- with .Values.prometheusExporter.deployment.nodeSelector }}
       nodeSelector:

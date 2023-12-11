@@ -4,6 +4,7 @@ kind: CronJob
 metadata:
   name: {{ .Release.Name }}
   labels:
+    {{- include "kor.labels" . | nindent 4 }}
     app: {{ .Release.Name }}
 spec:
   schedule: {{ .Values.cronJob.schedule }}
@@ -17,9 +18,13 @@ spec:
           containers:
             - name: {{ .Release.Name }}-container
               image: {{ .Values.cronJob.image.repository }}:{{ .Values.cronJob.image.tag }}
-              command: ["/bin/sh", "-c"]
+              command:
+                {{- toYaml .Values.cronJob.command | nindent 16 }}
+              args:
+                {{- toYaml .Values.cronJob.args | nindent 16 }}
               {{- if .Values.cronJob.slackWebhookUrl }}
-              args: ["{{ .Values.cronJob.command }} --slack-webhook-url $SLACK_WEBHOOK_URL"]
+                - '--slack-webhook-url'
+                - "${SLACK_WEBHOOK_URL}"
               env:
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
@@ -27,15 +32,16 @@ spec:
                       name: {{ .Release.Name }}-slack-webhook-url-secret
                       key: slack-webhook-url
               {{- else if and .Values.cronJob.slackChannel .Values.cronJob.slackAuthToken }}
-              args: ["{{ .Values.cronJob.command }} --slack-channel {{ .Values.cronJob.slackChannel }} --slack-auth-token $SLACK_AUTH_TOKEN"]
+                - '--slack-channel'
+                - {{ .Values.cronJob.slackChannel | quote }}
+                - '--slack-auth-token'
+                - "${SLACK_AUTH_TOKEN}"
               env:
                 - name: SLACK_AUTH_TOKEN
                   valueFrom:
                     secretKeyRef:
                       name: {{ .Release.Name }}-slack-auth-token-secret
                       key: slack-auth-token
-              {{- else }}
-              args: ["{{ .Values.cronJob.command }}"]
               {{- end }}
               {{- if .Values.cronJob.env }}
               env:

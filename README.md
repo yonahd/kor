@@ -24,6 +24,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - PDBs
 - CRDs
 - PVs
+- Pods
 - Jobs
 
 ![Kor Screenshot](/images/screenshot.png)
@@ -85,6 +86,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `statefulsets` - Gets unused StatefulSets for the specified namespace or all namespaces.
 - `role` - Gets unused Roles for the specified namespace or all namespaces.
 - `hpa` - Gets unused HPAs for the specified namespace or all namespaces.
+- `pods` - Gets unused Pods for the specified namespace or all namespaces.
 - `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
 - `pv` - Gets unused PVs in the cluster(non namespaced resource).
 - `ingress` - Gets unused Ingresses for the specified namespace or all namespaces.

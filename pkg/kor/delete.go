@@ -3,10 +3,11 @@ package kor
 import (
 	"context"
 	"fmt"
-	batchv1 "k8s.io/api/batch/v1"
 	"os"
 	"reflect"
 	"strings"
+
+	batchv1 "k8s.io/api/batch/v1"
 
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
@@ -55,6 +56,9 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 		},
 		"PV": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.CoreV1().PersistentVolumes().Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
+		"Pod": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.CoreV1().Pods(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
 		"Job": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.BatchV1().Jobs(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
@@ -112,6 +116,8 @@ func updateResource(clientset kubernetes.Interface, namespace, resourceType stri
 		return clientset.CoreV1().ServiceAccounts(namespace).Update(context.TODO(), resource.(*corev1.ServiceAccount), metav1.UpdateOptions{})
 	case "PV":
 		return clientset.CoreV1().PersistentVolumes().Update(context.TODO(), resource.(*corev1.PersistentVolume), metav1.UpdateOptions{})
+	case "Pod":
+		return clientset.CoreV1().Pods(namespace).Update(context.TODO(), resource.(*corev1.Pod), metav1.UpdateOptions{})
 	case "Job":
 		return clientset.BatchV1().Jobs(namespace).Update(context.TODO(), resource.(*batchv1.Job), metav1.UpdateOptions{})
 	}
@@ -144,6 +150,8 @@ func getResource(clientset kubernetes.Interface, namespace, resourceType, resour
 		return clientset.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "PV":
 		return clientset.CoreV1().PersistentVolumes().Get(context.TODO(), resourceName, metav1.GetOptions{})
+	case "Pod":
+		return clientset.CoreV1().Pods(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "Job":
 		return clientset.BatchV1().Jobs(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	}
