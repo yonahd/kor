@@ -43,7 +43,7 @@ spec:
           {{- if .Values.prometheusExporter.exporterInterval }}
           env:
           - name: EXPORTER_INTERVAL
-            value: {{ .Values.prometheusExporter.exporterInterval | quote}}
+            value: {{ .Values.prometheusExporter.exporterInterval | quote }}
           {{- end}}
       {{- with .Values.prometheusExporter.deployment.nodeSelector }}
       nodeSelector:
