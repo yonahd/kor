@@ -100,7 +100,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
       --delete                      Delete unused resources
   -l, --exclude-labels string       Selector to filter out, Example: --exclude-labels key1=value1,key2=value2.
   -e, --exclude-namespaces string   Namespaces to be excluded, splited by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
-  -i, --include-non-namespaced      Include Recources not bound to a Namespace
+  -i, --include-non-namespaced      Include recources not bound to a namespace.
   -h, --help                        help for kor
   -n, --include-namespaces string   Namespaces to run on, splited by comma. Example: --include-namespace ns1,ns2,ns3. 
   -k, --kubeconfig string           Path to kubeconfig file (optional)
