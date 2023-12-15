@@ -201,25 +201,27 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOpt
 		response[namespace] = resourceMap
 	}
 
-	var allDiffs []ResourceDiff
-	noNamespaceResourceMap := make(map[string][]string)
-	crdDiff := getUnusedCrds(apiExtClient, dynamicClient)
-	crdOutput := FormatOutputAll("", []ResourceDiff{crdDiff}, opts)
-	outputBuffer.WriteString(crdOutput)
-	outputBuffer.WriteString("\n")
-	noNamespaceResourceMap[crdDiff.resourceType] = crdDiff.diff
+	if opts.NoNamespaced {
+		var allDiffs []ResourceDiff
+		noNamespaceResourceMap := make(map[string][]string)
+		crdDiff := getUnusedCrds(apiExtClient, dynamicClient)
+		crdOutput := FormatOutputAll("", []ResourceDiff{crdDiff}, opts)
+		outputBuffer.WriteString(crdOutput)
+		outputBuffer.WriteString("\n")
+		noNamespaceResourceMap[crdDiff.resourceType] = crdDiff.diff
 
-	pvDiff := getUnusedPvs(clientset, filterOpts)
-	pvOutput := FormatOutputAll("", []ResourceDiff{pvDiff}, opts)
-	outputBuffer.WriteString(pvOutput)
-	outputBuffer.WriteString("\n")
-	noNamespaceResourceMap[pvDiff.resourceType] = pvDiff.diff
+		pvDiff := getUnusedPvs(clientset, filterOpts)
+		pvOutput := FormatOutputAll("", []ResourceDiff{pvDiff}, opts)
+		outputBuffer.WriteString(pvOutput)
+		outputBuffer.WriteString("\n")
+		noNamespaceResourceMap[pvDiff.resourceType] = pvDiff.diff
 
-	output := FormatOutputAll("", allDiffs, opts)
+		output := FormatOutputAll("", allDiffs, opts)
 
-	outputBuffer.WriteString(output)
-	outputBuffer.WriteString("\n")
-	response[""] = noNamespaceResourceMap
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+		response[""] = noNamespaceResourceMap
+	}
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {

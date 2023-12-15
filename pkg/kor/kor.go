@@ -32,6 +32,7 @@ type IncludeExcludeLists struct {
 type Opts struct {
 	DeleteFlag    bool
 	NoInteractive bool
+	NoNamespaced  bool
 	Verbose       bool
 	WebhookURL    string
 	Channel       string
