@@ -146,8 +146,7 @@ kor [subcommand] --help
 | Pvs             | PVs not bound to a PVC                                                                                                                                                                                                            |                                                                                                                              |
 | Pdbs            | PDBs not used in Deployments<br/> PDBs not used in StatefulSets                                                                                                                                                                   |                                                                                                                              |
 | Jobs            | Jobs status is completed                                                                                                                                                                                                          |                                                                                                                              |
-| ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work              
-                                                                                                            |                                                                                                                              |
+| ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work              |    
 
 
 ## Deleting Unused resources
