@@ -20,7 +20,9 @@ var allCmd = &cobra.Command{
 		if response, err := kor.GetUnusedAll(includeExcludeLists, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			if !opts.Quiet {
+				utils.PrintLogo(outputFormat)
+			}
 			fmt.Println(response)
 		}
 	},

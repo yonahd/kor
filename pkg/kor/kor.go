@@ -33,6 +33,7 @@ type Opts struct {
 	DeleteFlag    bool
 	NoInteractive bool
 	NoNamespaced  bool
+	Quiet         bool
 	Verbose       bool
 	WebhookURL    string
 	Channel       string
