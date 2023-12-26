@@ -10,8 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-func createTestPvs(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+func createTestPvs(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 
 	pv1 := CreateTestPv("test-pv1", "Bound")
 	pv2 := CreateTestPv("test-pv2", "Available")
@@ -28,8 +27,16 @@ func createTestPvs(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
+func createTestPvsClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	createTestPvs(clientset, t)
+
+	return clientset
+}
+
 func TestProcessPvs(t *testing.T) {
-	clientset := createTestPvs(t)
+	clientset := createTestPvsClient(t)
 	usedPvs, err := processPvs(clientset, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -45,7 +52,7 @@ func TestProcessPvs(t *testing.T) {
 }
 
 func TestGetUnusedPvs(t *testing.T) {
-	clientset := createTestPvs(t)
+	clientset := createTestPvsClient(t)
 
 	opts := Opts{
 		WebhookURL:    "",
@@ -75,5 +82,3 @@ func TestGetUnusedPvs(t *testing.T) {
 		t.Errorf("Expected output does not match actual output")
 	}
 }
-
-

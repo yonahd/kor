@@ -8,22 +8,13 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func createTestHpas(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
+func createTestHpas(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 
 	deploymentName := "test-deployment"
 	appLabels := map[string]string{}
@@ -32,7 +23,7 @@ func createTestHpas(t *testing.T) *fake.Clientset {
 	hpa1 := CreateTestHpa(testNamespace, "test-hpa1", deploymentName, 1, 1)
 
 	hpa2 := CreateTestHpa(testNamespace, "test-hpa2", "non-existing-deployment", 1, 1)
-	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
+	_, err := clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake deployment: %v", err)
 	}
@@ -50,8 +41,24 @@ func createTestHpas(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
+func createTestHpaClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestHpas(clientset, t)
+
+	return clientset
+}
+
 func TestExtractUnusedHpas(t *testing.T) {
-	clientset := createTestHpas(t)
+	clientset := createTestHpaClient(t)
 
 	unusedHpas, err := extractUnusedHpas(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
@@ -68,7 +75,7 @@ func TestExtractUnusedHpas(t *testing.T) {
 }
 
 func TestGetUnusedHpasStructured(t *testing.T) {
-	clientset := createTestHpas(t)
+	clientset := createTestHpaClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: "",

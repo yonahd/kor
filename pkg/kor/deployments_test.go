@@ -8,13 +8,29 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func createTestDeployments(t *testing.T) *fake.Clientset {
+func createTestDeployments(clientset *fake.Clientset, t *testing.T) {
+	appLabels := map[string]string{}
+
+	deployment1 := CreateTestDeployment(testNamespace, "test-deployment1", 0, appLabels)
+	deployment2 := CreateTestDeployment(testNamespace, "test-deployment2", 1, appLabels)
+	_, err := clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake deployment: %v", err)
+	}
+
+	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment2, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake deployment: %v", err)
+	}
+}
+
+func createTestDeploymentsClient(t *testing.T) *fake.Clientset {
 	clientset := fake.NewSimpleClientset()
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
@@ -25,25 +41,13 @@ func createTestDeployments(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	appLabels := map[string]string{}
-
-	deployment1 := CreateTestDeployment(testNamespace, "test-deployment1", 0, appLabels)
-	deployment2 := CreateTestDeployment(testNamespace, "test-deployment2", 1, appLabels)
-	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
-	if err != nil {
-		t.Fatalf("Error creating fake deployment: %v", err)
-	}
-
-	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment2, v1.CreateOptions{})
-	if err != nil {
-		t.Fatalf("Error creating fake deployment: %v", err)
-	}
+	createTestDeployments(clientset, t)
 
 	return clientset
 }
 
 func TestProcessNamespaceDeployments(t *testing.T) {
-	clientset := createTestDeployments(t)
+	clientset := createTestDeploymentsClient(t)
 
 	deploymentsWithoutReplicas, err := ProcessNamespaceDeployments(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
@@ -60,7 +64,7 @@ func TestProcessNamespaceDeployments(t *testing.T) {
 }
 
 func TestGetUnusedDeploymentsStructured(t *testing.T) {
-	clientset := createTestDeployments(t)
+	clientset := createTestDeploymentsClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: "",

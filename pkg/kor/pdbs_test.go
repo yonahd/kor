@@ -11,16 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-func createTestPdbs(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
+func createTestPdbs(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 
 	appLabels1 := map[string]string{
 		"app": "my-app",
@@ -30,7 +21,7 @@ func createTestPdbs(t *testing.T) *fake.Clientset {
 	pdb1 := CreateTestPdb(testNamespace, "test-pdb1", appLabels1)
 	pdb2 := CreateTestPdb(testNamespace, "test-pdb2", appLabels1)
 	pdb3 := CreateTestPdb(testNamespace, "test-pdb3", appLabels2)
-	_, err = clientset.PolicyV1().PodDisruptionBudgets(testNamespace).Create(context.TODO(), pdb1, v1.CreateOptions{})
+	_, err := clientset.PolicyV1().PodDisruptionBudgets(testNamespace).Create(context.TODO(), pdb1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pdb", err)
 	}
@@ -60,8 +51,24 @@ func createTestPdbs(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
+func createTestPdbsClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestPdbs(clientset, t)
+
+	return clientset
+}
+
 func TestProcessNamespacePdbs(t *testing.T) {
-	clientset := createTestPdbs(t)
+	clientset := createTestPdbsClient(t)
 
 	unusedPdbs, err := processNamespacePdbs(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
@@ -78,7 +85,7 @@ func TestProcessNamespacePdbs(t *testing.T) {
 }
 
 func TestGetUnusedPdbsStructured(t *testing.T) {
-	clientset := createTestPdbs(t)
+	clientset := createTestPdbsClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: "",
