@@ -8,43 +8,50 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func createTestServiceAccounts(t *testing.T) *fake.Clientset {
-
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
+func createTestServiceAccounts(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 
 	sa1 := CreateTestServiceAccount(testNamespace, "test-sa1")
 	sa2 := CreateTestServiceAccount(testNamespace, "test-sa2")
-	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa1, v1.CreateOptions{})
+	_, err := clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "ServiceAccount", err)
 	}
 
-	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa2, v1.CreateOptions{})
+	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa2, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "ServiceAccount", err)
 	}
 
 	return clientset
 }
+
+func createTestServiceAccountsClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
+	}, metav1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestServiceAccounts(clientset, t)
+
+	return clientset
+}
+
 func TestGetServiceAccountsFromClusterRoleBindings(t *testing.T) {
-	clientset := createTestServiceAccounts(t)
+	clientset := createTestServiceAccountsClient(t)
 
 	clusterRoleBinding1 := CreateTestClusterRoleBinding(testNamespace, "test-crb1", "test-sa1")
-	_, err := clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(), clusterRoleBinding1, v1.CreateOptions{})
+	_, err := clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(), clusterRoleBinding1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "clusterRoleBinding", err)
 	}
@@ -65,11 +72,11 @@ func TestGetServiceAccountsFromClusterRoleBindings(t *testing.T) {
 }
 
 func TestGetServiceAccountsFromRoleBindings(t *testing.T) {
-	clientset := createTestServiceAccounts(t)
+	clientset := createTestServiceAccountsClient(t)
 
 	testRoleRef := CreateTestRoleRef("test-role")
 	roleBinding1 := CreateTestRoleBinding(testNamespace, "test-crb1", "test-sa1", testRoleRef)
-	_, err := clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), roleBinding1, v1.CreateOptions{})
+	_, err := clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), roleBinding1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "roleBinding", err)
 	}
@@ -90,13 +97,13 @@ func TestGetServiceAccountsFromRoleBindings(t *testing.T) {
 
 func TestRetrieveUsedSA(t *testing.T) {
 	var volumeList []corev1.Volume
-	clientset := createTestServiceAccounts(t)
+	clientset := createTestServiceAccountsClient(t)
 
 	testVolume := CreateTestVolume("test-volume1", "test-pvc")
 	volumeList = append(volumeList, *testVolume)
 
 	podWithSA := CreateTestPod(testNamespace, "test-pod1", "test-sa1", volumeList)
-	_, err := clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), podWithSA, v1.CreateOptions{})
+	_, err := clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), podWithSA, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pod", err)
 	}
@@ -116,7 +123,7 @@ func TestRetrieveUsedSA(t *testing.T) {
 }
 
 func TestRetrieveServiceAccountNames(t *testing.T) {
-	clientset := createTestServiceAccounts(t)
+	clientset := createTestServiceAccountsClient(t)
 	serviceAccountNames, err := retrieveServiceAccountNames(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -127,7 +134,7 @@ func TestRetrieveServiceAccountNames(t *testing.T) {
 }
 
 func TestProcessNamespaceSA(t *testing.T) {
-	clientset := createTestServiceAccounts(t)
+	clientset := createTestServiceAccountsClient(t)
 	var volumeList []corev1.Volume
 
 	testVolume := CreateTestVolume("test-volume1", "test-pvc")
@@ -136,13 +143,13 @@ func TestProcessNamespaceSA(t *testing.T) {
 	testRoleRef := CreateTestRoleRef("test-role")
 
 	roleBinding1 := CreateTestRoleBinding(testNamespace, "test-crb1", "test-sa1", testRoleRef)
-	_, err := clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), roleBinding1, v1.CreateOptions{})
+	_, err := clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), roleBinding1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "roleBinding", err)
 	}
 
 	podWithSA := CreateTestPod(testNamespace, "test-pod1", "test-sa1", volumeList)
-	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), podWithSA, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), podWithSA, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pod", err)
 	}
@@ -162,10 +169,10 @@ func TestProcessNamespaceSA(t *testing.T) {
 }
 
 func TestGetUnusedServiceAccountsStructured(t *testing.T) {
-	clientset := createTestServiceAccounts(t)
+	clientset := createTestServiceAccountsClient(t)
 
 	clusterRoleBinding1 := CreateTestClusterRoleBinding(testNamespace, "test-crb1", "test-sa1")
-	_, err := clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(), clusterRoleBinding1, v1.CreateOptions{})
+	_, err := clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(), clusterRoleBinding1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "clusterRoleBinding", err)
 	}

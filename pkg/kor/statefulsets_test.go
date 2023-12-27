@@ -8,33 +8,24 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func createTestStatefulSets(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
+func createTestStatefulSets(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 
 	appLabels := map[string]string{}
 
 	sts1 := CreateTestStatefulSet(testNamespace, "test-sts1", 0, appLabels)
 	sts2 := CreateTestStatefulSet(testNamespace, "test-sts2", 1, appLabels)
-	_, err = clientset.AppsV1().StatefulSets(testNamespace).Create(context.TODO(), sts1, v1.CreateOptions{})
+	_, err := clientset.AppsV1().StatefulSets(testNamespace).Create(context.TODO(), sts1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "statefulSet", err)
 	}
 
-	_, err = clientset.AppsV1().StatefulSets(testNamespace).Create(context.TODO(), sts2, v1.CreateOptions{})
+	_, err = clientset.AppsV1().StatefulSets(testNamespace).Create(context.TODO(), sts2, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "statefulSet", err)
 	}
@@ -42,8 +33,24 @@ func createTestStatefulSets(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
+func createTestStatefulSetsClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
+	}, metav1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestStatefulSets(clientset, t)
+
+	return clientset
+}
+
 func TestProcessNamespaceStatefulSets(t *testing.T) {
-	clientset := createTestStatefulSets(t)
+	clientset := createTestStatefulSetsClient(t)
 
 	statefulSetsWithoutReplicas, err := ProcessNamespaceStatefulSets(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
@@ -60,7 +67,7 @@ func TestProcessNamespaceStatefulSets(t *testing.T) {
 }
 
 func TestGetUnusedStatefulSetsStructured(t *testing.T) {
-	clientset := createTestStatefulSets(t)
+	clientset := createTestStatefulSetsClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: "",

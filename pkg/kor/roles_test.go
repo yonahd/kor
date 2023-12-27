@@ -8,46 +8,54 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func createTestRoles(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
+func createTestRoles(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 
 	role1 := CreateTestRole(testNamespace, "test-role1")
 	role2 := CreateTestRole(testNamespace, "test-role2")
-	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role1, v1.CreateOptions{})
+	_, err := clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Role", err)
 	}
 
-	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role2, v1.CreateOptions{})
+	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role2, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Role", err)
 	}
 
 	testRoleRef := CreateTestRoleRef("test-role1")
 	testRoleBinding := CreateTestRoleBinding(testNamespace, "test-rb", "test-sa", testRoleRef)
-	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), testRoleBinding, v1.CreateOptions{})
+	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), testRoleBinding, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Role", err)
 	}
 
 	return clientset
 }
+
+func createTestRolesClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
+	}, metav1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestRoles(clientset, t)
+
+	return clientset
+}
+
 func TestRetrieveUsedRoles(t *testing.T) {
-	clientset := createTestRoles(t)
+	clientset := createTestRolesClient(t)
 
 	usedRoles, err := retrieveUsedRoles(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
@@ -64,7 +72,7 @@ func TestRetrieveUsedRoles(t *testing.T) {
 }
 
 func TestRetrieveRoleNames(t *testing.T) {
-	clientset := createTestRoles(t)
+	clientset := createTestRolesClient(t)
 	allRoles, err := retrieveRoleNames(clientset, testNamespace)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -76,7 +84,7 @@ func TestRetrieveRoleNames(t *testing.T) {
 }
 
 func TestProcessNamespaceRoles(t *testing.T) {
-	clientset := createTestRoles(t)
+	clientset := createTestRolesClient(t)
 
 	unusedRoles, err := processNamespaceRoles(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
@@ -93,7 +101,7 @@ func TestProcessNamespaceRoles(t *testing.T) {
 }
 
 func TestGetUnusedRolesStructured(t *testing.T) {
-	clientset := createTestRoles(t)
+	clientset := createTestRolesClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: "",

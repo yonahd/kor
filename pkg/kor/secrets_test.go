@@ -8,22 +8,13 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func createTestSecrets(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
+func createTestSecrets(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 
 	secret1 := CreateTestSecret(testNamespace, "test-secret1")
 	secret2 := CreateTestSecret(testNamespace, "test-secret2")
@@ -70,50 +61,66 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 		{Name: secret2.ObjectMeta.Name},
 	}
 
-	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod1, v1.CreateOptions{})
+	_, err := clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake pod: %v", err)
 	}
 
-	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod2, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod2, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake pod: %v", err)
 	}
 
-	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod3, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod3, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake pod: %v", err)
 	}
 
-	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod4, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod4, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake pod: %v", err)
 	}
 
-	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod5, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod5, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake pod: %v", err)
 	}
 
-	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod6, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod6, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake pod: %v", err)
 	}
 
-	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret1, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Secret", err)
 	}
 
-	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret2, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret2, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Secret", err)
 	}
 
-	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret3, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret3, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Secret", err)
 	}
+
+	return clientset
+}
+
+func createTestSecretsClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
+	}, metav1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestSecrets(clientset, t)
 
 	return clientset
 }
@@ -125,17 +132,17 @@ func TestRetrieveIngressTLS(t *testing.T) {
 	secret1 := CreateTestSecret(testNamespace, "test-secret1")
 	secret2 := CreateTestSecret(testNamespace, "test-secret2")
 
-	_, err := clientset.NetworkingV1().Ingresses(testNamespace).Create(context.TODO(), ingress1, v1.CreateOptions{})
+	_, err := clientset.NetworkingV1().Ingresses(testNamespace).Create(context.TODO(), ingress1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Ingress", err)
 	}
 
-	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret1, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Secret", err)
 	}
 
-	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret2, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret2, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Secret", err)
 	}
@@ -156,7 +163,7 @@ func TestRetrieveIngressTLS(t *testing.T) {
 }
 
 func TestRetrieveUsedSecret(t *testing.T) {
-	clientset := createTestSecrets(t)
+	clientset := createTestSecretsClient(t)
 
 	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, _, err := retrieveUsedSecret(clientset, testNamespace)
 	if err != nil {
@@ -196,12 +203,12 @@ func TestRetrieveSecretNames(t *testing.T) {
 	secret1 := CreateTestSecret(testNamespace, "secret-1")
 	secret2 := CreateTestSecret(testNamespace, "secret-2")
 
-	_, err := clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret1, v1.CreateOptions{})
+	_, err := clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake secret: %v", err)
 	}
 
-	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret2, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret2, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake secret: %v", err)
 	}
@@ -219,7 +226,7 @@ func TestRetrieveSecretNames(t *testing.T) {
 }
 
 func TestProcessNamespaceSecret(t *testing.T) {
-	clientset := createTestSecrets(t)
+	clientset := createTestSecretsClient(t)
 
 	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
@@ -237,7 +244,7 @@ func TestProcessNamespaceSecret(t *testing.T) {
 }
 
 func TestGetUnusedSecretsStructured(t *testing.T) {
-	clientset := createTestSecrets(t)
+	clientset := createTestSecretsClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: "",

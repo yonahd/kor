@@ -8,31 +8,22 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func createTestServices(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
+func createTestServices(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 
 	endpoint1 := CreateTestEndpoint(testNamespace, "test-endpoint1", 0)
 	endpoint2 := CreateTestEndpoint(testNamespace, "test-endpoint2", 1)
-	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint1, v1.CreateOptions{})
+	_, err := clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake endpoint: %v", err)
 	}
 
-	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint2, v1.CreateOptions{})
+	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint2, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake endpoint: %v", err)
 	}
@@ -40,8 +31,24 @@ func createTestServices(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
+func createTestServicesClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
+	}, metav1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestServices(clientset, t)
+
+	return clientset
+}
+
 func TestGetEndpointsWithoutSubsets(t *testing.T) {
-	clientset := createTestServices(t)
+	clientset := createTestServicesClient(t)
 
 	servicesWithoutEndpoints, err := ProcessNamespaceServices(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
@@ -58,7 +65,7 @@ func TestGetEndpointsWithoutSubsets(t *testing.T) {
 }
 
 func TestGetUnusedServicesStructured(t *testing.T) {
-	clientset := createTestServices(t)
+	clientset := createTestServicesClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: testNamespace,
