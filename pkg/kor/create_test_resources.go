@@ -283,3 +283,27 @@ func CreateTestJob(namespace, name string, status *batchv1.JobStatus) *batchv1.J
 		Status: *status,
 	}
 }
+
+func CreateTestReplicaSet(namespace, name string, specReplicas *int32, status *appsv1.ReplicaSetStatus) *appsv1.ReplicaSet {
+	return &appsv1.ReplicaSet{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: appsv1.ReplicaSetSpec{
+			Replicas: specReplicas,
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "test",
+						},
+					},
+					RestartPolicy: corev1.RestartPolicyNever,
+				},
+			},
+		},
+		Status: *status,
+	}
+}
