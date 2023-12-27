@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -13,17 +13,7 @@ import (
 	"testing"
 )
 
-func createTestReplicaSets(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
-
+func createTestReplicaSets(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 	var count1 int32 = 1
 	replicaSet1 := CreateTestReplicaSet(testNamespace, "test-replicaSet1", &count1, &appsv1.ReplicaSetStatus{
 		Replicas:             count1,
@@ -39,20 +29,36 @@ func createTestReplicaSets(t *testing.T) *fake.Clientset {
 		FullyLabeledReplicas: count2,
 	})
 
-	_, err = clientset.AppsV1().ReplicaSets(testNamespace).Create(context.TODO(), replicaSet1, v1.CreateOptions{})
+	_, err := clientset.AppsV1().ReplicaSets(testNamespace).Create(context.TODO(), replicaSet1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake replicaSet: %v", err)
 	}
 
-	_, err = clientset.AppsV1().ReplicaSets(testNamespace).Create(context.TODO(), replicaSet2, v1.CreateOptions{})
+	_, err = clientset.AppsV1().ReplicaSets(testNamespace).Create(context.TODO(), replicaSet2, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake replicaSet: %v", err)
 	}
 	return clientset
 }
 
+func createTestReplicaSetsClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
+	}, metav1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestReplicaSets(clientset, t)
+
+	return clientset
+}
+
 func TestProcessNamespaceReplicaSets(t *testing.T) {
-	clientset := createTestReplicaSets(t)
+	clientset := createTestReplicaSetsClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: "",
