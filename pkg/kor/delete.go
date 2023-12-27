@@ -63,6 +63,9 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 		"Job": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.BatchV1().Jobs(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
+		"ReplicaSet": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.AppsV1().ReplicaSets(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
 	}
 
 	return deleteResourceApiMap
@@ -120,6 +123,8 @@ func updateResource(clientset kubernetes.Interface, namespace, resourceType stri
 		return clientset.CoreV1().Pods(namespace).Update(context.TODO(), resource.(*corev1.Pod), metav1.UpdateOptions{})
 	case "Job":
 		return clientset.BatchV1().Jobs(namespace).Update(context.TODO(), resource.(*batchv1.Job), metav1.UpdateOptions{})
+	case "ReplicaSet":
+		return clientset.AppsV1().ReplicaSets(namespace).Update(context.TODO(), resource.(*appsv1.ReplicaSet), metav1.UpdateOptions{})
 	}
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }
@@ -154,6 +159,8 @@ func getResource(clientset kubernetes.Interface, namespace, resourceType, resour
 		return clientset.CoreV1().Pods(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "Job":
 		return clientset.BatchV1().Jobs(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
+	case "ReplicaSet":
+		return clientset.AppsV1().ReplicaSets(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	}
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }
