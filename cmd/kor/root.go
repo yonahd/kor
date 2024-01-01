@@ -48,7 +48,9 @@ func Execute() {
 	rootCmd.PersistentFlags().StringVar(&opts.Token, "slack-auth-token", "", "Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.")
 	rootCmd.PersistentFlags().BoolVar(&opts.DeleteFlag, "delete", false, "Delete unused resources")
 	rootCmd.PersistentFlags().BoolVar(&opts.NoInteractive, "no-interactive", false, "Do not prompt for confirmation when deleting resources. Be careful using this flag!")
+	rootCmd.PersistentFlags().BoolVarP(&opts.NoNamespaced, "include-non-namespaced", "i", false, "Include recources not bound to a namespace.")
 	rootCmd.PersistentFlags().BoolVarP(&opts.Verbose, "verbose", "v", false, "Verbose output (print empty namespaces)")
+	rootCmd.PersistentFlags().BoolVarP(&opts.Quiet, "quiet", "q", false, "Truncate logo and version display")
 	addFilterOptionsFlag(rootCmd, filterOptions)
 
 	if err := filterOptions.Validate(); err != nil {
