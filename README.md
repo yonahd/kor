@@ -24,7 +24,9 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - PDBs
 - CRDs
 - PVs
+- Pods
 - Jobs
+- ReplicaSets
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -85,12 +87,14 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `statefulsets` - Gets unused StatefulSets for the specified namespace or all namespaces.
 - `role` - Gets unused Roles for the specified namespace or all namespaces.
 - `hpa` - Gets unused HPAs for the specified namespace or all namespaces.
+- `pods` - Gets unused Pods for the specified namespace or all namespaces.
 - `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
 - `pv` - Gets unused PVs in the cluster(non namespaced resource).
 - `ingress` - Gets unused Ingresses for the specified namespace or all namespaces.
 - `pdb` - Gets unused PDBs for the specified namespace or all namespaces.
 - `crd` - Gets unused CRDs in the cluster(non namespaced resource).
 - `jobs` - Gets unused jobs for the specified namespace or all namespaces.
+- `replicasets` - Gets unused replicaSets for the specified namespace or all namespaces.
 - `exporter` - Export Prometheus metrics.
 
 ### Supported Flags
@@ -142,6 +146,8 @@ kor [subcommand] --help
 | Pvs             | PVs not bound to a PVC                                                                                                                                                                                                            |                                                                                                                              |
 | Pdbs            | PDBs not used in Deployments<br/> PDBs not used in StatefulSets                                                                                                                                                                   |                                                                                                                              |
 | Jobs            | Jobs status is completed                                                                                                                                                                                                          |                                                                                                                              |
+| ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work              |    
+
 
 ## Deleting Unused resources
 If you want to delete resources in an interactive way using Kor you can run:

@@ -3,6 +3,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
+    {{- include "kor.labels" . | nindent 4 }}
     app: {{ .Values.prometheusExporter.name }}
   name: {{ .Values.prometheusExporter.name }}
 {{- if .Values.prometheusExporter.serviceMonitor.namespace }}

@@ -138,13 +138,31 @@ func getUnusedPvs(clientset kubernetes.Interface, filterOpts *FilterOptions) Res
 	return allPvDiff
 }
 
+func getUnusedPods(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+	podDiff, err := ProcessNamespacePods(clientset, namespace, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pods", namespace, err)
+	}
+	namespacePodDiff := ResourceDiff{"Pod", podDiff}
+	return namespacePodDiff
+}
+
 func getUnusedJobs(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
 	jobDiff, err := ProcessNamespaceJobs(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "jobs", namespace, err)
 	}
-	namespaceSADiff := ResourceDiff{"Job", jobDiff}
-	return namespaceSADiff
+	namespaceJobDiff := ResourceDiff{"Job", jobDiff}
+	return namespaceJobDiff
+}
+
+func getUnusedReplicaSets(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+	replicaSetDiff, err := ProcessNamespaceReplicaSets(clientset, namespace, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "jobs", namespace, err)
+	}
+	namespaceRSDiff := ResourceDiff{"ReplicaSet", replicaSetDiff}
+	return namespaceRSDiff
 }
 
 func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
@@ -179,6 +197,8 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOpt
 		allDiffs = append(allDiffs, namespacePdbDiff)
 		namespaceJobDiff := getUnusedJobs(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceJobDiff)
+		namespaceRSDiff := getUnusedReplicaSets(clientset, namespace, filterOpts)
+		allDiffs = append(allDiffs, namespaceRSDiff)
 
 		output := FormatOutputAll(namespace, allDiffs, opts)
 
