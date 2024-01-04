@@ -36,13 +36,13 @@ func createTestPdbs(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating fake %s: %v", "Pdb", err)
 	}
 
-	deployment1 := CreateTestDeployment(testNamespace, "test-deployment2", 1, appLabels1)
+	deployment1 := CreateTestDeployment(testNamespace, "pdb-test-deploy2", 1, appLabels1)
 	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake deployment: %v", err)
 	}
 
-	sts1 := CreateTestStatefulSet(testNamespace, "test-sts2", 1, appLabels1)
+	sts1 := CreateTestStatefulSet(testNamespace, "pdb-test-sts2", 1, appLabels1)
 	_, err = clientset.AppsV1().StatefulSets(testNamespace).Create(context.TODO(), sts1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "StatefulSet", err)

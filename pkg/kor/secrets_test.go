@@ -20,15 +20,15 @@ func createTestSecrets(clientset *fake.Clientset, t *testing.T) *fake.Clientset 
 	secret2 := CreateTestSecret(testNamespace, "test-secret2")
 	secret3 := CreateTestSecret(testNamespace, "test-secret3")
 
-	pod1 := CreateTestPod(testNamespace, "pod-1", "", []corev1.Volume{
+	pod1 := CreateTestPod(testNamespace, "sec-pod-1", "", []corev1.Volume{
 		{Name: "vol-1", VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: "test-secret1"}}},
 	})
 
-	pod2 := CreateTestPod(testNamespace, "pod-2", "", []corev1.Volume{
+	pod2 := CreateTestPod(testNamespace, "sec-pod-2", "", []corev1.Volume{
 		{Name: "vol-2", VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: "test-secret2"}}},
 	})
 
-	pod3 := CreateTestPod(testNamespace, "pod-3", "", nil)
+	pod3 := CreateTestPod(testNamespace, "sec-pod-3", "", nil)
 	pod3.Spec.Containers = []corev1.Container{
 		{
 			Env: []corev1.EnvVar{
@@ -37,7 +37,7 @@ func createTestSecrets(clientset *fake.Clientset, t *testing.T) *fake.Clientset 
 		},
 	}
 
-	pod4 := CreateTestPod(testNamespace, "pod-4", "", nil)
+	pod4 := CreateTestPod(testNamespace, "sec-pod-4", "", nil)
 	pod4.Spec.Containers = []corev1.Container{
 		{
 			EnvFrom: []corev1.EnvFromSource{
@@ -46,7 +46,7 @@ func createTestSecrets(clientset *fake.Clientset, t *testing.T) *fake.Clientset 
 		},
 	}
 
-	pod5 := CreateTestPod(testNamespace, "pod-5", "", nil)
+	pod5 := CreateTestPod(testNamespace, "sec-pod-5", "", nil)
 	pod5.Spec.InitContainers = []corev1.Container{
 		{
 			Env: []corev1.EnvVar{
@@ -55,7 +55,7 @@ func createTestSecrets(clientset *fake.Clientset, t *testing.T) *fake.Clientset 
 		},
 	}
 
-	pod6 := CreateTestPod(testNamespace, "pod-6", "", nil)
+	pod6 := CreateTestPod(testNamespace, "sec-pod-6", "", nil)
 	pod6.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
 		{Name: secret1.ObjectMeta.Name},
 		{Name: secret2.ObjectMeta.Name},

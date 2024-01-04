@@ -20,11 +20,11 @@ func createTestConfigmaps(clientset *fake.Clientset, t *testing.T) {
 	configmap2 := CreateTestConfigmap(testNamespace, "configmap-2")
 	configmap3 := CreateTestConfigmap(testNamespace, "configmap-3")
 
-	pod1 := CreateTestPod(testNamespace, "pod-1", "", []corev1.Volume{
+	pod1 := CreateTestPod(testNamespace, "cm-pod-1", "", []corev1.Volume{
 		{Name: "vol-1", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.ObjectMeta.Name}}}},
 	})
 
-	pod2 := CreateTestPod(testNamespace, "pod-2", "", nil)
+	pod2 := CreateTestPod(testNamespace, "cm-pod-2", "", nil)
 	pod2.Spec.Containers = []corev1.Container{
 		{
 			Env: []corev1.EnvVar{
@@ -33,7 +33,7 @@ func createTestConfigmaps(clientset *fake.Clientset, t *testing.T) {
 		},
 	}
 
-	pod3 := CreateTestPod(testNamespace, "pod-3", "", nil)
+	pod3 := CreateTestPod(testNamespace, "cm-pod-3", "", nil)
 	pod3.Spec.Containers = []corev1.Container{
 		{
 			EnvFrom: []corev1.EnvFromSource{
@@ -42,7 +42,7 @@ func createTestConfigmaps(clientset *fake.Clientset, t *testing.T) {
 		},
 	}
 
-	pod4 := CreateTestPod(testNamespace, "pod-4", "", nil)
+	pod4 := CreateTestPod(testNamespace, "cm-pod-4", "", nil)
 	pod4.Spec.InitContainers = []corev1.Container{
 		{
 			Env: []corev1.EnvVar{
