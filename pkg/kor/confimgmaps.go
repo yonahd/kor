@@ -99,6 +99,14 @@ func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, fi
 		if included, _ := HasIncludedAge(configmap.CreationTimestamp, filterOpts); !included {
 			continue
 		}
+		if value, exists := configmap.Labels["kor/used"]; exists {
+			if value == "true" {
+				continue
+			} else if value == "false" {
+				names = append(names, configmap.Name)
+				continue
+			}
+		}
 
 		if configmap.Labels["kor/used"] == "true" {
 			continue

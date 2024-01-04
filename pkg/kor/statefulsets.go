@@ -20,6 +20,15 @@ func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 	var statefulSetsWithoutReplicas []string
 
 	for _, statefulSet := range statefulSetsList.Items {
+		if value, exists := statefulSet.Labels["kor/used"]; exists {
+			if value == "true" {
+				continue
+			} else if value == "false" {
+				statefulSetsWithoutReplicas = append(statefulSetsWithoutReplicas, statefulSet.Name)
+				continue
+			}
+		}
+
 		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
 		// If it does, the resource is skipped.
 		if excluded, _ := HasExcludedLabel(statefulSet.Labels, filterOpts.ExcludeLabels); excluded {

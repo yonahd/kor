@@ -206,7 +206,7 @@ func TestRetrieveSecretNames(t *testing.T) {
 		t.Fatalf("Error creating fake secret: %v", err)
 	}
 
-	secretNames, err := retrieveSecretNames(clientset, testNamespace, &FilterOptions{})
+	secretNames, _, err := retrieveSecretNames(clientset, testNamespace, &FilterOptions{})
 
 	if err != nil {
 		t.Fatalf("Error retrieving secret names: %v", err)

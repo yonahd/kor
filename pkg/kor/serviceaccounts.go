@@ -27,10 +27,6 @@ func getServiceAccountsFromClusterRoleBindings(clientset kubernetes.Interface, n
 
 	// Extract service account names from the role bindings
 	for _, rb := range roleBindings.Items {
-		if rb.Labels["kor/used"] == "true" {
-			continue
-		}
-
 		for _, subject := range rb.Subjects {
 
 			if subject.Kind == "ServiceAccount" {
@@ -54,10 +50,6 @@ func getServiceAccountsFromRoleBindings(clientset kubernetes.Interface, namespac
 
 	// Extract service account names from the role bindings
 	for _, rb := range roleBindings.Items {
-		if rb.Labels["kor/used"] == "true" {
-			continue
-		}
-
 		for _, subject := range rb.Subjects {
 			if subject.Kind == "ServiceAccount" {
 				serviceAccounts = append(serviceAccounts, subject.Name)
@@ -101,15 +93,21 @@ func retrieveUsedSA(clientset kubernetes.Interface, namespace string) ([]string,
 	return podServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, nil
 }
 
-func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
+func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, []string, error) {
 	serviceaccounts, err := clientset.CoreV1().ServiceAccounts(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	names := make([]string, 0, len(serviceaccounts.Items))
+	var unusedServiceAccountNames []string
 	for _, serviceaccount := range serviceaccounts.Items {
-		if serviceaccount.Labels["kor/used"] == "true" {
-			continue
+		if value, exists := serviceaccount.Labels["kor/used"]; exists {
+			if value == "true" {
+				continue
+			} else if value == "false" {
+				unusedServiceAccountNames = append(unusedServiceAccountNames, serviceaccount.Name)
+				continue
+			}
 		}
 
 		if excluded, _ := HasExcludedLabel(serviceaccount.Labels, filterOpts.ExcludeLabels); excluded {
@@ -122,7 +120,7 @@ func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace strin
 
 		names = append(names, serviceaccount.Name)
 	}
-	return names, nil
+	return names, unusedServiceAccountNames, nil
 }
 
 func processNamespaceSA(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
@@ -137,12 +135,13 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string, filter
 
 	usedServiceAccounts = append(append(usedServiceAccounts, roleServiceAccounts...), clusterRoleServiceAccounts...)
 
-	serviceAccountNames, err := retrieveServiceAccountNames(clientset, namespace, filterOpts)
+	serviceAccountNames, unusedServiceAccountNames, err := retrieveServiceAccountNames(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
 
 	diff := CalculateResourceDifference(usedServiceAccounts, serviceAccountNames)
+	diff = append(diff, unusedServiceAccountNames...)
 	return diff, nil
 
 }

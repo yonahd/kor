@@ -21,8 +21,13 @@ func processPvs(clientset kubernetes.Interface, filterOpts *FilterOptions) ([]st
 	var unusedPvs []string
 
 	for _, pv := range pvs.Items {
-		if pv.Labels["kor/used"] == "true" {
-			continue
+		if value, exists := pv.Labels["kor/used"]; exists {
+			if value == "true" {
+				continue
+			} else if value == "false" {
+				unusedPvs = append(unusedPvs, pv.Name)
+				continue
+			}
 		}
 
 		if excluded, _ := HasExcludedLabel(pv.Labels, filterOpts.ExcludeLabels); excluded {
