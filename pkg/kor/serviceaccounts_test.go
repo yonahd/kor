@@ -117,7 +117,7 @@ func TestRetrieveUsedSA(t *testing.T) {
 
 func TestRetrieveServiceAccountNames(t *testing.T) {
 	clientset := createTestServiceAccounts(t)
-	serviceAccountNames, err := retrieveServiceAccountNames(clientset, testNamespace, &FilterOptions{})
+	serviceAccountNames, _, err := retrieveServiceAccountNames(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}

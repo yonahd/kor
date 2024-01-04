@@ -49,7 +49,7 @@ func createTestRoles(t *testing.T) *fake.Clientset {
 func TestRetrieveUsedRoles(t *testing.T) {
 	clientset := createTestRoles(t)
 
-	usedRoles, err := retrieveUsedRoles(clientset, testNamespace, &FilterOptions{})
+	usedRoles, err := retrieveUsedRoles(clientset, testNamespace)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -65,7 +65,7 @@ func TestRetrieveUsedRoles(t *testing.T) {
 
 func TestRetrieveRoleNames(t *testing.T) {
 	clientset := createTestRoles(t)
-	allRoles, err := retrieveRoleNames(clientset, testNamespace)
+	allRoles, _, err := retrieveRoleNames(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
