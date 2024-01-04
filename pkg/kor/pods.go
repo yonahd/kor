@@ -21,8 +21,13 @@ func ProcessNamespacePods(clientset kubernetes.Interface, namespace string, filt
 	var evictedPods []string
 
 	for _, pod := range podsList.Items {
-		if pod.Labels["kor/used"] == "true" {
-			continue
+		if value, exists := pod.Labels["kor/used"]; exists {
+			if value == "true" {
+				continue
+			} else if value == "false" {
+				evictedPods = append(evictedPods, pod.Name)
+				continue
+			}
 		}
 
 		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.

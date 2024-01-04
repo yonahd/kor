@@ -20,8 +20,13 @@ func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, 
 	var endpointsWithoutSubsets []string
 
 	for _, endpoints := range endpointsList.Items {
-		if endpoints.Labels["kor/used"] == "true" {
-			continue
+		if value, exists := endpoints.Labels["kor/used"]; exists {
+			if value == "true" {
+				continue
+			} else if value == "false" {
+				endpointsWithoutSubsets = append(endpointsWithoutSubsets, endpoints.Name)
+				continue
+			}
 		}
 
 		if excluded, _ := HasExcludedLabel(endpoints.Labels, filterOpts.ExcludeLabels); excluded {

@@ -53,8 +53,13 @@ func extractUnusedHpas(clientset kubernetes.Interface, namespace string, filterO
 
 	var diff []string
 	for _, hpa := range hpas.Items {
-		if hpa.Labels["kor/used"] == "true" {
-			continue
+		if value, exists := hpa.Labels["kor/used"]; exists {
+			if value == "true" {
+				continue
+			} else if value == "false" {
+				diff = append(diff, hpa.Name)
+				continue
+			}
 		}
 
 		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.

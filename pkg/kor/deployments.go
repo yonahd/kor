@@ -20,8 +20,13 @@ func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 	var deploymentsWithoutReplicas []string
 
 	for _, deployment := range deploymentsList.Items {
-		if deployment.Labels["kor/used"] == "true" {
-			continue
+		if value, exists := deployment.Labels["kor/used"]; exists {
+			if value == "true" {
+				continue
+			} else if value == "false" {
+				deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, deployment.Name)
+				continue
+			}
 		}
 
 		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.

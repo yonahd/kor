@@ -20,8 +20,13 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 	}
 
 	for _, pdb := range pdbs.Items {
-		if pdb.Labels["kor/used"] == "true" {
-			continue
+		if value, exists := pdb.Labels["kor/used"]; exists {
+			if value == "true" {
+				continue
+			} else if value == "false" {
+				unusedPdbs = append(unusedPdbs, pdb.Name)
+				continue
+			}
 		}
 
 		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.

@@ -19,8 +19,13 @@ func ProcessNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 	var unusedJobNames []string
 
 	for _, job := range jobsList.Items {
-		if job.Labels["kor/used"] == "true" {
-			continue
+		if value, exists := job.Labels["kor/used"]; exists {
+			if value == "true" {
+				continue
+			} else if value == "false" {
+				unusedJobNames = append(unusedJobNames, job.Name)
+				continue
+			}
 		}
 
 		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.

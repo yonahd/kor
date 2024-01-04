@@ -12,7 +12,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
 
-func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
+func retrieveUsedRoles(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	// Get a list of all role bindings in the specified namespace
 	roleBindings, err := clientset.RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -21,17 +21,6 @@ func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, filterO
 
 	usedRoles := make(map[string]bool)
 	for _, rb := range roleBindings.Items {
-		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
-		// If it does, the resource is skipped.
-		if excluded, _ := HasExcludedLabel(rb.Labels, filterOpts.ExcludeLabels); excluded {
-			continue
-		}
-		// checks if the resource's age (measured from its last modified time) matches the included criteria
-		// specified by the filter options.
-		if included, _ := HasIncludedAge(rb.CreationTimestamp, filterOpts); !included {
-			continue
-		}
-
 		usedRoles[rb.RoleRef.Name] = true
 	}
 
@@ -43,36 +32,54 @@ func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, filterO
 	return usedRoleNames, nil
 }
 
-func retrieveRoleNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, []string, error) {
 	roles, err := clientset.RbacV1().Roles(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	names := make([]string, 0, len(roles.Items))
+	var unusedRoleNames []string
 	for _, role := range roles.Items {
-		if role.Labels["kor/used"] == "true" {
+		if value, exists := role.Labels["kor/used"]; exists {
+			if value == "true" {
+				continue
+			} else if value == "false" {
+				unusedRoleNames = append(unusedRoleNames, role.Name)
+				continue
+			}
+		}
+
+		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
+		// If it does, the resource is skipped.
+		if excluded, _ := HasExcludedLabel(role.Labels, filterOpts.ExcludeLabels); excluded {
+			continue
+		}
+		// checks if the resource's age (measured from its last modified time) matches the included criteria
+		// specified by the filter options.
+		if included, _ := HasIncludedAge(role.CreationTimestamp, filterOpts); !included {
 			continue
 		}
 
 		names = append(names, role.Name)
 	}
-	return names, nil
+	return names, unusedRoleNames, nil
 }
 
 func processNamespaceRoles(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
-	usedRoles, err := retrieveUsedRoles(clientset, namespace, filterOpts)
+	usedRoles, err := retrieveUsedRoles(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	usedRoles = RemoveDuplicatesAndSort(usedRoles)
 
-	roleNames, err := retrieveRoleNames(clientset, namespace)
+	roleNames, rolesUnusedFromLabel, err := retrieveRoleNames(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
 
 	diff := CalculateResourceDifference(usedRoles, roleNames)
+	diff = append(diff, rolesUnusedFromLabel...)
 	return diff, nil
 
 }

@@ -35,10 +35,21 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filt
 	if err != nil {
 		return nil, err
 	}
+
+	usedPvcs, err := retreiveUsedPvcs(clientset, namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	pvcNames := make([]string, 0, len(pvcs.Items))
 	for _, pvc := range pvcs.Items {
-		if pvc.Labels["kor/used"] == "true" {
-			continue
+		if value, exists := pvc.Labels["kor/used"]; exists {
+			if value == "false" {
+				continue
+			} else if value == "true" {
+				usedPvcs = append(usedPvcs, pvc.Name)
+				continue
+			}
 		}
 
 		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
@@ -53,11 +64,6 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filt
 		}
 
 		pvcNames = append(pvcNames, pvc.Name)
-	}
-
-	usedPvcs, err := retreiveUsedPvcs(clientset, namespace)
-	if err != nil {
-		return nil, err
 	}
 
 	diff := CalculateResourceDifference(usedPvcs, pvcNames)

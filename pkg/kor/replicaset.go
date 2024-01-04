@@ -19,8 +19,13 @@ func ProcessNamespaceReplicaSets(clientset kubernetes.Interface, namespace strin
 	var unusedReplicaSetNames []string
 
 	for _, replicaSet := range replicaSetList.Items {
-		if replicaSet.Labels["kor/used"] == "true" {
-			continue
+		if value, exists := replicaSet.Labels["kor/used"]; exists {
+			if value == "true" {
+				continue
+			} else if value == "false" {
+				unusedReplicaSetNames = append(unusedReplicaSetNames, replicaSet.Name)
+				continue
+			}
 		}
 
 		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.

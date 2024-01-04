@@ -34,6 +34,15 @@ func retrieveUsedIngress(clientset kubernetes.Interface, namespace string, filte
 	usedIngresses := []string{}
 
 	for _, ingress := range ingresses.Items {
+
+		if value, exists := ingress.Labels["kor/used"]; exists {
+			if value == "false" {
+				continue
+			} else if value == "true" {
+				usedIngresses = append(usedIngresses, ingress.Name)
+				continue
+			}
+		}
 		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
 		// If it does, the resource is skipped.
 		if excluded, _ := HasExcludedLabel(ingress.Labels, filterOpts.ExcludeLabels); excluded {
@@ -79,9 +88,6 @@ func retrieveIngressNames(clientset kubernetes.Interface, namespace string) ([]s
 	}
 	names := make([]string, 0, len(ingresses.Items))
 	for _, ingress := range ingresses.Items {
-		if ingress.Labels["kor/used"] == "true" {
-			continue
-		}
 		names = append(names, ingress.Name)
 	}
 	return names, nil
