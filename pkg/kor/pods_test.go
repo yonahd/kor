@@ -14,16 +14,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func createTestPods(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
+func createTestPods(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 
 	pod1 := CreateTestPod(testNamespace, "pod-1", "", nil)
 	pod1.Status = corev1.PodStatus{
@@ -72,7 +63,7 @@ func createTestPods(t *testing.T) *fake.Clientset {
 
 	// Add test pods to the clientset
 	for _, pod := range pods {
-		_, err = clientset.CoreV1().Pods(pod.Namespace).Create(context.TODO(), pod, v1.CreateOptions{})
+		_, err := clientset.CoreV1().Pods(pod.Namespace).Create(context.TODO(), pod, v1.CreateOptions{})
 		if err != nil {
 			t.Fatalf("Error creating fake pod: %v", err)
 		}
@@ -81,8 +72,24 @@ func createTestPods(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
+func createTestPodsClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestPods(clientset, t)
+
+	return clientset
+}
+
 func TestProcessNamespacePods(t *testing.T) {
-	clientset := createTestPods(t)
+	clientset := createTestPodsClient(t)
 	evictedPods, err := ProcessNamespacePods(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -102,7 +109,7 @@ func TestProcessNamespacePods(t *testing.T) {
 }
 
 func TestGetUnusedPodsStructured(t *testing.T) {
-	clientset := createTestPods(t)
+	clientset := createTestPodsClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: "",

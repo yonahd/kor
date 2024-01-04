@@ -8,28 +8,19 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func createTestIngresses(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
+func createTestIngresses(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 
 	service1 := CreateTestService(testNamespace, "my-service-1")
 	ingress1 := CreateTestIngress(testNamespace, "test-ingress-1", "my-service-1", "test-secret")
 	ingress2 := CreateTestIngress(testNamespace, "test-ingress-2", "my-service-2", "test-secret")
 
-	_, err = clientset.CoreV1().Services(testNamespace).Create(context.TODO(), service1, v1.CreateOptions{})
+	_, err := clientset.CoreV1().Services(testNamespace).Create(context.TODO(), service1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Service", err)
 	}
@@ -45,8 +36,24 @@ func createTestIngresses(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
+func createTestIngressClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestIngresses(clientset, t)
+
+	return clientset
+}
+
 func TestRetrieveUsedIngress(t *testing.T) {
-	clientset := createTestIngresses(t)
+	clientset := createTestIngressClient(t)
 
 	usedIngresses, err := retrieveUsedIngress(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
@@ -72,7 +79,7 @@ func contains(slice []string, item string) bool {
 }
 
 func TestGetUnusedIngressesStructured(t *testing.T) {
-	clientset := createTestIngresses(t)
+	clientset := createTestIngressClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: "",

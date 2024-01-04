@@ -3,6 +3,10 @@ package kor
 import (
 	"context"
 	"encoding/json"
+	"reflect"
+	"testing"
+	"time"
+
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -10,21 +14,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
-	"reflect"
-	"testing"
-	"time"
 )
 
-func createTestJobs(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
+func createTestJobs(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 
 	job1 := CreateTestJob(testNamespace, "test-job1", &batchv1.JobStatus{
 		Succeeded: 0,
@@ -36,7 +28,7 @@ func createTestJobs(t *testing.T) *fake.Clientset {
 		CompletionTime: &v1.Time{Time: time.Now()},
 	})
 
-	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job1, v1.CreateOptions{})
+	_, err := clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake job: %v", err)
 	}
@@ -48,8 +40,24 @@ func createTestJobs(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
+func createTestJobsClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestJobs(clientset, t)
+
+	return clientset
+}
+
 func TestProcessNamespaceJobs(t *testing.T) {
-	clientset := createTestJobs(t)
+	clientset := createTestJobsClient(t)
 
 	completedJobs, err := ProcessNamespaceJobs(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
@@ -66,7 +74,7 @@ func TestProcessNamespaceJobs(t *testing.T) {
 }
 
 func TestGetUnusedJobsStructured(t *testing.T) {
-	clientset := createTestJobs(t)
+	clientset := createTestJobsClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: "",
