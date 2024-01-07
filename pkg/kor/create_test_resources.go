@@ -148,11 +148,12 @@ func CreateTestRole(namespace, name string) *rbacv1.Role {
 	}
 }
 
-func CreateTestEndpoint(namespace, name string, endpointSubsetCount int) *corev1.Endpoints {
+func CreateTestEndpoint(namespace, name string, endpointSubsetCount int, labels map[string]string) *corev1.Endpoints {
 	return &corev1.Endpoints{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
+			Labels:    labels,
 		},
 		Subsets: make([]corev1.EndpointSubset, endpointSubsetCount),
 	}
