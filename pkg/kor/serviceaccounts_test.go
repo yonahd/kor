@@ -26,14 +26,30 @@ func createTestServiceAccounts(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	sa1 := CreateTestServiceAccount(testNamespace, "test-sa1")
-	sa2 := CreateTestServiceAccount(testNamespace, "test-sa2")
+	appLabels := map[string]string{}
+	usedLabels := map[string]string{"kor/used": "true"}
+	unusedLabels := map[string]string{"kor/used": "false"}
+
+	sa1 := CreateTestServiceAccount(testNamespace, "test-sa1", appLabels)
 	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "ServiceAccount", err)
 	}
 
+	sa2 := CreateTestServiceAccount(testNamespace, "test-sa2", appLabels)
 	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa2, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "ServiceAccount", err)
+	}
+
+	sa3 := CreateTestServiceAccount(testNamespace, "test-sa3", usedLabels)
+	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "ServiceAccount", err)
+	}
+
+	sa4 := CreateTestServiceAccount(testNamespace, "test-sa4", unusedLabels)
+	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa4, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "ServiceAccount", err)
 	}
@@ -59,7 +75,7 @@ func TestGetServiceAccountsFromClusterRoleBindings(t *testing.T) {
 	}
 
 	if serviceAccountWithCRB[0] != "test-sa1" {
-		t.Errorf("Expected 'test-sa1', got %s", serviceAccountWithCRB[0])
+		t.Errorf("Expected 'test-sa1' and 'test-sa4, got %s %s", serviceAccountWithCRB[0], serviceAccountWithCRB[1])
 	}
 
 }
@@ -152,7 +168,7 @@ func TestProcessNamespaceSA(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if len(unusedServiceAccounts) != 1 {
+	if len(unusedServiceAccounts) != 2 {
 		t.Errorf("Expected 2 serviceAccount Used by pod, got %d", len(unusedServiceAccounts))
 	}
 
@@ -190,7 +206,7 @@ func TestGetUnusedServiceAccountsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"ServiceAccounts": {"test-sa2"},
+			"ServiceAccounts": {"test-sa2", "test-sa4"},
 		},
 	}
 

@@ -80,11 +80,12 @@ func CreateTestVolume(name, pvcName string) *corev1.Volume {
 
 }
 
-func CreateTestServiceAccount(namespace, name string) *corev1.ServiceAccount {
+func CreateTestServiceAccount(namespace, name string, labels map[string]string) *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
+			Labels:    labels,
 		},
 	}
 }
