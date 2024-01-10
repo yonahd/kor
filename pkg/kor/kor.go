@@ -180,6 +180,41 @@ func FormatOutput(namespace string, resources []string, resourceType string, opt
 	return fmt.Sprintf("Unused %s in Namespace: %s\n%s", resourceType, namespace, buf.String())
 }
 
+func FormatOutputFromMap(namespace string, allDiffs map[string][]string, opts Opts) string {
+	i := 0
+	var buf bytes.Buffer
+	table := tablewriter.NewWriter(&buf)
+	table.SetHeader([]string{"#", "Resource Type", "Resource Name"})
+
+	// TODO parse resourceType, diff
+
+	allEmpty := true
+	for resourceType, diff := range allDiffs {
+		if len(diff) == 0 {
+			continue
+		}
+
+		allEmpty = false
+		for _, val := range diff {
+			row := []string{fmt.Sprintf("%d", i+1), resourceType, val}
+			table.Append(row)
+			i += 1
+		}
+	}
+
+	if opts.Verbose && allEmpty {
+		return fmt.Sprintf("No unused resources found in the namespace: %s", namespace)
+	} else if allEmpty {
+		return ""
+	}
+
+	table.Render()
+	if namespace == "" {
+		return fmt.Sprintf("Unused CRDs: \n%s", buf.String())
+	}
+	return fmt.Sprintf("Unused Resources in Namespace: %s\n%s", namespace, buf.String())
+}
+
 func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) string {
 	i := 0
 	var buf bytes.Buffer

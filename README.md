@@ -95,6 +95,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `crd` - Gets unused CRDs in the cluster(non namespaced resource).
 - `jobs` - Gets unused jobs for the specified namespace or all namespaces.
 - `replicasets` - Gets unused replicaSets for the specified namespace or all namespaces.
+- `finalizers` - Gets unused pending deletion resources for the specified namespace or all namespaces.
 - `exporter` - Export Prometheus metrics.
 
 ### Supported Flags
