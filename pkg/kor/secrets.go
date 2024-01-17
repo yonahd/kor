@@ -114,6 +114,7 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 				continue
 			} else if value == "false" {
 				unusedSecretNames = append(unusedSecretNames, secret.Name)
+				continue
 			}
 		}
 

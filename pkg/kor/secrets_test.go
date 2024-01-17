@@ -25,9 +25,15 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	secret1 := CreateTestSecret(testNamespace, "test-secret1")
-	secret2 := CreateTestSecret(testNamespace, "test-secret2")
-	secret3 := CreateTestSecret(testNamespace, "test-secret3")
+	appLabels := map[string]string{}
+	usedLabels := map[string]string{"kor/used": "true"}
+	unusedLabels := map[string]string{"kor/used": "false"}
+
+	secret1 := CreateTestSecret(testNamespace, "test-secret1", appLabels)
+	secret2 := CreateTestSecret(testNamespace, "test-secret2", appLabels)
+	secret3 := CreateTestSecret(testNamespace, "test-secret3", appLabels)
+	secret4 := CreateTestSecret(testNamespace, "test-secret4", usedLabels)
+	secret5 := CreateTestSecret(testNamespace, "test-secret5", unusedLabels)
 
 	pod1 := CreateTestPod(testNamespace, "pod-1", "", []corev1.Volume{
 		{Name: "vol-1", VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: "test-secret1"}}},
@@ -115,6 +121,16 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating fake %s: %v", "Secret", err)
 	}
 
+	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret4, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Secret", err)
+	}
+
+	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret5, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Secret", err)
+	}
+
 	return clientset
 }
 
@@ -122,8 +138,9 @@ func TestRetrieveIngressTLS(t *testing.T) {
 	clientset := fake.NewSimpleClientset()
 
 	ingress1 := CreateTestIngress(testNamespace, "test-ingress-1", "my-service-1", "test-secret1")
-	secret1 := CreateTestSecret(testNamespace, "test-secret1")
-	secret2 := CreateTestSecret(testNamespace, "test-secret2")
+	appLabels := map[string]string{}
+	secret1 := CreateTestSecret(testNamespace, "test-secret1", appLabels)
+	secret2 := CreateTestSecret(testNamespace, "test-secret2", appLabels)
 
 	_, err := clientset.NetworkingV1().Ingresses(testNamespace).Create(context.TODO(), ingress1, v1.CreateOptions{})
 	if err != nil {
@@ -193,8 +210,9 @@ func TestRetrieveUsedSecret(t *testing.T) {
 func TestRetrieveSecretNames(t *testing.T) {
 	clientset := fake.NewSimpleClientset()
 
-	secret1 := CreateTestSecret(testNamespace, "secret-1")
-	secret2 := CreateTestSecret(testNamespace, "secret-2")
+	appLabels := map[string]string{}
+	secret1 := CreateTestSecret(testNamespace, "secret-1", appLabels)
+	secret2 := CreateTestSecret(testNamespace, "secret-2", appLabels)
 
 	_, err := clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret1, v1.CreateOptions{})
 	if err != nil {
@@ -226,8 +244,8 @@ func TestProcessNamespaceSecret(t *testing.T) {
 		t.Fatalf("Error retrieving unused secrets: %v", err)
 	}
 
-	if len(unusedSecrets) != 1 {
-		t.Errorf("Expected 1 used Secret objects, got %d", len(unusedSecrets))
+	if len(unusedSecrets) != 2 {
+		t.Errorf("Expected 2 unused Secret objects, got %d", len(unusedSecrets))
 	}
 
 	if !contains(unusedSecrets, "test-secret3") {
@@ -259,7 +277,7 @@ func TestGetUnusedSecretsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Secrets": {"test-secret3"},
+			"Secrets": {"test-secret3", "test-secret5"},
 		},
 	}
 

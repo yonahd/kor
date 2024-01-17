@@ -138,12 +138,13 @@ func createPolicyRule() *rbacv1.PolicyRule {
 	}
 }
 
-func CreateTestRole(namespace, name string) *rbacv1.Role {
+func CreateTestRole(namespace, name string, labels map[string]string) *rbacv1.Role {
 	policyRule := createPolicyRule()
 	return &rbacv1.Role{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
+			Labels:    labels,
 		},
 		Rules: []rbacv1.PolicyRule{*policyRule},
 	}
@@ -245,11 +246,12 @@ func CreateTestPdb(namespace, name string, matchLabels map[string]string) *polic
 	}
 }
 
-func CreateTestSecret(namespace, name string) *corev1.Secret {
+func CreateTestSecret(namespace, name string, labels map[string]string) *corev1.Secret {
 	return &corev1.Secret{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
+			Labels:    labels,
 		},
 	}
 }

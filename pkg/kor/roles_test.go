@@ -25,21 +25,44 @@ func createTestRoles(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	role1 := CreateTestRole(testNamespace, "test-role1")
-	role2 := CreateTestRole(testNamespace, "test-role2")
+	appLabels := map[string]string{}
+	usedLabels := map[string]string{"kor/used": "true"}
+	unusedLabels := map[string]string{"kor/used": "false"}
+
+	role1 := CreateTestRole(testNamespace, "test-role1", appLabels)
 	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Role", err)
 	}
 
+	role2 := CreateTestRole(testNamespace, "test-role2", appLabels)
 	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Role", err)
 	}
 
-	testRoleRef := CreateTestRoleRef("test-role1")
-	testRoleBinding := CreateTestRoleBinding(testNamespace, "test-rb", "test-sa", testRoleRef)
-	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), testRoleBinding, v1.CreateOptions{})
+	role3 := CreateTestRole(testNamespace, "test-role3", usedLabels)
+	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Role", err)
+	}
+
+	role4 := CreateTestRole(testNamespace, "test-role4", unusedLabels)
+	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role4, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Role", err)
+	}
+
+	testRoleRef1 := CreateTestRoleRef("test-role1")
+	testRoleBinding1 := CreateTestRoleBinding(testNamespace, "test-rb1", "test-sa", testRoleRef1)
+	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), testRoleBinding1, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Role", err)
+	}
+
+	testRoleRef2 := CreateTestRoleRef("test-role4")
+	testRoleBinding2 := CreateTestRoleBinding(testNamespace, "test-rb2", "test-sa", testRoleRef2)
+	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), testRoleBinding2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Role", err)
 	}
@@ -54,24 +77,29 @@ func TestRetrieveUsedRoles(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(usedRoles) != 1 {
+	if len(usedRoles) != 2 {
 		t.Errorf("Expected 1 used role, got %d", len(usedRoles))
 	}
 
-	if usedRoles[0] != "test-role1" {
-		t.Errorf("Expected 'test-role1', got %s", usedRoles[0])
+	// test-role4 is technically used but marked as unused so in the later result it will be eliminated
+	if usedRoles[0] != "test-role1" || usedRoles[1] != "test-role4" {
+		t.Errorf("Expected 'test-role1', 'test-role4', got %s %s", usedRoles[0], usedRoles[1])
 	}
 }
 
 func TestRetrieveRoleNames(t *testing.T) {
 	clientset := createTestRoles(t)
-	allRoles, _, err := retrieveRoleNames(clientset, testNamespace, &FilterOptions{})
+	allRoles, markedUnusedRoles, err := retrieveRoleNames(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
 	if len(allRoles) != 2 {
 		t.Errorf("Expected 2 roles, got %d", len(allRoles))
+	}
+
+	if len(markedUnusedRoles) != 1 {
+		t.Errorf("Expected 1 role marked unused, got %d", len(markedUnusedRoles))
 	}
 }
 
@@ -83,12 +111,12 @@ func TestProcessNamespaceRoles(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(unusedRoles) != 1 {
-		t.Errorf("Expected 1 unused role, got %d", len(unusedRoles))
+	if len(unusedRoles) != 2 {
+		t.Errorf("Expected 2 unused role, got %d", len(unusedRoles))
 	}
 
-	if unusedRoles[0] != "test-role2" {
-		t.Errorf("Expected 'test-role2', got %s", unusedRoles[0])
+	if unusedRoles[0] != "test-role2" || unusedRoles[1] != "test-role4" {
+		t.Errorf("Expected 'test-role2', 'test-role4', got %s %s", unusedRoles[0], unusedRoles[1])
 	}
 }
 
@@ -115,7 +143,7 @@ func TestGetUnusedRolesStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Roles": {"test-role2"},
+			"Roles": {"test-role2", "test-role4"},
 		},
 	}
 
