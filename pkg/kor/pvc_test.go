@@ -14,21 +14,12 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func createTestPvcs(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+func createTestPvcs(clientset *fake.Clientset, t *testing.T) *fake.Clientset {
 	var volumeList []corev1.Volume
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
 
 	pvc1 := CreateTestPvc(testNamespace, "test-pvc1")
 	pvc2 := CreateTestPvc(testNamespace, "test-pvc2")
-	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc1, v1.CreateOptions{})
+	_, err := clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pvc", err)
 	}
@@ -50,8 +41,24 @@ func createTestPvcs(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
+func createTestPvcsClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestPvcs(clientset, t)
+
+	return clientset
+}
+
 func TestRetreiveUsedPvcs(t *testing.T) {
-	clientset := createTestPvcs(t)
+	clientset := createTestPvcsClient(t)
 	usedPvcs, err := retreiveUsedPvcs(clientset, testNamespace)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -67,7 +74,7 @@ func TestRetreiveUsedPvcs(t *testing.T) {
 }
 
 func TestProcessNamespacePvcs(t *testing.T) {
-	clientset := createTestPvcs(t)
+	clientset := createTestPvcsClient(t)
 	usedPvcs, err := processNamespacePvcs(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -83,7 +90,7 @@ func TestProcessNamespacePvcs(t *testing.T) {
 }
 
 func TestGetUnusedPvcsStructured(t *testing.T) {
-	clientset := createTestPvcs(t)
+	clientset := createTestPvcsClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: "",

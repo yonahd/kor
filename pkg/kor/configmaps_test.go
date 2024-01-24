@@ -14,26 +14,17 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-func createTestConfigmaps(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
-	}, metav1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
+func createTestConfigmaps(clientset *fake.Clientset, t *testing.T) {
 
 	configmap1 := CreateTestConfigmap(testNamespace, "configmap-1")
 	configmap2 := CreateTestConfigmap(testNamespace, "configmap-2")
 	configmap3 := CreateTestConfigmap(testNamespace, "configmap-3")
 
-	pod1 := CreateTestPod(testNamespace, "pod-1", "", []corev1.Volume{
+	pod1 := CreateTestPod(testNamespace, "cm-pod-1", "", []corev1.Volume{
 		{Name: "vol-1", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.ObjectMeta.Name}}}},
 	})
 
-	pod2 := CreateTestPod(testNamespace, "pod-2", "", nil)
+	pod2 := CreateTestPod(testNamespace, "cm-pod-2", "", nil)
 	pod2.Spec.Containers = []corev1.Container{
 		{
 			Env: []corev1.EnvVar{
@@ -42,7 +33,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 		},
 	}
 
-	pod3 := CreateTestPod(testNamespace, "pod-3", "", nil)
+	pod3 := CreateTestPod(testNamespace, "cm-pod-3", "", nil)
 	pod3.Spec.Containers = []corev1.Container{
 		{
 			EnvFrom: []corev1.EnvFromSource{
@@ -51,7 +42,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 		},
 	}
 
-	pod4 := CreateTestPod(testNamespace, "pod-4", "", nil)
+	pod4 := CreateTestPod(testNamespace, "cm-pod-4", "", nil)
 	pod4.Spec.InitContainers = []corev1.Container{
 		{
 			Env: []corev1.EnvVar{
@@ -60,7 +51,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 		},
 	}
 
-	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap1, metav1.CreateOptions{})
+	_, err := clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap1, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake configmap: %v", err)
 	}
@@ -95,11 +86,26 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating fake pod: %v", err)
 	}
 
+}
+
+func createTestConfigmapsClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
+	}, metav1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestConfigmaps(clientset, t)
+
 	return clientset
 }
 
 func TestRetrieveConfigMapNames(t *testing.T) {
-	clientset := createTestConfigmaps(t)
+	clientset := createTestConfigmapsClient(t)
 
 	configMapNames, err := retrieveConfigMapNames(clientset, testNamespace, &FilterOptions{})
 
@@ -114,7 +120,7 @@ func TestRetrieveConfigMapNames(t *testing.T) {
 }
 
 func TestProcessNamespaceCM(t *testing.T) {
-	clientset := createTestConfigmaps(t)
+	clientset := createTestConfigmapsClient(t)
 
 	diff, err := processNamespaceCM(clientset, testNamespace, &FilterOptions{})
 	if err != nil {
@@ -128,7 +134,7 @@ func TestProcessNamespaceCM(t *testing.T) {
 }
 
 func TestRetrieveUsedCM(t *testing.T) {
-	clientset := createTestConfigmaps(t)
+	clientset := createTestConfigmapsClient(t)
 
 	volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, testNamespace)
 
@@ -164,7 +170,7 @@ func TestRetrieveUsedCM(t *testing.T) {
 }
 
 func TestGetUnusedConfigmapsStructured(t *testing.T) {
-	clientset := createTestConfigmaps(t)
+	clientset := createTestConfigmapsClient(t)
 
 	includeExcludeLists := IncludeExcludeLists{
 		IncludeListStr: "",
