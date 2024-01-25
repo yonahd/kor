@@ -85,10 +85,12 @@ func (o *Options) Validate() error {
 	return nil
 }
 
+// Modify modifies the options
 func (o *Options) Modify() {
 	o.modifyLabels()
 }
 
+// Namespaces returns the namespaces, only called once
 func (o *Options) Namespaces(clientset kubernetes.Interface) []string {
 	o.once.Do(func() {
 		namespaces := make([]string, 0)

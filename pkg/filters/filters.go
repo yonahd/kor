@@ -15,6 +15,7 @@ const (
 	KorLabelFilterName = "korlabel"
 )
 
+// KorLabelFilter is a filter that filters out resources that are ["kor/used"] != "true"
 func KorLabelFilter(object runtime.Object, opts *Options) bool {
 	if meta, ok := object.(metav1.Object); ok {
 		if meta.GetLabels()["kor/used"] == "true" {
@@ -24,6 +25,7 @@ func KorLabelFilter(object runtime.Object, opts *Options) bool {
 	return false
 }
 
+// LabelFilter is a filter that filters out resources by label
 func LabelFilter(object runtime.Object, opts *Options) bool {
 	if meta, ok := object.(metav1.Object); ok {
 		if has, err := HasExcludedLabel(meta.GetLabels(), opts.ExcludeLabels); err == nil {
@@ -33,6 +35,7 @@ func LabelFilter(object runtime.Object, opts *Options) bool {
 	return false
 }
 
+// AgeFilter is a filter that filters out resources by age
 func AgeFilter(object runtime.Object, opts *Options) bool {
 	if meta, ok := object.(metav1.Object); ok {
 		if has, err := HasIncludedAge(meta.GetCreationTimestamp(), opts); err == nil {
