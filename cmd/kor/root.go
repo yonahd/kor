@@ -52,7 +52,7 @@ func init() {
 }
 
 func Execute() {
-	rootCmd.ParseFlags(os.Args)
+	_ = rootCmd.ParseFlags(os.Args)
 	if err := filterOptions.Validate(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while validating filter options '%s'", err)
 		os.Exit(1)

@@ -36,7 +36,7 @@ func (n *normalFramework) RunFilter(name string, opts *Options) (bool, error) {
 
 func (n *normalFramework) AddFilter(name string, f FilterFunc) Framework {
 	out := n.DeepCopy()
-	out.registry.Register(name, f)
+	_ = out.registry.Register(name, f)
 	return out
 }
 
@@ -67,7 +67,6 @@ func (n *normalFramework) DeepCopyInto(out *normalFramework) {
 			(*out)[key] = val
 		}
 	}
-	return
 }
 
 func isIn(name string, disable []string) bool {
