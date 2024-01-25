@@ -8,6 +8,8 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestPvs(t *testing.T) *fake.Clientset {
@@ -30,7 +32,7 @@ func createTestPvs(t *testing.T) *fake.Clientset {
 
 func TestProcessPvs(t *testing.T) {
 	clientset := createTestPvs(t)
-	usedPvs, err := processPvs(clientset, &FilterOptions{})
+	usedPvs, err := processPvs(clientset, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -55,7 +57,7 @@ func TestGetUnusedPvs(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedPvs(&FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedPvs(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedPvs: %v", err)
 	}
@@ -75,5 +77,3 @@ func TestGetUnusedPvs(t *testing.T) {
 		t.Errorf("Expected output does not match actual output")
 	}
 }
-
-

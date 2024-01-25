@@ -3,14 +3,17 @@ package kor
 import (
 	"context"
 	"encoding/json"
+	"reflect"
+	"testing"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
-	"reflect"
-	"testing"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestReplicaSets(t *testing.T) *fake.Clientset {
@@ -54,11 +57,6 @@ func createTestReplicaSets(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceReplicaSets(t *testing.T) {
 	clientset := createTestReplicaSets(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -67,7 +65,7 @@ func TestProcessNamespaceReplicaSets(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedReplicaSets(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedReplicaSets(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedReplicaSetsStructured: %v", err)
 	}

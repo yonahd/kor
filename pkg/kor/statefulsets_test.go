@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestStatefulSets(t *testing.T) *fake.Clientset {
@@ -45,7 +47,7 @@ func createTestStatefulSets(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceStatefulSets(t *testing.T) {
 	clientset := createTestStatefulSets(t)
 
-	statefulSetsWithoutReplicas, err := ProcessNamespaceStatefulSets(clientset, testNamespace, &FilterOptions{})
+	statefulSetsWithoutReplicas, err := ProcessNamespaceStatefulSets(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -62,11 +64,6 @@ func TestProcessNamespaceStatefulSets(t *testing.T) {
 func TestGetUnusedStatefulSetsStructured(t *testing.T) {
 	clientset := createTestStatefulSets(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -75,7 +72,7 @@ func TestGetUnusedStatefulSetsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedStatefulSets(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedStatefulSets(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedStatefulSetsStructured: %v", err)
 	}

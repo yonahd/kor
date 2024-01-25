@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestServiceAccounts(t *testing.T) *fake.Clientset {
@@ -117,7 +119,7 @@ func TestRetrieveUsedSA(t *testing.T) {
 
 func TestRetrieveServiceAccountNames(t *testing.T) {
 	clientset := createTestServiceAccounts(t)
-	serviceAccountNames, err := retrieveServiceAccountNames(clientset, testNamespace, &FilterOptions{})
+	serviceAccountNames, err := retrieveServiceAccountNames(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -147,7 +149,7 @@ func TestProcessNamespaceSA(t *testing.T) {
 		t.Fatalf("Error creating fake %s: %v", "Pod", err)
 	}
 
-	unusedServiceAccounts, err := processNamespaceSA(clientset, testNamespace, &FilterOptions{})
+	unusedServiceAccounts, err := processNamespaceSA(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -170,11 +172,6 @@ func TestGetUnusedServiceAccountsStructured(t *testing.T) {
 		t.Fatalf("Error creating fake %s: %v", "clusterRoleBinding", err)
 	}
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -183,7 +180,7 @@ func TestGetUnusedServiceAccountsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedServiceAccounts(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedServiceAccounts(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedServiceAccountsStructured: %v", err)
 	}

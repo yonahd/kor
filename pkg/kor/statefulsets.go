@@ -9,10 +9,12 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
-func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
-	statefulSetsList, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
+func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+	statefulSetsList, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
@@ -20,14 +22,7 @@ func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 	var statefulSetsWithoutReplicas []string
 
 	for _, statefulSet := range statefulSetsList.Items {
-		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
-		// If it does, the resource is skipped.
-		if excluded, _ := HasExcludedLabel(statefulSet.Labels, filterOpts.ExcludeLabels); excluded {
-			continue
-		}
-		// checks if the resource's age (measured from its last modified time) matches the included criteria
-		// specified by the filter options.
-		if included, _ := HasIncludedAge(statefulSet.CreationTimestamp, filterOpts); !included {
+		if pass, _ := filter.Run(filterOpts); pass {
 			continue
 		}
 
@@ -39,9 +34,9 @@ func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 	return statefulSetsWithoutReplicas, nil
 }
 
-func GetUnusedStatefulSets(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedStatefulSets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := filterOpts.Namespaces(clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

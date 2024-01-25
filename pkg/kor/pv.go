@@ -10,10 +10,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
-func processPvs(clientset kubernetes.Interface, filterOpts *FilterOptions) ([]string, error) {
-	pvs, err := clientset.CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
+func processPvs(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
+	pvs, err := clientset.CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
@@ -21,15 +23,7 @@ func processPvs(clientset kubernetes.Interface, filterOpts *FilterOptions) ([]st
 	var unusedPvs []string
 
 	for _, pv := range pvs.Items {
-		if pv.Labels["kor/used"] == "true" {
-			continue
-		}
-
-		if excluded, _ := HasExcludedLabel(pv.Labels, filterOpts.ExcludeLabels); excluded {
-			continue
-		}
-
-		if included, _ := HasIncludedAge(pv.CreationTimestamp, filterOpts); !included {
+		if pass, _ := filter.Run(filterOpts); pass {
 			continue
 		}
 
@@ -43,7 +37,7 @@ func processPvs(clientset kubernetes.Interface, filterOpts *FilterOptions) ([]st
 
 }
 
-func GetUnusedPvs(filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedPvs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 	response := make(map[string]map[string][]string)
 

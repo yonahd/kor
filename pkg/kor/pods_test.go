@@ -12,6 +12,8 @@ import (
 
 	fake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestPods(t *testing.T) *fake.Clientset {
@@ -83,7 +85,7 @@ func createTestPods(t *testing.T) *fake.Clientset {
 
 func TestProcessNamespacePods(t *testing.T) {
 	clientset := createTestPods(t)
-	evictedPods, err := ProcessNamespacePods(clientset, testNamespace, &FilterOptions{})
+	evictedPods, err := ProcessNamespacePods(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -104,11 +106,6 @@ func TestProcessNamespacePods(t *testing.T) {
 func TestGetUnusedPodsStructured(t *testing.T) {
 	clientset := createTestPods(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -117,7 +114,7 @@ func TestGetUnusedPodsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedPods(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedPods(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedPodsStructured: %v", err)
 	}

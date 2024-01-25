@@ -1,0 +1,145 @@
+package filters
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"sync"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/kubernetes"
+)
+
+// Options represents the flags and options for filtering unused Kubernetes resources, such as pods, services, or configmaps.
+// A resource is considered unused if it meets the following conditions:
+//   - Its age (measured from the last modified time) is within the range specified by older-than and newer-than flags.
+//     If older-than or newer-than is zero, no age limit is applied.
+//     If both flags are set, an error is returned.
+//   - Its size (measured in bytes) is within the range specified by MinSize and MaxSize flags.
+//     If MinSize or MaxSize is zero, no size limit is applied.
+//   - It does not have any labels that match the ExcludeLabels flag. The ExcludeLabels flag supports '=', '==', and '!=' operators,
+//     and multiple label pairs can be separated by commas. For example, -l key1=value1,key2!=value2.
+type Options struct {
+	// OlderThan is the minimum age of the resources to be considered unused
+	OlderThan string
+	// NewerThan is the maximum age of the resources to be considered unused
+	NewerThan string
+	// ExcludeLabels is a label selector to exclude resources with matching labels
+	// IncludeLabels conflicts with it, and when setting IncludeLabels, ExcludeLabels is ignored and set to empty
+	ExcludeLabels string
+	// IncludeLabels is a label selector to include resources with matching labels
+	IncludeLabels string
+	// ExcludeNamespaces is a namespace selector to exclude resources in matching namespaces
+	// IncludeNamespaces conflicts with it, and when setting IncludeNamespaces, ExcludeNamespaces is ignored and set to empty
+	ExcludeNamespaces []string
+	// IncludeNamespaces is a namespace selector to include resources in matching namespaces
+	IncludeNamespaces []string
+
+	namespace []string
+	once      sync.Once
+}
+
+// NewFilterOptions returns a new FilterOptions instance with default values
+func NewFilterOptions() *Options {
+	return &Options{
+		OlderThan:     "",
+		NewerThan:     "",
+		ExcludeLabels: "",
+	}
+}
+
+// Validate makes sure provided values for FilterOptions are valid
+func (o *Options) Validate() error {
+	if _, err := labels.Parse(o.ExcludeLabels); err != nil {
+		return err
+	}
+	if _, err := labels.Parse(o.IncludeLabels); err != nil {
+		return err
+	}
+
+	// Parse the older-than flag value into a time.Duration value
+	if o.OlderThan != "" {
+		olderThan, err := time.ParseDuration(o.OlderThan)
+		if err != nil {
+			return err
+		}
+		if olderThan < 0 {
+			return errors.New("OlderThan must be a non-negative duration")
+		}
+	}
+
+	// Parse the newer-than flag value into a time.Duration value
+	if o.NewerThan != "" {
+		newerThan, err := time.ParseDuration(o.NewerThan)
+		if err != nil {
+			return err
+		}
+		if newerThan < 0 {
+			return errors.New("NewerThan must be a non-negative duration")
+		}
+	}
+
+	return nil
+}
+
+func (o *Options) Modify() {
+	o.modifyLabels()
+}
+
+func (o *Options) Namespaces(clientset kubernetes.Interface) []string {
+	o.once.Do(func() {
+		namespaces := make([]string, 0)
+		namespacesMap := make(map[string]bool)
+		if len(o.IncludeNamespaces) > 0 && len(o.ExcludeNamespaces) > 0 {
+			fmt.Fprintf(os.Stderr, "Exclude namespaces can't be used together with include namespaces. Ignoring --exclude-namespace(-e) flag\n")
+			o.ExcludeNamespaces = nil
+		}
+		includeNamespaces := o.IncludeNamespaces
+		excludeNamespaces := o.ExcludeNamespaces
+		namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
+			os.Exit(1)
+		}
+		if len(o.IncludeNamespaces) > 0 {
+			for _, ns := range namespaceList.Items {
+				namespacesMap[ns.Name] = false
+			}
+			for _, ns := range includeNamespaces {
+				if _, exists := namespacesMap[ns]; exists {
+					namespacesMap[ns] = true
+				} else {
+					fmt.Fprintf(os.Stderr, "namespace [%s] not found\n", ns)
+				}
+			}
+		} else {
+			for _, ns := range namespaceList.Items {
+				namespacesMap[ns.Name] = true
+			}
+			for _, ns := range excludeNamespaces {
+				if _, exists := namespacesMap[ns]; exists {
+					namespacesMap[ns] = false
+				}
+			}
+		}
+		for ns := range namespacesMap {
+			if namespacesMap[ns] {
+				namespaces = append(namespaces, ns)
+			}
+		}
+		o.namespace = namespaces
+	})
+	return o.namespace
+}
+
+func (o *Options) modifyLabels() {
+	if o.IncludeLabels != "" {
+		if o.ExcludeLabels != "" {
+			fmt.Fprintf(os.Stderr, "Exclude labels can't be used together with include labels. Ignoring --exclude-label(-l) flag\n")
+		}
+		o.ExcludeLabels = ""
+	}
+}
