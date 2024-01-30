@@ -12,7 +12,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
 
-func retreiveUsedPvcs(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func retrieveUsedPvcs(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Printf("Failed to list Pods: %v\n", err)
@@ -55,7 +55,7 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filt
 		pvcNames = append(pvcNames, pvc.Name)
 	}
 
-	usedPvcs, err := retreiveUsedPvcs(clientset, namespace)
+	usedPvcs, err := retrieveUsedPvcs(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
