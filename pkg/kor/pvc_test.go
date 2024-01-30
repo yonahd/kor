@@ -50,9 +50,9 @@ func createTestPvcs(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
-func TestRetreiveUsedPvcs(t *testing.T) {
+func TestRetrieveUsedPvcs(t *testing.T) {
 	clientset := createTestPvcs(t)
-	usedPvcs, err := retreiveUsedPvcs(clientset, testNamespace)
+	usedPvcs, err := retrieveUsedPvcs(clientset, testNamespace)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
