@@ -12,19 +12,21 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
-func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface) ([]string, error) {
+func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) ([]string, error) {
 
 	var unusedCRDs []string
 
-	crds, err := apiExtClient.ApiextensionsV1().CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{})
+	crds, err := apiExtClient.ApiextensionsV1().CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 
 	for _, crd := range crds.Items {
-		if crd.Labels["kor/used"] == "true" {
+		if pass := filters.KorLabelFilter(&crd, &filters.Options{}); pass {
 			continue
 		}
 
@@ -33,7 +35,7 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 			Version:  crd.Spec.Versions[0].Name, // We're checking the first version.
 			Resource: crd.Spec.Names.Plural,
 		}
-		instances, err := dynamicClient.Resource(gvr).Namespace("").List(context.TODO(), metav1.ListOptions{})
+		instances, err := dynamicClient.Resource(gvr).Namespace("").List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 		if err != nil {
 			return nil, err
 		}
@@ -44,10 +46,10 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 	return unusedCRDs, nil
 }
 
-func GetUnusedCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedCrds(filterOpts *filters.Options, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
 
 	var outputBuffer bytes.Buffer
-	diff, err := processCrds(apiExtClient, dynamicClient)
+	diff, err := processCrds(apiExtClient, dynamicClient, &filters.Options{})
 
 	response := make(map[string]map[string][]string)
 

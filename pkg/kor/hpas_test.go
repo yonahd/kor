@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestHpas(t *testing.T) *fake.Clientset {
@@ -53,7 +55,7 @@ func createTestHpas(t *testing.T) *fake.Clientset {
 func TestExtractUnusedHpas(t *testing.T) {
 	clientset := createTestHpas(t)
 
-	unusedHpas, err := extractUnusedHpas(clientset, testNamespace, &FilterOptions{})
+	unusedHpas, err := extractUnusedHpas(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -70,11 +72,6 @@ func TestExtractUnusedHpas(t *testing.T) {
 func TestGetUnusedHpasStructured(t *testing.T) {
 	clientset := createTestHpas(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -83,7 +80,7 @@ func TestGetUnusedHpasStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedHpas(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedHpas(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedHpasStructured: %v", err)
 	}

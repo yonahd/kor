@@ -9,6 +9,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestPdbs(t *testing.T) *fake.Clientset {
@@ -63,7 +65,7 @@ func createTestPdbs(t *testing.T) *fake.Clientset {
 func TestProcessNamespacePdbs(t *testing.T) {
 	clientset := createTestPdbs(t)
 
-	unusedPdbs, err := processNamespacePdbs(clientset, testNamespace, &FilterOptions{})
+	unusedPdbs, err := processNamespacePdbs(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -80,11 +82,6 @@ func TestProcessNamespacePdbs(t *testing.T) {
 func TestGetUnusedPdbsStructured(t *testing.T) {
 	clientset := createTestPdbs(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -93,7 +90,7 @@ func TestGetUnusedPdbsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedPdbs(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedPdbs(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedPdbsStructured: %v", err)
 	}

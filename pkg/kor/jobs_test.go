@@ -3,6 +3,10 @@ package kor
 import (
 	"context"
 	"encoding/json"
+	"reflect"
+	"testing"
+	"time"
+
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -10,9 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
-	"reflect"
-	"testing"
-	"time"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestJobs(t *testing.T) *fake.Clientset {
@@ -51,7 +54,7 @@ func createTestJobs(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceJobs(t *testing.T) {
 	clientset := createTestJobs(t)
 
-	completedJobs, err := ProcessNamespaceJobs(clientset, testNamespace, &FilterOptions{})
+	completedJobs, err := ProcessNamespaceJobs(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -68,11 +71,6 @@ func TestProcessNamespaceJobs(t *testing.T) {
 func TestGetUnusedJobsStructured(t *testing.T) {
 	clientset := createTestJobs(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -81,7 +79,7 @@ func TestGetUnusedJobsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedJobs(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedJobs(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedJobsStructured: %v", err)
 	}

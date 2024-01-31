@@ -9,6 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	fakedynamic "k8s.io/client-go/dynamic/fake"
 	"k8s.io/utils/strings/slices"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func TestCheckFinalizers(t *testing.T) {
@@ -85,7 +87,7 @@ func TestRetrievePendingDeletionResources(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := retrievePendingDeletionResources(test.apiResourceLists, dynamicClient, &FilterOptions{})
+			result, err := retrievePendingDeletionResources(test.apiResourceLists, dynamicClient, &filters.Options{})
 			if (err != nil) != test.expectedError {
 				t.Errorf("Expected error: %v, Got: %v", test.expectedError, err)
 			}

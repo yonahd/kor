@@ -13,6 +13,8 @@ import (
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 var (
@@ -30,16 +32,16 @@ func init() {
 }
 
 // TODO: add option to change port / url !?
-func Exporter(includeExcludeLists IncludeExcludeLists, filterOptions *FilterOptions, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) {
+func Exporter(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) {
 	http.Handle("/metrics", promhttp.Handler())
 	fmt.Println("Server listening on :8080")
-	go exportMetrics(includeExcludeLists, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts) // Start exporting metrics in the background
+	go exportMetrics(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts) // Start exporting metrics in the background
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Println(err)
 	}
 }
 
-func exportMetrics(includeExcludeLists IncludeExcludeLists, filterOptions *FilterOptions, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) {
+func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) {
 	exporterInterval := os.Getenv("EXPORTER_INTERVAL")
 	if exporterInterval == "" {
 		exporterInterval = "10"
@@ -52,7 +54,7 @@ func exportMetrics(includeExcludeLists IncludeExcludeLists, filterOptions *Filte
 
 	for {
 		fmt.Println("collecting unused resources")
-		if korOutput, err := GetUnusedAll(includeExcludeLists, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
+		if korOutput, err := GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		} else {

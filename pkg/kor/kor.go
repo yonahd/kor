@@ -2,16 +2,13 @@ package kor
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -117,49 +114,6 @@ func GetDynamicClient(kubeconfig string) *dynamic.DynamicClient {
 	return clientset
 }
 
-func SetNamespaceList(namespaceLists IncludeExcludeLists, clientset kubernetes.Interface) []string {
-	namespaces := make([]string, 0)
-	namespacesMap := make(map[string]bool)
-	if namespaceLists.IncludeListStr != "" && namespaceLists.ExcludeListStr != "" {
-		fmt.Fprintf(os.Stderr, "Exclude namespaces can't be used together with include namespaces. Ignoring --exclude-namespace(-e) flag\n")
-		namespaceLists.ExcludeListStr = ""
-	}
-	includeNamespaces := strings.Split(namespaceLists.IncludeListStr, ",")
-	excludeNamespaces := strings.Split(namespaceLists.ExcludeListStr, ",")
-	namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
-		os.Exit(1)
-	}
-	if namespaceLists.IncludeListStr != "" {
-		for _, ns := range namespaceList.Items {
-			namespacesMap[ns.Name] = false
-		}
-		for _, ns := range includeNamespaces {
-			if _, exists := namespacesMap[ns]; exists {
-				namespacesMap[ns] = true
-			} else {
-				fmt.Fprintf(os.Stderr, "namespace [%s] not found\n", ns)
-			}
-		}
-	} else {
-		for _, ns := range namespaceList.Items {
-			namespacesMap[ns.Name] = true
-		}
-		for _, ns := range excludeNamespaces {
-			if _, exists := namespacesMap[ns]; exists {
-				namespacesMap[ns] = false
-			}
-		}
-	}
-	for ns := range namespacesMap {
-		if namespacesMap[ns] {
-			namespaces = append(namespaces, ns)
-		}
-	}
-	return namespaces
-}
-
 func FormatOutput(namespace string, resources []string, resourceType string, opts Opts) string {
 	if opts.Verbose && len(resources) == 0 {
 		return fmt.Sprintf("No unused %s found in the namespace: %s \n", resourceType, namespace)
@@ -251,7 +205,7 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) strin
 }
 
 // TODO create formatter by resource "#", "Resource Name", "Namespace"
-
+// TODO Functions that use this object are accompanied by repeated data acquisition operations and can be optimized.
 func CalculateResourceDifference(usedResourceNames []string, allResourceNames []string) []string {
 	var difference []string
 	for _, name := range allResourceNames {

@@ -9,6 +9,8 @@ import (
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 type GetUnusedResourceJSONResponse struct {
@@ -21,7 +23,7 @@ type ResourceDiff struct {
 	diff         []string
 }
 
-func getUnusedCMs(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedCMs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	cmDiff, err := processNamespaceCM(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "configmaps", namespace, err)
@@ -30,7 +32,7 @@ func getUnusedCMs(clientset kubernetes.Interface, namespace string, filterOpts *
 	return namespaceCMDiff
 }
 
-func getUnusedSVCs(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedSVCs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	svcDiff, err := ProcessNamespaceServices(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "services", namespace, err)
@@ -39,7 +41,7 @@ func getUnusedSVCs(clientset kubernetes.Interface, namespace string, filterOpts 
 	return namespaceSVCDiff
 }
 
-func getUnusedSecrets(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedSecrets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	secretDiff, err := processNamespaceSecret(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "secrets", namespace, err)
@@ -48,7 +50,7 @@ func getUnusedSecrets(clientset kubernetes.Interface, namespace string, filterOp
 	return namespaceSecretDiff
 }
 
-func getUnusedServiceAccounts(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedServiceAccounts(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	saDiff, err := processNamespaceSA(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "serviceaccounts", namespace, err)
@@ -57,7 +59,7 @@ func getUnusedServiceAccounts(clientset kubernetes.Interface, namespace string, 
 	return namespaceSADiff
 }
 
-func getUnusedDeployments(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedDeployments(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	deployDiff, err := ProcessNamespaceDeployments(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "deployments", namespace, err)
@@ -66,7 +68,7 @@ func getUnusedDeployments(clientset kubernetes.Interface, namespace string, filt
 	return namespaceSADiff
 }
 
-func getUnusedStatefulSets(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedStatefulSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	stsDiff, err := ProcessNamespaceStatefulSets(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "statefulSets", namespace, err)
@@ -75,7 +77,7 @@ func getUnusedStatefulSets(clientset kubernetes.Interface, namespace string, fil
 	return namespaceSADiff
 }
 
-func getUnusedRoles(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	roleDiff, err := processNamespaceRoles(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "roles", namespace, err)
@@ -84,7 +86,7 @@ func getUnusedRoles(clientset kubernetes.Interface, namespace string, filterOpts
 	return namespaceSADiff
 }
 
-func getUnusedHpas(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedHpas(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	hpaDiff, err := processNamespaceHpas(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "hpas", namespace, err)
@@ -93,7 +95,7 @@ func getUnusedHpas(clientset kubernetes.Interface, namespace string, filterOpts 
 	return namespaceHpaDiff
 }
 
-func getUnusedPvcs(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedPvcs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	pvcDiff, err := processNamespacePvcs(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pvcs", namespace, err)
@@ -102,7 +104,7 @@ func getUnusedPvcs(clientset kubernetes.Interface, namespace string, filterOpts 
 	return namespacePvcDiff
 }
 
-func getUnusedIngresses(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedIngresses(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	ingressDiff, err := processNamespaceIngresses(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "ingresses", namespace, err)
@@ -111,7 +113,7 @@ func getUnusedIngresses(clientset kubernetes.Interface, namespace string, filter
 	return namespaceIngressDiff
 }
 
-func getUnusedPdbs(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedPdbs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	pdbDiff, err := processNamespacePdbs(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pdbs", namespace, err)
@@ -120,8 +122,8 @@ func getUnusedPdbs(clientset kubernetes.Interface, namespace string, filterOpts 
 	return namespacePdbDiff
 }
 
-func getUnusedCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface) ResourceDiff {
-	crdDiff, err := processCrds(apiExtClient, dynamicClient)
+func getUnusedCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) ResourceDiff {
+	crdDiff, err := processCrds(apiExtClient, dynamicClient, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "Crds", err)
 	}
@@ -129,7 +131,7 @@ func getUnusedCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient 
 	return allCrdDiff
 }
 
-func getUnusedPvs(clientset kubernetes.Interface, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedPvs(clientset kubernetes.Interface, filterOpts *filters.Options) ResourceDiff {
 	pvDiff, err := processPvs(clientset, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "Pvs", err)
@@ -138,7 +140,7 @@ func getUnusedPvs(clientset kubernetes.Interface, filterOpts *FilterOptions) Res
 	return allPvDiff
 }
 
-func getUnusedPods(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedPods(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	podDiff, err := ProcessNamespacePods(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pods", namespace, err)
@@ -147,7 +149,7 @@ func getUnusedPods(clientset kubernetes.Interface, namespace string, filterOpts 
 	return namespacePodDiff
 }
 
-func getUnusedJobs(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedJobs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	jobDiff, err := ProcessNamespaceJobs(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "jobs", namespace, err)
@@ -156,7 +158,7 @@ func getUnusedJobs(clientset kubernetes.Interface, namespace string, filterOpts 
 	return namespaceJobDiff
 }
 
-func getUnusedReplicaSets(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedReplicaSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	replicaSetDiff, err := ProcessNamespaceReplicaSets(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "jobs", namespace, err)
@@ -165,10 +167,10 @@ func getUnusedReplicaSets(clientset kubernetes.Interface, namespace string, filt
 	return namespaceRSDiff
 }
 
-func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := filterOpts.Namespaces(clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {
@@ -214,7 +216,7 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOpt
 
 	var allDiffs []ResourceDiff
 	noNamespaceResourceMap := make(map[string][]string)
-	crdDiff := getUnusedCrds(apiExtClient, dynamicClient)
+	crdDiff := getUnusedCrds(apiExtClient, dynamicClient, filterOpts)
 	crdOutput := FormatOutputAll("", []ResourceDiff{crdDiff}, opts)
 	outputBuffer.WriteString(crdOutput)
 	outputBuffer.WriteString("\n")

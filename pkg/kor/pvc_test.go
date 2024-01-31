@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestPvcs(t *testing.T) *fake.Clientset {
@@ -68,7 +70,7 @@ func TestRetrieveUsedPvcs(t *testing.T) {
 
 func TestProcessNamespacePvcs(t *testing.T) {
 	clientset := createTestPvcs(t)
-	usedPvcs, err := processNamespacePvcs(clientset, testNamespace, &FilterOptions{})
+	usedPvcs, err := processNamespacePvcs(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -85,11 +87,6 @@ func TestProcessNamespacePvcs(t *testing.T) {
 func TestGetUnusedPvcsStructured(t *testing.T) {
 	clientset := createTestPvcs(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -98,7 +95,7 @@ func TestGetUnusedPvcsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedPvcs(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedPvcs(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedPvcsStructured: %v", err)
 	}
