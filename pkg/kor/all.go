@@ -84,6 +84,15 @@ func getUnusedRoles(clientset kubernetes.Interface, namespace string, filterOpts
 	return namespaceSADiff
 }
 
+func getUnusedClusterRoles(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+	roleDiff, err := processNamespaceClusterRoles(clientset, namespace, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "roles", namespace, err)
+	}
+	namespaceSADiff := ResourceDiff{"ClusterRole", roleDiff}
+	return namespaceSADiff
+}
+
 func getUnusedHpas(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
 	hpaDiff, err := processNamespaceHpas(clientset, namespace, filterOpts)
 	if err != nil {
@@ -187,6 +196,8 @@ func GetUnusedAll(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOpt
 		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
 		namespaceRoleDiff := getUnusedRoles(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceRoleDiff)
+		namespaceClusterRoleDiff := getUnusedClusterRoles(clientset, namespace, filterOpts)
+		allDiffs = append(allDiffs, namespaceClusterRoleDiff)
 		namespaceHpaDiff := getUnusedHpas(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceHpaDiff)
 		namespacePvcDiff := getUnusedPvcs(clientset, namespace, filterOpts)
