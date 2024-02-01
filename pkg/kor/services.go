@@ -9,10 +9,12 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
-func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
-	endpointsList, err := clientset.CoreV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{})
+func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+	endpointsList, err := clientset.CoreV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
@@ -20,15 +22,7 @@ func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, 
 	var endpointsWithoutSubsets []string
 
 	for _, endpoints := range endpointsList.Items {
-		if endpoints.Labels["kor/used"] == "true" {
-			continue
-		}
-
-		if excluded, _ := HasExcludedLabel(endpoints.Labels, filterOpts.ExcludeLabels); excluded {
-			continue
-		}
-
-		if included, _ := HasIncludedAge(endpoints.CreationTimestamp, filterOpts); !included {
+		if pass, _ := filter.Run(filterOpts); pass {
 			continue
 		}
 
@@ -40,10 +34,10 @@ func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, 
 	return endpointsWithoutSubsets, nil
 }
 
-func GetUnusedServices(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedServices(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := filterOpts.Namespaces(clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

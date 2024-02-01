@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestConfigmaps(t *testing.T) *fake.Clientset {
@@ -101,7 +103,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 func TestRetrieveConfigMapNames(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 
-	configMapNames, err := retrieveConfigMapNames(clientset, testNamespace, &FilterOptions{})
+	configMapNames, err := retrieveConfigMapNames(clientset, testNamespace, &filters.Options{})
 
 	if err != nil {
 		t.Fatalf("Error retrieving configmap names: %v", err)
@@ -116,7 +118,7 @@ func TestRetrieveConfigMapNames(t *testing.T) {
 func TestProcessNamespaceCM(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 
-	diff, err := processNamespaceCM(clientset, testNamespace, &FilterOptions{})
+	diff, err := processNamespaceCM(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Fatalf("Error processing namespace CM: %v", err)
 	}
@@ -166,11 +168,6 @@ func TestRetrieveUsedCM(t *testing.T) {
 func TestGetUnusedConfigmapsStructured(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -179,7 +176,7 @@ func TestGetUnusedConfigmapsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedConfigmaps(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedConfigmaps(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedConfigmapsStructured: %v", err)
 	}

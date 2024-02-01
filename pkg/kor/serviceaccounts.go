@@ -9,6 +9,8 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 var exceptionServiceAccounts = []ExceptionResource{
@@ -27,7 +29,7 @@ func getServiceAccountsFromClusterRoleBindings(clientset kubernetes.Interface, n
 
 	// Extract service account names from the role bindings
 	for _, rb := range roleBindings.Items {
-		if rb.Labels["kor/used"] == "true" {
+		if pass := filters.KorLabelFilter(&rb, &filters.Options{}); pass {
 			continue
 		}
 
@@ -101,22 +103,14 @@ func retrieveUsedSA(clientset kubernetes.Interface, namespace string) ([]string,
 	return podServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, nil
 }
 
-func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
-	serviceaccounts, err := clientset.CoreV1().ServiceAccounts(namespace).List(context.TODO(), metav1.ListOptions{})
+func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+	serviceaccounts, err := clientset.CoreV1().ServiceAccounts(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 	names := make([]string, 0, len(serviceaccounts.Items))
 	for _, serviceaccount := range serviceaccounts.Items {
-		if serviceaccount.Labels["kor/used"] == "true" {
-			continue
-		}
-
-		if excluded, _ := HasExcludedLabel(serviceaccount.Labels, filterOpts.ExcludeLabels); excluded {
-			continue
-		}
-
-		if included, _ := HasIncludedAge(serviceaccount.CreationTimestamp, filterOpts); !included {
+		if pass, _ := filter.SetObject(&serviceaccount).Run(filterOpts); pass {
 			continue
 		}
 
@@ -125,7 +119,7 @@ func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace strin
 	return names, nil
 }
 
-func processNamespaceSA(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
+func processNamespaceSA(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
 	usedServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, err := retrieveUsedSA(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -147,10 +141,10 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string, filter
 
 }
 
-func GetUnusedServiceAccounts(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedServiceAccounts(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := filterOpts.Namespaces(clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

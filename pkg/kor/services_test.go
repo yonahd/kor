@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestServices(t *testing.T) *fake.Clientset {
@@ -43,7 +45,7 @@ func createTestServices(t *testing.T) *fake.Clientset {
 func TestGetEndpointsWithoutSubsets(t *testing.T) {
 	clientset := createTestServices(t)
 
-	servicesWithoutEndpoints, err := ProcessNamespaceServices(clientset, testNamespace, &FilterOptions{})
+	servicesWithoutEndpoints, err := ProcessNamespaceServices(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -60,11 +62,6 @@ func TestGetEndpointsWithoutSubsets(t *testing.T) {
 func TestGetUnusedServicesStructured(t *testing.T) {
 	clientset := createTestServices(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: testNamespace,
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -73,7 +70,7 @@ func TestGetUnusedServicesStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedServices(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedServices(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedServicesStructured: %v", err)
 	}

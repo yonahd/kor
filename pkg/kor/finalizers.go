@@ -13,6 +13,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/utils/strings/slices"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func CheckFinalizers(finalizers []string, deletionTimestamp *metav1.Time) bool {
@@ -22,7 +24,7 @@ func CheckFinalizers(finalizers []string, deletionTimestamp *metav1.Time) bool {
 	return false
 }
 
-func retrievePendingDeletionResources(resourceTypes []*metav1.APIResourceList, dynamicClient dynamic.Interface, filterOpts *FilterOptions) (map[string]map[schema.GroupVersionResource][]string, error) {
+func retrievePendingDeletionResources(resourceTypes []*metav1.APIResourceList, dynamicClient dynamic.Interface, filterOpts *filters.Options) (map[string]map[schema.GroupVersionResource][]string, error) {
 	pendingDeletionResources := make(map[string]map[schema.GroupVersionResource][]string) //map[namespace]map[gvr][]resourceNames
 
 	for _, apiResourceList := range resourceTypes {
@@ -39,24 +41,13 @@ func retrievePendingDeletionResources(resourceTypes []*metav1.APIResourceList, d
 				resourceList, err := dynamicClient.
 					Resource(gvr).
 					Namespace(metav1.NamespaceAll).
-					List(context.TODO(), metav1.ListOptions{})
+					List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 				if err != nil {
 					fmt.Printf("Error listing resources for GVR %s: %v\n", apiResourceList.GroupVersion, err)
 					continue
 				}
 				for _, item := range resourceList.Items {
-					labels := item.GetLabels()
-					if labels["kor/used"] == "true" {
-						continue
-					}
-
-					// Check for excluded labels
-					if excluded, _ := HasExcludedLabel(labels, filterOpts.ExcludeLabels); excluded {
-						continue
-					}
-
-					// Check age criteria
-					if included, _ := HasIncludedAge(item.GetCreationTimestamp(), filterOpts); !included {
+					if pass, _ := filter.Run(filterOpts); pass {
 						continue
 					}
 					if CheckFinalizers(item.GetFinalizers(), item.GetDeletionTimestamp()) {
@@ -72,7 +63,7 @@ func retrievePendingDeletionResources(resourceTypes []*metav1.APIResourceList, d
 	return pendingDeletionResources, nil
 }
 
-func getResourcesWithFinalizersPendingDeletion(clientset kubernetes.Interface, dynamicClient dynamic.Interface, filterOpts *FilterOptions) (map[string]map[schema.GroupVersionResource][]string, error) {
+func getResourcesWithFinalizersPendingDeletion(clientset kubernetes.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) (map[string]map[schema.GroupVersionResource][]string, error) {
 	// Use the discovery client to fetch API resources
 	resourceTypes, err := clientset.Discovery().ServerPreferredNamespacedResources()
 	if err != nil {
@@ -83,9 +74,9 @@ func getResourcesWithFinalizersPendingDeletion(clientset kubernetes.Interface, d
 	return retrievePendingDeletionResources(resourceTypes, dynamicClient, filterOpts)
 }
 
-func GetUnusedfinalizers(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, dynamicClient *dynamic.DynamicClient, outputFormat string, opts Opts) (string, error) {
+func GetUnusedfinalizers(filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient *dynamic.DynamicClient, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := filterOpts.Namespaces(clientset)
 	response := make(map[string]map[string][]string)
 	pendingDeletionDiffs, err := getResourcesWithFinalizersPendingDeletion(clientset, dynamicClient, filterOpts)
 

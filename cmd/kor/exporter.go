@@ -2,6 +2,7 @@ package kor
 
 import (
 	"github.com/spf13/cobra"
+
 	"github.com/yonahd/kor/pkg/kor"
 )
 
@@ -14,7 +15,7 @@ var exporterCmd = &cobra.Command{
 		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
 
-		kor.Exporter(includeExcludeLists, filterOptions, clientset, apiExtClient, dynamicClient, "json", opts)
+		kor.Exporter(filterOptions, clientset, apiExtClient, dynamicClient, "json", opts)
 
 	},
 }
