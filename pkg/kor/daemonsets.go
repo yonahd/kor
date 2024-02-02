@@ -26,7 +26,7 @@ func ProcessNamespaceDaemonSets(clientset kubernetes.Interface, namespace string
 			continue
 		}
 
-		if *&daemonSet.Status.CurrentNumberScheduled == 0 {
+		if daemonSet.Status.CurrentNumberScheduled == 0 {
 			daemonSetsWithoutReplicas = append(daemonSetsWithoutReplicas, daemonSet.Name)
 		}
 	}
