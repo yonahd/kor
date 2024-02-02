@@ -167,6 +167,15 @@ func getUnusedReplicaSets(clientset kubernetes.Interface, namespace string, filt
 	return namespaceRSDiff
 }
 
+func getUnusedDaemonSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
+	dsDiff, err := ProcessNamespaceDaemonSets(clientset, namespace, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "DaemonSets", namespace, err)
+	}
+	namespaceSADiff := ResourceDiff{"DaemonSet", dsDiff}
+	return namespaceSADiff
+}
+
 func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
@@ -201,6 +210,8 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 		allDiffs = append(allDiffs, namespaceJobDiff)
 		namespaceRSDiff := getUnusedReplicaSets(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceRSDiff)
+		namespaceDaemonsetDiff := getUnusedDaemonSets(clientset, namespace, filterOpts)
+		allDiffs = append(allDiffs, namespaceDaemonsetDiff)
 
 		output := FormatOutputAll(namespace, allDiffs, opts)
 

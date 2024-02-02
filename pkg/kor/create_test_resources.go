@@ -322,3 +322,32 @@ func CreateTestReplicaSet(namespace, name string, specReplicas *int32, status *a
 		Status: *status,
 	}
 }
+
+func CreateTestDaemonSet(namespace, name string, labels map[string]string, status *appsv1.DaemonSetStatus) *appsv1.DaemonSet {
+	return &appsv1.DaemonSet{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+			Labels:    labels,
+		},
+		Spec: appsv1.DaemonSetSpec{
+			Selector: &v1.LabelSelector{
+				MatchLabels: labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "test",
+						},
+					},
+				},
+			},
+		},
+		Status: *status,
+	}
+}
