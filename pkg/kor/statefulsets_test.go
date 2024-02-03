@@ -8,7 +8,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -53,7 +53,7 @@ func TestProcessNamespaceStatefulSets(t *testing.T) {
 	}
 
 	if len(statefulSetsWithoutReplicas) != 1 {
-		t.Errorf("Expected 1 deployment without replicas, got %d", len(statefulSetsWithoutReplicas))
+		t.Errorf("Expected 1 statefulSet without replicas, got %d", len(statefulSetsWithoutReplicas))
 	}
 
 	if statefulSetsWithoutReplicas[0] != "test-sts1" {
