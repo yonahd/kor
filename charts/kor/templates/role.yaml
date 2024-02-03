@@ -10,7 +10,6 @@ rules:
     resources:
       - pods
       - configmaps
-      - namespaces
       - secrets
       - services
       - serviceaccounts
@@ -18,13 +17,13 @@ rules:
       - statefulsets
       - roles
       - rolebindings
-      - clusterroles
-      - clusterrolebindings
       - horizontalpodautoscalers
       - persistentvolumeclaims
       - ingresses
       - poddisruptionbudgets
       - endpoints
+      - jobs
+      - replicasets
     verbs:
       - get
       - list
@@ -41,7 +40,6 @@ rules:
     resources:
       - pods
       - configmaps
-      - namespaces
       - secrets
       - services
       - serviceaccounts
@@ -49,13 +47,19 @@ rules:
       - statefulsets
       - roles
       - rolebindings
-      - clusterroles
-      - clusterrolebindings
       - horizontalpodautoscalers
       - persistentvolumeclaims
       - ingresses
       - poddisruptionbudgets
       - endpoints
+      - jobs
+      - replicasets
+      {{/* cluster-scoped resources */}}
+      - namespaces
+      - clusterroles
+      - clusterrolebindings
+      - persistentvolumes
+      - customresourcedefinitions
     verbs:
       - get
       - list
