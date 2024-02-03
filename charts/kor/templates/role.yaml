@@ -25,6 +25,7 @@ rules:
       - ingresses
       - poddisruptionbudgets
       - endpoints
+      - daemonsets
     verbs:
       - get
       - list
@@ -56,6 +57,7 @@ rules:
       - ingresses
       - poddisruptionbudgets
       - endpoints
+      - daemonsets
     verbs:
       - get
       - list
