@@ -155,7 +155,7 @@ func GetUnusedServiceAccounts(filterOpts *filters.Options, clientset kubernetes.
 		}
 
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Serviceaccount", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource(diff, clientset, namespace, "ServiceAccount", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Serviceaccount %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}

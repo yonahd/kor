@@ -45,7 +45,7 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 		"PDB": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.PolicyV1beta1().PodDisruptionBudgets(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
-		"Roles": func(clientset kubernetes.Interface, namespace, name string) error {
+		"Role": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.RbacV1().Roles(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
 		"PVC": func(clientset kubernetes.Interface, namespace, name string) error {
@@ -137,7 +137,7 @@ func updateResource(clientset kubernetes.Interface, namespace, resourceType stri
 		return clientset.NetworkingV1().Ingresses(namespace).Update(context.TODO(), resource.(*networkingv1.Ingress), metav1.UpdateOptions{})
 	case "PDB":
 		return clientset.PolicyV1beta1().PodDisruptionBudgets(namespace).Update(context.TODO(), resource.(*policyv1beta1.PodDisruptionBudget), metav1.UpdateOptions{})
-	case "Roles":
+	case "Role":
 		return clientset.RbacV1().Roles(namespace).Update(context.TODO(), resource.(*rbacv1.Role), metav1.UpdateOptions{})
 	case "PVC":
 		return clientset.CoreV1().PersistentVolumeClaims(namespace).Update(context.TODO(), resource.(*corev1.PersistentVolumeClaim), metav1.UpdateOptions{})
@@ -175,7 +175,7 @@ func getResource(clientset kubernetes.Interface, namespace, resourceType, resour
 		return clientset.NetworkingV1().Ingresses(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "PDB":
 		return clientset.PolicyV1beta1().PodDisruptionBudgets(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
-	case "Roles":
+	case "Role":
 		return clientset.RbacV1().Roles(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "PVC":
 		return clientset.CoreV1().PersistentVolumeClaims(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
