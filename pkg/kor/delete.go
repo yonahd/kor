@@ -48,6 +48,9 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 		"Roles": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.RbacV1().Roles(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
+		"ClusterRoles": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.RbacV1().ClusterRoles().Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
 		"PVC": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.CoreV1().PersistentVolumeClaims(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
@@ -136,6 +139,8 @@ func updateResource(clientset kubernetes.Interface, namespace, resourceType stri
 		return clientset.PolicyV1beta1().PodDisruptionBudgets(namespace).Update(context.TODO(), resource.(*policyv1beta1.PodDisruptionBudget), metav1.UpdateOptions{})
 	case "Roles":
 		return clientset.RbacV1().Roles(namespace).Update(context.TODO(), resource.(*rbacv1.Role), metav1.UpdateOptions{})
+	case "ClusterRoles":
+		return clientset.RbacV1().ClusterRoles().Update(context.TODO(), resource.(*rbacv1.ClusterRole), metav1.UpdateOptions{})
 	case "PVC":
 		return clientset.CoreV1().PersistentVolumeClaims(namespace).Update(context.TODO(), resource.(*corev1.PersistentVolumeClaim), metav1.UpdateOptions{})
 	case "StatefulSet":
@@ -172,6 +177,8 @@ func getResource(clientset kubernetes.Interface, namespace, resourceType, resour
 		return clientset.PolicyV1beta1().PodDisruptionBudgets(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "Roles":
 		return clientset.RbacV1().Roles(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
+	case "ClusterRoles":
+		return clientset.RbacV1().ClusterRoles().Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "PVC":
 		return clientset.CoreV1().PersistentVolumeClaims(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "StatefulSet":

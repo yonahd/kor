@@ -100,7 +100,7 @@ func CreateTestRbacSubject(namespace, serviceAccountName string) *rbacv1.Subject
 
 func CreateTestRoleRef(roleName string) *rbacv1.RoleRef {
 	return &rbacv1.RoleRef{
-		Kind: "Role",
+		Kind: "ClusterRole",
 		Name: roleName,
 	}
 }
@@ -131,6 +131,19 @@ func CreateTestClusterRoleBinding(namespace, name, serviceAccountName string) *r
 	}
 }
 
+func CreateTestClusterRoleBindingRoleRef(namespace, name, serviceAccountName string, roleRefName *rbacv1.RoleRef) *rbacv1.ClusterRoleBinding {
+	rbacSubject := CreateTestRbacSubject(namespace, serviceAccountName)
+	return &rbacv1.ClusterRoleBinding{
+		ObjectMeta: v1.ObjectMeta{
+			Name: name,
+		},
+		Subjects: []rbacv1.Subject{
+			*rbacSubject,
+		},
+		RoleRef: *roleRefName,
+	}
+}
+
 func createPolicyRule() *rbacv1.PolicyRule {
 	return &rbacv1.PolicyRule{
 		Verbs:     []string{"get"},
@@ -144,6 +157,16 @@ func CreateTestRole(namespace, name string) *rbacv1.Role {
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
+		},
+		Rules: []rbacv1.PolicyRule{*policyRule},
+	}
+}
+
+func CreateTestClusterRole(name string) *rbacv1.ClusterRole {
+	policyRule := createPolicyRule()
+	return &rbacv1.ClusterRole{
+		ObjectMeta: v1.ObjectMeta{
+			Name: name,
 		},
 		Rules: []rbacv1.PolicyRule{*policyRule},
 	}

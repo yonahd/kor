@@ -18,6 +18,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - Deployments
 - StatefulSets
 - Roles
+- ClusterRoles
 - HPAs
 - PVCs
 - Ingresses
@@ -86,6 +87,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `deployments` - Gets unused Deployments for the specified namespace or all namespaces.
 - `statefulsets` - Gets unused StatefulSets for the specified namespace or all namespaces.
 - `role` - Gets unused Roles for the specified namespace or all namespaces.
+- `clusterrole` - Gets unused ClusterRoles for the specified namespace or all namespaces (namespace refers to RoleBinding).
 - `hpa` - Gets unused HPAs for the specified namespace or all namespaces.
 - `pods` - Gets unused Pods for the specified namespace or all namespaces.
 - `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
@@ -140,6 +142,7 @@ kor [subcommand] --help
 | ServiceAccounts | ServiceAccounts unused by Pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                    |                                                                                                                              |
 | StatefulSets    | Statefulsets with no Replicas                                                                                                                                                                                                     |                                                                                                                              |
 | Roles           | Roles not used in roleBinding                                                                                                                                                                                                     |                                                                                                                              |
+| ClusterRoles    | ClusterRoles not used in roleBinding or clusterRoleBinding                                                                                                                                                                        |                                                                                                                              |
 | PVCs            | PVCs not used in Pods                                                                                                                                                                                                             |                                                                                                                              |
 | Ingresses       | Ingresses not pointing at any Service                                                                                                                                                                                             |                                                                                                                              |
 | Hpas            | HPAs not used in Deployments<br/> HPAs not used in StatefulSets                                                                                                                                                                   |                                                                                                                              |
@@ -147,7 +150,7 @@ kor [subcommand] --help
 | Pvs             | PVs not bound to a PVC                                                                                                                                                                                                            |                                                                                                                              |
 | Pdbs            | PDBs not used in Deployments<br/> PDBs not used in StatefulSets                                                                                                                                                                   |                                                                                                                              |
 | Jobs            | Jobs status is completed                                                                                                                                                                                                          |                                                                                                                              |
-| ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work              |    
+| ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work                                                                                                                                                        |    
 
 
 ## Deleting Unused resources
