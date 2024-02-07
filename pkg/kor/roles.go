@@ -10,9 +10,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
-func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
+func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
 	// Get a list of all role bindings in the specified namespace
 	roleBindings, err := clientset.RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -21,14 +23,7 @@ func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, filterO
 
 	usedRoles := make(map[string]bool)
 	for _, rb := range roleBindings.Items {
-		// checks if the resource has any labels that match the excluded selector specified in opts.ExcludeLabels.
-		// If it does, the resource is skipped.
-		if excluded, _ := HasExcludedLabel(rb.Labels, filterOpts.ExcludeLabels); excluded {
-			continue
-		}
-		// checks if the resource's age (measured from its last modified time) matches the included criteria
-		// specified by the filter options.
-		if included, _ := HasIncludedAge(rb.CreationTimestamp, filterOpts); !included {
+		if pass, _ := filter.Run(filterOpts); pass {
 			continue
 		}
 
@@ -43,14 +38,14 @@ func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, filterO
 	return usedRoleNames, nil
 }
 
-func retrieveRoleNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
-	roles, err := clientset.RbacV1().Roles(namespace).List(context.TODO(), metav1.ListOptions{})
+func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+	roles, err := clientset.RbacV1().Roles(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 	names := make([]string, 0, len(roles.Items))
 	for _, role := range roles.Items {
-		if role.Labels["kor/used"] == "true" {
+		if pass := filters.KorLabelFilter(&role, &filters.Options{}); pass {
 			continue
 		}
 
@@ -59,7 +54,7 @@ func retrieveRoleNames(clientset kubernetes.Interface, namespace string) ([]stri
 	return names, nil
 }
 
-func processNamespaceRoles(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
+func processNamespaceRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
 	usedRoles, err := retrieveUsedRoles(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
@@ -67,7 +62,7 @@ func processNamespaceRoles(clientset kubernetes.Interface, namespace string, fil
 
 	usedRoles = RemoveDuplicatesAndSort(usedRoles)
 
-	roleNames, err := retrieveRoleNames(clientset, namespace)
+	roleNames, err := retrieveRoleNames(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -77,9 +72,9 @@ func processNamespaceRoles(clientset kubernetes.Interface, namespace string, fil
 
 }
 
-func GetUnusedRoles(includeExcludeLists IncludeExcludeLists, filterOpts *FilterOptions, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedRoles(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := filterOpts.Namespaces(clientset)
 	response := make(map[string]map[string][]string)
 
 	for _, namespace := range namespaces {

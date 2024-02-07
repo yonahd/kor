@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestDeployments(t *testing.T) *fake.Clientset {
@@ -45,7 +47,7 @@ func createTestDeployments(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceDeployments(t *testing.T) {
 	clientset := createTestDeployments(t)
 
-	deploymentsWithoutReplicas, err := ProcessNamespaceDeployments(clientset, testNamespace, &FilterOptions{})
+	deploymentsWithoutReplicas, err := ProcessNamespaceDeployments(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -62,11 +64,6 @@ func TestProcessNamespaceDeployments(t *testing.T) {
 func TestGetUnusedDeploymentsStructured(t *testing.T) {
 	clientset := createTestDeployments(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -75,7 +72,7 @@ func TestGetUnusedDeploymentsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedDeployments(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedDeployments(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedDeploymentsStructured: %v", err)
 	}

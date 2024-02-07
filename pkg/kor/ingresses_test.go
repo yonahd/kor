@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestIngresses(t *testing.T) *fake.Clientset {
@@ -48,7 +50,7 @@ func createTestIngresses(t *testing.T) *fake.Clientset {
 func TestRetrieveUsedIngress(t *testing.T) {
 	clientset := createTestIngresses(t)
 
-	usedIngresses, err := retrieveUsedIngress(clientset, testNamespace, &FilterOptions{})
+	usedIngresses, err := retrieveUsedIngress(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -74,11 +76,6 @@ func contains(slice []string, item string) bool {
 func TestGetUnusedIngressesStructured(t *testing.T) {
 	clientset := createTestIngresses(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -87,7 +84,7 @@ func TestGetUnusedIngressesStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedIngresses(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedIngresses(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedIngressesStructured: %v", err)
 	}

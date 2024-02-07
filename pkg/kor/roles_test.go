@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestRoles(t *testing.T) *fake.Clientset {
@@ -49,7 +51,7 @@ func createTestRoles(t *testing.T) *fake.Clientset {
 func TestRetrieveUsedRoles(t *testing.T) {
 	clientset := createTestRoles(t)
 
-	usedRoles, err := retrieveUsedRoles(clientset, testNamespace, &FilterOptions{})
+	usedRoles, err := retrieveUsedRoles(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -65,7 +67,7 @@ func TestRetrieveUsedRoles(t *testing.T) {
 
 func TestRetrieveRoleNames(t *testing.T) {
 	clientset := createTestRoles(t)
-	allRoles, err := retrieveRoleNames(clientset, testNamespace)
+	allRoles, err := retrieveRoleNames(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -78,7 +80,7 @@ func TestRetrieveRoleNames(t *testing.T) {
 func TestProcessNamespaceRoles(t *testing.T) {
 	clientset := createTestRoles(t)
 
-	unusedRoles, err := processNamespaceRoles(clientset, testNamespace, &FilterOptions{})
+	unusedRoles, err := processNamespaceRoles(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -95,11 +97,6 @@ func TestProcessNamespaceRoles(t *testing.T) {
 func TestGetUnusedRolesStructured(t *testing.T) {
 	clientset := createTestRoles(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -108,7 +105,7 @@ func TestGetUnusedRolesStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedRoles(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedRoles(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedRolesStructured: %v", err)
 	}

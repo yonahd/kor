@@ -10,9 +10,11 @@ import (
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
-func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, resourceList []string, filterOpts *FilterOptions) ([]ResourceDiff, []string) {
+func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, resourceList []string, filterOpts *filters.Options) ([]ResourceDiff, []string) {
 	var noNamespaceDiff []ResourceDiff
 	markedForRemoval := make([]bool, len(resourceList))
 	updatedResourceList := resourceList
@@ -20,7 +22,7 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 	for counter, resource := range resourceList {
 		switch resource {
 		case "crd", "customresourcedefinition", "customresourcedefinitions":
-			crdDiff := getUnusedCrds(apiExtClient, dynamicClient)
+			crdDiff := getUnusedCrds(apiExtClient, dynamicClient, filterOpts)
 			noNamespaceDiff = append(noNamespaceDiff, crdDiff)
 			markedForRemoval[counter] = true
 		case "pv", "persistentvolume", "persistentvolumes":
@@ -41,7 +43,7 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 	return noNamespaceDiff, clearedResourceList
 }
 
-func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *FilterOptions) []ResourceDiff {
+func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *filters.Options) []ResourceDiff {
 	var allDiffs []ResourceDiff
 	for _, resource := range resourceList {
 		var diffResult ResourceDiff
@@ -84,12 +86,12 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 	return allDiffs
 }
 
-func GetUnusedMulti(includeExcludeLists IncludeExcludeLists, resourceNames string, filterOpts *FilterOptions, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
 	var allDiffs []ResourceDiff
 	var outputBuffer bytes.Buffer
 	var unusedMulti string
 	resourceList := strings.Split(resourceNames, ",")
-	namespaces := SetNamespaceList(includeExcludeLists, clientset)
+	namespaces := filterOpts.Namespaces(clientset)
 	response := make(map[string]map[string][]string)
 	var err error
 

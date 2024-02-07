@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
 	"github.com/yonahd/kor/pkg/kor"
 )
 
@@ -15,7 +16,8 @@ var finalizerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
-		if response, err := kor.GetUnusedfinalizers(includeExcludeLists, filterOptions, clientset, dynamicClient, outputFormat, opts); err != nil {
+
+		if response, err := kor.GetUnusedfinalizers(filterOptions, clientset, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			fmt.Println(response)

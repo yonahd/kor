@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestSecrets(t *testing.T) *fake.Clientset {
@@ -206,7 +208,7 @@ func TestRetrieveSecretNames(t *testing.T) {
 		t.Fatalf("Error creating fake secret: %v", err)
 	}
 
-	secretNames, err := retrieveSecretNames(clientset, testNamespace, &FilterOptions{})
+	secretNames, err := retrieveSecretNames(clientset, testNamespace, &filters.Options{})
 
 	if err != nil {
 		t.Fatalf("Error retrieving secret names: %v", err)
@@ -221,7 +223,7 @@ func TestRetrieveSecretNames(t *testing.T) {
 func TestProcessNamespaceSecret(t *testing.T) {
 	clientset := createTestSecrets(t)
 
-	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, &FilterOptions{})
+	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Fatalf("Error retrieving unused secrets: %v", err)
 	}
@@ -239,11 +241,6 @@ func TestProcessNamespaceSecret(t *testing.T) {
 func TestGetUnusedSecretsStructured(t *testing.T) {
 	clientset := createTestSecrets(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -252,7 +249,7 @@ func TestGetUnusedSecretsStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedSecrets(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedSecrets(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedSecretsStructured: %v", err)
 	}
