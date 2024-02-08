@@ -86,8 +86,7 @@ func getUnusedRoles(clientset kubernetes.Interface, namespace string, filterOpts
 	return namespaceSADiff
 }
 
-
-func getUnusedClusterRoles(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ResourceDiff {
+func getUnusedClusterRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	roleDiff, err := processNamespaceClusterRoles(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "roles", namespace, err)
