@@ -3,6 +3,7 @@ package kor
 import (
 	"context"
 	"encoding/json"
+	"github.com/yonahd/kor/pkg/filters"
 	"reflect"
 	"testing"
 
@@ -62,7 +63,7 @@ func createTestClusterRoles(t *testing.T) *fake.Clientset {
 func TestRetrieveUsedClusterRoles(t *testing.T) {
 	clientset := createTestClusterRoles(t)
 
-	usedClusterRoles, err := retrieveUsedClusterRoles(clientset, testNamespace, &FilterOptions{})
+	usedClusterRoles, err := retrieveUsedClusterRoles(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -92,7 +93,7 @@ func TestRetrieveClusterRoleNames(t *testing.T) {
 func TestProcessNamespaceClusterRoles(t *testing.T) {
 	clientset := createTestClusterRoles(t)
 
-	unusedClusterRoles, err := processNamespaceClusterRoles(clientset, testNamespace, &FilterOptions{})
+	unusedClusterRoles, err := processNamespaceClusterRoles(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -109,11 +110,6 @@ func TestProcessNamespaceClusterRoles(t *testing.T) {
 func TestGetUnusedClusterRolesStructured(t *testing.T) {
 	clientset := createTestClusterRoles(t)
 
-	includeExcludeLists := IncludeExcludeLists{
-		IncludeListStr: "",
-		ExcludeListStr: "",
-	}
-
 	opts := Opts{
 		WebhookURL:    "",
 		Channel:       "",
@@ -122,7 +118,7 @@ func TestGetUnusedClusterRolesStructured(t *testing.T) {
 		NoInteractive: true,
 	}
 
-	output, err := GetUnusedClusterRoles(includeExcludeLists, &FilterOptions{}, clientset, "json", opts)
+	output, err := GetUnusedClusterRoles(&filters.Options{}, clientset, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedRolesStructured: %v", err)
 	}
