@@ -322,3 +322,14 @@ func CreateTestReplicaSet(namespace, name string, specReplicas *int32, status *a
 		Status: *status,
 	}
 }
+
+func CreateTestDaemonSet(namespace, name string, labels map[string]string, status *appsv1.DaemonSetStatus) *appsv1.DaemonSet {
+	return &appsv1.DaemonSet{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+			Labels:    labels,
+		},
+		Status: *status,
+	}
+}
