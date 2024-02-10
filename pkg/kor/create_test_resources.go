@@ -100,6 +100,13 @@ func CreateTestRbacSubject(namespace, serviceAccountName string) *rbacv1.Subject
 
 func CreateTestRoleRef(roleName string) *rbacv1.RoleRef {
 	return &rbacv1.RoleRef{
+		Kind: "Role",
+		Name: roleName,
+	}
+}
+
+func CreateTestRoleRefForClusterRole(roleName string) *rbacv1.RoleRef {
+	return &rbacv1.RoleRef{
 		Kind: "ClusterRole",
 		Name: roleName,
 	}
@@ -356,4 +363,3 @@ func CreateTestDaemonSet(namespace, name string, labels map[string]string, statu
 		Status: *status,
 	}
 }
-

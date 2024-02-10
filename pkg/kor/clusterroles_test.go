@@ -44,14 +44,14 @@ func createTestClusterRoles(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating fake %s: %v", "Role", err)
 	}
 
-	testRoleRef2 := CreateTestRoleRef("test-clusterRole2")
+	testRoleRef2 := CreateTestRoleRefForClusterRole("test-clusterRole2")
 	testClusterRoleBinding := CreateTestClusterRoleBindingRoleRef(testNamespace, "test-rb2", "test-sa", testRoleRef2)
 	_, err = clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(), testClusterRoleBinding, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Role", err)
 	}
 
-	testRoleRef3 := CreateTestRoleRef("test-clusterRole3")
+	testRoleRef3 := CreateTestRoleRefForClusterRole("test-clusterRole3")
 	testRoleBinding := CreateTestRoleBinding(testNamespace, "test-rb", "test-sa", testRoleRef3)
 	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), testRoleBinding, v1.CreateOptions{})
 	if err != nil {
