@@ -24,6 +24,7 @@ rules:
       - endpoints
       - jobs
       - replicasets
+      - daemonsets
     verbs:
       - get
       - list
@@ -54,6 +55,7 @@ rules:
       - endpoints
       - jobs
       - replicasets
+      - daemonsets      
       {{/* cluster-scoped resources */}}
       - namespaces
       - clusterroles
