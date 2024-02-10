@@ -16,7 +16,7 @@ var clusterRoleCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
 
-		if response, err := kor.GetUnusedClusterRoles(includeExcludeLists, filterOptions, clientset, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedClusterRoles(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			utils.PrintLogo(outputFormat)
