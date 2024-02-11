@@ -35,6 +35,10 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, namespace string, 
 	// Get a list of all cluster role bindings in the specified namespace
 	clusterRoleBindings, err := clientset.RbacV1().ClusterRoleBindings().List(context.TODO(), metav1.ListOptions{})
 
+	if err != nil {
+		return nil, fmt.Errorf("failed to list cluster role bindings in namespace %s: %v", namespace, err)
+	}
+	
 	for _, crb := range clusterRoleBindings.Items {
 		if pass, _ := filter.Run(filterOpts); pass {
 			continue
