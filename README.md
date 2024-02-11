@@ -221,6 +221,8 @@ Dashboard can be found [here](https://grafana.com/grafana/dashboards/19863-kor-d
 
 Contributions are welcome! If you encounter any bugs or have suggestions for improvements, please open an issue in the [issue tracker](https://github.com/yonahd/kor/issues).
 
+Follow [CONTRIBUTING.md](./CONTRIBUTING.md) for more.
+
 ## License
 
 This open-source project is available under the [MIT License](LICENSE). Feel free to use, modify, and distribute it as per the terms of the license.
