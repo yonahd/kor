@@ -69,6 +69,6 @@ func addFilterOptionsFlag(cmd *cobra.Command, opts *filters.Options) {
 	cmd.PersistentFlags().StringVar(&opts.NewerThan, "newer-than", opts.NewerThan, "The maximum age of the resources to be considered unused. This flag cannot be used together with older-than flag. Example: --newer-than=1h2m")
 	cmd.PersistentFlags().StringVar(&opts.OlderThan, "older-than", opts.OlderThan, "The minimum age of the resources to be considered unused. This flag cannot be used together with newer-than flag. Example: --older-than=1h2m")
 	cmd.PersistentFlags().StringVar(&opts.IncludeLabels, "include-labels", opts.IncludeLabels, "Selector to filter in, Example: --include-labels key1=value1,key2=value2.")
-	cmd.PersistentFlags().StringSliceVar(&opts.ExcludeNamespaces, "exclude-namespaces", opts.ExcludeNamespaces, "Namespaces to be excluded, splited by comma. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.")
-	cmd.PersistentFlags().StringSliceVarP(&opts.IncludeNamespaces, "include-namespaces", "n", opts.IncludeNamespaces, "Namespaces to run on, splited by comma. Example: --include-namespace ns1,ns2,ns3. ")
+	cmd.PersistentFlags().StringSliceVar(&opts.ExcludeNamespaces, "exclude-namespaces", opts.ExcludeNamespaces, "Namespaces to be excluded, split by commas. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.")
+	cmd.PersistentFlags().StringSliceVarP(&opts.IncludeNamespaces, "include-namespaces", "n", opts.IncludeNamespaces, "Namespaces to run on, split by commas. Example: --include-namespace ns1,ns2,ns3. ")
 }
