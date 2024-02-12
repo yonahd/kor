@@ -31,12 +31,12 @@ func createTestClusterRoles(t *testing.T) *fake.Clientset {
 	clusterRole3 := CreateTestClusterRole("test-clusterRole3")
 	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), clusterRole1, v1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("Error creating fake %s: %v", "Role", err)
+		t.Fatalf("Error creating fake %s: %v", "clusterRole", err)
 	}
 
 	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), clusterRole2, v1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("Error creating fake %s: %v", "Role", err)
+		t.Fatalf("Error creating fake %s: %v", "clusterRole", err)
 	}
 
 	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), clusterRole3, v1.CreateOptions{})
@@ -55,7 +55,7 @@ func createTestClusterRoles(t *testing.T) *fake.Clientset {
 	testRoleBinding := CreateTestRoleBinding(testNamespace, "test-rb", "test-sa", testRoleRef3)
 	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), testRoleBinding, v1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("Error creating fake %s: %v", "Role", err)
+		t.Fatalf("Error creating fake %s: %v", "clusterRole", err)
 	}
 
 	return clientset

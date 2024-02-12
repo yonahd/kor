@@ -38,7 +38,7 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, namespace string, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to list cluster role bindings in namespace %s: %v", namespace, err)
 	}
-	
+
 	for _, crb := range clusterRoleBindings.Items {
 		if pass, _ := filter.Run(filterOpts); pass {
 			continue
@@ -105,7 +105,7 @@ func GetUnusedClusterRoles(filterOpts *filters.Options, clientset kubernetes.Int
 
 		if opts.DeleteFlag {
 			if diff, err = DeleteResource(diff, clientset, namespace, "ClusterRole", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Role %s in namespace %s: %v\n", diff, namespace, err)
+				fmt.Fprintf(os.Stderr, "Failed to delete clusterRole %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
 		output := FormatOutput(namespace, diff, "ClusterRoles", opts)
