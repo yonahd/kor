@@ -63,7 +63,7 @@ func createTestClusterRoles(t *testing.T) *fake.Clientset {
 func TestRetrieveUsedClusterRoles(t *testing.T) {
 	clientset := createTestClusterRoles(t)
 
-	usedClusterRoles, err := retrieveUsedClusterRoles(clientset, testNamespace, &filters.Options{})
+	usedClusterRoles, err := retrieveUsedClusterRoles(clientset, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -90,10 +90,10 @@ func TestRetrieveClusterRoleNames(t *testing.T) {
 	}
 }
 
-func TestProcessNamespaceClusterRoles(t *testing.T) {
+func TestProcessClusterRoles(t *testing.T) {
 	clientset := createTestClusterRoles(t)
 
-	unusedClusterRoles, err := processNamespaceClusterRoles(clientset, testNamespace, &filters.Options{})
+	unusedClusterRoles, err := processClusterRoles(clientset, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -124,7 +124,7 @@ func TestGetUnusedClusterRolesStructured(t *testing.T) {
 	}
 
 	expectedOutput := map[string]map[string][]string{
-		testNamespace: {
+		"": {
 			"ClusterRoles": {"test-clusterRole1"},
 		},
 	}

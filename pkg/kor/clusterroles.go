@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/yonahd/kor/pkg/filters"
+	v1 "k8s.io/api/rbac/v1"
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,16 +14,29 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
 
-func retrieveUsedClusterRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
-	// Get a list of all role bindings in the specified namespace
-	roleBindings, err := clientset.RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{})
+func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
+
+	//Get a list of all namespaces
+	namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to list role bindings in namespace %s: %v", namespace, err)
+		fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
+		os.Exit(1)
+	}
+	roleBindingsAllNameSpaces := make([]v1.RoleBinding, 0)
+
+	for _, ns := range namespaceList.Items {
+		// Get a list of all role bindings in the specified namespace
+		roleBindings, err := clientset.RbacV1().RoleBindings(ns.Name).List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to list role bindings in namespace %s: %v", ns.Name, err)
+		}
+
+		roleBindingsAllNameSpaces = append(roleBindingsAllNameSpaces, roleBindings.Items...)
 	}
 
 	usedClusterRoles := make(map[string]bool)
 
-	for _, rb := range roleBindings.Items {
+	for _, rb := range roleBindingsAllNameSpaces {
 		if pass, _ := filter.Run(filterOpts); pass {
 			continue
 		}
@@ -36,7 +50,7 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, namespace string, 
 	clusterRoleBindings, err := clientset.RbacV1().ClusterRoleBindings().List(context.TODO(), metav1.ListOptions{})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to list cluster role bindings in namespace %s: %v", namespace, err)
+		return nil, fmt.Errorf("failed to list cluster role bindings %v", err)
 	}
 
 	for _, crb := range clusterRoleBindings.Items {
@@ -72,9 +86,8 @@ func retrieveClusterRoleNames(clientset kubernetes.Interface) ([]string, error) 
 	return names, nil
 }
 
-// func processNamespaceRoles(clientset kubernetes.Interface, namespace string, filterOpts *FilterOptions) ([]string, error) {
-func processNamespaceClusterRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
-	usedClusterRoles, err := retrieveUsedClusterRoles(clientset, namespace, filterOpts)
+func processClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
+	usedClusterRoles, err := retrieveUsedClusterRoles(clientset, filterOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -93,30 +106,32 @@ func processNamespaceClusterRoles(clientset kubernetes.Interface, namespace stri
 
 func GetUnusedClusterRoles(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
-	namespaces := filterOpts.Namespaces(clientset)
+
 	response := make(map[string]map[string][]string)
 
-	for _, namespace := range namespaces {
-		diff, err := processNamespaceClusterRoles(clientset, namespace, filterOpts)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
-			continue
-		}
+	diff, err := processClusterRoles(clientset, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to process cluster role : %v\n", err)
+	}
 
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "ClusterRole", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete clusterRole %s in namespace %s: %v\n", diff, namespace, err)
-			}
+	if len(diff) > 0 {
+		// We consider cluster scope resources in "" (empty string) namespace, as it is common in k8s
+		if response[""] == nil {
+			response[""] = make(map[string][]string)
 		}
-		output := FormatOutput(namespace, diff, "ClusterRoles", opts)
-		if output != "" {
-			outputBuffer.WriteString(output)
-			outputBuffer.WriteString("\n")
+		response[""]["ClusterRoles"] = diff
+	}
 
-			resourceMap := make(map[string][]string)
-			resourceMap["ClusterRoles"] = diff
-			response[namespace] = resourceMap
+	if opts.DeleteFlag {
+		if diff, err = DeleteResource(diff, clientset, "", "ClusterRole", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete clusterRole %s : %v\n", diff, err)
 		}
+	}
+	output := FormatOutput("", diff, "ClusterRoles", opts)
+	if output != "" {
+		outputBuffer.WriteString(output)
+		outputBuffer.WriteString("\n")
+		response[""]["ClusterRoles"] = diff
 	}
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")

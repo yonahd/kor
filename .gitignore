@@ -2,3 +2,4 @@
 .idea/
 dist/**
 main.exe
+coverage.txt

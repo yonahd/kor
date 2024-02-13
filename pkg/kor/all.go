@@ -86,13 +86,13 @@ func getUnusedRoles(clientset kubernetes.Interface, namespace string, filterOpts
 	return namespaceSADiff
 }
 
-func getUnusedClusterRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	roleDiff, err := processNamespaceClusterRoles(clientset, namespace, filterOpts)
+func getUnusedClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Options) ResourceDiff {
+	clusterRoleDiff, err := processClusterRoles(clientset, filterOpts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "clusterRoles", namespace, err)
+		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "clusterRoles", err)
 	}
-	namespaceSADiff := ResourceDiff{"ClusterRole", roleDiff}
-	return namespaceSADiff
+	aDiff := ResourceDiff{"ClusterRole", clusterRoleDiff}
+	return aDiff
 }
 
 func getUnusedHpas(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
@@ -207,8 +207,6 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
 		namespaceRoleDiff := getUnusedRoles(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceRoleDiff)
-		namespaceClusterRoleDiff := getUnusedClusterRoles(clientset, namespace, filterOpts)
-		allDiffs = append(allDiffs, namespaceClusterRoleDiff)
 		namespaceHpaDiff := getUnusedHpas(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceHpaDiff)
 		namespacePvcDiff := getUnusedPvcs(clientset, namespace, filterOpts)
@@ -249,6 +247,12 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 	outputBuffer.WriteString(pvOutput)
 	outputBuffer.WriteString("\n")
 	noNamespaceResourceMap[pvDiff.resourceType] = pvDiff.diff
+
+	clusterRoleDiff := getUnusedClusterRoles(clientset, filterOpts)
+	clusterRoleOutput := FormatOutputAll("", []ResourceDiff{clusterRoleDiff}, opts)
+	outputBuffer.WriteString(clusterRoleOutput)
+	outputBuffer.WriteString("\n")
+	noNamespaceResourceMap[clusterRoleDiff.resourceType] = clusterRoleDiff.diff
 
 	output := FormatOutputAll("", allDiffs, opts)
 
