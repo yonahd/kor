@@ -29,6 +29,10 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 			pvDiff := getUnusedPvs(clientset, filterOpts)
 			noNamespaceDiff = append(noNamespaceDiff, pvDiff)
 			markedForRemoval[counter] = true
+		case "clusterrole", "clusterroles":
+			clusterRoleDiff := getUnusedClusterRoles(clientset, filterOpts)
+			noNamespaceDiff = append(noNamespaceDiff, clusterRoleDiff)
+			markedForRemoval[counter] = true
 		}
 	}
 
