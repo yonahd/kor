@@ -80,7 +80,7 @@ func TestRetrieveUsedClusterRoles(t *testing.T) {
 
 func TestRetrieveClusterRoleNames(t *testing.T) {
 	clientset := createTestClusterRoles(t)
-	allRoles, err := retrieveClusterRoleNames(clientset)
+	allRoles, err := retrieveClusterRoleNames(clientset, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

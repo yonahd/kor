@@ -70,14 +70,14 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 	return usedClusterRoleNames, nil
 }
 
-func retrieveClusterRoleNames(clientset kubernetes.Interface) ([]string, error) {
+func retrieveClusterRoleNames(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
 	clusterRoles, err := clientset.RbacV1().ClusterRoles().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 	names := make([]string, 0, len(clusterRoles.Items))
 	for _, clusterRole := range clusterRoles.Items {
-		if clusterRole.Labels["kor/used"] == "true" {
+		if pass, _ := filter.Run(filterOpts); pass {
 			continue
 		}
 
@@ -94,7 +94,7 @@ func processClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Opt
 
 	usedClusterRoles = RemoveDuplicatesAndSort(usedClusterRoles)
 
-	clusterRoleNames, err := retrieveClusterRoleNames(clientset)
+	clusterRoleNames, err := retrieveClusterRoleNames(clientset, filterOpts)
 	if err != nil {
 		return nil, err
 	}
