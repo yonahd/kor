@@ -12,8 +12,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "kor",
-	Short: "kor - a CLI to to discover unused Kubernetes resources",
+	Use:     "kor",
+	Version: "v" + utils.Version,
+	Short:   "kor - a CLI to to discover unused Kubernetes resources",
 	Long: `kor is a CLI to to discover unused Kubernetes resources
 	kor can currently discover unused configmaps and secrets`,
 	Args: cobra.MinimumNArgs(1),

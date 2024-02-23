@@ -109,7 +109,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
       --exclude-namespaces strings   Namespaces to be excluded, split by commas. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
   -h, --help                         help for kor
       --include-labels string        Selector to filter in, Example: --include-labels key1=value1,key2=value2.
-  -n, --include-namespaces strings   Namespaces to run on, split by commas. Example: --include-namespace ns1,ns2,ns3. 
+  -n, --include-namespaces strings   Namespaces to run on, split by commas. Example: --include-namespace ns1,ns2,ns3.
   -k, --kubeconfig string            Path to kubeconfig file (optional)
       --newer-than string            The maximum age of the resources to be considered unused. This flag cannot be used together with older-than flag. Example: --newer-than=1h2m
       --no-interactive               Do not prompt for confirmation when deleting resources. Be careful using this flag!
@@ -119,7 +119,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
       --slack-channel string         Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.
       --slack-webhook-url string     Slack webhook URL to send notifications to
   -v, --verbose                      Verbose output (print empty namespaces)
-
+      --version                      version for kor
 ```
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.
