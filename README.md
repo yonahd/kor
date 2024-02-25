@@ -101,6 +101,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `daemonsets`- Gets unused DaemonSets for the specified namespace or all namespaces.
 - `finalizers` - Gets unused pending deletion resources for the specified namespace or all namespaces.
 - `exporter` - Export Prometheus metrics.
+- `version` - Print kor version information.
 
 ### Supported Flags
 ```
@@ -119,7 +120,6 @@ Kor provides various subcommands to identify and list unused resources. The avai
       --slack-channel string         Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.
       --slack-webhook-url string     Slack webhook URL to send notifications to
   -v, --verbose                      Verbose output (print empty namespaces)
-      --version                      version for kor
 ```
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.
