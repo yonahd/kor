@@ -176,7 +176,14 @@ The resources labeled with:
 ```sh
 kor/used=true
 ```
-will be ignored by kor even if they are unused. You can add this label to resources you want to ignore.
+Will be ignored by kor even if they are unused. You can add this label to resources you want to ignore.
+
+## Force clean Resources
+The resources labeled with:
+```sh
+kor/used=false
+```
+Will be cleaned always. This is a good way to mark resources for later cleanup.
 
 ## In Cluster Usage
 
