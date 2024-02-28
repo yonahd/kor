@@ -5,10 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-
 	"github.com/yonahd/kor/pkg/filters"
 	v1 "k8s.io/api/rbac/v1"
+	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -16,15 +15,6 @@ import (
 )
 
 func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
-	usedClusterRoles := make(map[string]bool)
-
-	//Get a list of all ClusterRoles
-	clusterRoleList, err := clientset.RbacV1().ClusterRoles().List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to retrieve ClusterRoles: %v\n", err)
-	}
-	//Define a List where all labels for aggregation are stored
-	aggregationLabelList := make(map[string]string)
 
 	//Get a list of all namespaces
 	namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
@@ -44,6 +34,8 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 		roleBindingsAllNameSpaces = append(roleBindingsAllNameSpaces, roleBindings.Items...)
 	}
 
+	usedClusterRoles := make(map[string]bool)
+
 	for _, rb := range roleBindingsAllNameSpaces {
 		if pass, _ := filter.Run(filterOpts); pass {
 			continue
@@ -51,23 +43,7 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 		usedClusterRoles[rb.RoleRef.Name] = true
 		if rb.RoleRef.Kind == "ClusterRole" {
 			usedClusterRoles[rb.RoleRef.Name] = true
-			clusterRole, err := clientset.RbacV1().ClusterRoles().Get(context.TODO(), rb.RoleRef.Name, metav1.GetOptions{})
-			if err != nil {
-				return nil, fmt.Errorf("failed to get ClusterRole")
-			}
-			if clusterRole.AggregationRule != nil {
-				fmt.Println(rb.RoleRef.Name + clusterRole.Name)
-				for _, matchLabel := range clusterRole.AggregationRule.ClusterRoleSelectors {
-					for key, value := range matchLabel.MatchLabels {
-						aggregationLabelList[key] = value
-					}
-				}
-			}
-			if err != nil {
-				return nil, fmt.Errorf("failed to get ClusterRole")
-			}
 		}
-
 	}
 
 	// Get a list of all cluster role bindings in the specified namespace
@@ -78,40 +54,19 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 	}
 
 	for _, crb := range clusterRoleBindings.Items {
-		fmt.Println(crb.RoleRef.Name)
 		if pass, _ := filter.Run(filterOpts); pass {
 			continue
-		}
-		clusterRole, err := clientset.RbacV1().ClusterRoles().Get(context.TODO(), crb.RoleRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to get ClusterRole")
-		}
-		if clusterRole.AggregationRule != nil {
-			// fmt.Println(crb.RoleRef.Name + clusterRole.Name)
-			for _, matchLabel := range clusterRole.AggregationRule.ClusterRoleSelectors {
-				for key, value := range matchLabel.MatchLabels {
-					aggregationLabelList[key] = value
-				}
-			}
 		}
 		usedClusterRoles[crb.RoleRef.Name] = true
 
 		usedClusterRoles[crb.RoleRef.Name] = true
-	}
-	//If the Role is aggregated add it to the List of used ClusterRoles
-	for _, cr := range clusterRoleList.Items {
-		for label := range cr.Labels {
-			_, aggregated := aggregationLabelList[label]
-			if aggregated {
-				usedClusterRoles[cr.Name] = true
-			}
-		}
 	}
 
 	var usedClusterRoleNames []string
 	for role := range usedClusterRoles {
 		usedClusterRoleNames = append(usedClusterRoleNames, role)
 	}
+
 	return usedClusterRoleNames, nil
 }
 
