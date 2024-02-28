@@ -27,34 +27,34 @@ func createTestPods(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	pod1 := CreateTestPod(testNamespace, "pod-1", "", nil)
+	pod1 := CreateTestPod(testNamespace, "pod-1", "", nil, AppLabels)
 	pod1.Status = corev1.PodStatus{
 		Phase:   corev1.PodRunning,
 		Reason:  "",
 		Message: "",
 	}
-	pod2 := CreateTestPod(testNamespace, "pod-2", "", nil)
+	pod2 := CreateTestPod(testNamespace, "pod-2", "", nil, AppLabels)
 	pod2.Status = corev1.PodStatus{
 		Phase:   corev1.PodFailed,
 		Reason:  "Evicted",
 		Message: "",
 	}
 
-	pod3 := CreateTestPod(testNamespace, "pod-3", "", nil)
+	pod3 := CreateTestPod(testNamespace, "pod-3", "", nil, AppLabels)
 	pod3.Status = corev1.PodStatus{
 		Phase:   corev1.PodFailed,
 		Reason:  "CrashLoopBackOff",
 		Message: "",
 	}
 
-	pod4 := CreateTestPod(testNamespace, "pod-4", "", nil)
+	pod4 := CreateTestPod(testNamespace, "pod-4", "", nil, AppLabels)
 	pod4.Status = corev1.PodStatus{
 		Phase:   corev1.PodSucceeded,
 		Reason:  "",
 		Message: "",
 	}
 
-	pod5 := CreateTestPod(testNamespace, "pod-5", "", nil)
+	pod5 := CreateTestPod(testNamespace, "pod-5", "", nil, AppLabels)
 	pod5.Labels = map[string]string{"kor/used": "true"}
 	pod5.Status = corev1.PodStatus{
 		Phase:   corev1.PodFailed,
@@ -62,7 +62,7 @@ func createTestPods(t *testing.T) *fake.Clientset {
 		Message: "",
 	}
 
-	pod6 := CreateTestPod(testNamespace, "pod-6", "", nil)
+	pod6 := CreateTestPod(testNamespace, "pod-6", "", nil, AppLabels)
 	pod6.Labels = map[string]string{"kor/used": "false"}
 	pod6.Status = corev1.PodStatus{
 		Phase:   corev1.PodFailed,

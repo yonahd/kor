@@ -27,16 +27,26 @@ func createTestStatefulSets(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	appLabels := map[string]string{}
-
-	sts1 := CreateTestStatefulSet(testNamespace, "test-sts1", 0, appLabels)
-	sts2 := CreateTestStatefulSet(testNamespace, "test-sts2", 1, appLabels)
+	sts1 := CreateTestStatefulSet(testNamespace, "test-sts1", 0, AppLabels)
 	_, err = clientset.AppsV1().StatefulSets(testNamespace).Create(context.TODO(), sts1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "statefulSet", err)
 	}
 
+	sts2 := CreateTestStatefulSet(testNamespace, "test-sts2", 1, AppLabels)
 	_, err = clientset.AppsV1().StatefulSets(testNamespace).Create(context.TODO(), sts2, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "statefulSet", err)
+	}
+
+	sts3 := CreateTestStatefulSet(testNamespace, "test-sts3", 1, UsedLabels)
+	_, err = clientset.AppsV1().StatefulSets(testNamespace).Create(context.TODO(), sts3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "statefulSet", err)
+	}
+
+	sts4 := CreateTestStatefulSet(testNamespace, "test-sts4", 1, UnusedLabels)
+	_, err = clientset.AppsV1().StatefulSets(testNamespace).Create(context.TODO(), sts4, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "statefulSet", err)
 	}
@@ -52,12 +62,12 @@ func TestProcessNamespaceStatefulSets(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(statefulSetsWithoutReplicas) != 1 {
-		t.Errorf("Expected 1 statefulSet without replicas, got %d", len(statefulSetsWithoutReplicas))
+	if len(statefulSetsWithoutReplicas) != 2 {
+		t.Errorf("Expected 2 deployment without replicas, got %d", len(statefulSetsWithoutReplicas))
 	}
 
-	if statefulSetsWithoutReplicas[0] != "test-sts1" {
-		t.Errorf("Expected 'test-sts1', got %s", statefulSetsWithoutReplicas[0])
+	if statefulSetsWithoutReplicas[0] != "test-sts1" || statefulSetsWithoutReplicas[1] != "test-sts4" {
+		t.Errorf("Expected 'test-sts1' and 'test-sts4, got %s, %s", statefulSetsWithoutReplicas[0], statefulSetsWithoutReplicas[1])
 	}
 }
 
@@ -79,7 +89,7 @@ func TestGetUnusedStatefulSetsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Statefulsets": {"test-sts1"},
+			"Statefulsets": {"test-sts1", "test-sts4"},
 		},
 	}
 

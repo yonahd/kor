@@ -28,18 +28,32 @@ func createTestIngresses(t *testing.T) *fake.Clientset {
 	}
 
 	service1 := CreateTestService(testNamespace, "my-service-1")
-	ingress1 := CreateTestIngress(testNamespace, "test-ingress-1", "my-service-1", "test-secret")
-	ingress2 := CreateTestIngress(testNamespace, "test-ingress-2", "my-service-2", "test-secret")
 
 	_, err = clientset.CoreV1().Services(testNamespace).Create(context.TODO(), service1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Service", err)
 	}
+
+	ingress1 := CreateTestIngress(testNamespace, "test-ingress-1", "my-service-1", "test-secret", AppLabels)
 	_, err = clientset.NetworkingV1().Ingresses(testNamespace).Create(context.TODO(), ingress1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Ingress", err)
 	}
+
+	ingress2 := CreateTestIngress(testNamespace, "test-ingress-2", "my-service-2", "test-secret", AppLabels)
 	_, err = clientset.NetworkingV1().Ingresses(testNamespace).Create(context.TODO(), ingress2, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Ingress", err)
+	}
+
+	ingress3 := CreateTestIngress(testNamespace, "test-ingress-3", "my-service-2", "test-secret", UsedLabels)
+	_, err = clientset.NetworkingV1().Ingresses(testNamespace).Create(context.TODO(), ingress3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Ingress", err)
+	}
+
+	ingress4 := CreateTestIngress(testNamespace, "test-ingress-4", "my-service-1", "test-secret", UnusedLabels)
+	_, err = clientset.NetworkingV1().Ingresses(testNamespace).Create(context.TODO(), ingress4, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Ingress", err)
 	}
@@ -55,8 +69,8 @@ func TestRetrieveUsedIngress(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(usedIngresses) != 1 {
-		t.Errorf("Expected 1 used Ingress objects, got %d", len(usedIngresses))
+	if len(usedIngresses) != 2 {
+		t.Errorf("Expected 2 used Ingress objects, got %d", len(usedIngresses))
 	}
 
 	if !contains(usedIngresses, "test-ingress-1") {
@@ -91,7 +105,7 @@ func TestGetUnusedIngressesStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Ingresses": {"test-ingress-2"},
+			"Ingresses": {"test-ingress-2", "test-ingress-4"},
 		},
 	}
 

@@ -28,21 +28,33 @@ func createTestPvcs(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	pvc1 := CreateTestPvc(testNamespace, "test-pvc1")
-	pvc2 := CreateTestPvc(testNamespace, "test-pvc2")
+	pvc1 := CreateTestPvc(testNamespace, "test-pvc1", AppLabels)
 	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pvc", err)
 	}
 
+	pvc2 := CreateTestPvc(testNamespace, "test-pvc2", AppLabels)
 	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc2, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Pvc", err)
+	}
+
+	pvc3 := CreateTestPvc(testNamespace, "test-pvc3", UsedLabels)
+	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Pvc", err)
+	}
+
+	pvc4 := CreateTestPvc(testNamespace, "test-pvc4", UnusedLabels)
+	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc4, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pvc", err)
 	}
 
 	testVolume := CreateTestVolume("test-volume", "test-pvc1")
 	volumeList = append(volumeList, *testVolume)
-	testPod := CreateTestPod(testNamespace, "test-pod", "test-sa", volumeList)
+	testPod := CreateTestPod(testNamespace, "test-pod", "test-sa", volumeList, AppLabels)
 
 	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), testPod, v1.CreateOptions{})
 	if err != nil {
@@ -75,8 +87,8 @@ func TestProcessNamespacePvcs(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(usedPvcs) != 1 {
-		t.Errorf("Expected 1 unused pvc, got %d", len(usedPvcs))
+	if len(usedPvcs) != 2 {
+		t.Errorf("Expected 2 unused pvc, got %d", len(usedPvcs))
 	}
 
 	if usedPvcs[0] != "test-pvc2" {
@@ -102,7 +114,7 @@ func TestGetUnusedPvcsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Pvc": {"test-pvc2"},
+			"Pvc": {"test-pvc2", "test-pvc4"},
 		},
 	}
 

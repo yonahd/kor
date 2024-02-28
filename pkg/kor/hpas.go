@@ -39,44 +39,43 @@ func getStatefulSetNames(clientset kubernetes.Interface, namespace string) ([]st
 	return names, nil
 }
 
-func extractUnusedHpas(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func processNamespaceHpas(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
 	deploymentNames, err := getDeploymentNames(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
+
 	statefulsetNames, err := getStatefulSetNames(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
+
 	hpas, err := clientset.AutoscalingV2().HorizontalPodAutoscalers(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 
-	var diff []string
+	var unusedHpas []string
 	for _, hpa := range hpas.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
+		if pass, _ := filter.SetObject(&hpa).Run(filterOpts); pass {
+			continue
+		}
+
+		if hpa.Labels["kor/used"] == "false" {
+			unusedHpas = append(unusedHpas, hpa.Name)
 			continue
 		}
 
 		switch hpa.Spec.ScaleTargetRef.Kind {
 		case "Deployment":
 			if !slices.Contains(deploymentNames, hpa.Spec.ScaleTargetRef.Name) {
-				diff = append(diff, hpa.Name)
+				unusedHpas = append(unusedHpas, hpa.Name)
 			}
 		case "StatefulSet":
 			if !slices.Contains(statefulsetNames, hpa.Spec.ScaleTargetRef.Name) {
-				diff = append(diff, hpa.Name)
+				unusedHpas = append(unusedHpas, hpa.Name)
 			}
 		}
-	}
-	return diff, nil
-}
-
-func processNamespaceHpas(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
-	unusedHpas, err := extractUnusedHpas(clientset, namespace, filterOpts)
-	if err != nil {
-		return nil, err
 	}
 	return unusedHpas, nil
 }

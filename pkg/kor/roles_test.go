@@ -27,14 +27,26 @@ func createTestRoles(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	role1 := CreateTestRole(testNamespace, "test-role1")
-	role2 := CreateTestRole(testNamespace, "test-role2")
+	role1 := CreateTestRole(testNamespace, "test-role1", AppLabels)
 	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Role", err)
 	}
 
+	role2 := CreateTestRole(testNamespace, "test-role2", AppLabels)
 	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role2, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Role", err)
+	}
+
+	role3 := CreateTestRole(testNamespace, "test-role3", UsedLabels)
+	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Role", err)
+	}
+
+	role4 := CreateTestRole(testNamespace, "test-role4", UnusedLabels)
+	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), role4, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Role", err)
 	}
@@ -67,7 +79,7 @@ func TestRetrieveUsedRoles(t *testing.T) {
 
 func TestRetrieveRoleNames(t *testing.T) {
 	clientset := createTestRoles(t)
-	allRoles, err := retrieveRoleNames(clientset, testNamespace, &filters.Options{})
+	allRoles, _, err := retrieveRoleNames(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -85,12 +97,12 @@ func TestProcessNamespaceRoles(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(unusedRoles) != 1 {
-		t.Errorf("Expected 1 unused role, got %d", len(unusedRoles))
+	if len(unusedRoles) != 2 {
+		t.Errorf("Expected 2 unused roles, got %d", len(unusedRoles))
 	}
 
-	if unusedRoles[0] != "test-role2" {
-		t.Errorf("Expected 'test-role2', got %s", unusedRoles[0])
+	if unusedRoles[0] != "test-role2" || unusedRoles[1] != "test-role4" {
+		t.Errorf("Expected 'test-role2', 'test-role4', got %s %s", unusedRoles[0], unusedRoles[1])
 	}
 }
 
@@ -112,7 +124,7 @@ func TestGetUnusedRolesStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Roles": {"test-role2"},
+			"Roles": {"test-role2", "test-role4"},
 		},
 	}
 

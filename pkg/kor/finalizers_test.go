@@ -40,7 +40,7 @@ func TestRetrievePendingDeletionResources(t *testing.T) {
 	scheme := runtime.NewScheme()
 
 	gvr := schema.GroupVersionResource{Group: "testgroup", Version: "v1", Resource: "testresources"}
-	testResource := CreateTestUnstuctered("TestResource", gvr.GroupVersion().String(), testNamespace, "test-resource")
+	testResource := CreateTestUnstructered("TestResource", gvr.GroupVersion().String(), testNamespace, "test-resource")
 	testResource.SetFinalizers([]string{"test", "test2"})
 	testResource.SetDeletionTimestamp(&metav1.Time{Time: time.Now()})
 	dynamicClient := fakedynamic.NewSimpleDynamicClient(scheme, testResource)

@@ -37,9 +37,16 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filt
 	if err != nil {
 		return nil, err
 	}
+
+	var unusedPvcNames []string
 	pvcNames := make([]string, 0, len(pvcs.Items))
 	for _, pvc := range pvcs.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
+		if pass := filters.KorLabelFilter(&pvc, &filters.Options{}); pass {
+			continue
+		}
+
+		if pvc.Labels["kor/used"] == "false" {
+			unusedPvcNames = append(unusedPvcNames, pvc.Name)
 			continue
 		}
 
@@ -52,6 +59,7 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filt
 	}
 
 	diff := CalculateResourceDifference(usedPvcs, pvcNames)
+	diff = append(diff, unusedPvcNames...)
 	return diff, nil
 }
 

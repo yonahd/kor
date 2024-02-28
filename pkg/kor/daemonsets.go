@@ -22,7 +22,12 @@ func ProcessNamespaceDaemonSets(clientset kubernetes.Interface, namespace string
 	var daemonSetsWithoutReplicas []string
 
 	for _, daemonSet := range daemonSetsList.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
+		if pass, _ := filter.SetObject(&daemonSet).Run(filterOpts); pass {
+			continue
+		}
+
+		if daemonSet.Labels["kor/used"] == "false" {
+			daemonSetsWithoutReplicas = append(daemonSetsWithoutReplicas, daemonSet.Name)
 			continue
 		}
 

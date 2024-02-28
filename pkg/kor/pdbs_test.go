@@ -27,22 +27,33 @@ func createTestPdbs(t *testing.T) *fake.Clientset {
 	appLabels1 := map[string]string{
 		"app": "my-app",
 	}
-	appLabels2 := map[string]string{}
 
-	pdb1 := CreateTestPdb(testNamespace, "test-pdb1", appLabels1)
-	pdb2 := CreateTestPdb(testNamespace, "test-pdb2", appLabels1)
-	pdb3 := CreateTestPdb(testNamespace, "test-pdb3", appLabels2)
+	pdb1 := CreateTestPdb(testNamespace, "test-pdb1", appLabels1, AppLabels)
 	_, err = clientset.PolicyV1().PodDisruptionBudgets(testNamespace).Create(context.TODO(), pdb1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pdb", err)
 	}
 
+	pdb2 := CreateTestPdb(testNamespace, "test-pdb2", appLabels1, AppLabels)
 	_, err = clientset.PolicyV1().PodDisruptionBudgets(testNamespace).Create(context.TODO(), pdb2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pdb", err)
 	}
 
+	pdb3 := CreateTestPdb(testNamespace, "test-pdb3", AppLabels, AppLabels)
 	_, err = clientset.PolicyV1().PodDisruptionBudgets(testNamespace).Create(context.TODO(), pdb3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Pdb", err)
+	}
+
+	pdb4 := CreateTestPdb(testNamespace, "test-pdb4", AppLabels, UsedLabels)
+	_, err = clientset.PolicyV1().PodDisruptionBudgets(testNamespace).Create(context.TODO(), pdb4, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Pdb", err)
+	}
+
+	pdb5 := CreateTestPdb(testNamespace, "test-pdb5", AppLabels, UnusedLabels)
+	_, err = clientset.PolicyV1().PodDisruptionBudgets(testNamespace).Create(context.TODO(), pdb5, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pdb", err)
 	}
@@ -70,11 +81,11 @@ func TestProcessNamespacePdbs(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(unusedPdbs) != 1 {
-		t.Errorf("Expected 1 unused pdb, got %d", len(unusedPdbs))
+	if len(unusedPdbs) != 2 {
+		t.Errorf("Expected 2 unused pdb, got %d", len(unusedPdbs))
 	}
 
-	if unusedPdbs[0] != "test-pdb3" {
+	if unusedPdbs[0] != "test-pdb3" && unusedPdbs[1] != "test-pdb5" {
 		t.Errorf("Expected 'test-pdb3', got %s", unusedPdbs[0])
 	}
 }
@@ -97,7 +108,7 @@ func TestGetUnusedPdbsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Pdb": {"test-pdb3"},
+			"Pdb": {"test-pdb3", "test-pdb5"},
 		},
 	}
 

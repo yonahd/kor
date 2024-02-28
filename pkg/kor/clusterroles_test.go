@@ -26,20 +26,32 @@ func createTestClusterRoles(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	clusterRole1 := CreateTestClusterRole("test-clusterRole1")
-	clusterRole2 := CreateTestClusterRole("test-clusterRole2")
-	clusterRole3 := CreateTestClusterRole("test-clusterRole3")
+	clusterRole1 := CreateTestClusterRole("test-clusterRole1", AppLabels)
 	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), clusterRole1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "clusterRole", err)
 	}
 
+	clusterRole2 := CreateTestClusterRole("test-clusterRole2", AppLabels)
 	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), clusterRole2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "clusterRole", err)
 	}
 
+	clusterRole3 := CreateTestClusterRole("test-clusterRole3", AppLabels)
 	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), clusterRole3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Role", err)
+	}
+
+	clusterRole4 := CreateTestClusterRole("test-clusterRole4", UsedLabels)
+	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), clusterRole4, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "clusterRole", err)
+	}
+
+	clusterRole5 := CreateTestClusterRole("test-clusterRole5", UnusedLabels)
+	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), clusterRole5, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Role", err)
 	}
@@ -69,24 +81,24 @@ func TestRetrieveUsedClusterRoles(t *testing.T) {
 	}
 
 	if len(usedClusterRoles) != 2 {
-		t.Errorf("Expected 1 used cluster role, got %d", len(usedClusterRoles))
+		t.Errorf("Expected 2 used cluster role, got %d", len(usedClusterRoles))
 	}
 
-	expectedRoles := []string{"test-clusterRole1", "test-clusterRole3"}
+	expectedRoles := []string{"test-clusterRole1", "test-clusterRole3", "test-clusterRole4"}
 	if reflect.DeepEqual(usedClusterRoles, expectedRoles) {
-		t.Errorf("Expected 'test-role1', got %s", usedClusterRoles[0])
+		t.Errorf("Expected 'test-role1', 'test-role3', 'test-role4', got %s, %s, %s", usedClusterRoles[0], usedClusterRoles[1], usedClusterRoles[2])
 	}
 }
 
 func TestRetrieveClusterRoleNames(t *testing.T) {
 	clientset := createTestClusterRoles(t)
-	allRoles, err := retrieveClusterRoleNames(clientset, &filters.Options{})
+	allRoles, _, err := retrieveClusterRoleNames(clientset, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
 	if len(allRoles) != 3 {
-		t.Errorf("Expected 2 roles, got %d", len(allRoles))
+		t.Errorf("Expected 3 roles, got %d", len(allRoles))
 	}
 }
 
@@ -98,12 +110,12 @@ func TestProcessClusterRoles(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(unusedClusterRoles) != 1 {
-		t.Errorf("Expected 1 unused role, got %d", len(unusedClusterRoles))
+	if len(unusedClusterRoles) != 2 {
+		t.Errorf("Expected 2 unused role, got %d", len(unusedClusterRoles))
 	}
 
-	if unusedClusterRoles[0] != "test-clusterRole1" {
-		t.Errorf("Expected 'test-clusterRole1', got %s", unusedClusterRoles[0])
+	if unusedClusterRoles[0] != "test-clusterRole1" && unusedClusterRoles[1] != "test-clusterRole5" {
+		t.Errorf("Expected 'test-clusterRole1', 'test-clusterRole5', got %s, %s", unusedClusterRoles[0], unusedClusterRoles[1])
 	}
 }
 
@@ -125,7 +137,7 @@ func TestGetUnusedClusterRolesStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		"": {
-			"ClusterRoles": {"test-clusterRole1"},
+			"ClusterRoles": {"test-clusterRole1", "test-clusterRole5"},
 		},
 	}
 
