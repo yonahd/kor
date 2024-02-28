@@ -27,16 +27,26 @@ func createTestDeployments(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	appLabels := map[string]string{}
-
-	deployment1 := CreateTestDeployment(testNamespace, "test-deployment1", 0, appLabels)
-	deployment2 := CreateTestDeployment(testNamespace, "test-deployment2", 1, appLabels)
+	deployment1 := CreateTestDeployment(testNamespace, "test-deployment1", 0, AppLabels)
 	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake deployment: %v", err)
 	}
 
+	deployment2 := CreateTestDeployment(testNamespace, "test-deployment2", 1, AppLabels)
 	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment2, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake deployment: %v", err)
+	}
+
+	deployment3 := CreateTestDeployment(testNamespace, "test-deployment3", 0, UsedLabels)
+	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake deployment: %v", err)
+	}
+
+	deployment4 := CreateTestDeployment(testNamespace, "test-deployment4", 1, UnusedLabels)
+	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment4, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake deployment: %v", err)
 	}
@@ -52,12 +62,12 @@ func TestProcessNamespaceDeployments(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(deploymentsWithoutReplicas) != 1 {
+	if len(deploymentsWithoutReplicas) != 2 {
 		t.Errorf("Expected 1 deployment without replicas, got %d", len(deploymentsWithoutReplicas))
 	}
 
-	if deploymentsWithoutReplicas[0] != "test-deployment1" {
-		t.Errorf("Expected 'test-deployment1', got %s", deploymentsWithoutReplicas[0])
+	if deploymentsWithoutReplicas[0] != "test-deployment1" && deploymentsWithoutReplicas[1] != "test-deployment4" {
+		t.Errorf("Expected 'test-deployment1', 'test-deployment4',got %s, %s", deploymentsWithoutReplicas[0], deploymentsWithoutReplicas[1])
 	}
 }
 
@@ -79,7 +89,7 @@ func TestGetUnusedDeploymentsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Deployments": {"test-deployment1"},
+			"Deployments": {"test-deployment1", "test-deployment4"},
 		},
 	}
 

@@ -47,7 +47,7 @@ func TestDeleteResource(t *testing.T) {
 func TestDeleteDeleteResourceWithFinalizer(t *testing.T) {
 	scheme := runtime.NewScheme()
 	gvr := schema.GroupVersionResource{Group: "testgroup", Version: "v1", Resource: "TestResource"}
-	testResource := CreateTestUnstuctered(gvr.Resource, gvr.GroupVersion().String(), testNamespace, "test-resource")
+	testResource := CreateTestUnstructered(gvr.Resource, gvr.GroupVersion().String(), testNamespace, "test-resource")
 	dynamicClient := fakedynamic.NewSimpleDynamicClient(scheme, testResource)
 
 	_, err := dynamicClient.Resource(gvr).
@@ -109,8 +109,8 @@ func TestDeleteDeleteResourceWithFinalizer(t *testing.T) {
 func TestFlagDynamicResource(t *testing.T) {
 	scheme := runtime.NewScheme()
 	gvr := schema.GroupVersionResource{Group: "testgroup", Version: "v1", Resource: "TestResource"}
-	testResource := CreateTestUnstuctered(gvr.Resource, gvr.GroupVersion().String(), testNamespace, "test-resource")
-	testResourceWithLabel := CreateTestUnstuctered(gvr.Resource, gvr.GroupVersion().String(), testNamespace, "test-resource-with-label")
+	testResource := CreateTestUnstructered(gvr.Resource, gvr.GroupVersion().String(), testNamespace, "test-resource")
+	testResourceWithLabel := CreateTestUnstructered(gvr.Resource, gvr.GroupVersion().String(), testNamespace, "test-resource-with-label")
 	dynamicClient := fakedynamic.NewSimpleDynamicClient(scheme, testResource, testResourceWithLabel)
 	testResourceWithLabel.SetLabels(map[string]string{
 		"test": "true",

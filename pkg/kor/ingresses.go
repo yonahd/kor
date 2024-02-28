@@ -67,19 +67,27 @@ func retrieveUsedIngress(clientset kubernetes.Interface, namespace string, filte
 	return usedIngresses, nil
 }
 
-func retrieveIngressNames(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func retrieveIngressNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, []string, error) {
 	ingresses, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+
+	var unusedIngressNames []string
 	names := make([]string, 0, len(ingresses.Items))
+
 	for _, ingress := range ingresses.Items {
-		if filters.KorLabelFilter(&ingress, &filters.Options{}) {
+		if pass, _ := filter.SetObject(&ingress).Run(filterOpts); pass {
+			continue
+		}
+
+		if ingress.Labels["kor/used"] == "false" {
+			unusedIngressNames = append(unusedIngressNames, ingress.Name)
 			continue
 		}
 		names = append(names, ingress.Name)
 	}
-	return names, nil
+	return names, unusedIngressNames, nil
 }
 
 func processNamespaceIngresses(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
@@ -87,12 +95,13 @@ func processNamespaceIngresses(clientset kubernetes.Interface, namespace string,
 	if err != nil {
 		return nil, err
 	}
-	ingressNames, err := retrieveIngressNames(clientset, namespace)
+	ingressNames, unusedIngressNames, err := retrieveIngressNames(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
 
 	diff := CalculateResourceDifference(usedIngresses, ingressNames)
+	diff = append(diff, unusedIngressNames...)
 	return diff, nil
 
 }

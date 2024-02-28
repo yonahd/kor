@@ -22,7 +22,12 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 	}
 
 	for _, pdb := range pdbs.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
+		if pass, _ := filter.SetObject(&pdb).Run(filterOpts); pass {
+			continue
+		}
+
+		if pdb.Labels["kor/used"] == "false" {
+			unusedPdbs = append(unusedPdbs, pdb.Name)
 			continue
 		}
 

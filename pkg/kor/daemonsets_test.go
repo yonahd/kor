@@ -27,21 +27,34 @@ func createTestDaemonSets(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	appLabels := map[string]string{}
-
-	ds1 := CreateTestDaemonSet(testNamespace, "test-ds1", appLabels, &appsv1.DaemonSetStatus{
+	ds1 := CreateTestDaemonSet(testNamespace, "test-ds1", AppLabels, &appsv1.DaemonSetStatus{
 		CurrentNumberScheduled: 0,
 	})
-	ds2 := CreateTestDaemonSet(testNamespace, "test-ds2", appLabels, &appsv1.DaemonSetStatus{
-		CurrentNumberScheduled: 1,
-	})
-
 	_, err = clientset.AppsV1().DaemonSets(testNamespace).Create(context.TODO(), ds1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "DaemonSet", err)
 	}
 
+	ds2 := CreateTestDaemonSet(testNamespace, "test-ds2", AppLabels, &appsv1.DaemonSetStatus{
+		CurrentNumberScheduled: 1,
+	})
 	_, err = clientset.AppsV1().DaemonSets(testNamespace).Create(context.TODO(), ds2, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "DaemonSet", err)
+	}
+
+	ds3 := CreateTestDaemonSet(testNamespace, "test-ds3", UsedLabels, &appsv1.DaemonSetStatus{
+		CurrentNumberScheduled: 0,
+	})
+	_, err = clientset.AppsV1().DaemonSets(testNamespace).Create(context.TODO(), ds3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "DaemonSet", err)
+	}
+
+	ds4 := CreateTestDaemonSet(testNamespace, "test-ds4", UnusedLabels, &appsv1.DaemonSetStatus{
+		CurrentNumberScheduled: 1,
+	})
+	_, err = clientset.AppsV1().DaemonSets(testNamespace).Create(context.TODO(), ds4, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "DaemonSet", err)
 	}
@@ -57,12 +70,12 @@ func TestProcessNamespaceDaemonSets(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(daemonSetsWithoutReplicas) != 1 {
+	if len(daemonSetsWithoutReplicas) != 2 {
 		t.Errorf("Expected 1 DaemonSet without replicas, got %d", len(daemonSetsWithoutReplicas))
 	}
 
-	if daemonSetsWithoutReplicas[0] != "test-ds1" {
-		t.Errorf("Expected 'test-ds1', got %s", daemonSetsWithoutReplicas[0])
+	if daemonSetsWithoutReplicas[0] != "test-ds1" && daemonSetsWithoutReplicas[1] != "test-ds4" {
+		t.Errorf("Expected 'test-ds1', 'test-ds4', got %s, %s", daemonSetsWithoutReplicas[0], daemonSetsWithoutReplicas[1])
 	}
 }
 
@@ -84,7 +97,7 @@ func TestGetUnusedDaemonSetsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"DaemonSets": {"test-ds1"},
+			"DaemonSets": {"test-ds1", "test-ds4"},
 		},
 	}
 

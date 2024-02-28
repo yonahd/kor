@@ -15,14 +15,26 @@ import (
 func createTestPvs(t *testing.T) *fake.Clientset {
 	clientset := fake.NewSimpleClientset()
 
-	pv1 := CreateTestPv("test-pv1", "Bound")
-	pv2 := CreateTestPv("test-pv2", "Available")
+	pv1 := CreateTestPv("test-pv1", "Bound", AppLabels)
 	_, err := clientset.CoreV1().PersistentVolumes().Create(context.TODO(), pv1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "PV", err)
 	}
 
+	pv2 := CreateTestPv("test-pv2", "Available", AppLabels)
 	_, err = clientset.CoreV1().PersistentVolumes().Create(context.TODO(), pv2, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "PV", err)
+	}
+
+	pv3 := CreateTestPv("test-pv3", "Bound", UsedLabels)
+	_, err = clientset.CoreV1().PersistentVolumes().Create(context.TODO(), pv3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "PV", err)
+	}
+
+	pv4 := CreateTestPv("test-pv4", "Available", UnusedLabels)
+	_, err = clientset.CoreV1().PersistentVolumes().Create(context.TODO(), pv4, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "PV", err)
 	}
@@ -37,11 +49,11 @@ func TestProcessPvs(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(usedPvs) != 1 {
-		t.Errorf("Expected 1 used pv, got %d", len(usedPvs))
+	if len(usedPvs) != 2 {
+		t.Errorf("Expected 2 used pv, got %d", len(usedPvs))
 	}
 
-	if usedPvs[0] != "test-pv2" {
+	if usedPvs[0] != "test-pv2" && usedPvs[1] != "test-pv3" {
 		t.Errorf("Expected 'test-pv2', got %s", usedPvs[0])
 	}
 }
@@ -64,7 +76,7 @@ func TestGetUnusedPvs(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		"": {
-			"Pv": {"test-pv2"},
+			"Pv": {"test-pv2", "test-pv4"},
 		},
 	}
 

@@ -103,14 +103,21 @@ func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]str
 	return envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, nil
 }
 
-func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, []string, error) {
 	secrets, err := clientset.CoreV1().Secrets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+
+	var unusedSecretNames []string
 	names := make([]string, 0, len(secrets.Items))
 	for _, secret := range secrets.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
+		if pass, _ := filter.SetObject(&secret).Run(filterOpts); pass {
+			continue
+		}
+
+		if secret.Labels["kor/used"] == "false" {
+			unusedSecretNames = append(unusedSecretNames, secret.Name)
 			continue
 		}
 
@@ -118,7 +125,7 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 			names = append(names, secret.Name)
 		}
 	}
-	return names, nil
+	return names, unusedSecretNames, nil
 }
 
 func processNamespaceSecret(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
@@ -134,7 +141,7 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 	pullSecrets = RemoveDuplicatesAndSort(pullSecrets)
 	tlsSecrets = RemoveDuplicatesAndSort(tlsSecrets)
 
-	secretNames, err := retrieveSecretNames(clientset, namespace, filterOpts)
+	secretNames, unusedSecretNames, err := retrieveSecretNames(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +153,7 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 		usedSecrets = append(usedSecrets, slice...)
 	}
 	diff := CalculateResourceDifference(usedSecrets, secretNames)
+	diff = append(diff, unusedSecretNames...)
 	return diff, nil
 
 }
