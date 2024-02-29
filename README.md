@@ -55,6 +55,11 @@ docker run --rm -i yonahdissen/kor
 docker run --rm -i -v "/path/to/.kube/config:/root/.kube/config" yonahdissen/kor all
 ```
 
+### Kubectl plugin (<img src="https://raw.githubusercontent.com/kubernetes-sigs/krew/master/assets/logo/horizontal/color/krew-horizontal-color.png" alt="krew" width="48"/>)
+```sh
+$ kubectl krew install kor
+```
+
 ### Helm
 Run as a cronjob in your Cluster (with an option for sending slack updates)
 ```sh
