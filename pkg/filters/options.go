@@ -101,23 +101,29 @@ func (o *Options) Namespaces(clientset kubernetes.Interface) []string {
 		}
 		includeNamespaces := o.IncludeNamespaces
 		excludeNamespaces := o.ExcludeNamespaces
-		namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
-			os.Exit(1)
-		}
+
 		if len(o.IncludeNamespaces) > 0 {
-			for _, ns := range namespaceList.Items {
-				namespacesMap[ns.Name] = false
-			}
+
 			for _, ns := range includeNamespaces {
-				if _, exists := namespacesMap[ns]; exists {
+
+				_, err := clientset.CoreV1().Namespaces().Get(context.TODO(), ns, metav1.GetOptions{})
+				if err == nil {
 					namespacesMap[ns] = true
 				} else {
 					fmt.Fprintf(os.Stderr, "namespace [%s] not found\n", ns)
 				}
 			}
 		} else {
+			namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
+				os.Exit(1)
+			}
+
+			for _, ns := range namespaceList.Items {
+				namespacesMap[ns.Name] = false
+			}
+
 			for _, ns := range namespaceList.Items {
 				namespacesMap[ns.Name] = true
 			}
