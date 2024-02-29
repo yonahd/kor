@@ -5,18 +5,11 @@ metadata:
 spec:
   version: {{ .TagName }}
   homepage: https://github.com/yonahd/kor
-  shortDescription: Kor is a tool to discover unused Kubernetes resources.
+  shortDescription: Kor is a tool to discover unused K8s resources.
   description: |
     This plugin shows unused Kubernetes resources (namespaced or cluster-scoped).
     It provides additional capabilities such as exporting Prometheus metrics,
     deleting unused resources, and more!
-
-    Examples:
-    # Find all unused resources in the cluster
-    kubectl kor all
-
-    # Delete all unused ConfigMaps from a certain namespace
-    kubectl kor configmaps --include-namespaces my-namespace --delete
   platforms:
   - selector:
       matchLabels:
