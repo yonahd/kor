@@ -57,7 +57,7 @@ docker run --rm -i -v "/path/to/.kube/config:/root/.kube/config" yonahdissen/kor
 
 ### Kubectl plugin (<img src="https://raw.githubusercontent.com/kubernetes-sigs/krew/master/assets/logo/horizontal/color/krew-horizontal-color.png" alt="krew" width="48"/>)
 ```sh
-$ kubectl krew install kor
+kubectl krew install kor
 ```
 
 ### Helm
