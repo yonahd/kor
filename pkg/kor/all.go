@@ -185,6 +185,15 @@ func getUnusedDaemonSets(clientset kubernetes.Interface, namespace string, filte
 	return namespaceSADiff
 }
 
+func getUnusedStorageClasses(clientset kubernetes.Interface, filterOpts *filters.Options) ResourceDiff {
+	scDiff, err := processStorageClasses(clientset, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "StorageClasses", err)
+	}
+	allScDiff := ResourceDiff{"StorageClass", scDiff}
+	return allScDiff
+}
+
 func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
@@ -253,6 +262,12 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 	outputBuffer.WriteString(clusterRoleOutput)
 	outputBuffer.WriteString("\n")
 	noNamespaceResourceMap[clusterRoleDiff.resourceType] = clusterRoleDiff.diff
+
+	storageClassDiff := getUnusedStorageClasses(clientset, filterOpts)
+	storageClassOutput := FormatOutputAll("", []ResourceDiff{storageClassDiff}, opts)
+	outputBuffer.WriteString(storageClassOutput)
+	outputBuffer.WriteString("\n")
+	noNamespaceResourceMap[storageClassDiff.resourceType] = storageClassDiff.diff
 
 	output := FormatOutputAll("", allDiffs, opts)
 

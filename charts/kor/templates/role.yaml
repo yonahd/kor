@@ -55,13 +55,14 @@ rules:
       - endpoints
       - jobs
       - replicasets
-      - daemonsets      
+      - daemonsets
       {{/* cluster-scoped resources */}}
       - namespaces
       - clusterroles
       - clusterrolebindings
       - persistentvolumes
       - customresourcedefinitions
+      - storageclasses
     verbs:
       - get
       - list
