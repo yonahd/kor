@@ -3,6 +3,8 @@ package kor
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -11,8 +13,17 @@ import (
 	"github.com/yonahd/kor/pkg/utils"
 )
 
+func execName() string {
+	n := "kor"
+	if strings.HasPrefix(filepath.Base(os.Args[0]), "kubectl-") {
+		return "kubectl-" + n
+	}
+
+	return n
+}
+
 var rootCmd = &cobra.Command{
-	Use:   "kor",
+	Use:   execName(),
 	Short: "kor - a CLI to to discover unused Kubernetes resources",
 	Long: `kor is a CLI to to discover unused Kubernetes resources
 	kor can currently discover unused configmaps and secrets`,

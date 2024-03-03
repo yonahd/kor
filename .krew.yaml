@@ -1,0 +1,43 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: kor
+spec:
+  version: {{ .TagName }}
+  homepage: https://github.com/yonahd/kor
+  shortDescription: Kor is a tool to discover unused K8s resources.
+  description: |
+    This plugin shows unused Kubernetes resources (namespaced or cluster-scoped).
+    It provides additional capabilities such as exporting Prometheus metrics,
+    deleting unused resources, and more!
+  platforms:
+  - selector:
+      matchLabels:
+        os: linux
+        arch: amd64
+    {{ addURIAndSha "https://github.com/yonahd/kor/releases/download/{{ .TagName }}/kor_Linux_x86_64.tar.gz" .TagName }}
+    bin: kor
+  - selector:
+      matchLabels:
+        os: linux
+        arch: arm64
+    {{ addURIAndSha "https://github.com/yonahd/kor/releases/download/{{ .TagName }}/kor_Linux_arm64.tar.gz" .TagName }}
+    bin: kor
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: amd64
+    {{ addURIAndSha "https://github.com/yonahd/kor/releases/download/{{ .TagName }}/kor_Darwin_x86_64.tar.gz" .TagName }}
+    bin: kor
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: arm64
+    {{ addURIAndSha "https://github.com/yonahd/kor/releases/download/{{ .TagName }}/kor_Darwin_arm64.tar.gz" .TagName }}
+    bin: kor
+  - selector:
+      matchLabels:
+        os: windows
+        arch: amd64
+    {{ addURIAndSha "https://github.com/yonahd/kor/releases/download/{{ .TagName }}/kor_Windows_x86_64.zip" .TagName }}
+    bin: kor.exe
