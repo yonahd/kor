@@ -8,7 +8,8 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	storagev1 "k8s.io/api/storage/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -219,25 +220,40 @@ func CreateTestIngress(namespace, name, ServiceName, secretName string, labels m
 	}
 }
 
-func CreateTestPvc(namespace, name string, labels map[string]string) *corev1.PersistentVolumeClaim {
+func CreateTestPvc(namespace, name string, labels map[string]string, storageClass string) *corev1.PersistentVolumeClaim {
 	return &corev1.PersistentVolumeClaim{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
 			Labels:    labels,
 		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			StorageClassName: &storageClass,
+		},
 	}
 }
 
-func CreateTestPv(name, phase string, labels map[string]string) *corev1.PersistentVolume {
+func CreateTestPv(name, phase string, labels map[string]string, storageClass string) *corev1.PersistentVolume {
 	return &corev1.PersistentVolume{
 		ObjectMeta: v1.ObjectMeta{
 			Name:   name,
 			Labels: labels,
 		},
+		Spec: corev1.PersistentVolumeSpec{
+			StorageClassName: storageClass,
+		},
 		Status: corev1.PersistentVolumeStatus{
 			Phase: corev1.PersistentVolumePhase(phase),
 		},
+	}
+}
+
+func CreateTestStorageClass(name, provisioner string) *storagev1.StorageClass {
+	return &storagev1.StorageClass{
+		ObjectMeta: v1.ObjectMeta{
+			Name: name,
+		},
+		Provisioner: provisioner,
 	}
 }
 

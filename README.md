@@ -29,6 +29,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - Jobs
 - ReplicaSets
 - DaemonSets
+- StorageClasses
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -97,10 +98,11 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `hpa` - Gets unused HPAs for the specified namespace or all namespaces.
 - `pods` - Gets unused Pods for the specified namespace or all namespaces.
 - `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
-- `pv` - Gets unused PVs in the cluster(non namespaced resource).
+- `pv` - Gets unused PVs in the cluster (non namespaced resource).
+- `storageclasses` - Gets unused StorageClasses in the cluster (non namespaced resource).
 - `ingress` - Gets unused Ingresses for the specified namespace or all namespaces.
 - `pdb` - Gets unused PDBs for the specified namespace or all namespaces.
-- `crd` - Gets unused CRDs in the cluster(non namespaced resource).
+- `crd` - Gets unused CRDs in the cluster (non namespaced resource).
 - `jobs` - Gets unused jobs for the specified namespace or all namespaces.
 - `replicasets` - Gets unused replicaSets for the specified namespace or all namespaces.
 - `daemonsets`- Gets unused DaemonSets for the specified namespace or all namespaces.
@@ -160,6 +162,7 @@ kor [subcommand] --help
 | Jobs            | Jobs status is completed                                                                                                                                                                                                          |                                                                                                                              |
 | ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work                                                                                                                                                        |
 | DaemonSets     | DaemonSets not scheduled on any nodes              |
+| StorageClasses | StorageClasses not used by any PVs/PVCs |
 
 ## Deleting Unused resources
 If you want to delete resources in an interactive way using Kor you can run:
