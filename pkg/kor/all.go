@@ -194,7 +194,7 @@ func getUnusedStorageClasses(clientset kubernetes.Interface, filterOpts *filters
 	return allScDiff
 }
 
-func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := filterOpts.Namespaces(clientset)
@@ -243,6 +243,23 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 		response[namespace] = resourceMap
 	}
 
+	jsonResponse, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	unusedAllNamespaced, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+
+	return unusedAllNamespaced, nil
+}
+
+func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+	var outputBuffer bytes.Buffer
+	response := make(map[string]map[string][]string)
+
 	var allDiffs []ResourceDiff
 	noNamespaceResourceMap := make(map[string][]string)
 	crdDiff := getUnusedCrds(apiExtClient, dynamicClient, filterOpts)
@@ -280,10 +297,26 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 		return "", err
 	}
 
-	unusedAll, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedAllNonNamespaced, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
+
+	return unusedAllNonNamespaced, nil
+}
+
+func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+
+	unusedAllNonNamespaced, err := GetUnusedAllNonNamespaced(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+
+	unusedAll := unusedAllNamespaced + unusedAllNonNamespaced
 
 	return unusedAll, nil
 }
