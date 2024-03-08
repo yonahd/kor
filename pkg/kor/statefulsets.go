@@ -26,6 +26,11 @@ func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 			continue
 		}
 
+		if statefulSet.Labels["kor/used"] == "false" {
+			statefulSetsWithoutReplicas = append(statefulSetsWithoutReplicas, statefulSet.Name)
+			continue
+		}
+
 		if *statefulSet.Spec.Replicas == 0 {
 			statefulSetsWithoutReplicas = append(statefulSetsWithoutReplicas, statefulSet.Name)
 		}

@@ -15,6 +15,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -74,6 +75,9 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 		},
 		"DaemonSet": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.AppsV1().DaemonSets(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
+		"StorageClass": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.StorageV1().StorageClasses().Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
 	}
 
@@ -160,6 +164,8 @@ func updateResource(clientset kubernetes.Interface, namespace, resourceType stri
 		return clientset.AppsV1().ReplicaSets(namespace).Update(context.TODO(), resource.(*appsv1.ReplicaSet), metav1.UpdateOptions{})
 	case "DaemonSet":
 		return clientset.AppsV1().DaemonSets(namespace).Update(context.TODO(), resource.(*appsv1.DaemonSet), metav1.UpdateOptions{})
+	case "StorageClass":
+		return clientset.StorageV1().StorageClasses().Update(context.TODO(), resource.(*storagev1.StorageClass), metav1.UpdateOptions{})
 	}
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }
@@ -200,6 +206,8 @@ func getResource(clientset kubernetes.Interface, namespace, resourceType, resour
 		return clientset.AppsV1().ReplicaSets(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "DaemonSet":
 		return clientset.AppsV1().DaemonSets(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
+	case "StorageClass":
+		return clientset.StorageV1().StorageClasses().Get(context.TODO(), resourceName, metav1.GetOptions{})
 	}
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }

@@ -27,14 +27,26 @@ func createTestServices(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	endpoint1 := CreateTestEndpoint(testNamespace, "test-endpoint1", 0)
-	endpoint2 := CreateTestEndpoint(testNamespace, "test-endpoint2", 1)
+	endpoint1 := CreateTestEndpoint(testNamespace, "test-endpoint1", 0, AppLabels)
 	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake endpoint: %v", err)
 	}
 
+	endpoint2 := CreateTestEndpoint(testNamespace, "test-endpoint2", 1, AppLabels)
 	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint2, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake endpoint: %v", err)
+	}
+
+	endpoint3 := CreateTestEndpoint(testNamespace, "test-endpoint3", 1, UsedLabels)
+	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake endpoint: %v", err)
+	}
+
+	endpoint4 := CreateTestEndpoint(testNamespace, "test-endpoint4", 1, UnusedLabels)
+	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint4, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake endpoint: %v", err)
 	}
@@ -50,12 +62,12 @@ func TestGetEndpointsWithoutSubsets(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(servicesWithoutEndpoints) != 1 {
-		t.Errorf("Expected 1 service without endpoint, got %d", len(servicesWithoutEndpoints))
+	if len(servicesWithoutEndpoints) != 2 {
+		t.Errorf("Expected 2 service without endpoint, got %d", len(servicesWithoutEndpoints))
 	}
 
-	if servicesWithoutEndpoints[0] != "test-endpoint1" {
-		t.Errorf("Expected 'test-endpoint1', got %s", servicesWithoutEndpoints[0])
+	if servicesWithoutEndpoints[0] != "test-endpoint1" || servicesWithoutEndpoints[1] != "test-endpoint4" {
+		t.Errorf("Expected 'test-endpoint1' and 'test-endpoint4', got %s, %s", servicesWithoutEndpoints[0], servicesWithoutEndpoints[1])
 	}
 }
 
@@ -77,7 +89,7 @@ func TestGetUnusedServicesStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Services": {"test-endpoint1"},
+			"Services": {"test-endpoint1", "test-endpoint4"},
 		},
 	}
 

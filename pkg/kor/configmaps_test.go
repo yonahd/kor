@@ -27,15 +27,41 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	configmap1 := CreateTestConfigmap(testNamespace, "configmap-1")
-	configmap2 := CreateTestConfigmap(testNamespace, "configmap-2")
-	configmap3 := CreateTestConfigmap(testNamespace, "configmap-3")
+	configmap1 := CreateTestConfigmap(testNamespace, "configmap-1", AppLabels)
+	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake configmap: %v", err)
+	}
+
+	configmap2 := CreateTestConfigmap(testNamespace, "configmap-2", AppLabels)
+	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap2, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake configmap: %v", err)
+	}
+
+	configmap3 := CreateTestConfigmap(testNamespace, "configmap-3", AppLabels)
+	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap3, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake configmap: %v", err)
+	}
+
+	configmap4 := CreateTestConfigmap(testNamespace, "configmap-4", UsedLabels)
+	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap4, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake configmap: %v", err)
+	}
+
+	configmap5 := CreateTestConfigmap(testNamespace, "configmap-5", UnusedLabels)
+	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap5, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake configmap: %v", err)
+	}
 
 	pod1 := CreateTestPod(testNamespace, "pod-1", "", []corev1.Volume{
 		{Name: "vol-1", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.ObjectMeta.Name}}}},
-	})
+	}, AppLabels)
 
-	pod2 := CreateTestPod(testNamespace, "pod-2", "", nil)
+	pod2 := CreateTestPod(testNamespace, "pod-2", "", nil, AppLabels)
 	pod2.Spec.Containers = []corev1.Container{
 		{
 			Env: []corev1.EnvVar{
@@ -44,7 +70,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 		},
 	}
 
-	pod3 := CreateTestPod(testNamespace, "pod-3", "", nil)
+	pod3 := CreateTestPod(testNamespace, "pod-3", "", nil, AppLabels)
 	pod3.Spec.Containers = []corev1.Container{
 		{
 			EnvFrom: []corev1.EnvFromSource{
@@ -53,28 +79,13 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 		},
 	}
 
-	pod4 := CreateTestPod(testNamespace, "pod-4", "", nil)
+	pod4 := CreateTestPod(testNamespace, "pod-4", "", nil, AppLabels)
 	pod4.Spec.InitContainers = []corev1.Container{
 		{
 			Env: []corev1.EnvVar{
 				{Name: "INIT_ENV_VAR_1", ValueFrom: &corev1.EnvVarSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: configmap2.ObjectMeta.Name}}}},
 			},
 		},
-	}
-
-	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap1, metav1.CreateOptions{})
-	if err != nil {
-		t.Fatalf("Error creating fake configmap: %v", err)
-	}
-
-	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap2, metav1.CreateOptions{})
-	if err != nil {
-		t.Fatalf("Error creating fake configmap: %v", err)
-	}
-
-	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap3, metav1.CreateOptions{})
-	if err != nil {
-		t.Fatalf("Error creating fake configmap: %v", err)
 	}
 
 	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod1, metav1.CreateOptions{})
@@ -103,7 +114,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 func TestRetrieveConfigMapNames(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 
-	configMapNames, err := retrieveConfigMapNames(clientset, testNamespace, &filters.Options{})
+	configMapNames, _, err := retrieveConfigMapNames(clientset, testNamespace, &filters.Options{})
 
 	if err != nil {
 		t.Fatalf("Error retrieving configmap names: %v", err)
@@ -123,7 +134,7 @@ func TestProcessNamespaceCM(t *testing.T) {
 		t.Fatalf("Error processing namespace CM: %v", err)
 	}
 
-	unusedConfigmaps := []string{"configmap-3"}
+	unusedConfigmaps := []string{"configmap-3", "configmap-5"}
 	if !equalSlices(diff, unusedConfigmaps) {
 		t.Errorf("Expected diff %v, got %v", unusedConfigmaps, diff)
 	}
@@ -183,7 +194,7 @@ func TestGetUnusedConfigmapsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"ConfigMap": {"configmap-3"},
+			"ConfigMap": {"configmap-3", "configmap-5"},
 		},
 	}
 

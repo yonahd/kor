@@ -38,20 +38,25 @@ func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, filterO
 	return usedRoleNames, nil
 }
 
-func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, []string, error) {
 	roles, err := clientset.RbacV1().Roles(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	var unusedRoleNames []string
 	names := make([]string, 0, len(roles.Items))
 	for _, role := range roles.Items {
 		if pass := filters.KorLabelFilter(&role, &filters.Options{}); pass {
 			continue
 		}
+		if role.Labels["kor/used"] == "false" {
+			unusedRoleNames = append(unusedRoleNames, role.Name)
+			continue
+		}
 
 		names = append(names, role.Name)
 	}
-	return names, nil
+	return names, unusedRoleNames, nil
 }
 
 func processNamespaceRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
@@ -62,12 +67,13 @@ func processNamespaceRoles(clientset kubernetes.Interface, namespace string, fil
 
 	usedRoles = RemoveDuplicatesAndSort(usedRoles)
 
-	roleNames, err := retrieveRoleNames(clientset, namespace, filterOpts)
+	roleNames, rolesUnusedFromLabel, err := retrieveRoleNames(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
 
 	diff := CalculateResourceDifference(usedRoles, roleNames)
+	diff = append(diff, rolesUnusedFromLabel...)
 	return diff, nil
 
 }

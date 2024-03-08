@@ -25,6 +25,12 @@ func ProcessNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 		if pass, _ := filter.SetObject(&deployment).Run(filterOpts); pass {
 			continue
 		}
+
+		if deployment.Labels["kor/used"] == "false" {
+			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, deployment.Name)
+			continue
+		}
+
 		if *deployment.Spec.Replicas == 0 {
 			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, deployment.Name)
 		}

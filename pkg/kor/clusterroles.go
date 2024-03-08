@@ -114,20 +114,28 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 	return usedClusterRoleNames, nil
 }
 
-func retrieveClusterRoleNames(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
+func retrieveClusterRoleNames(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, []string, error) {
 	clusterRoles, err := clientset.RbacV1().ClusterRoles().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+
+	var unusedClusterRoles []string
 	names := make([]string, 0, len(clusterRoles.Items))
+
 	for _, clusterRole := range clusterRoles.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
+		if pass, _ := filter.SetObject(&clusterRole).Run(filterOpts); pass {
+			continue
+		}
+
+		if clusterRole.Labels["kor/used"] == "false" {
+			unusedClusterRoles = append(unusedClusterRoles, clusterRole.Name)
 			continue
 		}
 
 		names = append(names, clusterRole.Name)
 	}
-	return names, nil
+	return names, unusedClusterRoles, nil
 }
 
 func processClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
@@ -138,12 +146,14 @@ func processClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Opt
 
 	usedClusterRoles = RemoveDuplicatesAndSort(usedClusterRoles)
 
-	clusterRoleNames, err := retrieveClusterRoleNames(clientset, filterOpts)
+	clusterRoleNames, unusedClusterRoles, err := retrieveClusterRoleNames(clientset, filterOpts)
 	if err != nil {
 		return nil, err
 	}
 
 	diff := CalculateResourceDifference(usedClusterRoles, clusterRoleNames)
+	diff = append(diff, unusedClusterRoles...)
+
 	return diff, nil
 
 }

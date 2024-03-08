@@ -32,22 +32,45 @@ func createTestJobs(t *testing.T) *fake.Clientset {
 	job1 := CreateTestJob(testNamespace, "test-job1", &batchv1.JobStatus{
 		Succeeded: 0,
 		Failed:    1,
-	})
-	job2 := CreateTestJob(testNamespace, "test-job2", &batchv1.JobStatus{
-		Succeeded:      1,
-		Failed:         0,
-		CompletionTime: &v1.Time{Time: time.Now()},
-	})
+	}, AppLabels)
 
 	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake job: %v", err)
 	}
 
+	job2 := CreateTestJob(testNamespace, "test-job2", &batchv1.JobStatus{
+		Succeeded:      1,
+		Failed:         0,
+		CompletionTime: &v1.Time{Time: time.Now()},
+	}, AppLabels)
+
 	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake job: %v", err)
 	}
+
+	job3 := CreateTestJob(testNamespace, "test-job3", &batchv1.JobStatus{
+		Succeeded: 0,
+		Failed:    1,
+	}, UsedLabels)
+
+	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake job: %v", err)
+	}
+
+	job4 := CreateTestJob(testNamespace, "test-job4", &batchv1.JobStatus{
+		Succeeded:      1,
+		Failed:         0,
+		CompletionTime: &v1.Time{Time: time.Now()},
+	}, UnusedLabels)
+
+	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job4, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake job: %v", err)
+	}
+
 	return clientset
 }
 
@@ -59,11 +82,11 @@ func TestProcessNamespaceJobs(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(completedJobs) != 1 {
-		t.Errorf("Expected 1 job been completed, got %d", len(completedJobs))
+	if len(completedJobs) != 2 {
+		t.Errorf("Expected 2 job been completed, got %d", len(completedJobs))
 	}
 
-	if completedJobs[0] != "test-job2" {
+	if completedJobs[0] != "test-job2" && completedJobs[1] != "test-job4" {
 		t.Errorf("job2', got %s", completedJobs[0])
 	}
 }
@@ -86,7 +109,7 @@ func TestGetUnusedJobsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Jobs": {"test-job2"},
+			"Jobs": {"test-job2", "test-job4"},
 		},
 	}
 

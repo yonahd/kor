@@ -29,6 +29,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - Jobs
 - ReplicaSets
 - DaemonSets
+- StorageClasses
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -53,6 +54,11 @@ Run a container with your kubeconfig mounted:
 docker run --rm -i yonahdissen/kor
 
 docker run --rm -i -v "/path/to/.kube/config:/root/.kube/config" yonahdissen/kor all
+```
+
+### Kubectl plugin (<img src="https://raw.githubusercontent.com/kubernetes-sigs/krew/master/assets/logo/horizontal/color/krew-horizontal-color.png" alt="krew" width="48"/>)
+```sh
+kubectl krew install kor
 ```
 
 ### Helm
@@ -92,15 +98,17 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `hpa` - Gets unused HPAs for the specified namespace or all namespaces.
 - `pods` - Gets unused Pods for the specified namespace or all namespaces.
 - `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
-- `pv` - Gets unused PVs in the cluster(non namespaced resource).
+- `pv` - Gets unused PVs in the cluster (non namespaced resource).
+- `storageclasses` - Gets unused StorageClasses in the cluster (non namespaced resource).
 - `ingress` - Gets unused Ingresses for the specified namespace or all namespaces.
 - `pdb` - Gets unused PDBs for the specified namespace or all namespaces.
-- `crd` - Gets unused CRDs in the cluster(non namespaced resource).
+- `crd` - Gets unused CRDs in the cluster (non namespaced resource).
 - `jobs` - Gets unused jobs for the specified namespace or all namespaces.
 - `replicasets` - Gets unused replicaSets for the specified namespace or all namespaces.
 - `daemonsets`- Gets unused DaemonSets for the specified namespace or all namespaces.
 - `finalizers` - Gets unused pending deletion resources for the specified namespace or all namespaces.
 - `exporter` - Export Prometheus metrics.
+- `version` - Print kor version information.
 
 ### Supported Flags
 ```
@@ -109,7 +117,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
       --exclude-namespaces strings   Namespaces to be excluded, split by commas. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
   -h, --help                         help for kor
       --include-labels string        Selector to filter in, Example: --include-labels key1=value1,key2=value2.
-  -n, --include-namespaces strings   Namespaces to run on, split by commas. Example: --include-namespace ns1,ns2,ns3. 
+  -n, --include-namespaces strings   Namespaces to run on, split by commas. Example: --include-namespace ns1,ns2,ns3.
   -k, --kubeconfig string            Path to kubeconfig file (optional)
       --newer-than string            The maximum age of the resources to be considered unused. This flag cannot be used together with older-than flag. Example: --newer-than=1h2m
       --no-interactive               Do not prompt for confirmation when deleting resources. Be careful using this flag!
@@ -119,7 +127,6 @@ Kor provides various subcommands to identify and list unused resources. The avai
       --slack-channel string         Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.
       --slack-webhook-url string     Slack webhook URL to send notifications to
   -v, --verbose                      Verbose output (print empty namespaces)
-
 ```
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.
@@ -155,6 +162,7 @@ kor [subcommand] --help
 | Jobs            | Jobs status is completed                                                                                                                                                                                                          |                                                                                                                              |
 | ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work                                                                                                                                                        |
 | DaemonSets     | DaemonSets not scheduled on any nodes              |
+| StorageClasses | StorageClasses not used by any PVs/PVCs |
 
 ## Deleting Unused resources
 If you want to delete resources in an interactive way using Kor you can run:
@@ -176,7 +184,14 @@ The resources labeled with:
 ```sh
 kor/used=true
 ```
-will be ignored by kor even if they are unused. You can add this label to resources you want to ignore.
+Will be ignored by kor even if they are unused. You can add this label to resources you want to ignore.
+
+## Force clean Resources
+The resources labeled with:
+```sh
+kor/used=false
+```
+Will be cleaned always. This is a good way to mark resources for later cleanup.
 
 ## In Cluster Usage
 

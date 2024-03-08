@@ -23,7 +23,12 @@ func processPvs(clientset kubernetes.Interface, filterOpts *filters.Options) ([]
 	var unusedPvs []string
 
 	for _, pv := range pvs.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
+		if pass := filters.KorLabelFilter(&pv, &filters.Options{}); pass {
+			continue
+		}
+
+		if pv.Labels["kor/used"] == "false" {
+			unusedPvs = append(unusedPvs, pv.Name)
 			continue
 		}
 

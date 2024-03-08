@@ -103,20 +103,27 @@ func retrieveUsedSA(clientset kubernetes.Interface, namespace string) ([]string,
 	return podServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, nil
 }
 
-func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, []string, error) {
 	serviceaccounts, err := clientset.CoreV1().ServiceAccounts(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	names := make([]string, 0, len(serviceaccounts.Items))
+	var unusedServiceAccountNames []string
+
 	for _, serviceaccount := range serviceaccounts.Items {
 		if pass, _ := filter.SetObject(&serviceaccount).Run(filterOpts); pass {
 			continue
 		}
 
+		if serviceaccount.Labels["kor/used"] == "false" {
+			unusedServiceAccountNames = append(unusedServiceAccountNames, serviceaccount.Name)
+			continue
+		}
+
 		names = append(names, serviceaccount.Name)
 	}
-	return names, nil
+	return names, unusedServiceAccountNames, nil
 }
 
 func processNamespaceSA(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
@@ -131,12 +138,13 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string, filter
 
 	usedServiceAccounts = append(append(usedServiceAccounts, roleServiceAccounts...), clusterRoleServiceAccounts...)
 
-	serviceAccountNames, err := retrieveServiceAccountNames(clientset, namespace, filterOpts)
+	serviceAccountNames, unusedServiceAccountNames, err := retrieveServiceAccountNames(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
 
 	diff := CalculateResourceDifference(usedServiceAccounts, serviceAccountNames)
+	diff = append(diff, unusedServiceAccountNames...)
 	return diff, nil
 
 }

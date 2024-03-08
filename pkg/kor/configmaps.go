@@ -84,19 +84,28 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 	return volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, nil
 }
 
-func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, []string, error) {
 	configmaps, err := clientset.CoreV1().ConfigMaps(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+
+	var unusedConfigmapNames []string
 	names := make([]string, 0, len(configmaps.Items))
+
 	for _, configmap := range configmaps.Items {
 		if pass, _ := filter.SetObject(&configmap).Run(filterOpts); pass {
 			continue
 		}
+
+		if configmap.Labels["kor/used"] == "false" {
+			unusedConfigmapNames = append(unusedConfigmapNames, configmap.Name)
+			continue
+		}
+
 		names = append(names, configmap.Name)
 	}
-	return names, nil
+	return names, unusedConfigmapNames, nil
 }
 
 func processNamespaceCM(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
@@ -111,7 +120,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 	envFromContainerCM = RemoveDuplicatesAndSort(envFromContainerCM)
 	envFromInitContainerCM = RemoveDuplicatesAndSort(envFromInitContainerCM)
 
-	configMapNames, err := retrieveConfigMapNames(clientset, namespace, filterOpts)
+	configMapNames, unusedConfigmapNames, err := retrieveConfigMapNames(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +131,10 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 	for _, slice := range slicesToAppend {
 		usedConfigMaps = append(usedConfigMaps, slice...)
 	}
+
 	diff := CalculateResourceDifference(usedConfigMaps, configMapNames)
+	diff = append(diff, unusedConfigmapNames...)
+
 	return diff, nil
 
 }
