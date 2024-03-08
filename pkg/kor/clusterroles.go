@@ -78,13 +78,15 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 
 	for clusterRole := range usedClusterRoles {
 		clusterRoleManifest := clusterRolesMap[clusterRole]
-		if clusterRolesMap[clusterRole].AggregationRule != nil {
-			for _, label := range clusterRoleManifest.AggregationRule.ClusterRoleSelectors {
-				for key, value := range label.MatchLabels {
-					aggregatedLabels = append(aggregatedLabels, key+": "+value)
-				}
+		if clusterRolesMap[clusterRole].AggregationRule == nil {
+			continue
+		}
+		for _, label := range clusterRoleManifest.AggregationRule.ClusterRoleSelectors {
+			for key, value := range label.MatchLabels {
+				aggregatedLabels = append(aggregatedLabels, key+": "+value)
 			}
 		}
+
 		for _, clusterRole := range clusterRoles.Items {
 			for label, value := range clusterRole.Labels {
 				if slices.Contains(aggregatedLabels, label+": "+value) {
@@ -92,18 +94,18 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 					if err != nil {
 						return nil, fmt.Errorf("couldn't convert string to bool %v", err)
 					}
-					if clusterRole.AggregationRule != nil {
-						for _, label := range clusterRole.AggregationRule.ClusterRoleSelectors {
-							for key, value := range label.MatchLabels {
-								aggregatedLabels = append(aggregatedLabels, key+": "+value)
-							}
+					if clusterRole.AggregationRule == nil {
+						continue
+					}
+					for _, label := range clusterRole.AggregationRule.ClusterRoleSelectors {
+						for key, value := range label.MatchLabels {
+							aggregatedLabels = append(aggregatedLabels, key+": "+value)
 						}
 					}
 				}
 			}
 		}
 	}
-	fmt.Println(aggregatedLabels)
 	var usedClusterRoleNames []string
 	for role := range usedClusterRoles {
 		usedClusterRoleNames = append(usedClusterRoleNames, role)
