@@ -16,8 +16,12 @@ import (
 var testNamespace = "test-namespace"
 
 var AppLabels = map[string]string{}
+var AggregatedLabels = map[string]string{"rbac.authorization.k8s.io/aggregate-to-test-clusterRole1": "true"}
 var UsedLabels = map[string]string{"kor/used": "true"}
 var UnusedLabels = map[string]string{"kor/used": "false"}
+var matchLabels = v1.LabelSelector{
+	MatchLabels: AggregatedLabels,
+}
 
 func CreateTestDeployment(namespace, name string, replicas int32, labels map[string]string) *appsv1.Deployment {
 	return &appsv1.Deployment{
@@ -341,12 +345,15 @@ func CreateTestReplicaSet(namespace, name string, specReplicas *int32, status *a
 	}
 }
 
-func CreateTestClusterRole(name string, labels map[string]string) *rbacv1.ClusterRole {
+func CreateTestClusterRole(name string, labels map[string]string, matchLabels ...v1.LabelSelector) *rbacv1.ClusterRole {
 	policyRule := createPolicyRule()
 	return &rbacv1.ClusterRole{
 		ObjectMeta: v1.ObjectMeta{
 			Name:   name,
 			Labels: labels,
+		},
+		AggregationRule: &rbacv1.AggregationRule{
+			ClusterRoleSelectors: matchLabels,
 		},
 		Rules: []rbacv1.PolicyRule{*policyRule},
 	}
