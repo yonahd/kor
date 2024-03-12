@@ -5,9 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
+
 	"github.com/yonahd/kor/pkg/filters"
 	v1 "k8s.io/api/rbac/v1"
-	"os"
+	"k8s.io/utils/strings/slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -58,10 +61,51 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 			continue
 		}
 		usedClusterRoles[crb.RoleRef.Name] = true
-
-		usedClusterRoles[crb.RoleRef.Name] = true
 	}
 
+	// Get a list of all ClusterRoles
+	clusterRoles, err := clientset.RbacV1().ClusterRoles().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list cluster roles %v", err)
+	}
+	// Convert the ClusterRole list into a Map
+	clusterRolesMap := make(map[string]v1.ClusterRole)
+	for _, clusterRole := range clusterRoles.Items {
+		clusterRolesMap[clusterRole.Name] = clusterRole
+	}
+	// Create a list wich holds all aggregated labels
+	aggregatedLabels := make([]string, 0)
+
+	for clusterRole := range usedClusterRoles {
+		clusterRoleManifest := clusterRolesMap[clusterRole]
+		if clusterRolesMap[clusterRole].AggregationRule == nil {
+			continue
+		}
+		for _, label := range clusterRoleManifest.AggregationRule.ClusterRoleSelectors {
+			for key, value := range label.MatchLabels {
+				aggregatedLabels = append(aggregatedLabels, fmt.Sprintf("%s: %s", key, value))
+			}
+		}
+
+		for _, clusterRole := range clusterRoles.Items {
+			for label, value := range clusterRole.Labels {
+				if slices.Contains(aggregatedLabels, label+": "+value) {
+					usedClusterRoles[clusterRole.Name], err = strconv.ParseBool(value)
+					if err != nil {
+						return nil, fmt.Errorf("couldn't convert string to bool %v", err)
+					}
+					if clusterRole.AggregationRule == nil {
+						continue
+					}
+					for _, label := range clusterRole.AggregationRule.ClusterRoleSelectors {
+						for key, value := range label.MatchLabels {
+							aggregatedLabels = append(aggregatedLabels, key+": "+value)
+						}
+					}
+				}
+			}
+		}
+	}
 	var usedClusterRoleNames []string
 	for role := range usedClusterRoles {
 		usedClusterRoleNames = append(usedClusterRoleNames, role)

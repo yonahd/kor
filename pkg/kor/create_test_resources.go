@@ -14,7 +14,6 @@ import (
 )
 
 var testNamespace = "test-namespace"
-
 var AppLabels = map[string]string{}
 var UsedLabels = map[string]string{"kor/used": "true"}
 var UnusedLabels = map[string]string{"kor/used": "false"}
@@ -341,12 +340,15 @@ func CreateTestReplicaSet(namespace, name string, specReplicas *int32, status *a
 	}
 }
 
-func CreateTestClusterRole(name string, labels map[string]string) *rbacv1.ClusterRole {
+func CreateTestClusterRole(name string, labels map[string]string, matchLabels ...v1.LabelSelector) *rbacv1.ClusterRole {
 	policyRule := createPolicyRule()
 	return &rbacv1.ClusterRole{
 		ObjectMeta: v1.ObjectMeta{
 			Name:   name,
 			Labels: labels,
+		},
+		AggregationRule: &rbacv1.AggregationRule{
+			ClusterRoleSelectors: matchLabels,
 		},
 		Rules: []rbacv1.PolicyRule{*policyRule},
 	}
