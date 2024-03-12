@@ -14,14 +14,9 @@ import (
 )
 
 var testNamespace = "test-namespace"
-
 var AppLabels = map[string]string{}
-var AggregatedLabels = map[string]string{"rbac.authorization.k8s.io/aggregate-to-test-clusterRole1": "true"}
 var UsedLabels = map[string]string{"kor/used": "true"}
 var UnusedLabels = map[string]string{"kor/used": "false"}
-var matchLabels = v1.LabelSelector{
-	MatchLabels: AggregatedLabels,
-}
 
 func CreateTestDeployment(namespace, name string, replicas int32, labels map[string]string) *appsv1.Deployment {
 	return &appsv1.Deployment{

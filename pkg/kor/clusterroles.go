@@ -83,7 +83,7 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 		}
 		for _, label := range clusterRoleManifest.AggregationRule.ClusterRoleSelectors {
 			for key, value := range label.MatchLabels {
-				aggregatedLabels = append(aggregatedLabels, key+": "+value)
+				aggregatedLabels = append(aggregatedLabels, fmt.Sprintf("%s: %s", key, value))
 			}
 		}
 
