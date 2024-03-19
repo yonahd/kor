@@ -316,7 +316,34 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 		fmt.Printf("err: %v\n", err)
 	}
 
-	unusedAll := unusedAllNamespaced + unusedAllNonNamespaced
+	unusedAll := make(map[string]interface{})
 
-	return unusedAll, nil
+	if outputFormat != "json" {
+		unusedAll := unusedAllNamespaced + unusedAllNonNamespaced
+
+		return unusedAll, nil
+	} else {
+		var namespacedResourceMap, nonNamespacedResourceMap map[string]interface{}
+
+		if err := json.Unmarshal([]byte(unusedAllNamespaced), &namespacedResourceMap); err != nil {
+			return "", err
+		}
+		if err := json.Unmarshal([]byte(unusedAllNonNamespaced), &nonNamespacedResourceMap); err != nil {
+			return "", err
+		}
+
+		for k, v := range namespacedResourceMap {
+			unusedAll[k] = v
+		}
+		for k, v := range nonNamespacedResourceMap {
+			unusedAll[k] = v
+		}
+
+		jsonResponse, err := json.MarshalIndent(unusedAll, "", "  ")
+		if err != nil {
+			return "", err
+		}
+
+		return string(jsonResponse), nil
+	}
 }
