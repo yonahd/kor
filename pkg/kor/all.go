@@ -185,7 +185,16 @@ func getUnusedDaemonSets(clientset kubernetes.Interface, namespace string, filte
 	return namespaceSADiff
 }
 
-func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+func getUnusedStorageClasses(clientset kubernetes.Interface, filterOpts *filters.Options) ResourceDiff {
+	scDiff, err := processStorageClasses(clientset, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "StorageClasses", err)
+	}
+	allScDiff := ResourceDiff{"StorageClass", scDiff}
+	return allScDiff
+}
+
+func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
 
 	namespaces := filterOpts.Namespaces(clientset)
@@ -234,6 +243,23 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 		response[namespace] = resourceMap
 	}
 
+	jsonResponse, err := json.MarshalIndent(response, "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	unusedAllNamespaced, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+
+	return unusedAllNamespaced, nil
+}
+
+func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+	var outputBuffer bytes.Buffer
+	response := make(map[string]map[string][]string)
+
 	var allDiffs []ResourceDiff
 	noNamespaceResourceMap := make(map[string][]string)
 	crdDiff := getUnusedCrds(apiExtClient, dynamicClient, filterOpts)
@@ -254,6 +280,12 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 	outputBuffer.WriteString("\n")
 	noNamespaceResourceMap[clusterRoleDiff.resourceType] = clusterRoleDiff.diff
 
+	storageClassDiff := getUnusedStorageClasses(clientset, filterOpts)
+	storageClassOutput := FormatOutputAll("", []ResourceDiff{storageClassDiff}, opts)
+	outputBuffer.WriteString(storageClassOutput)
+	outputBuffer.WriteString("\n")
+	noNamespaceResourceMap[storageClassDiff.resourceType] = storageClassDiff.diff
+
 	output := FormatOutputAll("", allDiffs, opts)
 
 	outputBuffer.WriteString(output)
@@ -265,10 +297,53 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 		return "", err
 	}
 
-	unusedAll, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedAllNonNamespaced, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
 
-	return unusedAll, nil
+	return unusedAllNonNamespaced, nil
+}
+
+func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+
+	unusedAllNonNamespaced, err := GetUnusedAllNonNamespaced(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+
+	unusedAll := make(map[string]interface{})
+
+	if outputFormat != "json" {
+		unusedAll := unusedAllNamespaced + unusedAllNonNamespaced
+
+		return unusedAll, nil
+	} else {
+		var namespacedResourceMap, nonNamespacedResourceMap map[string]interface{}
+
+		if err := json.Unmarshal([]byte(unusedAllNamespaced), &namespacedResourceMap); err != nil {
+			return "", err
+		}
+		if err := json.Unmarshal([]byte(unusedAllNonNamespaced), &nonNamespacedResourceMap); err != nil {
+			return "", err
+		}
+
+		for k, v := range namespacedResourceMap {
+			unusedAll[k] = v
+		}
+		for k, v := range nonNamespacedResourceMap {
+			unusedAll[k] = v
+		}
+
+		jsonResponse, err := json.MarshalIndent(unusedAll, "", "  ")
+		if err != nil {
+			return "", err
+		}
+
+		return string(jsonResponse), nil
+	}
 }

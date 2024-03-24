@@ -33,6 +33,10 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 			clusterRoleDiff := getUnusedClusterRoles(clientset, filterOpts)
 			noNamespaceDiff = append(noNamespaceDiff, clusterRoleDiff)
 			markedForRemoval[counter] = true
+		case "sc", "storageclass", "storageclasses":
+			storageClassDiff := getUnusedStorageClasses(clientset, filterOpts)
+			noNamespaceDiff = append(noNamespaceDiff, storageClassDiff)
+			markedForRemoval[counter] = true
 		}
 	}
 

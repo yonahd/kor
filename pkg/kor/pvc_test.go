@@ -28,25 +28,25 @@ func createTestPvcs(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	pvc1 := CreateTestPvc(testNamespace, "test-pvc1", AppLabels)
+	pvc1 := CreateTestPvc(testNamespace, "test-pvc1", AppLabels, "test-sc1")
 	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pvc", err)
 	}
 
-	pvc2 := CreateTestPvc(testNamespace, "test-pvc2", AppLabels)
+	pvc2 := CreateTestPvc(testNamespace, "test-pvc2", AppLabels, "test-sc1")
 	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pvc", err)
 	}
 
-	pvc3 := CreateTestPvc(testNamespace, "test-pvc3", UsedLabels)
+	pvc3 := CreateTestPvc(testNamespace, "test-pvc3", UsedLabels, "test-sc1")
 	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc3, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pvc", err)
 	}
 
-	pvc4 := CreateTestPvc(testNamespace, "test-pvc4", UnusedLabels)
+	pvc4 := CreateTestPvc(testNamespace, "test-pvc4", UnusedLabels, "test-sc1")
 	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), pvc4, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pvc", err)

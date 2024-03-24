@@ -15,25 +15,25 @@ import (
 func createTestPvs(t *testing.T) *fake.Clientset {
 	clientset := fake.NewSimpleClientset()
 
-	pv1 := CreateTestPv("test-pv1", "Bound", AppLabels)
+	pv1 := CreateTestPv("test-pv1", "Bound", AppLabels, "test-sc1")
 	_, err := clientset.CoreV1().PersistentVolumes().Create(context.TODO(), pv1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "PV", err)
 	}
 
-	pv2 := CreateTestPv("test-pv2", "Available", AppLabels)
+	pv2 := CreateTestPv("test-pv2", "Available", AppLabels, "test-sc1")
 	_, err = clientset.CoreV1().PersistentVolumes().Create(context.TODO(), pv2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "PV", err)
 	}
 
-	pv3 := CreateTestPv("test-pv3", "Bound", UsedLabels)
+	pv3 := CreateTestPv("test-pv3", "Bound", UsedLabels, "test-sc1")
 	_, err = clientset.CoreV1().PersistentVolumes().Create(context.TODO(), pv3, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "PV", err)
 	}
 
-	pv4 := CreateTestPv("test-pv4", "Available", UnusedLabels)
+	pv4 := CreateTestPv("test-pv4", "Available", UnusedLabels, "test-sc1")
 	_, err = clientset.CoreV1().PersistentVolumes().Create(context.TODO(), pv4, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "PV", err)

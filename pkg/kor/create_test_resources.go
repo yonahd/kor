@@ -8,12 +8,12 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	storagev1 "k8s.io/api/storage/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var testNamespace = "test-namespace"
-
 var AppLabels = map[string]string{}
 var UsedLabels = map[string]string{"kor/used": "true"}
 var UnusedLabels = map[string]string{"kor/used": "false"}
@@ -219,25 +219,40 @@ func CreateTestIngress(namespace, name, ServiceName, secretName string, labels m
 	}
 }
 
-func CreateTestPvc(namespace, name string, labels map[string]string) *corev1.PersistentVolumeClaim {
+func CreateTestPvc(namespace, name string, labels map[string]string, storageClass string) *corev1.PersistentVolumeClaim {
 	return &corev1.PersistentVolumeClaim{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
 			Labels:    labels,
 		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			StorageClassName: &storageClass,
+		},
 	}
 }
 
-func CreateTestPv(name, phase string, labels map[string]string) *corev1.PersistentVolume {
+func CreateTestPv(name, phase string, labels map[string]string, storageClass string) *corev1.PersistentVolume {
 	return &corev1.PersistentVolume{
 		ObjectMeta: v1.ObjectMeta{
 			Name:   name,
 			Labels: labels,
 		},
+		Spec: corev1.PersistentVolumeSpec{
+			StorageClassName: storageClass,
+		},
 		Status: corev1.PersistentVolumeStatus{
 			Phase: corev1.PersistentVolumePhase(phase),
 		},
+	}
+}
+
+func CreateTestStorageClass(name, provisioner string) *storagev1.StorageClass {
+	return &storagev1.StorageClass{
+		ObjectMeta: v1.ObjectMeta{
+			Name: name,
+		},
+		Provisioner: provisioner,
 	}
 }
 
@@ -325,12 +340,15 @@ func CreateTestReplicaSet(namespace, name string, specReplicas *int32, status *a
 	}
 }
 
-func CreateTestClusterRole(name string, labels map[string]string) *rbacv1.ClusterRole {
+func CreateTestClusterRole(name string, labels map[string]string, matchLabels ...v1.LabelSelector) *rbacv1.ClusterRole {
 	policyRule := createPolicyRule()
 	return &rbacv1.ClusterRole{
 		ObjectMeta: v1.ObjectMeta{
 			Name:   name,
 			Labels: labels,
+		},
+		AggregationRule: &rbacv1.AggregationRule{
+			ClusterRoleSelectors: matchLabels,
 		},
 		Rules: []rbacv1.PolicyRule{*policyRule},
 	}
