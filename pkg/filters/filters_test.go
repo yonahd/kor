@@ -32,7 +32,7 @@ func TestLabelFilter(t *testing.T) {
 			args: args{
 				object: node,
 				opts: &Options{
-					ExcludeLabels: "foo=barbar",
+					ExcludeLabels: []string{"foo=barbar"},
 				},
 			},
 			want: false,
@@ -42,7 +42,7 @@ func TestLabelFilter(t *testing.T) {
 			args: args{
 				object: node,
 				opts: &Options{
-					ExcludeLabels: "foo=bar",
+					ExcludeLabels: []string{"foo=bar"},
 				},
 			},
 			want: true,
