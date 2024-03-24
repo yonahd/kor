@@ -46,17 +46,28 @@ func AgeFilter(object runtime.Object, opts *Options) bool {
 }
 
 // HasExcludedLabel parses the excluded selector into a label selector object
-func HasExcludedLabel(resourcelabels map[string]string, excludeSelector string) (bool, error) {
-	if excludeSelector == "" {
+func HasExcludedLabel(resourcelabels map[string]string, excludeSelector []string) (bool, error) {
+	excludes := make([]labels.Selector, 0)
+
+	if len(excludeSelector) == 0 {
 		return false, nil
 	}
-	exclude, err := labels.Parse(excludeSelector)
-	if err != nil {
-		return false, err
+
+	for _, labelStr := range excludeSelector {
+		exclude, err := labels.Parse(labelStr)
+		if err != nil {
+			return false, err
+		}
+		excludes = append(excludes, exclude)
 	}
 
 	labelSet := labels.Set(resourcelabels)
-	return exclude.Matches(labelSet), nil
+	for _, exclude := range excludes {
+		if exclude.Matches(labelSet) == true {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // HasIncludedAge checks if a resource has an age that matches the included criteria specified by the filter options

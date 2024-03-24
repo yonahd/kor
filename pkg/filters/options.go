@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -29,7 +30,7 @@ type Options struct {
 	NewerThan string
 	// ExcludeLabels is a label selector to exclude resources with matching labels
 	// IncludeLabels conflicts with it, and when setting IncludeLabels, ExcludeLabels is ignored and set to empty
-	ExcludeLabels string
+	ExcludeLabels []string
 	// IncludeLabels is a label selector to include resources with matching labels
 	IncludeLabels string
 	// ExcludeNamespaces is a namespace selector to exclude resources in matching namespaces
@@ -45,19 +46,35 @@ type Options struct {
 // NewFilterOptions returns a new FilterOptions instance with default values
 func NewFilterOptions() *Options {
 	return &Options{
-		OlderThan:     "",
-		NewerThan:     "",
-		ExcludeLabels: "",
+		OlderThan: "",
+		NewerThan: "",
 	}
+}
+
+func parseLabels(labelsStr string) (labels.Set, error) {
+	labelMap := map[string]string{}
+
+	labelPairs := strings.Split(labelsStr, ",")
+
+	for _, pair := range labelPairs {
+		parts := strings.SplitN(pair, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid label format: %s", pair)
+		}
+		labelMap[parts[0]] = parts[1]
+	}
+
+	return labels.Set(labelMap), nil
 }
 
 // Validate makes sure provided values for FilterOptions are valid
 func (o *Options) Validate() error {
-	if _, err := labels.Parse(o.ExcludeLabels); err != nil {
-		return err
-	}
-	if _, err := labels.Parse(o.IncludeLabels); err != nil {
-		return err
+
+	// Parse and validate the labels
+	for _, labelStr := range o.ExcludeLabels {
+		if _, err := parseLabels(labelStr); err != nil {
+			return err
+		}
 	}
 
 	// Parse the older-than flag value into a time.Duration value
@@ -145,9 +162,9 @@ func (o *Options) Namespaces(clientset kubernetes.Interface) []string {
 
 func (o *Options) modifyLabels() {
 	if o.IncludeLabels != "" {
-		if o.ExcludeLabels != "" {
+		if len(o.ExcludeLabels) > 0 {
 			fmt.Fprintf(os.Stderr, "Exclude labels can't be used together with include labels. Ignoring --exclude-label(-l) flag\n")
 		}
-		o.ExcludeLabels = ""
+		o.ExcludeLabels = nil
 	}
 }
