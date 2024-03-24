@@ -63,7 +63,7 @@ func HasExcludedLabel(resourcelabels map[string]string, excludeSelector []string
 
 	labelSet := labels.Set(resourcelabels)
 	for _, exclude := range excludes {
-		if exclude.Matches(labelSet) == true {
+		if exclude.Matches(labelSet) {
 			return true, nil
 		}
 	}
