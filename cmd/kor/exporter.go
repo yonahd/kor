@@ -6,6 +6,8 @@ import (
 	"github.com/yonahd/kor/pkg/kor"
 )
 
+var resourceList []string
+
 var exporterCmd = &cobra.Command{
 	Use:   "exporter",
 	Short: "start prometheus exporter",
@@ -15,11 +17,12 @@ var exporterCmd = &cobra.Command{
 		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
 
-		kor.Exporter(filterOptions, clientset, apiExtClient, dynamicClient, "json", opts)
+		kor.Exporter(filterOptions, clientset, apiExtClient, dynamicClient, "json", opts, resourceList)
 
 	},
 }
 
 func init() {
+	exporterCmd.Flags().StringSliceVarP(&resourceList, "resources", "r", nil, "Comma-separated list of resources to monitor (e.g., deployment,service)")
 	rootCmd.AddCommand(exporterCmd)
 }
