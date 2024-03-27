@@ -220,6 +220,8 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 		allDiffs = append(allDiffs, namespaceHpaDiff)
 		namespacePvcDiff := getUnusedPvcs(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespacePvcDiff)
+		namespacePodDiff := getUnusedPods(clientset, namespace, filterOpts)
+		allDiffs = append(allDiffs, namespacePodDiff)
 		namespaceIngressDiff := getUnusedIngresses(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceIngressDiff)
 		namespacePdbDiff := getUnusedPdbs(clientset, namespace, filterOpts)
