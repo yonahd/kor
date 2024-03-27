@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,16 +33,16 @@ func init() {
 }
 
 // TODO: add option to change port / url !?
-func Exporter(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) {
+func Exporter(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts, resourceList []string) {
 	http.Handle("/metrics", promhttp.Handler())
 	fmt.Println("Server listening on :8080")
-	go exportMetrics(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts) // Start exporting metrics in the background
+	go exportMetrics(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts, resourceList) // Start exporting metrics in the background
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Println(err)
 	}
 }
 
-func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) {
+func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts, resourceList []string) {
 	exporterInterval := os.Getenv("EXPORTER_INTERVAL")
 	if exporterInterval == "" {
 		exporterInterval = "10"
@@ -54,7 +55,7 @@ func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interfac
 
 	for {
 		fmt.Println("collecting unused resources")
-		if korOutput, err := GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
+		if korOutput, err := getUnusedResources(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts, resourceList); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		} else {
@@ -76,4 +77,12 @@ func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interfac
 			time.Sleep(time.Duration(exporterIntervalValue) * time.Minute)
 		}
 	}
+}
+
+func getUnusedResources(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts, resourceList []string) (string, error) {
+	if len(resourceList) == 0 || (len(resourceList) == 1 && resourceList[0] == "all") {
+		return GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts)
+	}
+	return GetUnusedMulti(strings.Join(resourceList, ","), filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts)
+
 }
