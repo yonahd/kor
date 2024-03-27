@@ -80,8 +80,9 @@ func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interfac
 }
 
 func getUnusedResources(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts, resourceList []string) (string, error) {
-	if len(resourceList) > 0 {
-		return GetUnusedMulti(strings.Join(resourceList, ","), filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts)
+	if len(resourceList) == 0 || (len(resourceList) == 1 && resourceList[0] == "all") {
+		return GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts)
 	}
-	return GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts)
+	return GetUnusedMulti(strings.Join(resourceList, ","), filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts)
+
 }
