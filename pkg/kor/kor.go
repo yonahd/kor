@@ -30,6 +30,7 @@ type Opts struct {
 	DeleteFlag    bool
 	NoInteractive bool
 	Verbose       bool
+	PrintReason   bool
 	WebhookURL    string
 	Channel       string
 	Token         string
@@ -114,10 +115,26 @@ func GetDynamicClient(kubeconfig string) *dynamic.DynamicClient {
 	return clientset
 }
 
-func FormatOutput(namespace string, resources []string, resourceType string, opts Opts) string {
-	if opts.Verbose && len(resources) == 0 {
+func ConvertToResourceInfo(resources []ResourceInfo) []string {
+	resourceInfos := make([]string, len(resources))
+	for i := range resources {
+		resourceInfos[i] = resources[i].Name
+	}
+	return resourceInfos
+}
+
+func FormatOutput(namespace string, resources interface{}, resourceType string, opts Opts) string {
+	var resourceNames []string
+	switch res := resources.(type) {
+	case []string:
+		resourceNames = res
+	default:
+		return "Invalid resource type"
+	}
+
+	if opts.Verbose && len(resourceNames) == 0 {
 		return fmt.Sprintf("No unused %s found in the namespace: %s \n", resourceType, namespace)
-	} else if len(resources) == 0 {
+	} else if len(resourceNames) == 0 {
 		return ""
 	}
 
@@ -125,12 +142,38 @@ func FormatOutput(namespace string, resources []string, resourceType string, opt
 	table := tablewriter.NewWriter(&buf)
 	table.SetHeader([]string{"#", "Resource Name"})
 
-	for i, name := range resources {
+	for i, name := range resourceNames {
 		table.Append([]string{fmt.Sprintf("%d", i+1), name})
 	}
 
 	table.Render()
+	return fmt.Sprintf("Unused %s in Namespace: %s\n%s", resourceType, namespace, buf.String())
+}
 
+func FormatEnrichedOutput(namespace string, resources interface{}, resourceType string, opts Opts) string {
+	var enrichedResources []ResourceInfo
+	switch res := resources.(type) {
+	case []ResourceInfo:
+		enrichedResources = res
+	default:
+		return "Invalid resource type"
+	}
+
+	if opts.Verbose && len(enrichedResources) == 0 {
+		return fmt.Sprintf("No unused %s found in the namespace: %s \n", resourceType, namespace)
+	} else if len(enrichedResources) == 0 {
+		return ""
+	}
+
+	var buf bytes.Buffer
+	table := tablewriter.NewWriter(&buf)
+	table.SetHeader([]string{"#", "Resource Name", "Reason"})
+
+	for i, info := range enrichedResources {
+		table.Append([]string{fmt.Sprintf("%d", i+1), info.Name, info.Reason})
+	}
+
+	table.Render()
 	return fmt.Sprintf("Unused %s in Namespace: %s\n%s", resourceType, namespace, buf.String())
 }
 

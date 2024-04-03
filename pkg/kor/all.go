@@ -23,6 +23,11 @@ type ResourceDiff struct {
 	diff         []string
 }
 
+type ResourceDiff2 struct {
+	resourceType string
+	diff         interface{}
+}
+
 func getUnusedCMs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	cmDiff, err := processNamespaceCM(clientset, namespace, filterOpts)
 	if err != nil {
@@ -32,12 +37,12 @@ func getUnusedCMs(clientset kubernetes.Interface, namespace string, filterOpts *
 	return namespaceCMDiff
 }
 
-func getUnusedSVCs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	svcDiff, err := ProcessNamespaceServices(clientset, namespace, filterOpts)
+func getUnusedSVCs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff2 {
+	svcDiff, err := ProcessNamespaceServices(clientset, namespace, filterOpts, false)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "services", namespace, err)
 	}
-	namespaceSVCDiff := ResourceDiff{"Service", svcDiff}
+	namespaceSVCDiff := ResourceDiff2{"Service", svcDiff}
 	return namespaceSVCDiff
 }
 
@@ -204,8 +209,8 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 		var allDiffs []ResourceDiff
 		namespaceCMDiff := getUnusedCMs(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceCMDiff)
-		namespaceSVCDiff := getUnusedSVCs(clientset, namespace, filterOpts)
-		allDiffs = append(allDiffs, namespaceSVCDiff)
+		//namespaceSVCDiff := getUnusedSVCs(clientset, namespace, filterOpts)
+		// allDiffs = append(allDiffs, namespaceSVCDiff)
 		namespaceSecretDiff := getUnusedSecrets(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceSecretDiff)
 		namespaceSADiff := getUnusedServiceAccounts(clientset, namespace, filterOpts)

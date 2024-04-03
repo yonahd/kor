@@ -57,18 +57,23 @@ func createTestServices(t *testing.T) *fake.Clientset {
 func TestGetEndpointsWithoutSubsets(t *testing.T) {
 	clientset := createTestServices(t)
 
-	servicesWithoutEndpoints, err := ProcessNamespaceServices(clientset, testNamespace, &filters.Options{})
+	servicesWithoutEndpointsInterface, err := ProcessNamespaceServices(clientset, testNamespace, &filters.Options{}, false)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(servicesWithoutEndpoints) != 2 {
-		t.Errorf("Expected 2 service without endpoint, got %d", len(servicesWithoutEndpoints))
+	switch servicesWithoutEndpoints := servicesWithoutEndpointsInterface.(type) {
+	case []string:
+		if len(servicesWithoutEndpoints) != 2 {
+			t.Errorf("Expected 2 service without endpoint, got %d", len(servicesWithoutEndpoints))
+		}
+		if servicesWithoutEndpoints[0] != "test-endpoint1" || servicesWithoutEndpoints[1] != "test-endpoint4" {
+			t.Errorf("Expected 'test-endpoint1' and 'test-endpoint4', got %s, %s", servicesWithoutEndpoints[0], servicesWithoutEndpoints[1])
+		}
+	default:
+		t.Errorf("Unknown type was returned")
 	}
 
-	if servicesWithoutEndpoints[0] != "test-endpoint1" || servicesWithoutEndpoints[1] != "test-endpoint4" {
-		t.Errorf("Expected 'test-endpoint1' and 'test-endpoint4', got %s, %s", servicesWithoutEndpoints[0], servicesWithoutEndpoints[1])
-	}
 }
 
 func TestGetUnusedServicesStructured(t *testing.T) {

@@ -58,8 +58,8 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 		switch resource {
 		case "cm", "configmap", "configmaps":
 			diffResult = getUnusedCMs(clientset, namespace, filterOpts)
-		case "svc", "service", "services":
-			diffResult = getUnusedSVCs(clientset, namespace, filterOpts)
+		// case "svc", "service", "services":
+		//	diffResult = getUnusedSVCs(clientset, namespace, filterOpts)
 		case "scrt", "secret", "secrets":
 			diffResult = getUnusedSecrets(clientset, namespace, filterOpts)
 		case "sa", "serviceaccount", "serviceaccounts":

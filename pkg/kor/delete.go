@@ -263,52 +263,82 @@ func DeleteResourceWithFinalizer(diff []string, dynamicClient dynamic.Interface,
 	return deletedDiff, nil
 }
 
-func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, resourceType string, noInteractive bool) ([]string, error) {
-	deletedDiff := []string{}
+func processResource(clientset kubernetes.Interface, namespace, resourceType, resourceName string, noInteractive bool) (bool, error) {
+	// Your deletion logic for each resource
+	deleteFunc, exists := DeleteResourceCmd()[resourceType]
+	if !exists {
+		fmt.Printf("Resource type '%s' is not supported\n", resourceName)
+		return false, nil
+	}
 
-	for _, resourceName := range diff {
-		deleteFunc, exists := DeleteResourceCmd()[resourceType]
-		if !exists {
-			fmt.Printf("Resource type '%s' is not supported\n", resourceName)
-			continue
+	// Prompt for confirmation if not in noInteractive mode
+	if !noInteractive {
+		fmt.Printf("Do you want to delete %s %s in namespace %s? (Y/N): ", resourceType, resourceName, namespace)
+		var confirmation string
+		_, err := fmt.Scanf("%s", &confirmation)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to read input: %v\n", err)
+			return false, err
 		}
 
-		if !noInteractive {
-			fmt.Printf("Do you want to delete %s %s in namespace %s? (Y/N): ", resourceType, resourceName, namespace)
-			var confirmation string
-			_, err := fmt.Scanf("%s", &confirmation)
+		if strings.ToLower(confirmation) != "y" && strings.ToLower(confirmation) != "yes" {
+			// If user chooses not to delete, proceed with flagging the resource as In Use
+			fmt.Printf("Do you want flag the resource %s %s in namespace %s as In Use? (Y/N): ", resourceType, resourceName, namespace)
+			var inUse string
+			_, err := fmt.Scanf("%s", &inUse)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to read input: %v\n", err)
-				continue
+				return false, err
 			}
 
-			if strings.ToLower(confirmation) != "y" && strings.ToLower(confirmation) != "yes" {
-				deletedDiff = append(deletedDiff, resourceName)
-
-				fmt.Printf("Do you want flag the resource %s %s in namespace %s as In Use? (Y/N): ", resourceType, resourceName, namespace)
-				var inUse string
-				_, err := fmt.Scanf("%s", &inUse)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to read input: %v\n", err)
-					continue
+			if strings.ToLower(inUse) == "y" || strings.ToLower(inUse) == "yes" {
+				if err := FlagResource(clientset, namespace, resourceType, resourceName); err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to flag resource %s %s in namespace %s as In Use: %v\n", resourceType, resourceName, namespace, err)
 				}
+			}
+			return false, nil
+		}
+	}
 
-				if strings.ToLower(inUse) == "y" || strings.ToLower(inUse) == "yes" {
-					if err := FlagResource(clientset, namespace, resourceType, resourceName); err != nil {
-						fmt.Fprintf(os.Stderr, "Failed to flag resource %s %s in namespace %s as In Use: %v\n", resourceType, resourceName, namespace, err)
-					}
-					continue
-				}
-				continue
+	fmt.Printf("Deleting %s %s in namespace %s\n", resourceType, resourceName, namespace)
+	if err := deleteFunc(clientset, namespace, resourceName); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", resourceType, resourceName, namespace, err)
+		return false, err
+	}
+	return true, nil
+}
+
+func DeleteResource(diff interface{}, clientset kubernetes.Interface, namespace, resourceType string, noInteractive bool) ([]string, error) {
+	// Initialize deletedDiff slice to store deleted resources
+	deletedDiff := []string{}
+
+	// Type switch to handle different types of 'diff'
+	switch d := diff.(type) {
+	case []string:
+		// If 'diff' is of type []string, proceed with deletion logic
+		for _, resourceName := range d {
+			deleted, err := processResource(clientset, namespace, resourceType, resourceName, noInteractive)
+			if err != nil {
+				return nil, err
+			}
+			if deleted {
+				deletedDiff = append(deletedDiff, resourceName+"-DELETED")
 			}
 		}
-
-		fmt.Printf("Deleting %s %s in namespace %s\n", resourceType, resourceName, namespace)
-		if err := deleteFunc(clientset, namespace, resourceName); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", resourceType, resourceName, namespace, err)
-			continue
+	case []ResourceInfo:
+		// If 'diff' is of type []ResourceInfo, proceed with deletion logic
+		for _, info := range d {
+			deleted, err := processResource(clientset, namespace, resourceType, info.Name, noInteractive)
+			if err != nil {
+				return nil, err
+			}
+			if deleted {
+				deletedDiff = append(deletedDiff, info.Name+"-DELETED")
+			}
 		}
-		deletedDiff = append(deletedDiff, resourceName+"-DELETED")
+	default:
+		// Handle unexpected type for 'diff'
+		return nil, fmt.Errorf("unexpected type for diff: %T", diff)
 	}
 
 	return deletedDiff, nil

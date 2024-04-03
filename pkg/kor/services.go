@@ -13,40 +13,73 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+var exceptionServices = []ExceptionResource{
+	{ResourceName: "docker.io-hostpath", Namespace: "kube-system"},
+}
+
+type ResourceInfo struct {
+	Name   string `json:"name"`
+	Reason string `json:"reason,omitempty"`
+}
+
+func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, enrich bool) (interface{}, error) {
 	endpointsList, err := clientset.CoreV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 
-	var endpointsWithoutSubsets []string
+	if enrich {
+		var servicesStatus []ResourceInfo
+
+		for _, endpoints := range endpointsList.Items {
+			if pass, _ := filter.Run(filterOpts); pass {
+				continue
+			}
+
+			status := ResourceInfo{Name: endpoints.Name}
+			if endpoints.Labels["kor/used"] == "false" {
+				status.Reason = "Marked with unused label"
+				servicesStatus = append(servicesStatus, status)
+				continue
+			} else if len(endpoints.Subsets) == 0 {
+				status.Reason = "No endpoints"
+				servicesStatus = append(servicesStatus, status)
+			}
+
+		}
+
+		return servicesStatus, nil
+	}
+
+	var services []string
 
 	for _, endpoints := range endpointsList.Items {
 		if pass, _ := filter.Run(filterOpts); pass {
 			continue
 		}
 
-		if endpoints.Labels["kor/used"] == "false" {
-			endpointsWithoutSubsets = append(endpointsWithoutSubsets, endpoints.Name)
-			continue
-		}
-
-		if len(endpoints.Subsets) == 0 {
-			endpointsWithoutSubsets = append(endpointsWithoutSubsets, endpoints.Name)
+		if endpoints.Labels["kor/used"] == "false" || len(endpoints.Subsets) == 0 {
+			services = append(services, endpoints.Name)
 		}
 	}
 
-	return endpointsWithoutSubsets, nil
+	return services, nil
 }
 
 func GetUnusedServices(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
+	var output string
+	var response interface{}
 
 	namespaces := filterOpts.Namespaces(clientset)
-	response := make(map[string]map[string][]string)
+	if opts.PrintReason {
+		response = make(map[string]map[string][]ResourceInfo)
+	} else {
+		response = make(map[string]map[string][]string)
+	}
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceServices(clientset, namespace, filterOpts)
+		diff, err := ProcessNamespaceServices(clientset, namespace, filterOpts, opts.PrintReason)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -57,18 +90,40 @@ func GetUnusedServices(filterOpts *filters.Options, clientset kubernetes.Interfa
 				fmt.Fprintf(os.Stderr, "Failed to delete Service %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
-		output := FormatOutput(namespace, diff, "Services", opts)
+		if opts.PrintReason {
+			output = FormatEnrichedOutput(namespace, diff, "Services", opts)
+		} else {
+			output = FormatOutput(namespace, diff, "Services", opts)
+		}
+
 		if output != "" {
 			outputBuffer.WriteString(output)
 			outputBuffer.WriteString("\n")
 
-			resourceMap := make(map[string][]string)
-			resourceMap["Services"] = diff
-			response[namespace] = resourceMap
+			switch res := response.(type) {
+			case map[string]map[string][]string:
+				diffSlice, _ := diff.([]string)
+				res[namespace] = map[string][]string{"Services": diffSlice}
+			case map[string]map[string][]ResourceInfo:
+				diffSlice, _ := diff.([]ResourceInfo)
+				res[namespace] = map[string][]ResourceInfo{"Services": diffSlice}
+			default:
+				fmt.Println("Invalid type for response")
+			}
+
 		}
 	}
 
-	jsonResponse, err := json.MarshalIndent(response, "", "  ")
+	var jsonResponse []byte
+	var err error
+
+	if opts.PrintReason {
+		jsonResponse, err = json.MarshalIndent(response, "", "  ")
+	} else {
+		// Marshal the response map instead of the string
+		jsonResponse, err = json.MarshalIndent(response, "", "  ")
+	}
+
 	if err != nil {
 		return "", err
 	}
