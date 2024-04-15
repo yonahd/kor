@@ -13,56 +13,96 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func ProcessNamespaceStatefulSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, enrich bool) (interface{}, error) {
 	statefulSetsList, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 
-	var statefulSetsWithoutReplicas []string
+	if enrich {
+		var statefulSetsStatus []ResourceInfo
+
+		for _, statefulSet := range statefulSetsList.Items {
+			if pass, _ := filter.Run(filterOpts); pass {
+				continue
+			}
+
+			status := ResourceInfo{Name: statefulSet.Name}
+			if statefulSet.Labels["kor/used"] == "false" {
+				status.Reason = "Marked with unused label"
+				statefulSetsStatus = append(statefulSetsStatus, status)
+				continue
+			}
+
+			if *statefulSet.Spec.Replicas == 0 {
+				status.Reason = "Statefulset has no replicas"
+				statefulSetsStatus = append(statefulSetsStatus, status)
+			}
+		}
+
+		return statefulSetsStatus, nil
+	}
+
+	var statefulSets []string
 
 	for _, statefulSet := range statefulSetsList.Items {
 		if pass, _ := filter.Run(filterOpts); pass {
 			continue
 		}
 
-		if statefulSet.Labels["kor/used"] == "false" {
-			statefulSetsWithoutReplicas = append(statefulSetsWithoutReplicas, statefulSet.Name)
-			continue
-		}
-
-		if *statefulSet.Spec.Replicas == 0 {
-			statefulSetsWithoutReplicas = append(statefulSetsWithoutReplicas, statefulSet.Name)
+		if statefulSet.Labels["kor/used"] == "false" || *statefulSet.Spec.Replicas == 0 {
+			statefulSets = append(statefulSets, statefulSet.Name)
 		}
 	}
 
-	return statefulSetsWithoutReplicas, nil
+	return statefulSets, nil
 }
 
 func GetUnusedStatefulSets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
 	var outputBuffer bytes.Buffer
+	var response interface{}
+
 	namespaces := filterOpts.Namespaces(clientset)
-	response := make(map[string]map[string][]string)
+	if opts.PrintReason {
+		response = make(map[string]map[string][]ResourceInfo)
+	} else {
+		response = make(map[string]map[string][]string)
+	}
 
 	for _, namespace := range namespaces {
-		diff, err := ProcessNamespaceStatefulSets(clientset, namespace, filterOpts)
+		diff, err := ProcessNamespaceStatefulSets(clientset, namespace, filterOpts, opts.PrintReason)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+
 		if opts.DeleteFlag {
 			if diff, err = DeleteResource(diff, clientset, namespace, "StatefulSet", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Statefulset %s in namespace %s: %v\n", diff, namespace, err)
+				fmt.Fprintf(os.Stderr, "Failed to delete StatefulSet %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
-		output := FormatOutput(namespace, diff, "Statefulsets", opts)
+
+		var output string
+		if opts.PrintReason {
+			output = FormatEnrichedOutput(namespace, diff, "StatefulSets", opts)
+		} else {
+			output = FormatOutput(namespace, diff, "StatefulSets", opts)
+		}
+
 		if output != "" {
 			outputBuffer.WriteString(output)
 			outputBuffer.WriteString("\n")
 
-			resourceMap := make(map[string][]string)
-			resourceMap["Statefulsets"] = diff
-			response[namespace] = resourceMap
+			switch res := response.(type) {
+			case map[string]map[string][]string:
+				diffSlice, _ := diff.([]string)
+				res[namespace] = map[string][]string{"StatefulSets": diffSlice}
+			case map[string]map[string][]ResourceInfo:
+				diffSlice, _ := diff.([]ResourceInfo)
+				res[namespace] = map[string][]ResourceInfo{"StatefulSets": diffSlice}
+			default:
+				fmt.Println("Invalid type for response")
+			}
 		}
 	}
 
@@ -71,10 +111,10 @@ func GetUnusedStatefulSets(filterOpts *filters.Options, clientset kubernetes.Int
 		return "", err
 	}
 
-	unusedStatefulsets, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedStatefulSets, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
 
-	return unusedStatefulsets, nil
+	return unusedStatefulSets, nil
 }

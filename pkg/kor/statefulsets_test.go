@@ -57,18 +57,24 @@ func createTestStatefulSets(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceStatefulSets(t *testing.T) {
 	clientset := createTestStatefulSets(t)
 
-	statefulSetsWithoutReplicas, err := ProcessNamespaceStatefulSets(clientset, testNamespace, &filters.Options{})
+	statefulSetsWithoutReplicasInterface, err := ProcessNamespaceStatefulSets(clientset, testNamespace, &filters.Options{}, false)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(statefulSetsWithoutReplicas) != 2 {
-		t.Errorf("Expected 2 deployment without replicas, got %d", len(statefulSetsWithoutReplicas))
+	switch statefulSetsWithoutReplicas := statefulSetsWithoutReplicasInterface.(type) {
+	case []string:
+		if len(statefulSetsWithoutReplicas) != 2 {
+			t.Errorf("Expected 2 deployment without replicas, got %d", len(statefulSetsWithoutReplicas))
+		}
+
+		if statefulSetsWithoutReplicas[0] != "test-sts1" || statefulSetsWithoutReplicas[1] != "test-sts4" {
+			t.Errorf("Expected 'test-sts1' and 'test-sts4, got %s, %s", statefulSetsWithoutReplicas[0], statefulSetsWithoutReplicas[1])
+		}
+	default:
+		t.Errorf("Unknown type was returned")
 	}
 
-	if statefulSetsWithoutReplicas[0] != "test-sts1" || statefulSetsWithoutReplicas[1] != "test-sts4" {
-		t.Errorf("Expected 'test-sts1' and 'test-sts4, got %s, %s", statefulSetsWithoutReplicas[0], statefulSetsWithoutReplicas[1])
-	}
 }
 
 func TestGetUnusedStatefulSetsStructured(t *testing.T) {

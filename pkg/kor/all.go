@@ -73,12 +73,12 @@ func getUnusedDeployments(clientset kubernetes.Interface, namespace string, filt
 	return namespaceSADiff
 }
 
-func getUnusedStatefulSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	stsDiff, err := ProcessNamespaceStatefulSets(clientset, namespace, filterOpts)
+func getUnusedStatefulSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff2 {
+	stsDiff, err := ProcessNamespaceStatefulSets(clientset, namespace, filterOpts, false)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "statefulSets", namespace, err)
 	}
-	namespaceSADiff := ResourceDiff{"StatefulSet", stsDiff}
+	namespaceSADiff := ResourceDiff2{"StatefulSet", stsDiff}
 	return namespaceSADiff
 }
 
@@ -217,8 +217,8 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 		allDiffs = append(allDiffs, namespaceSADiff)
 		namespaceDeploymentDiff := getUnusedDeployments(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceDeploymentDiff)
-		namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace, filterOpts)
-		allDiffs = append(allDiffs, namespaceStatefulsetDiff)
+		//namespaceStatefulsetDiff := getUnusedStatefulSets(clientset, namespace, filterOpts)
+		//allDiffs = append(allDiffs, namespaceStatefulsetDiff)
 		namespaceRoleDiff := getUnusedRoles(clientset, namespace, filterOpts)
 		allDiffs = append(allDiffs, namespaceRoleDiff)
 		namespaceHpaDiff := getUnusedHpas(clientset, namespace, filterOpts)

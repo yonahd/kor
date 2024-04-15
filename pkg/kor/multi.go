@@ -66,8 +66,8 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 			diffResult = getUnusedServiceAccounts(clientset, namespace, filterOpts)
 		case "deploy", "deployment", "deployments":
 			diffResult = getUnusedDeployments(clientset, namespace, filterOpts)
-		case "sts", "statefulset", "statefulsets":
-			diffResult = getUnusedStatefulSets(clientset, namespace, filterOpts)
+		//case "sts", "statefulset", "statefulsets":
+		//	diffResult = getUnusedStatefulSets(clientset, namespace, filterOpts)
 		case "role", "roles":
 			diffResult = getUnusedRoles(clientset, namespace, filterOpts)
 		case "hpa", "horizontalpodautoscaler", "horizontalpodautoscalers":

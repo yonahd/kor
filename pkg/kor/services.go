@@ -42,7 +42,7 @@ func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, 
 				servicesStatus = append(servicesStatus, status)
 				continue
 			} else if len(endpoints.Subsets) == 0 {
-				status.Reason = "No endpoints"
+				status.Reason = "Service has no endpoints"
 				servicesStatus = append(servicesStatus, status)
 			}
 

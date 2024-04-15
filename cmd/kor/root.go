@@ -59,7 +59,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&opts.DeleteFlag, "delete", false, "Delete unused resources")
 	rootCmd.PersistentFlags().BoolVar(&opts.NoInteractive, "no-interactive", false, "Do not prompt for confirmation when deleting resources. Be careful using this flag!")
 	rootCmd.PersistentFlags().BoolVarP(&opts.Verbose, "verbose", "v", false, "Verbose output (print empty namespaces)")
-	rootCmd.PersistentFlags().BoolVarP(&opts.PrintReason, "print-reason", "r", false, "Print reason resource is considered unused")
+	rootCmd.PersistentFlags().BoolVarP(&opts.PrintReason, "show-reason", "r", false, "Print reason resource is considered unused")
 	addFilterOptionsFlag(rootCmd, filterOptions)
 }
 
