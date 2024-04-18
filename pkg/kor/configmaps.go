@@ -14,9 +14,39 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-var exceptionconfigmaps = []ExceptionResource{
-	{ResourceName: "aws-auth", Namespace: "kube-system"},
-	{ResourceName: "kube-root-ca.crt", Namespace: "*"},
+var exceptionConfigMaps = []ExceptionResource{
+	{
+		ResourceName: "aws-auth",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "kube-root-ca.crt",
+		Namespace:    "*",
+	},
+	{
+		ResourceName: "extension-apiserver-authentication",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "kube-apiserver-legacy-service-account-token-tracking",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "kubeadm-config",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "kubelet-config",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "kubernetes-dashboard-settings",
+		Namespace:    "kubernetes-dashboard",
+	},
+	{
+		ResourceName: "cluster-info",
+		Namespace:    "kube-public",
+	},
 }
 
 func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, error) {
@@ -75,7 +105,7 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 		}
 	}
 
-	for _, resource := range exceptionconfigmaps {
+	for _, resource := range exceptionConfigMaps {
 		if resource.Namespace == namespace || resource.Namespace == "*" {
 			volumesCM = append(volumesCM, resource.ResourceName)
 		}
@@ -126,7 +156,13 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 	}
 
 	var usedConfigMaps []string
-	slicesToAppend := [][]string{volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM}
+	slicesToAppend := [][]string{
+		volumesCM,
+		envCM,
+		envFromCM,
+		envFromContainerCM,
+		envFromInitContainerCM,
+	}
 
 	for _, slice := range slicesToAppend {
 		usedConfigMaps = append(usedConfigMaps, slice...)

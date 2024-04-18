@@ -21,6 +21,25 @@ var exceptionSecretTypes = []string{
 	`kubernetes.io/service-account-token`,
 }
 
+var exceptionSecrets = []ExceptionResource{
+	{
+		ResourceName: "kubernetes-dashboard-certs",
+		Namespace:    "kubernetes-dashboard",
+	},
+	{
+		ResourceName: "kubernetes-dashboard-csrf",
+		Namespace:    "kubernetes-dashboard",
+	},
+	{
+		ResourceName: "kubernetes-dashboard-key-holder",
+		Namespace:    "kubernetes-dashboard",
+	},
+	{
+		ResourceName: "bootstrap-token-*",
+		Namespace:    "kube-system",
+	},
+}
+
 func retrieveIngressTLS(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	secretNames := make([]string, 0)
 	ingressList, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
@@ -121,7 +140,7 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 			continue
 		}
 
-		if !slices.Contains(exceptionSecretTypes, string(secret.Type)) {
+		if !slices.Contains(exceptionSecretTypes, string(secret.Type)) && !isResourceException(secret.Name, namespace, exceptionSecrets) {
 			names = append(names, secret.Name)
 		}
 	}
@@ -147,7 +166,14 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 	}
 
 	var usedSecrets []string
-	slicesToAppend := [][]string{envSecrets, envSecrets2, volumeSecrets, pullSecrets, tlsSecrets, initContainerEnvSecrets}
+	slicesToAppend := [][]string{
+		envSecrets,
+		envSecrets2,
+		volumeSecrets,
+		pullSecrets,
+		tlsSecrets,
+		initContainerEnvSecrets,
+	}
 
 	for _, slice := range slicesToAppend {
 		usedSecrets = append(usedSecrets, slice...)

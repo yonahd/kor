@@ -14,6 +14,13 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+var exceptionStorageClasses = []ExceptionResource{
+	{
+		ResourceName: "standard",
+		Namespace:    "",
+	},
+}
+
 func retrieveUsedStorageClasses(clientset kubernetes.Interface) ([]string, error) {
 	pvs, err := clientset.CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -71,6 +78,12 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 	usedStorageClasses, err := retrieveUsedStorageClasses(clientset)
 	if err != nil {
 		return nil, err
+	}
+
+	for i, name := range storageClassNames {
+		if isResourceException(name, "", exceptionStorageClasses) {
+			storageClassNames = append(storageClassNames[:i], storageClassNames[i+1:]...)
+		}
 	}
 
 	diff := CalculateResourceDifference(usedStorageClasses, storageClassNames)

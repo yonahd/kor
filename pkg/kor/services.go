@@ -13,6 +13,13 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+var exceptionServices = []ExceptionResource{
+	{
+		ResourceName: "k8s.io-minikube-hostpath",
+		Namespace:    "kube-system",
+	},
+}
+
 func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
 	endpointsList, err := clientset.CoreV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
@@ -25,7 +32,9 @@ func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, 
 		if pass, _ := filter.Run(filterOpts); pass {
 			continue
 		}
-
+		if isResourceException(endpoints.Name, namespace, exceptionServices) {
+			continue
+		}
 		if endpoints.Labels["kor/used"] == "false" {
 			endpointsWithoutSubsets = append(endpointsWithoutSubsets, endpoints.Name)
 			continue
