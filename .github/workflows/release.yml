@@ -9,21 +9,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
 
-      - name: Install goreleaser
-        run: go install github.com/goreleaser/goreleaser@latest
-
       - name: Run goreleaser
-        run: |
-          goreleaser release
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: latest
+          args: release --clean
         env:
-          GITHUB_TOKEN: "${{ secrets.RELEASE_GITHUB_TOKEN }}"
+          GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3

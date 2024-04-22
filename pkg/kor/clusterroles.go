@@ -8,13 +8,13 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/yonahd/kor/pkg/filters"
 	v1 "k8s.io/api/rbac/v1"
-	"k8s.io/utils/strings/slices"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"k8s.io/utils/strings/slices"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
