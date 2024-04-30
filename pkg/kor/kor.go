@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -123,10 +124,16 @@ func FormatOutput(namespace string, resources []string, resourceType string, opt
 
 	var buf bytes.Buffer
 	table := tablewriter.NewWriter(&buf)
-	table.SetHeader([]string{"#", "Resource Name"})
+	table.SetHeader([]string{
+		"#",
+		"Resource Name",
+	})
 
 	for i, name := range resources {
-		table.Append([]string{fmt.Sprintf("%d", i+1), name})
+		table.Append([]string{
+			fmt.Sprintf("%d", i+1),
+			name,
+		})
 	}
 
 	table.Render()
@@ -138,7 +145,11 @@ func FormatOutputFromMap(namespace string, allDiffs map[string][]string, opts Op
 	i := 0
 	var buf bytes.Buffer
 	table := tablewriter.NewWriter(&buf)
-	table.SetHeader([]string{"#", "Resource Type", "Resource Name"})
+	table.SetHeader([]string{
+		"#",
+		"Resource Type",
+		"Resource Name",
+	})
 
 	// TODO parse resourceType, diff
 
@@ -150,7 +161,11 @@ func FormatOutputFromMap(namespace string, allDiffs map[string][]string, opts Op
 
 		allEmpty = false
 		for _, val := range diff {
-			row := []string{fmt.Sprintf("%d", i+1), resourceType, val}
+			row := []string{
+				fmt.Sprintf("%d", i+1),
+				resourceType,
+				val,
+			}
 			table.Append(row)
 			i += 1
 		}
@@ -173,7 +188,11 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) strin
 	i := 0
 	var buf bytes.Buffer
 	table := tablewriter.NewWriter(&buf)
-	table.SetHeader([]string{"#", "Resource Type", "Resource Name"})
+	table.SetHeader([]string{
+		"#",
+		"Resource Type",
+		"Resource Name",
+	})
 
 	// TODO parse resourceType, diff
 
@@ -185,7 +204,11 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) strin
 
 		allEmpty = false
 		for _, val := range data.diff {
-			row := []string{fmt.Sprintf("%d", i+1), data.resourceType, val}
+			row := []string{
+				fmt.Sprintf("%d", i+1),
+				data.resourceType,
+				val,
+			}
 			table.Append(row)
 			i += 1
 		}
@@ -244,4 +267,22 @@ func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opt
 		}
 	}
 	return string(jsonResponse), nil
+}
+
+func isResourceException(resourceName, namespace string, exceptions []ExceptionResource) bool {
+	var match bool
+	for _, e := range exceptions {
+		if e.ResourceName == resourceName && e.Namespace == namespace {
+			match = true
+			break
+		}
+		if strings.HasSuffix(e.ResourceName, "*") {
+			resourceNameMatched := strings.HasPrefix(resourceName, strings.TrimSuffix(e.ResourceName, "*"))
+			if resourceNameMatched && e.Namespace == namespace {
+				match = true
+				break
+			}
+		}
+	}
+	return match
 }

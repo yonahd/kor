@@ -17,6 +17,69 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+var exceptionClusterRoles = []ExceptionResource{
+	{
+		ResourceName: "admin",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "edit",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:aggregate-to-admin",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:aggregate-to-edit",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:aggregate-to-view",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:auth-delegator",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:certificates.k8s.io:kube-apiserver-client-approver",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:certificates.k8s.io:kube-apiserver-client-kubelet-approver",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:certificates.k8s.io:kubelet-serving-approver",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:certificates.k8s.io:legacy-unknown-approver",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:heapster",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:kube-aggregator",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:kubelet-api-admin",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:node-problem-detector",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "view",
+		Namespace:    "",
+	},
+}
+
 func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
 
 	//Get a list of all namespaces
@@ -130,6 +193,10 @@ func retrieveClusterRoleNames(clientset kubernetes.Interface, filterOpts *filter
 
 		if clusterRole.Labels["kor/used"] == "false" {
 			unusedClusterRoles = append(unusedClusterRoles, clusterRole.Name)
+			continue
+		}
+
+		if isResourceException(clusterRole.Name, "", exceptionClusterRoles) {
 			continue
 		}
 
