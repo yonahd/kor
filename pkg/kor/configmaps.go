@@ -47,6 +47,46 @@ var exceptionConfigMaps = []ExceptionResource{
 		ResourceName: "cluster-info",
 		Namespace:    "kube-public",
 	},
+	{
+		ResourceName: "config-images",
+		Namespace:    "gmp-system",
+	},
+	{
+		ResourceName: "webhook-ca",
+		Namespace:    "gmp-system",
+	},
+	{
+		ResourceName: "cluster-autoscaler-status",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "cluster-kubestore",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "clustermetrics",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "gke-common-webhook-heartbeat",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "ingress-uid",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "konnectivity-agent-autoscaler-config",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "kube-dns-autoscaler",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "kubedns-config-images",
+		Namespace:    "kube-system",
+	},
 }
 
 func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, error) {

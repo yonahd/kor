@@ -14,7 +14,14 @@ import (
 )
 
 var exceptionServiceAccounts = []ExceptionResource{
-	{ResourceName: "default", Namespace: "*"},
+	{
+		ResourceName: "default",
+		Namespace:    "*",
+	},
+	{
+		ResourceName: "metadata-proxy",
+		Namespace:    "kube-system",
+	},
 }
 
 func getServiceAccountsFromClusterRoleBindings(clientset kubernetes.Interface, namespace string) ([]string, error) {

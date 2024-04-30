@@ -16,6 +16,81 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+var exceptionCrds = []ExceptionResource{
+	{
+		ResourceName: "capacityrequests.internal.autoscaling.gke.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "clusterpodmonitorings.monitoring.googleapis.com",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "clusterrules.monitoring.googleapis.com ",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "frontendconfigs.networking.gke.io ",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "gkenetworkparamsets.networking.gke.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "globalrules.monitoring.googleapis.com",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "managedcertificates.networking.gke.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "memberships.hub.gke.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "networks.networking.gke.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "podmonitorings.monitoring.googleapis.com",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "provisioningrequests.autoscaling.x-k8s.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "rules.monitoring.googleapis.com",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "serviceattachments.networking.gke.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "servicenetworkendpointgroups.networking.gke.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "updateinfos.nodemanagement.gke.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "volumesnapshotclasses.snapshot.storage.k8s.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "volumesnapshotcontents.snapshot.storage.k8s.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "volumesnapshots.snapshot.storage.k8s.io",
+		Namespace:    "",
+	},
+}
+
 func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) ([]string, error) {
 
 	var unusedCRDs []string
@@ -27,6 +102,9 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 
 	for _, crd := range crds.Items {
 		if pass := filters.KorLabelFilter(&crd, &filters.Options{}); pass {
+			continue
+		}
+		if isResourceException(crd.Name, "", exceptionCrds) {
 			continue
 		}
 
