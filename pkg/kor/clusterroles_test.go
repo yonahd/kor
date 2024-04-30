@@ -7,14 +7,14 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/yonahd/kor/pkg/filters"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestClusterRoles(t *testing.T) *fake.Clientset {
