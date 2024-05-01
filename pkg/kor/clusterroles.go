@@ -78,6 +78,30 @@ var exceptionClusterRoles = []ExceptionResource{
 		ResourceName: "view",
 		Namespace:    "",
 	},
+	{
+		ResourceName: "cloud-provider",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:certificates.k8s.io:certificatesigningrequests:nodeclient",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:certificates.k8s.io:certificatesigningrequests:selfnodeclient",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:controller:cloud-node-controller",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:controller:glbc",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:persistent-volume-provisioner",
+		Namespace:    "",
+	},
 }
 
 func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {

@@ -13,6 +13,93 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+var exceptionDaemonSets = []ExceptionResource{
+	{
+		ResourceName: "kube-proxy",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "fluentbit-gke-256pd",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "fluentbit-gke-max",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "gke-metrics-agent-scaling-10",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "gke-metrics-agent-scaling-100",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "gke-metrics-agent-scaling-20",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "gke-metrics-agent-scaling-200",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "gke-metrics-agent-scaling-50",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "gke-metrics-agent-scaling-500",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "gke-metrics-agent-windows",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "metadata-proxy-v0.1",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "nccl-fastsocket-installer",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "nvidia-gpu-device-plugin-large-cos",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "nvidia-gpu-device-plugin-large-ubuntu",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "nvidia-gpu-device-plugin-medium-cos",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "nvidia-gpu-device-plugin-medium-ubuntu",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "nvidia-gpu-device-plugin-small-cos",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "nvidia-gpu-device-plugin-small-ubuntu",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "pdcsi-node-windows",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "runsc-metric-server",
+		Namespace:    "kube-system",
+	},
+	{
+		ResourceName: "tpu-device-plugin",
+		Namespace:    "kube-system",
+	},
+}
+
 func ProcessNamespaceDaemonSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
 	daemonSetsList, err := clientset.AppsV1().DaemonSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
@@ -23,6 +110,9 @@ func ProcessNamespaceDaemonSets(clientset kubernetes.Interface, namespace string
 
 	for _, daemonSet := range daemonSetsList.Items {
 		if pass, _ := filter.SetObject(&daemonSet).Run(filterOpts); pass {
+			continue
+		}
+		if isResourceException(daemonSet.Name, daemonSet.Namespace, exceptionDaemonSets) {
 			continue
 		}
 

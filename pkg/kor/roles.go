@@ -14,6 +14,17 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+var exceptionRoles = []ExceptionResource{
+	{
+		ResourceName: "cloud-provider",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "system:controller:glbc",
+		Namespace:    "",
+	},
+}
+
 func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
 	// Get a list of all role bindings in the specified namespace
 	roleBindings, err := clientset.RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{})
@@ -51,6 +62,10 @@ func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterO
 		}
 		if role.Labels["kor/used"] == "false" {
 			unusedRoleNames = append(unusedRoleNames, role.Name)
+			continue
+		}
+
+		if isResourceException(role.Name, "", exceptionRoles) {
 			continue
 		}
 

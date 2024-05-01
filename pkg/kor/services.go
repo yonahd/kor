@@ -18,6 +18,10 @@ var exceptionServices = []ExceptionResource{
 		ResourceName: "k8s.io-minikube-hostpath",
 		Namespace:    "kube-system",
 	},
+	{
+		ResourceName: "vpa-recommender",
+		Namespace:    "kube-system",
+	},
 }
 
 func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
