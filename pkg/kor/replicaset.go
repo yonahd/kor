@@ -13,19 +13,6 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-// These replica sets generated for default GKE
-// TODO: Need to add it the ability for isResourceException to handle regex/wildcard matching
-// var exceptionReplicaSets = []ExceptionResource{
-// 	{
-// 		ResourceName: "metrics-server-v0.6.3-7cb4458849",
-// 		Namespace:    "gmp-system",
-// 	},
-// 	{
-// 		ResourceName: "metrics-server-v0.6.3-7cb4458849",
-// 		Namespace:    "kube-system",
-// 	},
-// }
-
 func ProcessNamespaceReplicaSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
 	replicaSetList, err := clientset.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {

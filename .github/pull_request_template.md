@@ -14,7 +14,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for additional information on con
 
 ## PR Checklist
 
-- [ ] This PR adds K8 exceptions
+- [ ] This PR adds K8s exceptions (false positives)
 - [ ] This PR add new code
 - [ ] This PR includes test for any new code
 
