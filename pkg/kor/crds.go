@@ -104,7 +104,7 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 		if pass := filters.KorLabelFilter(&crd, &filters.Options{}); pass {
 			continue
 		}
-		if isResourceException(crd.Name, "", exceptionCrds) {
+		if isResourceException(crd.Name, crd.Namespace, exceptionCrds) {
 			continue
 		}
 

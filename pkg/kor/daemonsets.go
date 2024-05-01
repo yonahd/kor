@@ -112,7 +112,7 @@ func ProcessNamespaceDaemonSets(clientset kubernetes.Interface, namespace string
 		if pass, _ := filter.SetObject(&daemonSet).Run(filterOpts); pass {
 			continue
 		}
-		if isResourceException(daemonSet.Name, "", exceptionDaemonSets) {
+		if isResourceException(daemonSet.Name, daemonSet.Namespace, exceptionDaemonSets) {
 			continue
 		}
 
