@@ -26,11 +26,11 @@ var exceptionCrds = []ExceptionResource{
 		Namespace:    "",
 	},
 	{
-		ResourceName: "clusterrules.monitoring.googleapis.com ",
+		ResourceName: "clusterrules.monitoring.googleapis.com",
 		Namespace:    "",
 	},
 	{
-		ResourceName: "frontendconfigs.networking.gke.io ",
+		ResourceName: "frontendconfigs.networking.gke.io",
 		Namespace:    "",
 	},
 	{
@@ -99,14 +99,6 @@ var exceptionCrds = []ExceptionResource{
 	},
 	{
 		ResourceName: "backendconfigs.cloud.google.com",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "clusterrules.monitoring.googleapis.com",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "frontendconfigs.networking.gke.io",
 		Namespace:    "",
 	},
 }
