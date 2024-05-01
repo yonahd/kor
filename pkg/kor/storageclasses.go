@@ -80,18 +80,16 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 			continue
 		}
 
+		if isResourceException(sc.Name, sc.Namespace, exceptionStorageClasses) {
+			continue
+		}
+
 		storageClassNames = append(storageClassNames, sc.Name)
 	}
 
 	usedStorageClasses, err := retrieveUsedStorageClasses(clientset)
 	if err != nil {
 		return nil, err
-	}
-
-	for i, name := range storageClassNames {
-		if isResourceException(name, "", exceptionStorageClasses) {
-			storageClassNames = append(storageClassNames[:i], storageClassNames[i+1:]...)
-		}
 	}
 
 	diff := CalculateResourceDifference(usedStorageClasses, storageClassNames)
