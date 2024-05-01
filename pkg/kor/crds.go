@@ -89,6 +89,26 @@ var exceptionCrds = []ExceptionResource{
 		ResourceName: "volumesnapshots.snapshot.storage.k8s.io",
 		Namespace:    "",
 	},
+	{
+		ResourceName: "allowlistedv2workloads.auto.gke.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "allowlistedworkloads.auto.gke.io",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "backendconfigs.cloud.google.com",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "clusterrules.monitoring.googleapis.com",
+		Namespace:    "",
+	},
+	{
+		ResourceName: "frontendconfigs.networking.gke.io",
+		Namespace:    "",
+	},
 }
 
 func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) ([]string, error) {
