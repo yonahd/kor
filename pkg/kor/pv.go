@@ -43,40 +43,34 @@ func processPvs(clientset kubernetes.Interface, filterOpts *filters.Options) ([]
 }
 
 func GetUnusedPvs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	var outputBuffer bytes.Buffer
-	response := make(map[string]map[string][]string)
-
+	resources := make(map[string]map[string][]string)
 	diff, err := processPvs(clientset, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to process pvs: %v\n", err)
 	}
-
-	if len(diff) > 0 {
-		// We consider cluster scope resources in "" (empty string) namespace, as it is common in k8s
-		if response[""] == nil {
-			response[""] = make(map[string][]string)
-		}
-		response[""]["Pv"] = diff
+	switch opts.GroupBy {
+	case "namespace":
+		resources[""] = make(map[string][]string)
+		resources[""]["Pv"] = diff
+	case "resource":
+		appendResources(resources, "Pv", "", diff)
 	}
-
 	if opts.DeleteFlag {
 		if diff, err = DeleteResource(diff, clientset, "", "PV", opts.NoInteractive); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to delete PV %s: %v\n", diff, err)
 		}
 	}
 
-	output := FormatOutput("", diff, "PVs", opts)
-	if output != "" {
-		outputBuffer.WriteString(output)
-		outputBuffer.WriteString("\n")
-
-		response[""]["Pv"] = diff
-
-	}
-
-	jsonResponse, err := json.MarshalIndent(response, "", "  ")
-	if err != nil {
-		return "", err
+	var outputBuffer bytes.Buffer
+	var jsonResponse []byte
+	switch outputFormat {
+	case "table":
+		outputBuffer = FormatOutput(resources, opts)
+	case "json", "yaml":
+		var err error
+		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {
+			return "", err
+		}
 	}
 
 	unusedPvs, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)

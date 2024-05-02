@@ -96,6 +96,7 @@ func TestGetUnusedIngressesStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedIngresses(&filters.Options{}, clientset, "json", opts)
@@ -105,7 +106,10 @@ func TestGetUnusedIngressesStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Ingresses": {"test-ingress-2", "test-ingress-4"},
+			"Ingress": {
+				"test-ingress-2",
+				"test-ingress-4",
+			},
 		},
 	}
 

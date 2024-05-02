@@ -95,7 +95,11 @@ func TestRetrieveUsedClusterRoles(t *testing.T) {
 		t.Errorf("Expected 3 used cluster role, got %d", len(usedClusterRoles))
 	}
 
-	expectedRoles := []string{"test-clusterRole2", "test-clusterRole3", "test-clusterRole6"}
+	expectedRoles := []string{
+		"test-clusterRole2",
+		"test-clusterRole3",
+		"test-clusterRole6",
+	}
 	sort.Strings(usedClusterRoles)
 	t.Log(usedClusterRoles)
 	if !reflect.DeepEqual(usedClusterRoles, expectedRoles) {
@@ -140,6 +144,7 @@ func TestGetUnusedClusterRolesStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedClusterRoles(&filters.Options{}, clientset, "json", opts)
@@ -149,7 +154,10 @@ func TestGetUnusedClusterRolesStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		"": {
-			"ClusterRoles": {"test-clusterRole1", "test-clusterRole5"},
+			"ClusterRole": {
+				"test-clusterRole1",
+				"test-clusterRole5",
+			},
 		},
 	}
 

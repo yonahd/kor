@@ -69,7 +69,14 @@ func createTestPods(t *testing.T) *fake.Clientset {
 		Message: "",
 	}
 
-	pods := []*corev1.Pod{pod1, pod2, pod3, pod4, pod5, pod6}
+	pods := []*corev1.Pod{
+		pod1,
+		pod2,
+		pod3,
+		pod4,
+		pod5,
+		pod6,
+	}
 
 	// Add test pods to the clientset
 	for _, pod := range pods {
@@ -84,12 +91,15 @@ func createTestPods(t *testing.T) *fake.Clientset {
 
 func TestProcessNamespacePods(t *testing.T) {
 	clientset := createTestPods(t)
-	evictedPods, err := ProcessNamespacePods(clientset, testNamespace, &filters.Options{})
+	evictedPods, err := processNamespacePods(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	expectedEvictedPods := []string{"pod-2", "pod-6"}
+	expectedEvictedPods := []string{
+		"pod-2",
+		"pod-6",
+	}
 
 	if len(evictedPods) != len(expectedEvictedPods) {
 		t.Errorf("Expected %d evicted pods, got %d", len(expectedEvictedPods), len(evictedPods))
@@ -111,6 +121,7 @@ func TestGetUnusedPodsStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedPods(&filters.Options{}, clientset, "json", opts)
@@ -120,7 +131,10 @@ func TestGetUnusedPodsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Pods": {"pod-2", "pod-6"},
+			"Pod": {
+				"pod-2",
+				"pod-6",
+			},
 		},
 	}
 

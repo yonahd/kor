@@ -65,7 +65,7 @@ func createTestDaemonSets(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceDaemonSets(t *testing.T) {
 	clientset := createTestDaemonSets(t)
 
-	daemonSetsWithoutReplicas, err := ProcessNamespaceDaemonSets(clientset, testNamespace, &filters.Options{})
+	daemonSetsWithoutReplicas, err := processNamespaceDaemonSets(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -88,6 +88,7 @@ func TestGetUnusedDaemonSetsStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedDaemonSets(&filters.Options{}, clientset, "json", opts)
@@ -97,7 +98,10 @@ func TestGetUnusedDaemonSetsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"DaemonSets": {"test-ds1", "test-ds4"},
+			"DaemonSet": {
+				"test-ds1",
+				"test-ds4",
+			},
 		},
 	}
 

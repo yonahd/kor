@@ -67,6 +67,7 @@ func TestGetUnusedPvs(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedPvs(&filters.Options{}, clientset, "json", opts)
@@ -76,7 +77,10 @@ func TestGetUnusedPvs(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		"": {
-			"Pv": {"test-pv2", "test-pv4"},
+			"Pv": {
+				"test-pv2",
+				"test-pv4",
+			},
 		},
 	}
 

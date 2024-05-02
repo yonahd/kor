@@ -34,18 +34,27 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 	secret5 := CreateTestSecret(testNamespace, "test-secret5", UnusedLabels)
 
 	pod1 := CreateTestPod(testNamespace, "pod-1", "", []corev1.Volume{
-		{Name: "vol-1", VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: "test-secret1"}}},
+		{
+			Name:         "vol-1",
+			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: "test-secret1"}},
+		},
 	}, AppLabels)
 
 	pod2 := CreateTestPod(testNamespace, "pod-2", "", []corev1.Volume{
-		{Name: "vol-2", VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: "test-secret2"}}},
+		{
+			Name:         "vol-2",
+			VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: "test-secret2"}},
+		},
 	}, AppLabels)
 
 	pod3 := CreateTestPod(testNamespace, "pod-3", "", nil, AppLabels)
 	pod3.Spec.Containers = []corev1.Container{
 		{
 			Env: []corev1.EnvVar{
-				{Name: "ENV_VAR_1", ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: secret1.ObjectMeta.Name}}}},
+				{
+					Name:      "ENV_VAR_1",
+					ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: secret1.ObjectMeta.Name}}},
+				},
 			},
 		},
 	}
@@ -63,7 +72,10 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 	pod5.Spec.InitContainers = []corev1.Container{
 		{
 			Env: []corev1.EnvVar{
-				{Name: "INIT_ENV_VAR_1", ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: secret1.ObjectMeta.Name}}}},
+				{
+					Name:      "INIT_ENV_VAR_1",
+					ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: secret1.ObjectMeta.Name}}},
+				},
 			},
 		},
 	}
@@ -178,7 +190,10 @@ func TestRetrieveUsedSecret(t *testing.T) {
 		t.Fatalf("Error retrieving used secrets: %v", err)
 	}
 
-	expectedVolumeSecrets := []string{"test-secret1", "test-secret2"}
+	expectedVolumeSecrets := []string{
+		"test-secret1",
+		"test-secret2",
+	}
 	if !equalSlices(volumeSecrets, expectedVolumeSecrets) {
 		t.Errorf("Expected volume secrets %v, got %v", expectedVolumeSecrets, volumeSecrets)
 	}
@@ -198,7 +213,10 @@ func TestRetrieveUsedSecret(t *testing.T) {
 		t.Errorf("Expected initContainer env secrets %v, got %v", expectedInitContainerEnvSecrets, initContainerEnvSecrets)
 	}
 
-	expectedPullSecrets := []string{"test-secret1", "test-secret2"}
+	expectedPullSecrets := []string{
+		"test-secret1",
+		"test-secret2",
+	}
 	if !equalSlices(pullSecrets, expectedPullSecrets) {
 		t.Errorf("Expected pull secrets %v, got %v", expectedPullSecrets, pullSecrets)
 	}
@@ -228,7 +246,10 @@ func TestRetrieveSecretNames(t *testing.T) {
 		t.Fatalf("Error retrieving secret names: %v", err)
 	}
 
-	expectedSecretNames := []string{"secret-1", "secret-2"}
+	expectedSecretNames := []string{
+		"secret-1",
+		"secret-2",
+	}
 	if !equalSlices(secretNames, expectedSecretNames) {
 		t.Errorf("Expected secret names %v, got %v", expectedSecretNames, secretNames)
 	}
@@ -261,6 +282,7 @@ func TestGetUnusedSecretsStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedSecrets(&filters.Options{}, clientset, "json", opts)
@@ -270,7 +292,10 @@ func TestGetUnusedSecretsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Secrets": {"test-secret3", "test-secret5"},
+			"Secret": {
+				"test-secret3",
+				"test-secret5",
+			},
 		},
 	}
 
