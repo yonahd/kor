@@ -20,8 +20,8 @@ import (
 )
 
 type ExceptionResource struct {
-	ResourceName string
 	Namespace    string
+	ResourceName string
 }
 type IncludeExcludeLists struct {
 	IncludeListStr string
@@ -29,8 +29,15 @@ type IncludeExcludeLists struct {
 }
 
 type Config struct {
-	ExceptionStorageClasses []ExceptionResource `json:"exceptionStorageClasses"`
-	ExceptionClusterRoles   []ExceptionResource `json:"exceptionClusterRoles"`
+	ExceptionClusterRoles    []ExceptionResource `json:"exceptionClusterRoles"`
+	ExceptionConfigMaps      []ExceptionResource `json:"exceptionConfigMaps"`
+	ExceptionCrds            []ExceptionResource `json:"exceptionCrds"`
+	ExceptionDaemonSets      []ExceptionResource `json:"exceptionDaemonSets"`
+	ExceptionRoles           []ExceptionResource `json:"exceptionRoles"`
+	ExceptionSecrets         []ExceptionResource `json:"exceptionSecrets"`
+	ExceptionServiceAccounts []ExceptionResource `json:"exceptionServiceAccounts"`
+	ExceptionServices        []ExceptionResource `json:"exceptionServices"`
+	ExceptionStorageClasses  []ExceptionResource `json:"exceptionStorageClasses"`
 	// Add other configurations if needed
 }
 

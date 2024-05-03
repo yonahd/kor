@@ -3,6 +3,7 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,80 +15,8 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-var exceptionConfigMaps = []ExceptionResource{
-	{
-		ResourceName: "aws-auth",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "kube-root-ca.crt",
-		Namespace:    "*",
-	},
-	{
-		ResourceName: "extension-apiserver-authentication",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "kube-apiserver-legacy-service-account-token-tracking",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "kubeadm-config",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "kubelet-config",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "kubernetes-dashboard-settings",
-		Namespace:    "kubernetes-dashboard",
-	},
-	{
-		ResourceName: "cluster-info",
-		Namespace:    "kube-public",
-	},
-	{
-		ResourceName: "config-images",
-		Namespace:    "gmp-system",
-	},
-	{
-		ResourceName: "webhook-ca",
-		Namespace:    "gmp-system",
-	},
-	{
-		ResourceName: "cluster-autoscaler-status",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "cluster-kubestore",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "clustermetrics",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "gke-common-webhook-heartbeat",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "ingress-uid",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "konnectivity-agent-autoscaler-config",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "kube-dns-autoscaler",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "kubedns-config-images",
-		Namespace:    "kube-system",
-	},
-}
+//go:embed exceptions/configmaps/configmaps.json
+var configMapsConfig []byte
 
 func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, error) {
 	var volumesCM []string
@@ -145,7 +74,12 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 		}
 	}
 
-	for _, resource := range exceptionConfigMaps {
+	config, err := unmarshalConfig(configMapsConfig)
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+
+	for _, resource := range config.ExceptionConfigMaps {
 		if resource.Namespace == namespace || resource.Namespace == "*" {
 			volumesCM = append(volumesCM, resource.ResourceName)
 		}

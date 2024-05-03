@@ -141,9 +141,8 @@ func retrieveClusterRoleNames(clientset kubernetes.Interface, filterOpts *filter
 		if err != nil {
 			return nil, nil, err
 		}
-		exceptionClusterRoles := config.ExceptionClusterRoles
 
-		if isResourceException(clusterRole.Name, "", exceptionClusterRoles) {
+		if isResourceException(clusterRole.Name, "", config.ExceptionClusterRoles) {
 			continue
 		}
 

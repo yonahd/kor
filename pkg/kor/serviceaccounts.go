@@ -3,6 +3,7 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -13,16 +14,8 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-var exceptionServiceAccounts = []ExceptionResource{
-	{
-		ResourceName: "default",
-		Namespace:    "*",
-	},
-	{
-		ResourceName: "metadata-proxy",
-		Namespace:    "kube-system",
-	},
-}
+//go:embed exceptions/serviceaccounts/serviceaccounts.json
+var serviceAccountsConfig []byte
 
 func getServiceAccountsFromClusterRoleBindings(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	// Get a list of all role bindings in the specified namespace
@@ -93,7 +86,12 @@ func retrieveUsedSA(clientset kubernetes.Interface, namespace string) ([]string,
 		}
 	}
 
-	for _, resource := range exceptionServiceAccounts {
+	config, err := unmarshalConfig(serviceAccountsConfig)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	for _, resource := range config.ExceptionServiceAccounts {
 		if resource.Namespace == namespace || resource.Namespace == "*" {
 			podServiceAccounts = append(podServiceAccounts, resource.ResourceName)
 		}

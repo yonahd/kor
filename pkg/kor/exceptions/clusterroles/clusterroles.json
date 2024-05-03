@@ -1,88 +1,88 @@
 {
   "exceptionClusterRoles": [
     {
-      "ResourceName": "admin",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "admin"
     },
     {
-      "ResourceName": "edit",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "cloud-provider"
     },
     {
-      "ResourceName": "system:aggregate-to-admin",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "edit"
     },
     {
-      "ResourceName": "system:aggregate-to-edit",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:aggregate-to-admin"
     },
     {
-      "ResourceName": "system:aggregate-to-view",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:aggregate-to-edit"
     },
     {
-      "ResourceName": "system:auth-delegator",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:aggregate-to-view"
     },
     {
-      "ResourceName": "system:certificates.k8s.io:kube-apiserver-client-approver",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:auth-delegator"
     },
     {
-      "ResourceName": "system:certificates.k8s.io:kube-apiserver-client-kubelet-approver",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:certificates.k8s.io:certificatesigningrequests:nodeclient"
     },
     {
-      "ResourceName": "system:certificates.k8s.io:kubelet-serving-approver",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:certificates.k8s.io:certificatesigningrequests:selfnodeclient"
     },
     {
-      "ResourceName": "system:certificates.k8s.io:legacy-unknown-approver",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:certificates.k8s.io:kube-apiserver-client-approver"
     },
     {
-      "ResourceName": "system:heapster",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:certificates.k8s.io:kube-apiserver-client-kubelet-approver"
     },
     {
-      "ResourceName": "system:kube-aggregator",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:certificates.k8s.io:kubelet-serving-approver"
     },
     {
-      "ResourceName": "system:kubelet-api-admin",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:certificates.k8s.io:legacy-unknown-approver"
     },
     {
-      "ResourceName": "system:node-problem-detector",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:controller:cloud-node-controller"
     },
     {
-      "ResourceName": "view",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:controller:glbc"
     },
     {
-      "ResourceName": "cloud-provider",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:heapster"
     },
     {
-      "ResourceName": "system:certificates.k8s.io:certificatesigningrequests:nodeclient",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:kube-aggregator"
     },
     {
-      "ResourceName": "system:certificates.k8s.io:certificatesigningrequests:selfnodeclient",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:kubelet-api-admin"
     },
     {
-      "ResourceName": "system:controller:cloud-node-controller",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:node-problem-detector"
     },
     {
-      "ResourceName": "system:controller:glbc",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "system:persistent-volume-provisioner"
     },
     {
-      "ResourceName": "system:persistent-volume-provisioner",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "view"
     }
   ]
 }

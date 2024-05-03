@@ -1,16 +1,16 @@
 {
   "exceptionStorageClasses": [
     {
-      "ResourceName": "standard",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "premium-rwo"
     },
     {
-      "ResourceName": "premium-rwo",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "standard"
     },
     {
-      "ResourceName": "standard-rwo",
-      "Namespace": ""
+      "Namespace": "",
+      "ResourceName": "standard-rwo"
     }
   ]
 }

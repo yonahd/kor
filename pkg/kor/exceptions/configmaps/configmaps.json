@@ -1,0 +1,76 @@
+{
+  "exceptionConfigMaps": [
+    {
+      "Namespace": "*",
+      "ResourceName": "kube-root-ca.crt"
+    },
+    {
+      "Namespace": "gmp-system",
+      "ResourceName": "config-images"
+    },
+    {
+      "Namespace": "gmp-system",
+      "ResourceName": "webhook-ca"
+    },
+    {
+      "Namespace": "kube-public",
+      "ResourceName": "cluster-info"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "aws-auth"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "cluster-autoscaler-status"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "cluster-kubestore"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "clustermetrics"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "extension-apiserver-authentication"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "gke-common-webhook-heartbeat"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "ingress-uid"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "konnectivity-agent-autoscaler-config"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "kube-apiserver-legacy-service-account-token-tracking"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "kube-dns-autoscaler"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "kubeadm-config"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "kubedns-config-images"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "kubelet-config"
+    },
+    {
+      "Namespace": "kubernetes-dashboard",
+      "ResourceName": "kubernetes-dashboard-settings"
+    }
+  ]
+}
