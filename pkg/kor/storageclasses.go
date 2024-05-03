@@ -16,7 +16,7 @@ import (
 )
 
 //go:embed exceptions/storageclasses/storageclasses.json
-var embeddedConfig []byte
+var storageClassesConfig []byte
 
 func retrieveUsedStorageClasses(clientset kubernetes.Interface) ([]string, error) {
 	pvs, err := clientset.CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
@@ -69,7 +69,7 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 			continue
 		}
 
-		config, err := unmarshalConfig(embeddedConfig)
+		config, err := unmarshalConfig(storageClassesConfig)
 		if err != nil {
 			return nil, err
 		}

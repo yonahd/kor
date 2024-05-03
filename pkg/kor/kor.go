@@ -30,6 +30,7 @@ type IncludeExcludeLists struct {
 
 type Config struct {
 	ExceptionStorageClasses []ExceptionResource `json:"exceptionStorageClasses"`
+	ExceptionClusterRoles   []ExceptionResource `json:"exceptionClusterRoles"`
 	// Add other configurations if needed
 }
 

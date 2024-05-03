@@ -3,6 +3,7 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -17,92 +18,8 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-var exceptionClusterRoles = []ExceptionResource{
-	{
-		ResourceName: "admin",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "edit",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:aggregate-to-admin",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:aggregate-to-edit",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:aggregate-to-view",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:auth-delegator",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:certificates.k8s.io:kube-apiserver-client-approver",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:certificates.k8s.io:kube-apiserver-client-kubelet-approver",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:certificates.k8s.io:kubelet-serving-approver",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:certificates.k8s.io:legacy-unknown-approver",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:heapster",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:kube-aggregator",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:kubelet-api-admin",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:node-problem-detector",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "view",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "cloud-provider",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:certificates.k8s.io:certificatesigningrequests:nodeclient",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:certificates.k8s.io:certificatesigningrequests:selfnodeclient",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:controller:cloud-node-controller",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:controller:glbc",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:persistent-volume-provisioner",
-		Namespace:    "",
-	},
-}
+//go:embed exceptions/clusterroles/clusterroles.json
+var clusterRolesConfig []byte
 
 func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
 
@@ -219,6 +136,12 @@ func retrieveClusterRoleNames(clientset kubernetes.Interface, filterOpts *filter
 			unusedClusterRoles = append(unusedClusterRoles, clusterRole.Name)
 			continue
 		}
+
+		config, err := unmarshalConfig(clusterRolesConfig)
+		if err != nil {
+			return nil, nil, err
+		}
+		exceptionClusterRoles := config.ExceptionClusterRoles
 
 		if isResourceException(clusterRole.Name, "", exceptionClusterRoles) {
 			continue
