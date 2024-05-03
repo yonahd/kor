@@ -5,7 +5,7 @@ cronJob:
   image:
     repository: yonahdissen/kor
     tag: latest
-  # e.g. kor configmap --include-namespace default,other-ns
+  # e.g. kor configmap --include-namespaces default,other-ns
   command:
     - kor
   args:

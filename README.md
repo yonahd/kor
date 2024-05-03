@@ -4,13 +4,12 @@
 [![codecov](https://codecov.io/gh/yonahd/kor/branch/main/graph/badge.svg?token=tNKcOjlxLo)](https://codecov.io/gh/yonahd/kor)
 [![Discord](https://discord.com/api/guilds/1159544275722321990/embed.png)](https://discord.gg/ajptYPwcJY)
 
-
-
 # Kor - Kubernetes Orphaned Resources Finder
 
 ![Kor Logo](/images/kor_logo.png)
 
 Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identify and list unused:
+
 - ConfigMaps
 - Secrets
 - Services
@@ -38,18 +37,25 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 Download the binary for your operating system from the [releases page](https://github.com/yonahd/kor/releases) and add it to your system's PATH.
 
 ### Homebrew
+
 For macOS users, you can install Kor using Homebrew:
+
 ```sh
 brew install kor
 ```
+
 ### Build from source
+
 Install the binary to your `$GOBIN` or `$GOPATH/bin`:
+
 ```sh
 go install github.com/yonahd/kor@latest
 ```
 
 ### Docker
+
 Run a container with your kubeconfig mounted:
+
 ```sh
 docker run --rm -i yonahdissen/kor
 
@@ -57,12 +63,15 @@ docker run --rm -i -v "/path/to/.kube/config:/root/.kube/config" yonahdissen/kor
 ```
 
 ### Kubectl plugin (<img src="https://raw.githubusercontent.com/kubernetes-sigs/krew/master/assets/logo/horizontal/color/krew-horizontal-color.png" alt="krew" width="48"/>)
+
 ```sh
 kubectl krew install kor
 ```
 
 ### Helm
+
 Run as a cronjob in your Cluster (with an option for sending slack updates)
+
 ```sh
 helm upgrade -i kor \
     --namespace kor \
@@ -72,13 +81,13 @@ helm upgrade -i kor \
 ```
 
 Run as a deployment in your Cluster exposing prometheus metrics
+
 ```sh
 helm upgrade -i kor \
     --namespace kor \
     --create-namespace \
     ./charts/kor
 ```
-
 
 For more information see [in cluster usage](#in-cluster-usage)
 
@@ -111,13 +120,14 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `version` - Print kor version information.
 
 ### Supported Flags
+
 ```
       --delete                       Delete unused resources
   -l, --exclude-labels string        Selector to filter out, Example: --exclude-labels key1=value1,key2=value2. If --include-labels is set, --exclude-labels will be ignored.
-      --exclude-namespaces strings   Namespaces to be excluded, split by commas. Example: --exclude-namespace ns1,ns2,ns3. If --include-namespace is set, --exclude-namespaces will be ignored.
+      --exclude-namespaces strings   Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored.
   -h, --help                         help for kor
       --include-labels string        Selector to filter in, Example: --include-labels key1=value1,key2=value2.
-  -n, --include-namespaces strings   Namespaces to run on, split by commas. Example: --include-namespace ns1,ns2,ns3.
+  -n, --include-namespaces strings   Namespaces to run on, split by commas. Example: --include-namespaces ns1,ns2,ns3.
   -k, --kubeconfig string            Path to kubeconfig file (optional)
       --newer-than string            The maximum age of the resources to be considered unused. This flag cannot be used together with older-than flag. Example: --newer-than=1h2m
       --no-interactive               Do not prompt for confirmation when deleting resources. Be careful using this flag!
@@ -143,54 +153,65 @@ kor [subcommand] --help
 
 ## Supported resources and limitations
 
-| Resource        | What it looks for                                                                                                                                                                                                                 | Known False Positives  ⚠️                                                                                                    |
-|-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| ConfigMaps      | ConfigMaps not used in the following places:<br/>- Pods<br/>- Containers<br/>- ConfigMaps used through Volumes<br/>- ConfigMaps used through environment variables                                                                | ConfigMaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically OPA policies fluentd configs CRD configs  |
-| Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers<br/>- Secrets used through volumes<br/>- Secrets used through environment variables<br/>- Secrets used by Ingress TLS<br/>- Secrets used by ServiceAccounts |    Secrets used by resources which don't explicitly state them in the config e.g. secrets used by CRDs                                                                                                                        |
-| Services        | Services with no endpoints                                                                                                                                                                                                        |                                                                                                                              |
-| Deployments     | Deployments with no Replicas                                                                                                                                                                                                      |                                                                                                                              |
-| ServiceAccounts | ServiceAccounts unused by Pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                    |                                                                                                                              |
-| StatefulSets    | Statefulsets with no Replicas                                                                                                                                                                                                     |                                                                                                                              |
-| Roles           | Roles not used in roleBinding                                                                                                                                                                                                     |                                                                                                                              |
-| ClusterRoles    | ClusterRoles not used in roleBinding or clusterRoleBinding                                                                                                                                                                        |                                                                                                                              |
-| PVCs            | PVCs not used in Pods                                                                                                                                                                                                             |                                                                                                                              |
-| Ingresses       | Ingresses not pointing at any Service                                                                                                                                                                                             |                                                                                                                              |
-| Hpas            | HPAs not used in Deployments<br/> HPAs not used in StatefulSets                                                                                                                                                                   |                                                                                                                              |
-| CRDs            | CRDs not used the cluster                                                                                                                                                                                                         |                                                                                                                              |
-| Pvs             | PVs not bound to a PVC                                                                                                                                                                                                            |                                                                                                                              |
-| Pdbs            | PDBs not used in Deployments<br/> PDBs not used in StatefulSets                                                                                                                                                                   |                                                                                                                              |
-| Jobs            | Jobs status is completed                                                                                                                                                                                                          |                                                                                                                              |
+| Resource        | What it looks for                                                                                                                                                                                                                 | Known False Positives ⚠️                                                                                                                                              |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ConfigMaps      | ConfigMaps not used in the following places:<br/>- Pods<br/>- Containers<br/>- ConfigMaps used through Volumes<br/>- ConfigMaps used through environment variables                                                                | ConfigMaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically OPA policies fluentd configs CRD configs |
+| Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers<br/>- Secrets used through volumes<br/>- Secrets used through environment variables<br/>- Secrets used by Ingress TLS<br/>- Secrets used by ServiceAccounts | Secrets used by resources which don't explicitly state them in the config e.g. secrets used by CRDs                                                                   |
+| Services        | Services with no endpoints                                                                                                                                                                                                        |                                                                                                                                                                       |
+| Deployments     | Deployments with no Replicas                                                                                                                                                                                                      |                                                                                                                                                                       |
+| ServiceAccounts | ServiceAccounts unused by Pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                    |                                                                                                                                                                       |
+| StatefulSets    | Statefulsets with no Replicas                                                                                                                                                                                                     |                                                                                                                                                                       |
+| Roles           | Roles not used in roleBinding                                                                                                                                                                                                     |                                                                                                                                                                       |
+| ClusterRoles    | ClusterRoles not used in roleBinding or clusterRoleBinding                                                                                                                                                                        |                                                                                                                                                                       |
+| PVCs            | PVCs not used in Pods                                                                                                                                                                                                             |                                                                                                                                                                       |
+| Ingresses       | Ingresses not pointing at any Service                                                                                                                                                                                             |                                                                                                                                                                       |
+| Hpas            | HPAs not used in Deployments<br/> HPAs not used in StatefulSets                                                                                                                                                                   |                                                                                                                                                                       |
+| CRDs            | CRDs not used the cluster                                                                                                                                                                                                         |                                                                                                                                                                       |
+| Pvs             | PVs not bound to a PVC                                                                                                                                                                                                            |                                                                                                                                                                       |
+| Pdbs            | PDBs not used in Deployments<br/> PDBs not used in StatefulSets                                                                                                                                                                   |                                                                                                                                                                       |
+| Jobs            | Jobs status is completed                                                                                                                                                                                                          |                                                                                                                                                                       |
 | ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work                                                                                                                                                        |
-| DaemonSets     | DaemonSets not scheduled on any nodes              |
-| StorageClasses | StorageClasses not used by any PVs/PVCs |
+| DaemonSets      | DaemonSets not scheduled on any nodes                                                                                                                                                                                             |
+| StorageClasses  | StorageClasses not used by any PVs/PVCs                                                                                                                                                                                           |
 
 ## Deleting Unused resources
+
 If you want to delete resources in an interactive way using Kor you can run:
+
 ```sh
 kor configmap --include-namespaces my-namespace --delete
 ```
+
 You will be prompted with:
+
 ```sh
 Do you want to delete ConfigMap test-configmap in namespace my-namespace? (Y/N):
 ```
 
 To delete with no prompt ( ⚠️ use with caution):
+
 ```sh
 kor configmap --include-namespaces my-namespace --delete --no-interactive
 ```
 
 ## Ignore Resources
+
 The resources labeled with:
+
 ```sh
 kor/used=true
 ```
+
 Will be ignored by kor even if they are unused. You can add this label to resources you want to ignore.
 
 ## Force clean Resources
+
 The resources labeled with:
+
 ```sh
 kor/used=false
 ```
+
 Will be cleaned always. This is a good way to mark resources for later cleanup.
 
 ## In Cluster Usage
@@ -215,6 +236,7 @@ helm upgrade -i kor \
     --set cronJob.slackToken=<slack-token> \
     ./charts/kor
 ```
+
 > Note: To send it to Slack as a file it's required to set the `slackToken` and `slackChannel` values.
 
 It's set to run every Monday at 1 a.m. by default. You can change the schedule by setting the `cronJob.schedule` value.
@@ -230,6 +252,7 @@ helm upgrade -i kor \
 ```
 
 ## Grafana Dashboard
+
 Dashboard can be found [here](https://grafana.com/grafana/dashboards/19863-kor-dashboard/).
 ![Grafana Dashboard](/grafana/dashboard-screenshot-1.png)
 
