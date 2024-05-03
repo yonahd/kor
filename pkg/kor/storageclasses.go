@@ -15,7 +15,7 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-//go:embed exceptions/storageclasses/config.json
+//go:embed exceptions/storageclasses/storageclasses.json
 var embeddedConfig []byte
 
 func retrieveUsedStorageClasses(clientset kubernetes.Interface) ([]string, error) {
