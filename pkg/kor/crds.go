@@ -3,6 +3,7 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -16,92 +17,8 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-var exceptionCrds = []ExceptionResource{
-	{
-		ResourceName: "capacityrequests.internal.autoscaling.gke.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "clusterpodmonitorings.monitoring.googleapis.com",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "clusterrules.monitoring.googleapis.com",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "frontendconfigs.networking.gke.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "gkenetworkparamsets.networking.gke.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "globalrules.monitoring.googleapis.com",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "managedcertificates.networking.gke.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "memberships.hub.gke.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "networks.networking.gke.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "podmonitorings.monitoring.googleapis.com",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "provisioningrequests.autoscaling.x-k8s.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "rules.monitoring.googleapis.com",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "serviceattachments.networking.gke.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "servicenetworkendpointgroups.networking.gke.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "updateinfos.nodemanagement.gke.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "volumesnapshotclasses.snapshot.storage.k8s.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "volumesnapshotcontents.snapshot.storage.k8s.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "volumesnapshots.snapshot.storage.k8s.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "allowlistedv2workloads.auto.gke.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "allowlistedworkloads.auto.gke.io",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "backendconfigs.cloud.google.com",
-		Namespace:    "",
-	},
-}
+//go:embed exceptions/crds/crds.json
+var crdsConfig []byte
 
 func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) ([]string, error) {
 
@@ -116,7 +33,13 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 		if pass := filters.KorLabelFilter(&crd, &filters.Options{}); pass {
 			continue
 		}
-		if isResourceException(crd.Name, crd.Namespace, exceptionCrds) {
+
+		config, err := unmarshalConfig(crdsConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		if isResourceException(crd.Name, crd.Namespace, config.ExceptionCrds) {
 			continue
 		}
 

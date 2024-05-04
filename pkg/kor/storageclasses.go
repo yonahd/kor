@@ -3,6 +3,7 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,20 +15,8 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-var exceptionStorageClasses = []ExceptionResource{
-	{
-		ResourceName: "standard",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "premium-rwo",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "standard-rwo",
-		Namespace:    "",
-	},
-}
+//go:embed exceptions/storageclasses/storageclasses.json
+var storageClassesConfig []byte
 
 func retrieveUsedStorageClasses(clientset kubernetes.Interface) ([]string, error) {
 	pvs, err := clientset.CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
@@ -79,6 +68,12 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 			unusedStorageClassNames = append(unusedStorageClassNames, sc.Name)
 			continue
 		}
+
+		config, err := unmarshalConfig(storageClassesConfig)
+		if err != nil {
+			return nil, err
+		}
+		exceptionStorageClasses := config.ExceptionStorageClasses
 
 		if isResourceException(sc.Name, sc.Namespace, exceptionStorageClasses) {
 			continue

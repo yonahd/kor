@@ -2,6 +2,7 @@ package kor
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,12 +20,25 @@ import (
 )
 
 type ExceptionResource struct {
-	ResourceName string
 	Namespace    string
+	ResourceName string
 }
 type IncludeExcludeLists struct {
 	IncludeListStr string
 	ExcludeListStr string
+}
+
+type Config struct {
+	ExceptionClusterRoles    []ExceptionResource `json:"exceptionClusterRoles"`
+	ExceptionConfigMaps      []ExceptionResource `json:"exceptionConfigMaps"`
+	ExceptionCrds            []ExceptionResource `json:"exceptionCrds"`
+	ExceptionDaemonSets      []ExceptionResource `json:"exceptionDaemonSets"`
+	ExceptionRoles           []ExceptionResource `json:"exceptionRoles"`
+	ExceptionSecrets         []ExceptionResource `json:"exceptionSecrets"`
+	ExceptionServiceAccounts []ExceptionResource `json:"exceptionServiceAccounts"`
+	ExceptionServices        []ExceptionResource `json:"exceptionServices"`
+	ExceptionStorageClasses  []ExceptionResource `json:"exceptionStorageClasses"`
+	// Add other configurations if needed
 }
 
 type Opts struct {
@@ -285,4 +299,12 @@ func isResourceException(resourceName, namespace string, exceptions []ExceptionR
 		}
 	}
 	return match
+}
+
+func unmarshalConfig(data []byte) (*Config, error) {
+	var config Config
+	if err := json.Unmarshal(data, &config); err != nil {
+		return nil, err
+	}
+	return &config, nil
 }

@@ -3,6 +3,7 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,16 +15,8 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-var exceptionRoles = []ExceptionResource{
-	{
-		ResourceName: "cloud-provider",
-		Namespace:    "",
-	},
-	{
-		ResourceName: "system:controller:glbc",
-		Namespace:    "",
-	},
-}
+//go:embed exceptions/roles/roles.json
+var rolesConfig []byte
 
 func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
 	// Get a list of all role bindings in the specified namespace
@@ -65,7 +58,12 @@ func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterO
 			continue
 		}
 
-		if isResourceException(role.Name, "", exceptionRoles) {
+		config, err := unmarshalConfig(rolesConfig)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if isResourceException(role.Name, "", config.ExceptionRoles) {
 			continue
 		}
 

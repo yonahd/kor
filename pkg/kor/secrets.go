@@ -3,6 +3,7 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -21,24 +22,8 @@ var exceptionSecretTypes = []string{
 	`kubernetes.io/service-account-token`,
 }
 
-var exceptionSecrets = []ExceptionResource{
-	{
-		ResourceName: "kubernetes-dashboard-certs",
-		Namespace:    "kubernetes-dashboard",
-	},
-	{
-		ResourceName: "kubernetes-dashboard-csrf",
-		Namespace:    "kubernetes-dashboard",
-	},
-	{
-		ResourceName: "kubernetes-dashboard-key-holder",
-		Namespace:    "kubernetes-dashboard",
-	},
-	{
-		ResourceName: "bootstrap-token-*",
-		Namespace:    "kube-system",
-	},
-}
+//go:embed exceptions/secrets/secrets.json
+var secretsConfig []byte
 
 func retrieveIngressTLS(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	secretNames := make([]string, 0)
@@ -140,7 +125,12 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 			continue
 		}
 
-		if !slices.Contains(exceptionSecretTypes, string(secret.Type)) && !isResourceException(secret.Name, namespace, exceptionSecrets) {
+		config, err := unmarshalConfig(secretsConfig)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if !slices.Contains(exceptionSecretTypes, string(secret.Type)) && !isResourceException(secret.Name, namespace, config.ExceptionSecrets) {
 			names = append(names, secret.Name)
 		}
 	}

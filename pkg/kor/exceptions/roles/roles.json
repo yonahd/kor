@@ -1,0 +1,12 @@
+{
+  "exceptionRoles": [
+    {
+      "Namespace": "",
+      "ResourceName": "cloud-provider"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:controller:glbc"
+    }
+  ]
+}

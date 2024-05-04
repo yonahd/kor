@@ -3,6 +3,7 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -13,16 +14,8 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-var exceptionServices = []ExceptionResource{
-	{
-		ResourceName: "k8s.io-minikube-hostpath",
-		Namespace:    "kube-system",
-	},
-	{
-		ResourceName: "vpa-recommender",
-		Namespace:    "kube-system",
-	},
-}
+//go:embed exceptions/services/services.json
+var servicesConfig []byte
 
 func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
 	endpointsList, err := clientset.CoreV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
@@ -36,7 +29,13 @@ func ProcessNamespaceServices(clientset kubernetes.Interface, namespace string, 
 		if pass, _ := filter.Run(filterOpts); pass {
 			continue
 		}
-		if isResourceException(endpoints.Name, namespace, exceptionServices) {
+
+		config, err := unmarshalConfig(servicesConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		if isResourceException(endpoints.Name, namespace, config.ExceptionServices) {
 			continue
 		}
 		if endpoints.Labels["kor/used"] == "false" {
