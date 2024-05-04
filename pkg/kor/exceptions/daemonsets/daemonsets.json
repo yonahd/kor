@@ -2,6 +2,18 @@
   "exceptionDaemonSets": [
     {
       "Namespace": "kube-system",
+      "ResourceName": "cloud-node-manager-windows"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "csi-azuredisk-node-win"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "csi-azurefile-node-win"
+    },
+    {
+      "Namespace": "kube-system",
       "ResourceName": "fluentbit-gke-256pd"
     },
     {
