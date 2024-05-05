@@ -3,7 +3,7 @@
 .idea/
 dist/**
 main.exe
-coverage.txt
+coverage.*
 build/
 kor
 !kor/
