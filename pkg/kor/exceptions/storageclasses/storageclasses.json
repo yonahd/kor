@@ -2,6 +2,38 @@
   "exceptionStorageClasses": [
     {
       "Namespace": "",
+      "ResourceName": "azurefile"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "azurefile-csi"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "azurefile-csi-premium"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "default"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "managed"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "managed-csi"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "managed-csi-premium"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "managed-premium"
+    },
+    {
+      "Namespace": "",
       "ResourceName": "premium-rwo"
     },
     {
