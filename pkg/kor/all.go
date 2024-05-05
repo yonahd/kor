@@ -313,6 +313,11 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 		fmt.Printf("err: %v\n", err)
 	}
 
+	// Skip getting non-namespaced resources if --include-namespaces flag is used
+	if len(filterOpts.IncludeNamespaces) > 0 {
+		return unusedAllNamespaced, nil
+	}
+
 	unusedAllNonNamespaced, err := GetUnusedAllNonNamespaced(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)

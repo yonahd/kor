@@ -113,7 +113,7 @@ func (o *Options) Namespaces(clientset kubernetes.Interface) []string {
 		namespaces := make([]string, 0)
 		namespacesMap := make(map[string]bool)
 		if len(o.IncludeNamespaces) > 0 && len(o.ExcludeNamespaces) > 0 {
-			fmt.Fprintf(os.Stderr, "Exclude namespaces can't be used together with include namespaces. Ignoring --exclude-namespace(-e) flag\n")
+			fmt.Fprintf(os.Stderr, "Exclude namespaces can't be used together with include namespaces. Ignoring --exclude-namespaces (-e) flag\n")
 			o.ExcludeNamespaces = nil
 		}
 		includeNamespaces := o.IncludeNamespaces
@@ -163,7 +163,7 @@ func (o *Options) Namespaces(clientset kubernetes.Interface) []string {
 func (o *Options) modifyLabels() {
 	if o.IncludeLabels != "" {
 		if len(o.ExcludeLabels) > 0 {
-			fmt.Fprintf(os.Stderr, "Exclude labels can't be used together with include labels. Ignoring --exclude-label(-l) flag\n")
+			fmt.Fprintf(os.Stderr, "Exclude labels can't be used together with include labels. Ignoring --exclude-labels (-l) flag\n")
 		}
 		o.ExcludeLabels = nil
 	}
