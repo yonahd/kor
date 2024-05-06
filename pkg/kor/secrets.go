@@ -19,6 +19,7 @@ import (
 var exceptionSecretTypes = []string{
 	`helm.sh/release.v1`,
 	`kubernetes.io/dockerconfigjson`,
+	`kubernetes.io/dockercfg`,
 	`kubernetes.io/service-account-token`,
 }
 
