@@ -170,6 +170,7 @@ func TestRetrieveUsedCM(t *testing.T) {
 		"kube-root-ca.crt",
 		"openshift-service-ca.crt",
 	}
+
 	if !equalSlices(volumesCM, expectedVolumesCM) {
 		t.Errorf("Expected volume configmaps %v, got %v", expectedVolumesCM, volumesCM)
 	}
