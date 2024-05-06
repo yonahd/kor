@@ -1,0 +1,8 @@
+{
+    "exceptionJobs": [
+      {
+        "Namespace": "assisted-installer",
+        "ResourceName": "assisted-installer-controller"
+      }
+    ]
+  }

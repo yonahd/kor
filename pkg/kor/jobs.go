@@ -3,6 +3,7 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -13,6 +14,9 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+//go:embed exceptions/jobs/jobs.json
+var jobsConfig []byte
+
 func ProcessNamespaceJobs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
 	jobsList, err := clientset.BatchV1().Jobs(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
@@ -21,8 +25,17 @@ func ProcessNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 
 	var unusedJobNames []string
 
+	config, err := unmarshalConfig(jobsConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, job := range jobsList.Items {
 		if pass, _ := filter.Run(filterOpts); pass {
+			continue
+		}
+
+		if isResourceException(job.Name, namespace, config.ExceptionJobs) {
 			continue
 		}
 

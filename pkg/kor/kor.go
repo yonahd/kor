@@ -33,6 +33,7 @@ type Config struct {
 	ExceptionConfigMaps      []ExceptionResource `json:"exceptionConfigMaps"`
 	ExceptionCrds            []ExceptionResource `json:"exceptionCrds"`
 	ExceptionDaemonSets      []ExceptionResource `json:"exceptionDaemonSets"`
+	ExceptionJobs            []ExceptionResource `json:"exceptionJobs"`
 	ExceptionRoles           []ExceptionResource `json:"exceptionRoles"`
 	ExceptionSecrets         []ExceptionResource `json:"exceptionSecrets"`
 	ExceptionServiceAccounts []ExceptionResource `json:"exceptionServiceAccounts"`
