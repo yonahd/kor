@@ -123,10 +123,10 @@ Kor provides various subcommands to identify and list unused resources. The avai
 
 ```
       --delete                       Delete unused resources
-  -l, --exclude-labels string        Selector to filter out, Example: --exclude-labels key1=value1,key2=value2. If --include-labels is set, --exclude-labels will be ignored.
-      --exclude-namespaces strings   Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored.
+  -l, --exclude-labels strings       Selector to filter out, Example: --exclude-labels key1=value1,key2=value2. If --include-labels is set, --exclude-labels will be ignored.
+  -e, --exclude-namespaces strings   Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored.
   -h, --help                         help for kor
-      --include-labels string        Selector to filter in, Example: --include-labels key1=value1,key2=value2.
+      --include-labels string        Selector to filter in, Example: --include-labels key1=value1.(currently supports one label)
   -n, --include-namespaces strings   Namespaces to run on, split by commas. Example: --include-namespaces ns1,ns2,ns3. If set, non-namespaced resources will be ignored.
   -k, --kubeconfig string            Path to kubeconfig file (optional)
       --newer-than string            The maximum age of the resources to be considered unused. This flag cannot be used together with older-than flag. Example: --newer-than=1h2m
