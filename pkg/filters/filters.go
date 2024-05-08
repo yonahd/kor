@@ -141,6 +141,7 @@ func SystemNamespaceFilter(object runtime.Object, filterOpts *Options) bool {
 	return false
 }
 
+// ExcludeNamespacesFilter is a filter that filters out namespaces specified by user
 func ExcludeNamespacesFilter(object runtime.Object, filterOpts *Options) bool {
 	if filterOpts.ExcludeNamespaces != nil {
 		excludeList := filterOpts.ExcludeNamespaces
@@ -156,6 +157,7 @@ func ExcludeNamespacesFilter(object runtime.Object, filterOpts *Options) bool {
 	return false
 }
 
+// IncludeNamespacesFilter is a filter that acts as a whitelist, only these namespaces will be processed if specified
 func IncludeNamespacesFilter(object runtime.Object, filterOpts *Options) bool {
 	if filterOpts.IncludeNamespaces != nil {
 		includeList := filterOpts.IncludeNamespaces

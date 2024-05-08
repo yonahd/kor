@@ -51,7 +51,7 @@ func ignoreResourceType(resource string, ignoreResourceTypes []string) bool {
 	return false
 }
 
-func getNamespacedResources(
+func isErrorOrNamespaceContainsResources(
 	ctx context.Context,
 	clientset kubernetes.Interface,
 	dynamicClient dynamic.Interface,
@@ -139,7 +139,13 @@ func processNamespaces(
 		}
 
 		// skipping two namespaces and default resources here
-		resourceFound, err := getNamespacedResources(ctx, clientset, dynamicClient, namespace.Name, filterOpts)
+		resourceFound, err := isErrorOrNamespaceContainsResources(
+			ctx,
+			clientset,
+			dynamicClient,
+			namespace.Name,
+			filterOpts,
+		)
 		if err != nil {
 			return unusedNamespaces, err
 		}
@@ -207,7 +213,7 @@ func GetUnusedNamespaces(
 		return "", err
 	}
 
-	unusedNamespacess, err := unusedResourceFormatter(
+	unusedNamespaces, err := unusedResourceFormatter(
 		outputFormat,
 		outputBuffer,
 		opts,
@@ -217,5 +223,5 @@ func GetUnusedNamespaces(
 		fmt.Printf("err: %v\n", err)
 	}
 
-	return unusedNamespacess, nil
+	return unusedNamespaces, nil
 }
