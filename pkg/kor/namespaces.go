@@ -60,7 +60,7 @@ func isErrorOrNamespaceContainsResources(
 ) (bool, error) {
 	apiResourceLists, err := clientset.Discovery().ServerPreferredNamespacedResources()
 	if err != nil {
-		panic(err)
+		return true, err
 	}
 
 	// Iterate over all API resources and list instances of each in the specified namespace
