@@ -7,7 +7,7 @@ toolchain go1.22.2
 require (
 	github.com/fatih/color v1.16.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/spf13/cobra v1.8.0
 	k8s.io/api v0.30.0
 	k8s.io/apiextensions-apiserver v0.30.0
