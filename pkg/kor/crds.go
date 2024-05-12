@@ -59,32 +59,30 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 	return unusedCRDs, nil
 }
 
-func GetUnusedCrds(filterOpts *filters.Options, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
-
-	var outputBuffer bytes.Buffer
+func GetUnusedCrds(_ *filters.Options, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+	resources := make(map[string]map[string][]string)
 	diff, err := processCrds(apiExtClient, dynamicClient, &filters.Options{})
-
-	response := make(map[string]map[string][]string)
-
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to process crds: %v\n", err)
 	}
-	if len(diff) > 0 {
-		// We consider cluster scope resources in "" (empty string) namespace, as it is common in k8s
-		if response[""] == nil {
-			response[""] = make(map[string][]string)
-		}
-		response[""]["Crd"] = diff
-	}
-	output := FormatOutput("", diff, "Crds", opts)
-	if output != "" {
-		outputBuffer.WriteString(output)
-		outputBuffer.WriteString("\n")
+	switch opts.GroupBy {
+	case "namespace":
+		resources[""] = make(map[string][]string)
+		resources[""]["Crd"] = diff
+	case "resource":
+		appendResources(resources, "Crd", "", diff)
 	}
 
-	jsonResponse, err := json.MarshalIndent(response, "", "  ")
-	if err != nil {
-		return "", err
+	var outputBuffer bytes.Buffer
+	var jsonResponse []byte
+	switch outputFormat {
+	case "table":
+		outputBuffer = FormatOutput(resources, opts)
+	case "json", "yaml":
+		var err error
+		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {
+			return "", err
+		}
 	}
 
 	unusedCRDs, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)

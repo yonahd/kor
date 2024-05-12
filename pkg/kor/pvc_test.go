@@ -105,6 +105,7 @@ func TestGetUnusedPvcsStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedPvcs(&filters.Options{}, clientset, "json", opts)
@@ -114,7 +115,10 @@ func TestGetUnusedPvcsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Pvc": {"test-pvc2", "test-pvc4"},
+			"Pvc": {
+				"test-pvc2",
+				"test-pvc4",
+			},
 		},
 	}
 

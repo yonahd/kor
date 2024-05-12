@@ -97,7 +97,7 @@ func GetUnusedfinalizers(filterOpts *filters.Options, clientset kubernetes.Inter
 				allDiffs[gvr.Resource] = resourceDiff
 			}
 
-			output := FormatOutputFromMap(namespace, allDiffs, opts)
+			output := formatOutputForNamespace(namespace, allDiffs, opts)
 			outputBuffer.WriteString(output)
 			outputBuffer.WriteString("\n")
 

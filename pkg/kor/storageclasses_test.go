@@ -75,6 +75,7 @@ func TestGetUnusedStorageClassesStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedStorageClasses(&filters.Options{}, clientset, "json", opts)

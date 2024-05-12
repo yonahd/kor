@@ -48,6 +48,7 @@ type Opts struct {
 	WebhookURL    string
 	Channel       string
 	Token         string
+	GroupBy       string
 }
 
 func RemoveDuplicatesAndSort(slice []string) []string {
@@ -129,116 +130,125 @@ func GetDynamicClient(kubeconfig string) *dynamic.DynamicClient {
 	return clientset
 }
 
-func FormatOutput(namespace string, resources []string, resourceType string, opts Opts) string {
-	if opts.Verbose && len(resources) == 0 {
-		return fmt.Sprintf("No unused %s found in the namespace: %s \n", resourceType, namespace)
-	} else if len(resources) == 0 {
-		return ""
+func appendResources(resources map[string]map[string][]string, resourceType, namespace string, diff []string) {
+	for _, d := range diff {
+		if _, ok := resources[resourceType]; !ok {
+			resources[resourceType] = make(map[string][]string)
+		}
+		resources[resourceType][namespace] = append(resources[resourceType][namespace], d)
 	}
-
-	var buf bytes.Buffer
-	table := tablewriter.NewWriter(&buf)
-	table.SetHeader([]string{
-		"#",
-		"Resource Name",
-	})
-
-	for i, name := range resources {
-		table.Append([]string{
-			fmt.Sprintf("%d", i+1),
-			name,
-		})
-	}
-
-	table.Render()
-
-	return fmt.Sprintf("Unused %s in Namespace: %s\n%s", resourceType, namespace, buf.String())
 }
 
-func FormatOutputFromMap(namespace string, allDiffs map[string][]string, opts Opts) string {
-	i := 0
-	var buf bytes.Buffer
-	table := tablewriter.NewWriter(&buf)
-	table.SetHeader([]string{
-		"#",
-		"Resource Type",
-		"Resource Name",
-	})
-
-	// TODO parse resourceType, diff
-
-	allEmpty := true
-	for resourceType, diff := range allDiffs {
-		if len(diff) == 0 {
-			continue
+func getTableHeader(groupBy string) []string {
+	switch groupBy {
+	case "namespace":
+		return []string{
+			"#",
+			"RESOURCE TYPE",
+			"RESOURCE NAME",
 		}
+	case "resource":
+		return []string{
+			"#",
+			"NAMESPACE",
+			"RESOURCE NAME",
+		}
+	default:
+		return nil
+	}
+}
 
-		allEmpty = false
-		for _, val := range diff {
-			row := []string{
-				fmt.Sprintf("%d", i+1),
-				resourceType,
-				val,
-			}
-			table.Append(row)
-			i += 1
+func getTableRow(index int, columns ...string) []string {
+	row := make([]string, 0, len(columns)+1)
+	row = append(row, fmt.Sprintf("%d", index+1))
+	row = append(row, columns...)
+	return row
+}
+
+// FormatOutput formats the output based on the group by option
+func FormatOutput(resources map[string]map[string][]string, opts Opts) bytes.Buffer {
+	var output bytes.Buffer
+	switch opts.GroupBy {
+	case "namespace":
+		for namespace, diffs := range resources {
+			output.WriteString(formatOutputForNamespace(namespace, diffs, opts))
+		}
+	case "resource":
+		for resource, diffs := range resources {
+			output.WriteString(formatOutputForResource(resource, diffs, opts))
 		}
 	}
+	return output
+}
 
-	if opts.Verbose && allEmpty {
-		return fmt.Sprintf("No unused resources found in the namespace: %s", namespace)
-	} else if allEmpty {
+func formatOutputForResource(resource string, resources map[string][]string, opts Opts) string {
+	if len(resources) == 0 {
+		if opts.Verbose {
+			return fmt.Sprintf("No unused %ss found\n", resource)
+		}
 		return ""
 	}
-
-	table.Render()
-	if namespace == "" {
-		return fmt.Sprintf("Unused CRDs: \n%s", buf.String())
+	var buf bytes.Buffer
+	table := tablewriter.NewWriter(&buf)
+	table.SetHeader(getTableHeader(opts.GroupBy))
+	var index int
+	for ns, diffs := range resources {
+		for _, d := range diffs {
+			row := getTableRow(index, ns, d)
+			table.Append(row)
+			index++
+		}
 	}
-	return fmt.Sprintf("Unused Resources in Namespace: %s\n%s", namespace, buf.String())
+	table.Render()
+	return fmt.Sprintf("Unused %ss:\n%s", resource, buf.String())
+}
+
+func formatOutputForNamespace(namespace string, resources map[string][]string, opts Opts) string {
+	var buf bytes.Buffer
+	table := tablewriter.NewWriter(&buf)
+	table.SetHeader(getTableHeader(opts.GroupBy))
+	allEmpty := true
+	var index int
+	for resourceType, diff := range resources {
+		for _, val := range diff {
+			row := getTableRow(index, resourceType, val)
+			table.Append(row)
+			allEmpty = false
+			index++
+		}
+	}
+	if allEmpty {
+		if opts.Verbose {
+			return fmt.Sprintf("No unused resources found in the namespace: %q\n", namespace)
+		}
+		return ""
+	}
+	table.Render()
+	return fmt.Sprintf("Unused resources in namespace: %q\n%s", namespace, buf.String())
 }
 
 func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) string {
-	i := 0
 	var buf bytes.Buffer
 	table := tablewriter.NewWriter(&buf)
-	table.SetHeader([]string{
-		"#",
-		"Resource Type",
-		"Resource Name",
-	})
-
-	// TODO parse resourceType, diff
-
+	table.SetHeader(getTableHeader(opts.GroupBy))
 	allEmpty := true
+	var index int
 	for _, data := range allDiffs {
-		if len(data.diff) == 0 {
-			continue
-		}
-
-		allEmpty = false
 		for _, val := range data.diff {
-			row := []string{
-				fmt.Sprintf("%d", i+1),
-				data.resourceType,
-				val,
-			}
+			row := getTableRow(index, data.resourceType, val)
 			table.Append(row)
-			i += 1
+			allEmpty = false
+			index++
 		}
 	}
-
-	if opts.Verbose && allEmpty {
-		return fmt.Sprintf("No unused resources found in the namespace: %s", namespace)
-	} else if allEmpty {
+	if allEmpty {
+		if opts.Verbose {
+			return fmt.Sprintf("No unused resources found in the namespace: %q\n", namespace)
+		}
 		return ""
 	}
-
 	table.Render()
-	if namespace == "" {
-		return fmt.Sprintf("Unused %ss: \n%s", allDiffs[0].resourceType, buf.String())
-	}
-	return fmt.Sprintf("Unused Resources in Namespace: %s\n%s", namespace, buf.String())
+	return fmt.Sprintf("Unused resources in namespace: %q\n%s", namespace, buf.String())
 }
 
 // TODO create formatter by resource "#", "Resource Name", "Namespace"
@@ -261,24 +271,20 @@ func CalculateResourceDifference(usedResourceNames []string, allResourceNames []
 }
 
 func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opts Opts, jsonResponse []byte) (string, error) {
-	if outputFormat == "table" {
-
-		if opts.WebhookURL != "" || opts.Channel != "" && opts.Token != "" {
-			if err := SendToSlack(SlackMessage{}, opts, outputBuffer.String()); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to send message to slack: %v\n", err)
-				os.Exit(1)
-			}
-		} else {
+	switch outputFormat {
+	case "table":
+		if opts.WebhookURL == "" || opts.Channel == "" || opts.Token != "" {
 			return outputBuffer.String(), nil
 		}
-	} else {
-		if outputFormat == "yaml" {
-			yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-			if err != nil {
-				fmt.Printf("err: %v\n", err)
-			}
-			return string(yamlResponse), nil
+		if err := SendToSlack(SlackMessage{}, opts, outputBuffer.String()); err != nil {
+			return "", fmt.Errorf("failed to send message to slack: %w", err)
 		}
+	case "yaml":
+		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
+		if err != nil {
+			return "", fmt.Errorf("failed to convert json to yaml: %w", err)
+		}
+		return string(yamlResponse), nil
 	}
 	return string(jsonResponse), nil
 }

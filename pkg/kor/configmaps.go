@@ -150,35 +150,37 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 }
 
 func GetUnusedConfigmaps(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	var outputBuffer bytes.Buffer
-	response := make(map[string]map[string][]string)
-
+	resources := make(map[string]map[string][]string)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceCM(clientset, namespace, filterOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-
+		switch opts.GroupBy {
+		case "namespace":
+			resources[namespace] = make(map[string][]string)
+			resources[namespace]["ConfigMap"] = diff
+		case "resource":
+			appendResources(resources, "ConfigMap", namespace, diff)
+		}
 		if opts.DeleteFlag {
 			if diff, err = DeleteResource(diff, clientset, namespace, "ConfigMap", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete ConfigMap %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
-		output := FormatOutput(namespace, diff, "Configmaps", opts)
-		if output != "" {
-			outputBuffer.WriteString(output)
-			outputBuffer.WriteString("\n")
-
-			resourceMap := make(map[string][]string)
-			resourceMap["ConfigMap"] = diff
-			response[namespace] = resourceMap
-		}
 	}
 
-	jsonResponse, err := json.MarshalIndent(response, "", "  ")
-	if err != nil {
-		return "", err
+	var outputBuffer bytes.Buffer
+	var jsonResponse []byte
+	switch outputFormat {
+	case "table":
+		outputBuffer = FormatOutput(resources, opts)
+	case "json", "yaml":
+		var err error
+		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {
+			return "", err
+		}
 	}
 
 	unusedCMs, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)

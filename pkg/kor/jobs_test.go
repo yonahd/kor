@@ -77,7 +77,7 @@ func createTestJobs(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceJobs(t *testing.T) {
 	clientset := createTestJobs(t)
 
-	completedJobs, err := ProcessNamespaceJobs(clientset, testNamespace, &filters.Options{})
+	completedJobs, err := processNamespaceJobs(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -100,6 +100,7 @@ func TestGetUnusedJobsStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedJobs(&filters.Options{}, clientset, "json", opts)
@@ -109,7 +110,10 @@ func TestGetUnusedJobsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Jobs": {"test-job2", "test-job4"},
+			"Job": {
+				"test-job2",
+				"test-job4",
+			},
 		},
 	}
 

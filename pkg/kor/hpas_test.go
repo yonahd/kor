@@ -89,6 +89,7 @@ func TestGetUnusedHpasStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedHpas(&filters.Options{}, clientset, "json", opts)
@@ -98,7 +99,10 @@ func TestGetUnusedHpasStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Hpa": {"test-hpa2", "test-hpa4"},
+			"Hpa": {
+				"test-hpa2",
+				"test-hpa4",
+			},
 		},
 	}
 

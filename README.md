@@ -125,6 +125,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
       --delete                       Delete unused resources
   -l, --exclude-labels strings       Selector to filter out, Example: --exclude-labels key1=value1,key2=value2. If --include-labels is set, --exclude-labels will be ignored.
   -e, --exclude-namespaces strings   Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored.
+      --group-by string              Group output by (namespace, resource) (default "namespace")
   -h, --help                         help for kor
       --include-labels string        Selector to filter in, Example: --include-labels key1=value1.(currently supports one label)
   -n, --include-namespaces strings   Namespaces to run on, split by commas. Example: --include-namespaces ns1,ns2,ns3. If set, non-namespaced resources will be ignored.
@@ -151,7 +152,7 @@ For more information about each subcommand and its available flags, you can use 
 kor [subcommand] --help
 ```
 
-## Supported resources and limitations
+### Supported resources and limitations
 
 | Resource        | What it looks for                                                                                                                                                                                                                 | Known False Positives ⚠️                                                                                                                                              |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -174,7 +175,7 @@ kor [subcommand] --help
 | DaemonSets      | DaemonSets not scheduled on any nodes                                                                                                                                                                                             |
 | StorageClasses  | StorageClasses not used by any PVs/PVCs                                                                                                                                                                                           |
 
-## Deleting Unused resources
+### Deleting Unused resources
 
 If you want to delete resources in an interactive way using Kor you can run:
 
@@ -194,7 +195,7 @@ To delete with no prompt ( ⚠️ use with caution):
 kor configmap --include-namespaces my-namespace --delete --no-interactive
 ```
 
-## Ignore Resources
+### Ignore Resources
 
 The resources labeled with:
 
@@ -204,7 +205,7 @@ kor/used=true
 
 Will be ignored by kor even if they are unused. You can add this label to resources you want to ignore.
 
-## Force clean Resources
+### Force clean Resources
 
 The resources labeled with:
 
@@ -213,6 +214,66 @@ kor/used=false
 ```
 
 Will be cleaned always. This is a good way to mark resources for later cleanup.
+
+### Output Formats
+
+Kor supports three output formats: `table`, `json`, and `yaml`. The default output format is `table`.  
+Additionally, you can use the `--group-by` flag to group the output by `namespace` or `resource`.
+
+#### Group by resource
+
+```sh
+kor all --group-by=resource --output=table
+```
+```
+Unused ConfigMaps:
++---+-----------+---------------+
+| # | NAMESPACE | RESOURCE NAME |
++---+-----------+---------------+
+| 1 | ns1       | cm1           |
+| 2 | ns1       | cm2           |
+| 3 | ns2       | cm3           |
++---+-----------+---------------+
+Unused Deployments:
++---+-----------+---------------+
+| # | NAMESPACE | RESOURCE NAME |
++---+-----------+---------------+
+| 1 | ns1       | deploy1       |
+| 2 | ns2       | deploy2       |
++---+-----------+---------------+
+Unused ReplicaSets:
++---+-----------+--------------------+
+| # | NAMESPACE |   RESOURCE NAME    |
++---+-----------+--------------------+
+| 1 | ns1       | deploy1-654d48b75f |
+| 2 | ns2       | deploy2-79f48888c6 |
++---+-----------+--------------------+
+```
+
+#### Group by namespace
+
+```sh
+kor all --group-by=namespace --output=table
+```
+```
+Unused resources in namespace: "ns1"
++---+---------------+--------------------+
+| # | RESOURCE TYPE |   RESOURCE NAME    |
++---+---------------+--------------------+
+| 1 | ConfigMap     | cm1                |
+| 2 | ConfigMap     | cm2                |
+| 3 | ReplicaSet    | deploy1-654d48b75f |
+| 4 | Deployment    | deploy1            |
++---+---------------+--------------------+
+Unused resources in namespace: "ns2"
++---+---------------+--------------------+
+| # | RESOURCE TYPE |   RESOURCE NAME    |
++---+---------------+--------------------+
+| 1 | ReplicaSet    | deploy2-79f48888c6 |
+| 2 | ConfigMap     | cm3                |
+| 3 | Deployment    | deploy2            |
++---+---------------+--------------------+
+```
 
 ## In Cluster Usage
 

@@ -58,14 +58,20 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 	}
 
 	pod1 := CreateTestPod(testNamespace, "pod-1", "", []corev1.Volume{
-		{Name: "vol-1", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.ObjectMeta.Name}}}},
+		{
+			Name:         "vol-1",
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.ObjectMeta.Name}}},
+		},
 	}, AppLabels)
 
 	pod2 := CreateTestPod(testNamespace, "pod-2", "", nil, AppLabels)
 	pod2.Spec.Containers = []corev1.Container{
 		{
 			Env: []corev1.EnvVar{
-				{Name: "ENV_VAR_1", ValueFrom: &corev1.EnvVarSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.ObjectMeta.Name}}}},
+				{
+					Name:      "ENV_VAR_1",
+					ValueFrom: &corev1.EnvVarSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.ObjectMeta.Name}}},
+				},
 			},
 		},
 	}
@@ -83,7 +89,10 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 	pod4.Spec.InitContainers = []corev1.Container{
 		{
 			Env: []corev1.EnvVar{
-				{Name: "INIT_ENV_VAR_1", ValueFrom: &corev1.EnvVarSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: configmap2.ObjectMeta.Name}}}},
+				{
+					Name:      "INIT_ENV_VAR_1",
+					ValueFrom: &corev1.EnvVarSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: configmap2.ObjectMeta.Name}}},
+				},
 			},
 		},
 	}
@@ -120,7 +129,11 @@ func TestRetrieveConfigMapNames(t *testing.T) {
 		t.Fatalf("Error retrieving configmap names: %v", err)
 	}
 
-	expectedConfigMapNames := []string{"configmap-1", "configmap-2", "configmap-3"}
+	expectedConfigMapNames := []string{
+		"configmap-1",
+		"configmap-2",
+		"configmap-3",
+	}
 	if !equalSlices(configMapNames, expectedConfigMapNames) {
 		t.Errorf("Expected configmap names %v, got %v", expectedConfigMapNames, configMapNames)
 	}
@@ -134,7 +147,10 @@ func TestProcessNamespaceCM(t *testing.T) {
 		t.Fatalf("Error processing namespace CM: %v", err)
 	}
 
-	unusedConfigmaps := []string{"configmap-3", "configmap-5"}
+	unusedConfigmaps := []string{
+		"configmap-3",
+		"configmap-5",
+	}
 	if !equalSlices(diff, unusedConfigmaps) {
 		t.Errorf("Expected diff %v, got %v", unusedConfigmaps, diff)
 	}
@@ -149,7 +165,10 @@ func TestRetrieveUsedCM(t *testing.T) {
 		t.Fatalf("Error retrieving used ConfigMaps: %v", err)
 	}
 
-	expectedVolumesCM := []string{"configmap-1", "kube-root-ca.crt"}
+	expectedVolumesCM := []string{
+		"configmap-1",
+		"kube-root-ca.crt",
+	}
 	if !equalSlices(volumesCM, expectedVolumesCM) {
 		t.Errorf("Expected volume configmaps %v, got %v", expectedVolumesCM, volumesCM)
 	}
@@ -185,6 +204,7 @@ func TestGetUnusedConfigmapsStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedConfigmaps(&filters.Options{}, clientset, "json", opts)
@@ -194,7 +214,10 @@ func TestGetUnusedConfigmapsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"ConfigMap": {"configmap-3", "configmap-5"},
+			"ConfigMap": {
+				"configmap-3",
+				"configmap-5",
+			},
 		},
 	}
 

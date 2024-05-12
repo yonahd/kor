@@ -115,6 +115,7 @@ func TestGetUnusedRolesStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedRoles(&filters.Options{}, clientset, "json", opts)
@@ -124,7 +125,10 @@ func TestGetUnusedRolesStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Roles": {"test-role2", "test-role4"},
+			"Role": {
+				"test-role2",
+				"test-role4",
+			},
 		},
 	}
 

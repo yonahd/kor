@@ -63,6 +63,7 @@ func TestProcessNamespaceReplicaSets(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedReplicaSets(&filters.Options{}, clientset, "json", opts)
@@ -72,7 +73,7 @@ func TestProcessNamespaceReplicaSets(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"ReplicaSets": {"test-replicaSet2"},
+			"ReplicaSet": {"test-replicaSet2"},
 		},
 	}
 

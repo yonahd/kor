@@ -175,36 +175,37 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 }
 
 func GetUnusedSecrets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	var outputBuffer bytes.Buffer
-	namespaces := filterOpts.Namespaces(clientset)
-	response := make(map[string]map[string][]string)
-
-	for _, namespace := range namespaces {
+	resources := make(map[string]map[string][]string)
+	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceSecret(clientset, namespace, filterOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-
+		switch opts.GroupBy {
+		case "namespace":
+			resources[namespace] = make(map[string][]string)
+			resources[namespace]["Secret"] = diff
+		case "resource":
+			appendResources(resources, "Secret", namespace, diff)
+		}
 		if opts.DeleteFlag {
 			if diff, err = DeleteResource(diff, clientset, namespace, "Secret", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Secret %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
-		output := FormatOutput(namespace, diff, "Secrets", opts)
-		if output != "" {
-			outputBuffer.WriteString(output)
-			outputBuffer.WriteString("\n")
-
-			resourceMap := make(map[string][]string)
-			resourceMap["Secrets"] = diff
-			response[namespace] = resourceMap
-		}
 	}
 
-	jsonResponse, err := json.MarshalIndent(response, "", "  ")
-	if err != nil {
-		return "", err
+	var outputBuffer bytes.Buffer
+	var jsonResponse []byte
+	switch outputFormat {
+	case "table":
+		outputBuffer = FormatOutput(resources, opts)
+	case "json", "yaml":
+		var err error
+		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {
+			return "", err
+		}
 	}
 
 	unusedSecrets, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)

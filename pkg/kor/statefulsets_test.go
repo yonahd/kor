@@ -57,7 +57,7 @@ func createTestStatefulSets(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceStatefulSets(t *testing.T) {
 	clientset := createTestStatefulSets(t)
 
-	statefulSetsWithoutReplicas, err := ProcessNamespaceStatefulSets(clientset, testNamespace, &filters.Options{})
+	statefulSetsWithoutReplicas, err := processNamespaceStatefulSets(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -80,6 +80,7 @@ func TestGetUnusedStatefulSetsStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedStatefulSets(&filters.Options{}, clientset, "json", opts)
@@ -89,7 +90,10 @@ func TestGetUnusedStatefulSetsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Statefulsets": {"test-sts1", "test-sts4"},
+			"StatefulSet": {
+				"test-sts1",
+				"test-sts4",
+			},
 		},
 	}
 

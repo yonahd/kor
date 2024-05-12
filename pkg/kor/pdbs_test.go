@@ -99,6 +99,7 @@ func TestGetUnusedPdbsStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedPdbs(&filters.Options{}, clientset, "json", opts)
@@ -108,7 +109,10 @@ func TestGetUnusedPdbsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"Pdb": {"test-pdb3", "test-pdb5"},
+			"Pdb": {
+				"test-pdb3",
+				"test-pdb5",
+			},
 		},
 	}
 

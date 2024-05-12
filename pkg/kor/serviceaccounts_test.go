@@ -190,6 +190,7 @@ func TestGetUnusedServiceAccountsStructured(t *testing.T) {
 		Token:         "",
 		DeleteFlag:    false,
 		NoInteractive: true,
+		GroupBy:       "namespace",
 	}
 
 	output, err := GetUnusedServiceAccounts(&filters.Options{}, clientset, "json", opts)
@@ -199,7 +200,10 @@ func TestGetUnusedServiceAccountsStructured(t *testing.T) {
 
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
-			"ServiceAccounts": {"test-sa2", "test-sa4"},
+			"ServiceAccount": {
+				"test-sa2",
+				"test-sa4",
+			},
 		},
 	}
 
