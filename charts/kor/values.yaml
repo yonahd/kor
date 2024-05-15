@@ -59,7 +59,7 @@ prometheusExporter:
     type: ClusterIP
     port: 8080
 
-    serviceMonitor:
+  serviceMonitor:
     enabled: true
     # Set the namespace the ServiceMonitor should be deployed, if empty namespace will be .Release.Namespace
     namespace: ""
