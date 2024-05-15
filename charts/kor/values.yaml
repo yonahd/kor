@@ -59,7 +59,7 @@ prometheusExporter:
     type: ClusterIP
     port: 8080
 
-  serviceMonitor:
+    serviceMonitor:
     enabled: true
     # Set the namespace the ServiceMonitor should be deployed, if empty namespace will be .Release.Namespace
     namespace: ""
@@ -74,6 +74,9 @@ prometheusExporter:
     # Set of labels to transfer on the Kubernetes Service onto the target.
     targetLabels: []
     metricRelabelings: []
+
+# Custom labels to add into metadata
+additionalLabels: {}
 
 serviceAccount:
   # Specifies whether a service account should be created
