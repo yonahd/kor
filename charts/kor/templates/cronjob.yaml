@@ -12,6 +12,7 @@ spec:
     spec:
       template:
         metadata:
+          {{- include "kor.labels" . | nindent 8 }}
           name: {{ .Release.Name }}
         spec:
           serviceAccountName: {{ include "kor.serviceAccountName" . }}

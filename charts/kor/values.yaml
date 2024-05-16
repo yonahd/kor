@@ -75,6 +75,9 @@ prometheusExporter:
     targetLabels: []
     metricRelabelings: []
 
+# Custom labels to add into metadata
+additionalLabels: {}
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
