@@ -150,6 +150,7 @@ func FormatOutput(namespace string, resources []string, resourceType string, opt
 		})
 	}
 
+	table.Append([]string{"", "", ""})
 	table.Render()
 
 	return fmt.Sprintf("Unused %s in Namespace: %s\n%s", resourceType, namespace, buf.String())
@@ -191,6 +192,7 @@ func FormatOutputFromMap(namespace string, allDiffs map[string][]string, opts Op
 		return ""
 	}
 
+	table.Append([]string{"", "", ""})
 	table.Render()
 	if namespace == "" {
 		return fmt.Sprintf("Unused CRDs: \n%s", buf.String())
@@ -234,6 +236,7 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) strin
 		return ""
 	}
 
+	table.Append([]string{"", "", ""})
 	table.Render()
 	if namespace == "" {
 		return fmt.Sprintf("Unused %ss: \n%s", allDiffs[0].resourceType, buf.String())
