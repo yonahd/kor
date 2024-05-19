@@ -172,10 +172,12 @@ func FormatOutput(resources map[string]map[string][]string, opts Opts) bytes.Buf
 	case "namespace":
 		for namespace, diffs := range resources {
 			output.WriteString(formatOutputForNamespace(namespace, diffs, opts))
+			output.WriteString("\n")
 		}
 	case "resource":
 		for resource, diffs := range resources {
 			output.WriteString(formatOutputForResource(resource, diffs, opts))
+			output.WriteString("\n")
 		}
 	}
 	return output
@@ -199,7 +201,6 @@ func formatOutputForResource(resource string, resources map[string][]string, opt
 			index++
 		}
 	}
-	table.Append([]string{})
 	table.Render()
 	return fmt.Sprintf("Unused %ss:\n%s", resource, buf.String())
 }
@@ -224,7 +225,6 @@ func formatOutputForNamespace(namespace string, resources map[string][]string, o
 		}
 		return ""
 	}
-	table.Append([]string{})
 	table.Render()
 	return fmt.Sprintf("Unused resources in namespace: %q\n%s", namespace, buf.String())
 }
@@ -249,7 +249,6 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) strin
 		}
 		return ""
 	}
-	table.Append([]string{})
 	table.Render()
 	return fmt.Sprintf("Unused resources in namespace: %q\n%s", namespace, buf.String())
 }
