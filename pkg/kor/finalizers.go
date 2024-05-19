@@ -99,7 +99,6 @@ func GetUnusedfinalizers(filterOpts *filters.Options, clientset kubernetes.Inter
 
 			output := formatOutputForNamespace(namespace, allDiffs, opts)
 			outputBuffer.WriteString(output)
-			outputBuffer.WriteString("\n")
 
 			response[namespace] = allDiffs
 		}

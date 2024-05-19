@@ -109,7 +109,6 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 			if len(diff.diff) != 0 {
 				output := FormatOutputAll("", []ResourceDiff{diff}, opts)
 				outputBuffer.WriteString(output)
-				outputBuffer.WriteString("\n")
 
 				resourceMap := make(map[string][]string)
 				resourceMap[diff.resourceType] = diff.diff
@@ -139,7 +138,6 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 		output := FormatOutputAll(namespace, allDiffs, opts)
 		if output != "" {
 			outputBuffer.WriteString(output)
-			outputBuffer.WriteString("\n")
 
 			resourceMap := make(map[string][]string)
 			for _, diff := range allDiffs {
