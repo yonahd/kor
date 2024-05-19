@@ -14,13 +14,13 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func processPvs(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
+func processPvs(clientset kubernetes.Interface, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	pvs, err := clientset.CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 
-	var unusedPvs []string
+	var unusedPvs []ResourceInfo
 
 	for _, pv := range pvs.Items {
 		if pass := filters.KorLabelFilter(&pv, &filters.Options{}); pass {
@@ -28,12 +28,14 @@ func processPvs(clientset kubernetes.Interface, filterOpts *filters.Options) ([]
 		}
 
 		if pv.Labels["kor/used"] == "false" {
-			unusedPvs = append(unusedPvs, pv.Name)
+			reason := "Marked with unused label"
+			unusedPvs = append(unusedPvs, ResourceInfo{Name: pv.Name, Reason: reason})
 			continue
 		}
 
 		if pv.Status.Phase != "Bound" {
-			unusedPvs = append(unusedPvs, pv.Name)
+			reason := "Persistent Volume is not in use"
+			unusedPvs = append(unusedPvs, ResourceInfo{Name: pv.Name, Reason: reason})
 		}
 
 	}
@@ -43,20 +45,20 @@ func processPvs(clientset kubernetes.Interface, filterOpts *filters.Options) ([]
 }
 
 func GetUnusedPvs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	diff, err := processPvs(clientset, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to process pvs: %v\n", err)
 	}
 	switch opts.GroupBy {
 	case "namespace":
-		resources[""] = make(map[string][]string)
+		resources[""] = make(map[string][]ResourceInfo)
 		resources[""]["Pv"] = diff
 	case "resource":
-		appendResources(resources, "Pv", "", diff)
+		appendResources2(resources, "Pv", "", diff)
 	}
 	if opts.DeleteFlag {
-		if diff, err = DeleteResource(diff, clientset, "", "PV", opts.NoInteractive); err != nil {
+		if diff, err = DeleteResource2(diff, clientset, "", "PV", opts.NoInteractive); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to delete PV %s: %v\n", diff, err)
 		}
 	}
@@ -65,7 +67,7 @@ func GetUnusedPvs(filterOpts *filters.Options, clientset kubernetes.Interface, o
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput(resources, opts)
+		outputBuffer = FormatOutput2(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {

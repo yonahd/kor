@@ -66,7 +66,7 @@ func TestGetEndpointsWithoutSubsets(t *testing.T) {
 		t.Errorf("Expected 2 service without endpoint, got %d", len(servicesWithoutEndpoints))
 	}
 
-	if servicesWithoutEndpoints[0] != "test-endpoint1" || servicesWithoutEndpoints[1] != "test-endpoint4" {
+	if servicesWithoutEndpoints[0].Name != "test-endpoint1" || servicesWithoutEndpoints[1].Name != "test-endpoint4" {
 		t.Errorf("Expected 'test-endpoint1' and 'test-endpoint4', got %s, %s", servicesWithoutEndpoints[0], servicesWithoutEndpoints[1])
 	}
 }

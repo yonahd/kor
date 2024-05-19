@@ -36,13 +36,15 @@ func getUnusedCMs(clientset kubernetes.Interface, namespace string, filterOpts *
 }
 
 func getUnusedSVCs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	svcDiff, err := processNamespaceServices(clientset, namespace, filterOpts)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "services", namespace, err)
-	}
+	//svcDiff, err := processNamespaceServices(clientset, namespace, filterOpts)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "services", namespace, err)
+	//}
+	var stringList []string
+
 	namespaceSVCDiff := ResourceDiff{
 		"Service",
-		svcDiff,
+		stringList,
 	}
 	return namespaceSVCDiff
 }
@@ -60,13 +62,14 @@ func getUnusedSecrets(clientset kubernetes.Interface, namespace string, filterOp
 }
 
 func getUnusedServiceAccounts(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	saDiff, err := processNamespaceSA(clientset, namespace, filterOpts)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "serviceaccounts", namespace, err)
-	}
+	//saDiff, err := processNamespaceSA(clientset, namespace, filterOpts)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "serviceaccounts", namespace, err)
+	//}
+	var stringList []string
 	namespaceSADiff := ResourceDiff{
 		"ServiceAccount",
-		saDiff,
+		stringList,
 	}
 	return namespaceSADiff
 }
@@ -84,25 +87,27 @@ func getUnusedDeployments(clientset kubernetes.Interface, namespace string, filt
 }
 
 func getUnusedStatefulSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	stsDiff, err := processNamespaceStatefulSets(clientset, namespace, filterOpts)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "statefulSets", namespace, err)
-	}
+	//stsDiff, err := processNamespaceStatefulSets(clientset, namespace, filterOpts)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "statefulSets", namespace, err)
+	//}
+	var stringList []string
 	namespaceSADiff := ResourceDiff{
 		"StatefulSet",
-		stsDiff,
+		stringList,
 	}
 	return namespaceSADiff
 }
 
 func getUnusedRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	roleDiff, err := processNamespaceRoles(clientset, namespace, filterOpts)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "roles", namespace, err)
-	}
+	//roleDiff, err := processNamespaceRoles(clientset, namespace, filterOpts)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "roles", namespace, err)
+	//}
+	var stringList []string
 	namespaceSADiff := ResourceDiff{
 		"Role",
-		roleDiff,
+		stringList,
 	}
 	return namespaceSADiff
 }
@@ -216,13 +221,14 @@ func getUnusedJobs(clientset kubernetes.Interface, namespace string, filterOpts 
 }
 
 func getUnusedReplicaSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	replicaSetDiff, err := processNamespaceReplicaSets(clientset, namespace, filterOpts)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "jobs", namespace, err)
-	}
+	//replicaSetDiff, err := processNamespaceReplicaSets(clientset, namespace, filterOpts)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "jobs", namespace, err)
+	//}
+	var stringList []string
 	namespaceRSDiff := ResourceDiff{
 		"ReplicaSet",
-		replicaSetDiff,
+		stringList,
 	}
 	return namespaceRSDiff
 }
@@ -240,13 +246,14 @@ func getUnusedDaemonSets(clientset kubernetes.Interface, namespace string, filte
 }
 
 func getUnusedStorageClasses(clientset kubernetes.Interface, filterOpts *filters.Options) ResourceDiff {
-	scDiff, err := processStorageClasses(clientset, filterOpts)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "StorageClasses", err)
-	}
+	//scDiff, err := processStorageClasses(clientset, filterOpts)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "StorageClasses", err)
+	//}
+	var stringList []string
 	allScDiff := ResourceDiff{
 		"StorageClass",
-		scDiff,
+		stringList,
 	}
 	return allScDiff
 }

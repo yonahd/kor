@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sigs.k8s.io/yaml"
 	"sort"
 	"strings"
 
@@ -16,7 +17,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-	"sigs.k8s.io/yaml"
 )
 
 type ExceptionResource struct {
@@ -49,6 +49,7 @@ type Opts struct {
 	Channel       string
 	Token         string
 	GroupBy       string
+	PrintReason   bool
 }
 
 func RemoveDuplicatesAndSort(slice []string) []string {
@@ -139,15 +140,31 @@ func appendResources(resources map[string]map[string][]string, resourceType, nam
 	}
 }
 
-func getTableHeader(groupBy string) []string {
+func getTableHeader(groupBy string, showReason bool) []string {
 	switch groupBy {
 	case "namespace":
+		if showReason {
+			return []string{
+				"#",
+				"RESOURCE TYPE",
+				"RESOURCE NAME",
+				"REASON",
+			}
+		}
 		return []string{
 			"#",
 			"RESOURCE TYPE",
 			"RESOURCE NAME",
 		}
 	case "resource":
+		if showReason {
+			return []string{
+				"#",
+				"NAMESPACE",
+				"RESOURCE NAME",
+				"REASON",
+			}
+		}
 		return []string{
 			"#",
 			"NAMESPACE",
@@ -190,7 +207,7 @@ func formatOutputForResource(resource string, resources map[string][]string, opt
 	}
 	var buf bytes.Buffer
 	table := tablewriter.NewWriter(&buf)
-	table.SetHeader(getTableHeader(opts.GroupBy))
+	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
 	var index int
 	for ns, diffs := range resources {
 		for _, d := range diffs {
@@ -206,7 +223,7 @@ func formatOutputForResource(resource string, resources map[string][]string, opt
 func formatOutputForNamespace(namespace string, resources map[string][]string, opts Opts) string {
 	var buf bytes.Buffer
 	table := tablewriter.NewWriter(&buf)
-	table.SetHeader(getTableHeader(opts.GroupBy))
+	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
 	allEmpty := true
 	var index int
 	for resourceType, diff := range resources {
@@ -223,6 +240,8 @@ func formatOutputForNamespace(namespace string, resources map[string][]string, o
 		}
 		return ""
 	}
+
+	table.Append([]string{})
 	table.Render()
 	return fmt.Sprintf("Unused resources in namespace: %q\n%s", namespace, buf.String())
 }
@@ -230,7 +249,7 @@ func formatOutputForNamespace(namespace string, resources map[string][]string, o
 func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) string {
 	var buf bytes.Buffer
 	table := tablewriter.NewWriter(&buf)
-	table.SetHeader(getTableHeader(opts.GroupBy))
+	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
 	allEmpty := true
 	var index int
 	for _, data := range allDiffs {
@@ -313,4 +332,13 @@ func unmarshalConfig(data []byte) (*Config, error) {
 		return nil, err
 	}
 	return &config, nil
+}
+
+func contains(slice []string, item string) bool {
+	for _, element := range slice {
+		if element == item {
+			return true
+		}
+	}
+	return false
 }

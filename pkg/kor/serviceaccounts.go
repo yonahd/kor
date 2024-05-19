@@ -131,7 +131,7 @@ func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace strin
 	return names, unusedServiceAccountNames, nil
 }
 
-func processNamespaceSA(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func processNamespaceSA(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	usedServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, err := retrieveUsedSA(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -148,14 +148,22 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string, filter
 		return nil, err
 	}
 
-	diff := CalculateResourceDifference(usedServiceAccounts, serviceAccountNames)
-	diff = append(diff, unusedServiceAccountNames...)
-	return diff, nil
+	var unusedServiceAccounts []ResourceInfo
 
+	for _, name := range CalculateResourceDifference(usedServiceAccounts, serviceAccountNames) {
+		reason := "ServiceAccount is not in use"
+		unusedServiceAccounts = append(unusedServiceAccounts, ResourceInfo{Name: name, Reason: reason})
+	}
+
+	for _, name := range unusedServiceAccountNames {
+		reason := "Marked with unused label"
+		unusedServiceAccounts = append(unusedServiceAccounts, ResourceInfo{Name: name, Reason: reason})
+	}
+	return unusedServiceAccounts, nil
 }
 
 func GetUnusedServiceAccounts(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceSA(clientset, namespace, filterOpts)
 		if err != nil {
@@ -164,13 +172,13 @@ func GetUnusedServiceAccounts(filterOpts *filters.Options, clientset kubernetes.
 		}
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
+			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["ServiceAccount"] = diff
 		case "resource":
-			appendResources(resources, "ServiceAccount", namespace, diff)
+			appendResources2(resources, "ServiceAccount", namespace, diff)
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "ServiceAccount", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource2(diff, clientset, namespace, "ServiceAccount", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Serviceaccount %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
@@ -180,7 +188,7 @@ func GetUnusedServiceAccounts(filterOpts *filters.Options, clientset kubernetes.
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput(resources, opts)
+		outputBuffer = FormatOutput2(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {
@@ -188,7 +196,7 @@ func GetUnusedServiceAccounts(filterOpts *filters.Options, clientset kubernetes.
 		}
 	}
 
-	unusedServiceAccounts, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedServiceAccounts, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

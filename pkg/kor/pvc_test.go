@@ -91,7 +91,7 @@ func TestProcessNamespacePvcs(t *testing.T) {
 		t.Errorf("Expected 2 unused pvc, got %d", len(usedPvcs))
 	}
 
-	if usedPvcs[0] != "test-pvc2" {
+	if usedPvcs[0].Name != "test-pvc2" {
 		t.Errorf("Expected 'test-pvc2', got %s", usedPvcs[0])
 	}
 }

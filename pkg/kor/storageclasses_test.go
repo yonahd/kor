@@ -61,7 +61,7 @@ func TestProcessStorageClasses(t *testing.T) {
 		t.Errorf("Expected 1 used StorageClasses, got %d", len(unusedStorageClasses))
 	}
 
-	if unusedStorageClasses[0] != "test-sc1" {
+	if unusedStorageClasses[0].Name != "test-sc1" {
 		t.Errorf("Expected 'test-sc1', got %s", unusedStorageClasses[0])
 	}
 }

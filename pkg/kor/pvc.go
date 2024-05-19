@@ -32,7 +32,7 @@ func retrieveUsedPvcs(clientset kubernetes.Interface, namespace string) ([]strin
 	return usedPvcs, err
 }
 
-func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	pvcs, err := clientset.CoreV1().PersistentVolumeClaims(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
@@ -58,13 +58,22 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filt
 		return nil, err
 	}
 
-	diff := CalculateResourceDifference(usedPvcs, pvcNames)
-	diff = append(diff, unusedPvcNames...)
+	var diff []ResourceInfo
+	for _, name := range CalculateResourceDifference(usedPvcs, pvcNames) {
+		reason := "PVC is not in use"
+		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
+	}
+
+	for _, name := range unusedPvcNames {
+		reason := "Marked with unused label"
+		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
+	}
+
 	return diff, nil
 }
 
 func GetUnusedPvcs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespacePvcs(clientset, namespace, filterOpts)
 		if err != nil {
@@ -73,13 +82,13 @@ func GetUnusedPvcs(filterOpts *filters.Options, clientset kubernetes.Interface, 
 		}
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
+			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Pvc"] = diff
 		case "resource":
-			appendResources(resources, "Pvc", namespace, diff)
+			appendResources2(resources, "Pvc", namespace, diff)
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "PVC", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource2(diff, clientset, namespace, "PVC", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete PVC %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
@@ -89,7 +98,7 @@ func GetUnusedPvcs(filterOpts *filters.Options, clientset kubernetes.Interface, 
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput(resources, opts)
+		outputBuffer = FormatOutput2(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {

@@ -312,3 +312,56 @@ func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, re
 
 	return deletedDiff, nil
 }
+
+func DeleteResource2(diff []ResourceInfo, clientset kubernetes.Interface, namespace, resourceType string, noInteractive bool) ([]ResourceInfo, error) {
+	deletedDiff := []ResourceInfo{}
+
+	for _, resource := range diff {
+		deleteFunc, exists := DeleteResourceCmd()[resourceType]
+		if !exists {
+			fmt.Printf("Resource type '%s' is not supported\n", resource.Name)
+			continue
+		}
+
+		if !noInteractive {
+			fmt.Printf("Do you want to delete %s %s in namespace %s? (Y/N): ", resourceType, resource.Name, namespace)
+			var confirmation string
+			_, err := fmt.Scanf("%s", &confirmation)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to read input: %v\n", err)
+				continue
+			}
+
+			if strings.ToLower(confirmation) != "y" && strings.ToLower(confirmation) != "yes" {
+				deletedDiff = append(deletedDiff, resource)
+
+				fmt.Printf("Do you want flag the resource %s %s in namespace %s as In Use? (Y/N): ", resourceType, resource.Name, namespace)
+				var inUse string
+				_, err := fmt.Scanf("%s", &inUse)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to read input: %v\n", err)
+					continue
+				}
+
+				if strings.ToLower(inUse) == "y" || strings.ToLower(inUse) == "yes" {
+					if err := FlagResource(clientset, namespace, resourceType, resource.Name); err != nil {
+						fmt.Fprintf(os.Stderr, "Failed to flag resource %s %s in namespace %s as In Use: %v\n", resourceType, resource.Name, namespace, err)
+					}
+					continue
+				}
+				continue
+			}
+		}
+
+		fmt.Printf("Deleting %s %s in namespace %s\n", resourceType, resource.Name, namespace)
+		if err := deleteFunc(clientset, namespace, resource.Name); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", resourceType, resource.Name, namespace, err)
+			continue
+		}
+		deletedResource := resource
+		deletedResource.Name += "-DELETED"
+		deletedDiff = append(deletedDiff, deletedResource)
+	}
+
+	return deletedDiff, nil
+}

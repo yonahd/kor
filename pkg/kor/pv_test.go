@@ -53,7 +53,7 @@ func TestProcessPvs(t *testing.T) {
 		t.Errorf("Expected 2 used pv, got %d", len(usedPvs))
 	}
 
-	if usedPvs[0] != "test-pv2" && usedPvs[1] != "test-pv3" {
+	if usedPvs[0].Name != "test-pv2" && usedPvs[1].Name != "test-pv3" {
 		t.Errorf("Expected 'test-pv2', got %s", usedPvs[0])
 	}
 }
