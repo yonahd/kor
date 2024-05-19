@@ -248,7 +248,7 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) strin
 		return ""
 	}
 	table.Render()
-	return fmt.Sprintf("Unused resources in namespace: %q\n%s", namespace, buf.String())
+	return fmt.Sprintf("Unused resources in namespace: %q\n%s\n", namespace, buf.String())
 }
 
 // TODO create formatter by resource "#", "Resource Name", "Namespace"

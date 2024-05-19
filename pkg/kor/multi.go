@@ -145,7 +145,6 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 			}
 			response[namespace] = resourceMap
 		}
-
 	}
 
 	jsonResponse, err := json.MarshalIndent(response, "", "  ")
