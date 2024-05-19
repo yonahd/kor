@@ -200,7 +200,7 @@ func formatOutputForResource(resource string, resources map[string][]string, opt
 		}
 	}
 	table.Render()
-	return fmt.Sprintf("Unused %ss:\n%s", resource, buf.String())
+	return fmt.Sprintf("Unused %ss:\n%s\n", resource, buf.String())
 }
 
 func formatOutputForNamespace(namespace string, resources map[string][]string, opts Opts) string {
@@ -224,7 +224,7 @@ func formatOutputForNamespace(namespace string, resources map[string][]string, o
 		return ""
 	}
 	table.Render()
-	return fmt.Sprintf("Unused resources in namespace: %q\n%s", namespace, buf.String())
+	return fmt.Sprintf("Unused resources in namespace: %q\n%s\n", namespace, buf.String())
 }
 
 func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) string {
@@ -248,7 +248,7 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) strin
 		return ""
 	}
 	table.Render()
-	return fmt.Sprintf("Unused resources in namespace: %q\n%s", namespace, buf.String())
+	return fmt.Sprintf("Unused resources in namespace: %q\n%s\n", namespace, buf.String())
 }
 
 // TODO create formatter by resource "#", "Resource Name", "Namespace"
