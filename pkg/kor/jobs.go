@@ -35,7 +35,12 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 			continue
 		}
 
-		if isResourceException(job.Name, job.Namespace, config.ExceptionJobs) {
+		exceptionFound, err := isResourceException(job.Name, job.Namespace, config.ExceptionJobs)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
 			continue
 		}
 
