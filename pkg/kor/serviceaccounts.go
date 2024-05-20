@@ -125,7 +125,7 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string, filter
 	if err != nil {
 		return nil, err
 	}
-	config, err := unmarshalConfig(crdsConfig)
+	config, err := unmarshalConfig(serviceAccountsConfig)
 	if err != nil {
 		return nil, err
 	}
