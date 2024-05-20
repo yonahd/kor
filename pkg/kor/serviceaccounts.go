@@ -146,7 +146,7 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string, filter
 
 	var result []string
 	for _, saName := range diff {
-		exceptionFound, err := isResourceException(saName, namespace, config.ExceptionCrds)
+		exceptionFound, err := isResourceException(saName, namespace, config.ExceptionServiceAccounts)
 		if err != nil {
 			return nil, err
 		}
