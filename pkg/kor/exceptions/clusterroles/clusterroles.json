@@ -83,6 +83,14 @@
     {
       "Namespace": "",
       "ResourceName": "view"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:node-bootstrapper"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:aggregated-metrics-reader"
     }
   ]
 }
