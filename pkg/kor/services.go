@@ -35,9 +35,15 @@ func processNamespaceServices(clientset kubernetes.Interface, namespace string, 
 			return nil, err
 		}
 
-		if isResourceException(endpoints.Name, namespace, config.ExceptionServices) {
+		exceptionFound, err := isResourceException(endpoints.Name, endpoints.Namespace, config.ExceptionServices)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
 			continue
 		}
+
 		if endpoints.Labels["kor/used"] == "false" {
 			endpointsWithoutSubsets = append(endpointsWithoutSubsets, endpoints.Name)
 			continue
