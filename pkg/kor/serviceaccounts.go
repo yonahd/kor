@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -92,7 +93,11 @@ func retrieveUsedSA(clientset kubernetes.Interface, namespace string) ([]string,
 	}
 
 	for _, resource := range config.ExceptionServiceAccounts {
-		if resource.Namespace == namespace || resource.Namespace == "*" {
+		namespaceRegexp, err := regexp.Compile(resource.Namespace)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		if namespaceRegexp.MatchString(namespace) {
 			podServiceAccounts = append(podServiceAccounts, resource.ResourceName)
 		}
 	}
