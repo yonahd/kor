@@ -79,6 +79,10 @@
     {
       "Namespace": "kubernetes-dashboard",
       "ResourceName": "kubernetes-dashboard-settings"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "cluster-dns"
     }
   ]
 }

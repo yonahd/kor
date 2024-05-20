@@ -43,6 +43,10 @@
     {
       "Namespace": "",
       "ResourceName": "standard-rwo"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "local-path"
     }
   ]
 }
