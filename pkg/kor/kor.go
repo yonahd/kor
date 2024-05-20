@@ -299,11 +299,11 @@ func isResourceException(resourceName, namespace string, exceptions []ExceptionR
 
 		namespaceRegexp, err := regexp.Compile(e.Namespace)
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 		nameRegexp, err := regexp.Compile(e.ResourceName)
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 		if nameRegexp.MatchString(resourceName) && namespaceRegexp.MatchString(namespace) {
 			match = true
