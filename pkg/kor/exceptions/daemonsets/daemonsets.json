@@ -54,7 +54,7 @@
     },
     {
       "Namespace": "kube-system",
-      "ResourceName": "metadata-proxy-v0.1"
+      "ResourceName": "metadata-proxy-v0\\.1"
     },
     {
       "Namespace": "kube-system",

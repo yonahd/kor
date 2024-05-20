@@ -2,7 +2,7 @@
   "exceptionServices": [
     {
       "Namespace": "kube-system",
-      "ResourceName": "k8s.io-minikube-hostpath"
+      "ResourceName": "k8s\\.io-minikube-hostpath"
     },
     {
       "Namespace": "kube-system",
@@ -10,7 +10,7 @@
     },
     {
       "Namespace": "kube-system",
-      "ResourceName": "docker.io-hostpath"
+      "ResourceName": "docker\\.io-hostpath"
     }
   ]
 }

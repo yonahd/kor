@@ -30,27 +30,27 @@
     },
     {
       "Namespace": "",
-      "ResourceName": "system:certificates.k8s.io:certificatesigningrequests:nodeclient"
+      "ResourceName": "system:certificates\\.k8s\\.io:certificatesigningrequests:nodeclient"
     },
     {
       "Namespace": "",
-      "ResourceName": "system:certificates.k8s.io:certificatesigningrequests:selfnodeclient"
+      "ResourceName": "system:certificates\\.k8s\\.io:certificatesigningrequests:selfnodeclient"
     },
     {
       "Namespace": "",
-      "ResourceName": "system:certificates.k8s.io:kube-apiserver-client-approver"
+      "ResourceName": "system:certificates\\.k8s\\.io:kube-apiserver-client-approver"
     },
     {
       "Namespace": "",
-      "ResourceName": "system:certificates.k8s.io:kube-apiserver-client-kubelet-approver"
+      "ResourceName": "system:certificates\\.k8s\\.io:kube-apiserver-client-kubelet-approver"
     },
     {
       "Namespace": "",
-      "ResourceName": "system:certificates.k8s.io:kubelet-serving-approver"
+      "ResourceName": "system:certificates\\.k8s\\.io:kubelet-serving-approver"
     },
     {
       "Namespace": "",
-      "ResourceName": "system:certificates.k8s.io:legacy-unknown-approver"
+      "ResourceName": "system:certificates\\.k8s\\.io:legacy-unknown-approver"
     },
     {
       "Namespace": "",

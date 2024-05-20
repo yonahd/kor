@@ -2,7 +2,7 @@
   "exceptionConfigMaps": [
     {
       "Namespace": ".*",
-      "ResourceName": "kube-root-ca.crt"
+      "ResourceName": "kube-root-ca\\.crt"
     },
     {
       "Namespace": "gmp-system",
