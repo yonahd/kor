@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"regexp"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -87,21 +86,6 @@ func retrieveUsedSA(clientset kubernetes.Interface, namespace string) ([]string,
 		}
 	}
 
-	config, err := unmarshalConfig(serviceAccountsConfig)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	for _, resource := range config.ExceptionServiceAccounts {
-		namespaceRegexp, err := regexp.Compile(resource.Namespace)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		if namespaceRegexp.MatchString(namespace) {
-			podServiceAccounts = append(podServiceAccounts, resource.ResourceName)
-		}
-	}
-
 	roleServiceAccounts, err := getServiceAccountsFromRoleBindings(clientset, namespace)
 	if err != nil {
 		return nil, nil, nil, err
@@ -141,6 +125,10 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string, filter
 	if err != nil {
 		return nil, err
 	}
+	config, err := unmarshalConfig(crdsConfig)
+	if err != nil {
+		return nil, err
+	}
 
 	usedServiceAccounts = RemoveDuplicatesAndSort(usedServiceAccounts)
 	roleServiceAccounts = RemoveDuplicatesAndSort(roleServiceAccounts)
@@ -155,7 +143,20 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string, filter
 
 	diff := CalculateResourceDifference(usedServiceAccounts, serviceAccountNames)
 	diff = append(diff, unusedServiceAccountNames...)
-	return diff, nil
+
+	var result []string
+	for _, saName := range diff {
+		exceptionFound, err := isResourceException(saName, namespace, config.ExceptionCrds)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
+			continue
+		}
+		result = append(result, saName)
+	}
+	return result, nil
 
 }
 
