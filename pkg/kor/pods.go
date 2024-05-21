@@ -14,13 +14,13 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func processNamespacePods(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func processNamespacePods(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	podsList, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 
-	var evictedPods []string
+	var evictedPods []ResourceInfo
 
 	for _, pod := range podsList.Items {
 		if pass := filters.KorLabelFilter(&pod, &filters.Options{}); pass {
@@ -28,12 +28,14 @@ func processNamespacePods(clientset kubernetes.Interface, namespace string, filt
 		}
 
 		if pod.Labels["kor/used"] == "false" {
-			evictedPods = append(evictedPods, pod.Name)
+			reason := "Marked with unused label"
+			evictedPods = append(evictedPods, ResourceInfo{Name: pod.Name, Reason: reason})
 			continue
 		}
 
 		if pod.Status.Phase == corev1.PodFailed && pod.Status.Reason == "Evicted" {
-			evictedPods = append(evictedPods, pod.Name)
+			reason := "Pod is evicted"
+			evictedPods = append(evictedPods, ResourceInfo{Name: pod.Name, Reason: reason})
 		}
 
 	}
@@ -42,7 +44,7 @@ func processNamespacePods(clientset kubernetes.Interface, namespace string, filt
 }
 
 func GetUnusedPods(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespacePods(clientset, namespace, filterOpts)
 		if err != nil {
@@ -51,13 +53,13 @@ func GetUnusedPods(filterOpts *filters.Options, clientset kubernetes.Interface, 
 		}
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
+			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Pod"] = diff
 		case "resource":
-			appendResources(resources, "Pod", namespace, diff)
+			appendResources2(resources, "Pod", namespace, diff)
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Pod", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource2(diff, clientset, namespace, "Pod", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Pod %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
@@ -67,7 +69,7 @@ func GetUnusedPods(filterOpts *filters.Options, clientset kubernetes.Interface, 
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput(resources, opts)
+		outputBuffer = FormatOutput2(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {
@@ -75,7 +77,7 @@ func GetUnusedPods(filterOpts *filters.Options, clientset kubernetes.Interface, 
 		}
 	}
 
-	unusedPods, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedPods, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

@@ -106,7 +106,7 @@ func TestProcessNamespacePods(t *testing.T) {
 	}
 
 	for i, pod := range evictedPods {
-		if pod != expectedEvictedPods[i] {
+		if pod.Name != expectedEvictedPods[i] {
 			t.Errorf("Expected evicted pod %s, got %s", expectedEvictedPods[i], pod)
 		}
 	}
