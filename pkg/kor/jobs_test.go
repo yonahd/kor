@@ -101,7 +101,7 @@ func TestProcessNamespaceJobs(t *testing.T) {
 	}
 
 	if len(unusedJobs) != 3 {
-		t.Errorf("Expected 3 job been completed, got %d", len(completedJobs))
+		t.Errorf("Expected 3 job been completed, got %d", len(unusedJobs))
 	}
 
 	if unusedJobs[0] != "test-job2" && unusedJobs[1] != "test-job4" && unusedJobs[1] != "test-job5"{
