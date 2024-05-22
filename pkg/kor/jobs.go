@@ -42,6 +42,19 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 		// if the job has completionTime and succeeded count greater than zero, think the job is completed
 		if job.Status.CompletionTime != nil && job.Status.Succeeded > 0 {
 			unusedJobNames = append(unusedJobNames, job.Name)
+			continue
+		} else {
+			// Check if the job has a condition indicating it has exceeded the backoff limit
+			backoffExceeded := false
+			for _, condition := range job.Status.Conditions {
+				if condition.Type == "Failed" && condition.Reason == "BackoffLimitExceeded" {
+					backoffExceeded = true
+					break
+				}
+			}
+			if backoffExceeded {
+				unusedJobNames = append(unusedJobNames, job.Name)
+			}
 		}
 	}
 
