@@ -1,6 +1,6 @@
 apiVersion: v2
 name: kor
-description: A Kubernetes Helm Chart to clean up orphaned resources using kor
+description: A Kubernetes Helm Chart to discover orphaned resources using kor
 type: application
 version: 0.1.6
 appVersion: "0.4.0"
