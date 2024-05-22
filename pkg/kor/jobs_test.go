@@ -71,23 +71,41 @@ func createTestJobs(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating fake job: %v", err)
 	}
 
+	job5 := CreateTestJob(testNamespace, "test-job5", &batchv1.JobStatus{
+		Succeeded: 0,
+		Failed:    1,
+		Conditions: []batchv1.JobCondition{
+			{
+				Type:    batchv1.JobFailed,
+				Status:  corev1.ConditionTrue,
+				Reason:  "BackoffLimitExceeded",
+				Message: "Job has reached the specified backoff limit",
+			},
+		},
+	}, AppLabels)
+
+	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job5, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake job: %v", err)
+	}
+
 	return clientset
 }
 
 func TestProcessNamespaceJobs(t *testing.T) {
 	clientset := createTestJobs(t)
 
-	completedJobs, err := processNamespaceJobs(clientset, testNamespace, &filters.Options{})
+	unusedJobs, err := processNamespaceJobs(clientset, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(completedJobs) != 2 {
-		t.Errorf("Expected 2 job been completed, got %d", len(completedJobs))
+	if len(unusedJobs) != 3 {
+		t.Errorf("Expected 3 job been completed, got %d", len(completedJobs))
 	}
 
-	if completedJobs[0] != "test-job2" && completedJobs[1] != "test-job4" {
-		t.Errorf("job2', got %s", completedJobs[0])
+	if unusedJobs[0] != "test-job2" && unusedJobs[1] != "test-job4" && unusedJobs[1] != "test-job5"{
+		t.Errorf("job2', got %s", unusedJobs[0])
 	}
 }
 
@@ -113,6 +131,7 @@ func TestGetUnusedJobsStructured(t *testing.T) {
 			"Job": {
 				"test-job2",
 				"test-job4",
+				"test-job5",
 			},
 		},
 	}
