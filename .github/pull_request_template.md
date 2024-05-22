@@ -1,4 +1,4 @@
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for additional information on contributing to this repository!
+<!-- Please read [CONTRIBUTING.md](CONTRIBUTING.md) for additional information on contributing to this repository! -->
 
 <!--
   !!!! README !!!! Please fill this out.
@@ -10,15 +10,16 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for additional information on con
 
 <!-- A short description of what your PR does and what it solves. -->
 
-## What this PR does / why we need it
+## What this PR does / why we need it?
 
 ## PR Checklist
 
 - [ ] This PR adds K8s exceptions (false positives)
 - [ ] This PR adds new code
-- [ ] This PR includes test for any new code
+- [ ] This PR includes test for new/existing code
+<!-- - [ ] This PR does something else -->
 
-## Github Issue
+## GitHub Issue
 
 [XX-XX]
 
