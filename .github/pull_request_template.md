@@ -16,7 +16,8 @@
 
 - [ ] This PR adds K8s exceptions (false positives)
 - [ ] This PR adds new code
-- [ ] This PR includes test for new/existing code
+- [ ] This PR includes tests for new/existing code
+- [ ] This PR adds docs
 <!-- - [ ] This PR does something else -->
 
 ## GitHub Issue
