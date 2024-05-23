@@ -91,6 +91,178 @@
     {
       "Namespace": "",
       "ResourceName": "system:aggregated-metrics-reader"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "alert-routing-edit"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "cluster-debugger"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "global-operators-admin"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "global-operators-edit"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "global-operators-view"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "monitoring-edit"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "monitoring-rules-edit"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "monitoring-rules-view"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "olm-operators-admin"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "olm-operators-edit"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "olm-operators-view"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "openshift-cluster-monitoring-admin"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "openshift-cluster-monitoring-edit"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "openshift-cluster-monitoring-view"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "openshift-csi-main-attacher-role"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "openshift-csi-main-provisioner-role"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "openshift-csi-main-resizer-role"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "openshift-csi-main-snapshotter-role"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "openshift-csi-provisioner-configmap-and-secret-reader-role"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "openshift-csi-provisioner-volumeattachment-reader-role"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "openshift-csi-provisioner-volumesnapshot-reader-role"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "openshift-csi-resizer-infrastructure-reader-role"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "openshift-csi-resizer-storageclass-reader-role"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "resource-metrics-server-resources"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "storage-admin"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "sudoer"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:build-strategy-custom"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:image-auditor"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:image-pusher"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:image-signer"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:node-reader"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:openshift:aggregate-snapshots-to-storage-admin"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:openshift:aggregate-to-storage-admin"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:openshift:scc:hostaccess"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:openshift:scc:hostmount"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:openshift:scc:hostnetwork"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:openshift:scc:nonroot"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:openshift:scc:nonroot-v2"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:openshift:scc:privileged"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:openshift:scc:restricted"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:openshift:templateservicebroker-client"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:router"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:sdn-manager"
     }
   ]
 }

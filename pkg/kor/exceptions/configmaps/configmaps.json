@@ -5,6 +5,10 @@
       "ResourceName": "kube-root-ca.crt"
     },
     {
+      "Namespace": "*",
+      "ResourceName": "openshift-service-ca.crt"
+    },
+    {
       "Namespace": "gmp-system",
       "ResourceName": "config-images"
     },
@@ -77,12 +81,24 @@
       "ResourceName": "overlay-upgrade-data"
     },
     {
-      "Namespace": "kubernetes-dashboard",
-      "ResourceName": "kubernetes-dashboard-settings"
+      "Namespace": "kube-system",
+      "ResourceName": "cluster-dns"
     },
     {
       "Namespace": "kube-system",
-      "ResourceName": "cluster-dns"
+      "ResourceName": "bootstrap"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "cluster-config-v1"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "root-ca"
+    },
+    {
+      "Namespace": "kubernetes-dashboard",
+      "ResourceName": "kubernetes-dashboard-settings"
     }
   ]
 }
