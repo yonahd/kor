@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 
+	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -42,6 +43,15 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 		// if the job has completionTime and succeeded count greater than zero, think the job is completed
 		if job.Status.CompletionTime != nil && job.Status.Succeeded > 0 {
 			unusedJobNames = append(unusedJobNames, job.Name)
+			continue
+		} else {
+			// Check if the job has a condition indicating it has exceeded the backoff limit
+			for _, condition := range job.Status.Conditions {
+				if condition.Type == batchv1.JobFailed && condition.Reason == "BackoffLimitExceeded" {
+					unusedJobNames = append(unusedJobNames, job.Name)
+					break
+				}
+			}
 		}
 	}
 
