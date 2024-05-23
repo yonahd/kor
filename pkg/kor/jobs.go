@@ -46,15 +46,11 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 			continue
 		} else {
 			// Check if the job has a condition indicating it has exceeded the backoff limit
-			backoffExceeded := false
 			for _, condition := range job.Status.Conditions {
 				if condition.Type == batchv1.JobFailed && condition.Reason == "BackoffLimitExceeded" {
-					backoffExceeded = true
+					unusedJobNames = append(unusedJobNames, job.Name)
 					break
 				}
-			}
-			if backoffExceeded {
-				unusedJobNames = append(unusedJobNames, job.Name)
 			}
 		}
 	}
