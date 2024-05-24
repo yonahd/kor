@@ -22,6 +22,7 @@ import (
 type ExceptionResource struct {
 	Namespace    string
 	ResourceName string
+	MatchRegex   bool
 }
 type IncludeExcludeLists struct {
 	IncludeListStr string
@@ -298,17 +299,19 @@ func isResourceException(resourceName, namespace string, exceptions []ExceptionR
 			break
 		}
 
-		namespaceRegexp, err := regexp.Compile(e.Namespace)
-		if err != nil {
-			return false, err
-		}
-		nameRegexp, err := regexp.Compile(e.ResourceName)
-		if err != nil {
-			return false, err
-		}
-		if nameRegexp.MatchString(resourceName) && namespaceRegexp.MatchString(namespace) {
-			match = true
-			break
+		if e.MatchRegex {
+			namespaceRegexp, err := regexp.Compile(e.Namespace)
+			if err != nil {
+				return false, err
+			}
+			nameRegexp, err := regexp.Compile(e.ResourceName)
+			if err != nil {
+				return false, err
+			}
+			if nameRegexp.MatchString(resourceName) && namespaceRegexp.MatchString(namespace) {
+				match = true
+				break
+			}
 		}
 	}
 	return match, nil

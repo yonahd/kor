@@ -3,7 +3,7 @@
     {
       "Namespace": "\\.*",
       "ResourceName": "kube-root-ca\\.crt",
-      "Regex": true
+      "MatchRegex": true
     },
     {
       "Namespace": "gmp-system",
