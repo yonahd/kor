@@ -16,8 +16,4 @@ vendor/
 *.yml
 kor
 images
-
-.github
-*.yml
-kor
-images
+hack

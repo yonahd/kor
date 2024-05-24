@@ -5,3 +5,5 @@ dist/**
 main.exe
 coverage.txt
 build/
+*.swp
+hack/exceptions/
