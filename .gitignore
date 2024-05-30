@@ -6,3 +6,4 @@ main.exe
 coverage.txt
 build/
 kor
+!kor/
