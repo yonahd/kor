@@ -46,7 +46,7 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
         run: |
           docker run --rm --volume "$(pwd):/helm-docs" jnorwood/helm-docs:latest
-          if ! git diff-index --quiet HEAD --; then
+          if ! git diff --exit-code; then
             echo "Error: Please update the chart README"
             echo "  docker run --rm --volume \"\$(pwd):/helm-docs\" jnorwood/helm-docs:latest"
             exit 1
