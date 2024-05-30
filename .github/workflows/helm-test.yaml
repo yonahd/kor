@@ -42,6 +42,16 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
         run: ct lint --target-branch ${{ github.event.repository.default_branch }}
 
+      - name: Check README diff
+        if: steps.list-changed.outputs.changed == 'true'
+        run: |
+          docker run --rm --volume "$(pwd):/helm-docs" jnorwood/helm-docs:latest
+          if ! git diff-index --quiet HEAD --; then
+            echo "Error: Please update the chart README"
+            echo "  docker run --rm --volume \"\$(pwd):/helm-docs\" jnorwood/helm-docs:latest"
+            exit 1
+          fi
+
       - name: Create kind cluster
         if: steps.list-changed.outputs.changed == 'true'
         uses: helm/kind-action@v1.10.0
