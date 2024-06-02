@@ -267,7 +267,7 @@ func TestProcessNamespaceSecret(t *testing.T) {
 		t.Errorf("Expected 2 used Secret objects, got %d", len(unusedSecrets))
 	}
 
-	if !contains(unusedSecrets, "test-secret3") {
+	if !resourceInfoContains(unusedSecrets, "test-secret3") {
 		t.Error("Expected specific Secret  in the list")
 	}
 

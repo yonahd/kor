@@ -137,7 +137,7 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 	return names, unusedSecretNames, nil
 }
 
-func processNamespaceSecret(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func processNamespaceSecret(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -168,14 +168,25 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 	for _, slice := range slicesToAppend {
 		usedSecrets = append(usedSecrets, slice...)
 	}
-	diff := CalculateResourceDifference(usedSecrets, secretNames)
-	diff = append(diff, unusedSecretNames...)
+
+	var diff []ResourceInfo
+
+	for _, name := range CalculateResourceDifference(usedSecrets, secretNames) {
+		reason := "Secret is not used in any pod, container, or ingress"
+		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
+	}
+
+	for _, name := range unusedSecretNames {
+		reason := "Marked with unused label"
+		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
+	}
+
 	return diff, nil
 
 }
 
 func GetUnusedSecrets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceSecret(clientset, namespace, filterOpts)
 		if err != nil {
@@ -184,13 +195,13 @@ func GetUnusedSecrets(filterOpts *filters.Options, clientset kubernetes.Interfac
 		}
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
+			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Secret"] = diff
 		case "resource":
-			appendResources(resources, "Secret", namespace, diff)
+			appendResources2(resources, "Secret", namespace, diff)
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Secret", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource2(diff, clientset, namespace, "Secret", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Secret %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
@@ -200,7 +211,7 @@ func GetUnusedSecrets(filterOpts *filters.Options, clientset kubernetes.Interfac
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput(resources, opts)
+		outputBuffer = FormatOutput2(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {
@@ -208,7 +219,7 @@ func GetUnusedSecrets(filterOpts *filters.Options, clientset kubernetes.Interfac
 		}
 	}
 
-	unusedSecrets, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedSecrets, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

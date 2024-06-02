@@ -211,13 +211,11 @@ func getResource(clientset kubernetes.Interface, namespace, resourceType, resour
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }
 
-func DeleteResourceWithFinalizer(diff []string, dynamicClient dynamic.Interface, namespace string, gvr schema.GroupVersionResource, noInteractive bool) ([]string, error) {
-	deletedDiff := []string{}
-
-	for _, resourceName := range diff {
-
+func DeleteResourceWithFinalizer(resources []ResourceInfo, dynamicClient dynamic.Interface, namespace string, gvr schema.GroupVersionResource, noInteractive bool) ([]ResourceInfo, error) {
+	var remainingResources []ResourceInfo
+	for _, resource := range resources {
 		if !noInteractive {
-			fmt.Printf("Do you want to delete %s %s in namespace %s? (Y/N): ", gvr.Resource, resourceName, namespace)
+			fmt.Printf("Do you want to delete %s %s in namespace %s? (Y/N): ", gvr.Resource, resource.Name, namespace)
 			var confirmation string
 			_, err := fmt.Scanf("%s", &confirmation)
 			if err != nil {
@@ -226,40 +224,44 @@ func DeleteResourceWithFinalizer(diff []string, dynamicClient dynamic.Interface,
 			}
 
 			if strings.ToLower(confirmation) != "y" && strings.ToLower(confirmation) != "yes" {
-				deletedDiff = append(deletedDiff, resourceName)
+				resource.Reason = "not deleted - user declined"
+				remainingResources = append(remainingResources, resource)
 
-				fmt.Printf("Do you want flag the resource %s %s in namespace %s as In Use? (Y/N): ", gvr.Resource, resourceName, namespace)
+				fmt.Printf("Do you want to flag the resource %s %s in namespace %s as In Use? (Y/N): ", gvr.Resource, resource.Name, namespace)
 				var inUse string
-				_, err := fmt.Scanf("%s", &inUse)
+				_, err = fmt.Scanf("%s", &inUse)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Failed to read input: %v\n", err)
 					continue
 				}
 
 				if strings.ToLower(inUse) == "y" || strings.ToLower(inUse) == "yes" {
-					if err := FlagDynamicResource(dynamicClient, namespace, gvr, resourceName); err != nil {
-						fmt.Fprintf(os.Stderr, "Failed to flag resource %s %s in namespace %s as In Use: %v\n", gvr.Resource, resourceName, namespace, err)
+					if err := FlagDynamicResource(dynamicClient, namespace, gvr, resource.Name); err != nil {
+						fmt.Fprintf(os.Stderr, "Failed to flag resource %s %s in namespace %s as In Use: %v\n", gvr.Resource, resource.Name, namespace, err)
+					} else {
+						resource.Reason = "flagged as in use"
 					}
-					continue
 				}
 				continue
 			}
 		}
 
-		fmt.Printf("Deleting %s %s in namespace %s\n", gvr.Resource, resourceName, namespace)
+		fmt.Printf("Deleting %s %s in namespace %s\n", gvr.Resource, resource.Name, namespace)
 		if _, err := dynamicClient.
 			Resource(gvr).
 			Namespace(namespace).
-			Patch(context.TODO(), resourceName, types.MergePatchType,
+			Patch(context.TODO(), resource.Name, types.MergePatchType,
 				[]byte(`{"metadata":{"finalizers":null}}`),
 				metav1.PatchOptions{}); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", gvr.Resource, resourceName, namespace, err)
+			resource.Reason = fmt.Sprintf("failed to delete: %v", err)
+			remainingResources = append(remainingResources, resource)
 			continue
 		}
-		deletedDiff = append(deletedDiff, resourceName+"-DELETED")
+		resource.Reason = "deleted"
+		remainingResources = append(remainingResources, resource)
 	}
 
-	return deletedDiff, nil
+	return remainingResources, nil
 }
 
 func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, resourceType string, noInteractive bool) ([]string, error) {
