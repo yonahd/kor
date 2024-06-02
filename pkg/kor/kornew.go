@@ -73,6 +73,7 @@ func FormatOutput2(resources map[string]map[string][]ResourceInfo, opts Opts) by
 func formatOutputForNamespace2(namespace string, resources map[string][]ResourceInfo, opts Opts) string {
 	var buf strings.Builder
 	table := tablewriter.NewWriter(&buf)
+	table.SetColWidth(60)
 	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
 	allEmpty := true
 	var index int
@@ -107,6 +108,7 @@ func formatOutputForResource2(resource string, resources map[string][]ResourceIn
 	}
 	var buf bytes.Buffer
 	table := tablewriter.NewWriter(&buf)
+	table.SetColWidth(20)
 	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
 	var index int
 	for _, infos := range resources {

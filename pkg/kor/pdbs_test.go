@@ -85,7 +85,7 @@ func TestProcessNamespacePdbs(t *testing.T) {
 		t.Errorf("Expected 2 unused pdb, got %d", len(unusedPdbs))
 	}
 
-	if unusedPdbs[0] != "test-pdb3" && unusedPdbs[1] != "test-pdb5" {
+	if unusedPdbs[0].Name != "test-pdb3" && unusedPdbs[1].Name != "test-pdb5" {
 		t.Errorf("Expected 'test-pdb3', got %s", unusedPdbs[0])
 	}
 }

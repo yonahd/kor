@@ -18,6 +18,8 @@ type GetUnusedResourceJSONResponse struct {
 	Namespaces   map[string][]string `json:"namespaces"`
 }
 
+var stringList []string
+
 type ResourceDiff struct {
 	resourceType string
 	diff         []string
@@ -137,37 +139,37 @@ func getUnusedHpas(clientset kubernetes.Interface, namespace string, filterOpts 
 }
 
 func getUnusedPvcs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	pvcDiff, err := processNamespacePvcs(clientset, namespace, filterOpts)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pvcs", namespace, err)
-	}
+	//pvcDiff, err := processNamespacePvcs(clientset, namespace, filterOpts)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pvcs", namespace, err)
+	//}
 	namespacePvcDiff := ResourceDiff{
 		"Pvc",
-		pvcDiff,
+		stringList,
 	}
 	return namespacePvcDiff
 }
 
 func getUnusedIngresses(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	ingressDiff, err := processNamespaceIngresses(clientset, namespace, filterOpts)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "ingresses", namespace, err)
-	}
+	//ingressDiff, err := processNamespaceIngresses(clientset, namespace, filterOpts)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "ingresses", namespace, err)
+	//}
 	namespaceIngressDiff := ResourceDiff{
 		"Ingress",
-		ingressDiff,
+		stringList,
 	}
 	return namespaceIngressDiff
 }
 
 func getUnusedPdbs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	pdbDiff, err := processNamespacePdbs(clientset, namespace, filterOpts)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pdbs", namespace, err)
-	}
+	//pdbDiff, err := processNamespacePdbs(clientset, namespace, filterOpts)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pdbs", namespace, err)
+	//}
 	namespacePdbDiff := ResourceDiff{
 		"Pdb",
-		pdbDiff,
+		stringList,
 	}
 	return namespacePdbDiff
 }
@@ -185,37 +187,37 @@ func getUnusedCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient 
 }
 
 func getUnusedPvs(clientset kubernetes.Interface, filterOpts *filters.Options) ResourceDiff {
-	pvDiff, err := processPvs(clientset, filterOpts)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "Pvs", err)
-	}
+	//pvDiff, err := processPvs(clientset, filterOpts)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "Pvs", err)
+	//}
 	allPvDiff := ResourceDiff{
 		"Pv",
-		pvDiff,
+		stringList,
 	}
 	return allPvDiff
 }
 
 func getUnusedPods(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	podDiff, err := processNamespacePods(clientset, namespace, filterOpts)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pods", namespace, err)
-	}
+	//podDiff, err := processNamespacePods(clientset, namespace, filterOpts)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "pods", namespace, err)
+	//}
 	namespacePodDiff := ResourceDiff{
 		"Pod",
-		podDiff,
+		stringList,
 	}
 	return namespacePodDiff
 }
 
 func getUnusedJobs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	jobDiff, err := processNamespaceJobs(clientset, namespace, filterOpts)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "jobs", namespace, err)
-	}
+	//jobDiff, err := processNamespaceJobs(clientset, namespace, filterOpts)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "jobs", namespace, err)
+	//}
 	namespaceJobDiff := ResourceDiff{
 		"Job",
-		jobDiff,
+		stringList,
 	}
 	return namespaceJobDiff
 }

@@ -86,7 +86,7 @@ func TestProcessNamespaceJobs(t *testing.T) {
 		t.Errorf("Expected 2 job been completed, got %d", len(completedJobs))
 	}
 
-	if completedJobs[0] != "test-job2" && completedJobs[1] != "test-job4" {
+	if completedJobs[0].Name != "test-job2" && completedJobs[1].Name != "test-job4" {
 		t.Errorf("job2', got %s", completedJobs[0])
 	}
 }
