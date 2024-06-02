@@ -130,7 +130,7 @@ func TestProcessClusterRoles(t *testing.T) {
 		t.Errorf("Expected 2 unused role, got %d", len(unusedClusterRoles))
 	}
 
-	if unusedClusterRoles[0] != "test-clusterRole1" && unusedClusterRoles[1] != "test-clusterRole5" {
+	if unusedClusterRoles[0].Name != "test-clusterRole1" && unusedClusterRoles[1].Name != "test-clusterRole5" {
 		t.Errorf("Expected 'test-clusterRole1', 'test-clusterRole5', got %s, %s", unusedClusterRoles[0], unusedClusterRoles[1])
 	}
 }

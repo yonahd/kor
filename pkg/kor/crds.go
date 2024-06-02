@@ -20,9 +20,9 @@ import (
 //go:embed exceptions/crds/crds.json
 var crdsConfig []byte
 
-func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) ([]string, error) {
+func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) ([]ResourceInfo, error) {
 
-	var unusedCRDs []string
+	var unusedCRDs []ResourceInfo
 
 	crds, err := apiExtClient.ApiextensionsV1().CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
@@ -53,31 +53,32 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 			return nil, err
 		}
 		if len(instances.Items) == 0 {
-			unusedCRDs = append(unusedCRDs, crd.Name)
+			reason := "CRD has no instances"
+			unusedCRDs = append(unusedCRDs, ResourceInfo{Name: crd.Name, Reason: reason})
 		}
 	}
 	return unusedCRDs, nil
 }
 
 func GetUnusedCrds(_ *filters.Options, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	diff, err := processCrds(apiExtClient, dynamicClient, &filters.Options{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to process crds: %v\n", err)
 	}
 	switch opts.GroupBy {
 	case "namespace":
-		resources[""] = make(map[string][]string)
+		resources[""] = make(map[string][]ResourceInfo)
 		resources[""]["Crd"] = diff
 	case "resource":
-		appendResources(resources, "Crd", "", diff)
+		appendResources2(resources, "Crd", "", diff)
 	}
 
 	var outputBuffer bytes.Buffer
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput(resources, opts)
+		outputBuffer = FormatOutput2(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {
@@ -85,7 +86,7 @@ func GetUnusedCrds(_ *filters.Options, apiExtClient apiextensionsclientset.Inter
 		}
 	}
 
-	unusedCRDs, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedCRDs, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

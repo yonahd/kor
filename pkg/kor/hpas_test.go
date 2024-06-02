@@ -75,7 +75,7 @@ func TestExtractUnusedHpas(t *testing.T) {
 		t.Errorf("Expected 1 unused HPA, got %d", len(unusedHpas))
 	}
 
-	if unusedHpas[0] != "test-hpa2" && unusedHpas[1] != "test-hpa4" {
+	if unusedHpas[0].Name != "test-hpa2" && unusedHpas[1].Name != "test-hpa4" {
 		t.Errorf("Expected 'test-hpa2', 'test-hpa4', got %s, %s", unusedHpas[0], unusedHpas[1])
 	}
 }

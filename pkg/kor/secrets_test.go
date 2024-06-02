@@ -321,6 +321,18 @@ func equalSlices(a, b []string) bool {
 	return true
 }
 
+func equalResourceInfoSlices(a, b []ResourceInfo) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v.Name != b[i].Name || v.Reason != b[i].Reason {
+			return false
+		}
+	}
+	return true
+}
+
 func init() {
 	scheme.Scheme = runtime.NewScheme()
 	_ = appsv1.AddToScheme(scheme.Scheme)

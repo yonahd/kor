@@ -66,7 +66,7 @@ func TestProcessNamespaceDeployments(t *testing.T) {
 		t.Errorf("Expected 1 deployment without replicas, got %d", len(deploymentsWithoutReplicas))
 	}
 
-	if deploymentsWithoutReplicas[0] != "test-deployment1" && deploymentsWithoutReplicas[1] != "test-deployment4" {
+	if deploymentsWithoutReplicas[0].Name != "test-deployment1" && deploymentsWithoutReplicas[1].Name != "test-deployment4" {
 		t.Errorf("Expected 'test-deployment1', 'test-deployment4',got %s, %s", deploymentsWithoutReplicas[0], deploymentsWithoutReplicas[1])
 	}
 }

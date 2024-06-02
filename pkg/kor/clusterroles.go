@@ -151,7 +151,7 @@ func retrieveClusterRoleNames(clientset kubernetes.Interface, filterOpts *filter
 	return names, unusedClusterRoles, nil
 }
 
-func processClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
+func processClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	usedClusterRoles, err := retrieveUsedClusterRoles(clientset, filterOpts)
 	if err != nil {
 		return nil, err
@@ -164,28 +164,37 @@ func processClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Opt
 		return nil, err
 	}
 
-	diff := CalculateResourceDifference(usedClusterRoles, clusterRoleNames)
-	diff = append(diff, unusedClusterRoles...)
+	var diff []ResourceInfo
+
+	for _, name := range CalculateResourceDifference(usedClusterRoles, clusterRoleNames) {
+		reason := "ClusterRole is not used by any RoleBinding or ClusterRoleBinding"
+		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
+	}
+
+	for _, name := range unusedClusterRoles {
+		reason := "Marked with unused label"
+		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
+	}
 
 	return diff, nil
 
 }
 
 func GetUnusedClusterRoles(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	diff, err := processClusterRoles(clientset, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to process cluster role : %v\n", err)
 	}
 	switch opts.GroupBy {
 	case "namespace":
-		resources[""] = make(map[string][]string)
+		resources[""] = make(map[string][]ResourceInfo)
 		resources[""]["ClusterRole"] = diff
 	case "resource":
-		appendResources(resources, "ClusterRole", "", diff)
+		appendResources2(resources, "ClusterRole", "", diff)
 	}
 	if opts.DeleteFlag {
-		if diff, err = DeleteResource(diff, clientset, "", "ClusterRole", opts.NoInteractive); err != nil {
+		if diff, err = DeleteResource2(diff, clientset, "", "ClusterRole", opts.NoInteractive); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to delete clusterRole %s : %v\n", diff, err)
 		}
 	}
@@ -194,7 +203,7 @@ func GetUnusedClusterRoles(filterOpts *filters.Options, clientset kubernetes.Int
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput(resources, opts)
+		outputBuffer = FormatOutput2(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {
@@ -202,7 +211,7 @@ func GetUnusedClusterRoles(filterOpts *filters.Options, clientset kubernetes.Int
 		}
 	}
 
-	unusedClusterRoles, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedClusterRoles, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
