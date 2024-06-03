@@ -7,3 +7,5 @@ coverage.txt
 build/
 kor
 !kor/
+*.swp
+hack/exceptions
