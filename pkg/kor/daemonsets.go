@@ -88,7 +88,7 @@ func GetUnusedDaemonSets(filterOpts *filters.Options, clientset kubernetes.Inter
 		}
 	}
 
-	unusedDaemonSets, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedDaemonSets, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

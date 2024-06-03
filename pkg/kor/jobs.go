@@ -71,7 +71,7 @@ func GetUnusedJobs(filterOpts *filters.Options, clientset kubernetes.Interface, 
 		}
 	}
 
-	unusedJobs, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedJobs, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

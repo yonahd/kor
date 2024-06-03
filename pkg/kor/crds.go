@@ -86,7 +86,7 @@ func GetUnusedCrds(_ *filters.Options, apiExtClient apiextensionsclientset.Inter
 		}
 	}
 
-	unusedCRDs, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedCRDs, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

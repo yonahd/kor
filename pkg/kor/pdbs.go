@@ -92,7 +92,7 @@ func GetUnusedPdbs(filterOpts *filters.Options, clientset kubernetes.Interface, 
 		}
 	}
 
-	unusedPdbs, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedPdbs, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

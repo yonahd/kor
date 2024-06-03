@@ -13,7 +13,7 @@ type ResourceInfo struct {
 	Reason string `json:"reason,omitempty"`
 }
 
-func unusedResourceFormatter2(outputFormat string, outputBuffer bytes.Buffer, opts Opts, jsonResponse []byte) (string, error) {
+func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opts Opts, jsonResponse []byte) (string, error) {
 	switch outputFormat {
 	case "table":
 		return outputBuffer.String(), nil
@@ -132,4 +132,63 @@ func appendResources2(resources map[string]map[string][]ResourceInfo, resourceTy
 		}
 		resources[resourceType][namespace] = append(resources[resourceType][namespace], d)
 	}
+}
+
+func getTableHeader(groupBy string, showReason bool) []string {
+	switch groupBy {
+	case "namespace":
+		if showReason {
+			return []string{
+				"#",
+				"RESOURCE TYPE",
+				"RESOURCE NAME",
+				"REASON",
+			}
+		}
+		return []string{
+			"#",
+			"RESOURCE TYPE",
+			"RESOURCE NAME",
+		}
+	case "resource":
+		if showReason {
+			return []string{
+				"#",
+				"NAMESPACE",
+				"RESOURCE NAME",
+				"REASON",
+			}
+		}
+		return []string{
+			"#",
+			"NAMESPACE",
+			"RESOURCE NAME",
+		}
+	default:
+		return nil
+	}
+}
+
+func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) string {
+	var buf bytes.Buffer
+	table := tablewriter.NewWriter(&buf)
+	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
+	allEmpty := true
+	var index int
+	for _, data := range allDiffs {
+		for _, val := range data.diff {
+			row := getTableRowResourceInfo(index, data.resourceType, val)
+			table.Append(row)
+			allEmpty = false
+			index++
+		}
+	}
+	if allEmpty {
+		if opts.Verbose {
+			return fmt.Sprintf("No unused resources found in the namespace: %q\n", namespace)
+		}
+		return ""
+	}
+	table.Render()
+	return fmt.Sprintf("Unused resources in namespace: %q\n%s", namespace, buf.String())
 }

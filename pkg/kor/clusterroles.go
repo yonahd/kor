@@ -211,7 +211,7 @@ func GetUnusedClusterRoles(filterOpts *filters.Options, clientset kubernetes.Int
 		}
 	}
 
-	unusedClusterRoles, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedClusterRoles, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

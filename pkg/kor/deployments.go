@@ -75,7 +75,7 @@ func GetUnusedDeployments(filterOpts *filters.Options, clientset kubernetes.Inte
 		}
 	}
 
-	unusedDeployments, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedDeployments, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

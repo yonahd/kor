@@ -81,7 +81,7 @@ func GetUnusedStatefulSets(filterOpts *filters.Options, clientset kubernetes.Int
 		}
 	}
 
-	unusedStatefulsets, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedStatefulsets, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

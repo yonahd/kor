@@ -219,7 +219,7 @@ func GetUnusedSecrets(filterOpts *filters.Options, clientset kubernetes.Interfac
 		}
 	}
 
-	unusedSecrets, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedSecrets, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

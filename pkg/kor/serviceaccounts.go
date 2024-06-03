@@ -196,7 +196,7 @@ func GetUnusedServiceAccounts(filterOpts *filters.Options, clientset kubernetes.
 		}
 	}
 
-	unusedServiceAccounts, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedServiceAccounts, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

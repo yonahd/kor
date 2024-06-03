@@ -303,7 +303,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 		}
 	}
 
-	unusedAllNamespaced, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedAllNamespaced, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
@@ -339,7 +339,7 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 		}
 	}
 
-	unusedAllNonNamespaced, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedAllNonNamespaced, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

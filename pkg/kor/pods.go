@@ -77,7 +77,7 @@ func GetUnusedPods(filterOpts *filters.Options, clientset kubernetes.Interface, 
 		}
 	}
 
-	unusedPods, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedPods, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

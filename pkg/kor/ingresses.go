@@ -150,7 +150,7 @@ func GetUnusedIngresses(filterOpts *filters.Options, clientset kubernetes.Interf
 		}
 	}
 
-	unusedIngresses, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedIngresses, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

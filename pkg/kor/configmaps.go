@@ -192,7 +192,7 @@ func GetUnusedConfigmaps(filterOpts *filters.Options, clientset kubernetes.Inter
 		}
 	}
 
-	unusedCMs, err := unusedResourceFormatter2(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedCMs, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

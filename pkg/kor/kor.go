@@ -1,16 +1,13 @@
 package kor
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
-	"sigs.k8s.io/yaml"
 	"sort"
 	"strings"
 
-	"github.com/olekukonko/tablewriter"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -140,41 +137,6 @@ func appendResources(resources map[string]map[string][]ResourceInfo, resourceTyp
 	}
 }
 
-func getTableHeader(groupBy string, showReason bool) []string {
-	switch groupBy {
-	case "namespace":
-		if showReason {
-			return []string{
-				"#",
-				"RESOURCE TYPE",
-				"RESOURCE NAME",
-				"REASON",
-			}
-		}
-		return []string{
-			"#",
-			"RESOURCE TYPE",
-			"RESOURCE NAME",
-		}
-	case "resource":
-		if showReason {
-			return []string{
-				"#",
-				"NAMESPACE",
-				"RESOURCE NAME",
-				"REASON",
-			}
-		}
-		return []string{
-			"#",
-			"NAMESPACE",
-			"RESOURCE NAME",
-		}
-	default:
-		return nil
-	}
-}
-
 func getTableRow(index int, columns ...string) []string {
 	row := make([]string, 0, len(columns)+1)
 	row = append(row, fmt.Sprintf("%d", index+1))
@@ -182,92 +144,11 @@ func getTableRow(index int, columns ...string) []string {
 	return row
 }
 
-// FormatOutput formats the output based on the group by option
-func FormatOutput(resources map[string]map[string][]string, opts Opts) bytes.Buffer {
-	var output bytes.Buffer
-	switch opts.GroupBy {
-	case "namespace":
-		for namespace, diffs := range resources {
-			output.WriteString(formatOutputForNamespace(namespace, diffs, opts))
-		}
-	case "resource":
-		for resource, diffs := range resources {
-			output.WriteString(formatOutputForResource(resource, diffs, opts))
-		}
-	}
-	return output
-}
-
-func formatOutputForResource(resource string, resources map[string][]string, opts Opts) string {
-	if len(resources) == 0 {
-		if opts.Verbose {
-			return fmt.Sprintf("No unused %ss found\n", resource)
-		}
-		return ""
-	}
-	var buf bytes.Buffer
-	table := tablewriter.NewWriter(&buf)
-	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
-	var index int
-	for ns, diffs := range resources {
-		for _, d := range diffs {
-			row := getTableRow(index, ns, d)
-			table.Append(row)
-			index++
-		}
-	}
-	table.Render()
-	return fmt.Sprintf("Unused %ss:\n%s", resource, buf.String())
-}
-
-func formatOutputForNamespace(namespace string, resources map[string][]string, opts Opts) string {
-	var buf bytes.Buffer
-	table := tablewriter.NewWriter(&buf)
-	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
-	allEmpty := true
-	var index int
-	for resourceType, diff := range resources {
-		for _, val := range diff {
-			row := getTableRow(index, resourceType, val)
-			table.Append(row)
-			allEmpty = false
-			index++
-		}
-	}
-	if allEmpty {
-		if opts.Verbose {
-			return fmt.Sprintf("No unused resources found in the namespace: %q\n", namespace)
-		}
-		return ""
-	}
-
-	table.Append([]string{})
-	table.Render()
-	return fmt.Sprintf("Unused resources in namespace: %q\n%s", namespace, buf.String())
-}
-
-func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) string {
-	var buf bytes.Buffer
-	table := tablewriter.NewWriter(&buf)
-	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
-	allEmpty := true
-	var index int
-	for _, data := range allDiffs {
-		for _, val := range data.diff {
-			row := getTableRow(index, data.resourceType, val)
-			table.Append(row)
-			allEmpty = false
-			index++
-		}
-	}
-	if allEmpty {
-		if opts.Verbose {
-			return fmt.Sprintf("No unused resources found in the namespace: %q\n", namespace)
-		}
-		return ""
-	}
-	table.Render()
-	return fmt.Sprintf("Unused resources in namespace: %q\n%s", namespace, buf.String())
+func getTableRowResourceInfo(index int, resourceType string, resource ResourceInfo) []string {
+	row := make([]string, 0, 4)
+	row = append(row, fmt.Sprintf("%d", index+1))
+	row = append(row, resource.Name, resourceType, resource.Reason)
+	return row
 }
 
 // TODO create formatter by resource "#", "Resource Name", "Namespace"
@@ -287,25 +168,6 @@ func CalculateResourceDifference(usedResourceNames []string, allResourceNames []
 		}
 	}
 	return difference
-}
-
-func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opts Opts, jsonResponse []byte) (string, error) {
-	switch outputFormat {
-	case "table":
-		if opts.WebhookURL == "" || opts.Channel == "" || opts.Token != "" {
-			return outputBuffer.String(), nil
-		}
-		if err := SendToSlack(SlackMessage{}, opts, outputBuffer.String()); err != nil {
-			return "", fmt.Errorf("failed to send message to slack: %w", err)
-		}
-	case "yaml":
-		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-		if err != nil {
-			return "", fmt.Errorf("failed to convert json to yaml: %w", err)
-		}
-		return string(yamlResponse), nil
-	}
-	return string(jsonResponse), nil
 }
 
 func isResourceException(resourceName, namespace string, exceptions []ExceptionResource) bool {
