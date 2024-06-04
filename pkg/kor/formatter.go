@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/olekukonko/tablewriter"
 	"strings"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 type ResourceInfo struct {
