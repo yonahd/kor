@@ -72,7 +72,7 @@ func GetUnusedServices(filterOpts *filters.Options, clientset kubernetes.Interfa
 			}
 		case "resource":
 			if diff != nil {
-				appendResources2(resources, "Service", namespace, diff)
+				appendResources(resources, "Service", namespace, diff)
 			}
 
 		}
@@ -88,7 +88,7 @@ func GetUnusedServices(filterOpts *filters.Options, clientset kubernetes.Interfa
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput2(resources, opts)
+		outputBuffer = FormatOutput(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {

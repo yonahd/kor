@@ -171,7 +171,7 @@ func GetUnusedConfigmaps(filterOpts *filters.Options, clientset kubernetes.Inter
 			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["ConfigMap"] = diff
 		case "resource":
-			appendResources2(resources, "ConfigMap", namespace, diff)
+			appendResources(resources, "ConfigMap", namespace, diff)
 		}
 		if opts.DeleteFlag {
 			if diff, err = DeleteResource2(diff, clientset, namespace, "ConfigMap", opts.NoInteractive); err != nil {
@@ -184,7 +184,7 @@ func GetUnusedConfigmaps(filterOpts *filters.Options, clientset kubernetes.Inter
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput2(resources, opts)
+		outputBuffer = FormatOutput(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {

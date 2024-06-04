@@ -129,7 +129,7 @@ func GetUnusedIngresses(filterOpts *filters.Options, clientset kubernetes.Interf
 			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Ingress"] = diff
 		case "resource":
-			appendResources2(resources, "Ingress", namespace, diff)
+			appendResources(resources, "Ingress", namespace, diff)
 		}
 		if opts.DeleteFlag {
 			if diff, err = DeleteResource2(diff, clientset, namespace, "Ingress", opts.NoInteractive); err != nil {
@@ -142,7 +142,7 @@ func GetUnusedIngresses(filterOpts *filters.Options, clientset kubernetes.Interf
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput2(resources, opts)
+		outputBuffer = FormatOutput(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {

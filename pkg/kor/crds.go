@@ -71,14 +71,14 @@ func GetUnusedCrds(_ *filters.Options, apiExtClient apiextensionsclientset.Inter
 		resources[""] = make(map[string][]ResourceInfo)
 		resources[""]["Crd"] = diff
 	case "resource":
-		appendResources2(resources, "Crd", "", diff)
+		appendResources(resources, "Crd", "", diff)
 	}
 
 	var outputBuffer bytes.Buffer
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput2(resources, opts)
+		outputBuffer = FormatOutput(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {

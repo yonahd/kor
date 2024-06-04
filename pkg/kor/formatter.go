@@ -55,22 +55,22 @@ func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opt
 	}
 }
 
-func FormatOutput2(resources map[string]map[string][]ResourceInfo, opts Opts) bytes.Buffer {
+func FormatOutput(resources map[string]map[string][]ResourceInfo, opts Opts) bytes.Buffer {
 	var output bytes.Buffer
 	switch opts.GroupBy {
 	case "namespace":
 		for namespace, diffs := range resources {
-			output.WriteString(formatOutputForNamespace2(namespace, diffs, opts))
+			output.WriteString(formatOutputForNamespace(namespace, diffs, opts))
 		}
 	case "resource":
 		for resource, diffs := range resources {
-			output.WriteString(formatOutputForResource2(resource, diffs, opts))
+			output.WriteString(formatOutputForResource(resource, diffs, opts))
 		}
 	}
 	return output
 }
 
-func formatOutputForNamespace2(namespace string, resources map[string][]ResourceInfo, opts Opts) string {
+func formatOutputForNamespace(namespace string, resources map[string][]ResourceInfo, opts Opts) string {
 	var buf strings.Builder
 	table := tablewriter.NewWriter(&buf)
 	table.SetColWidth(60)
@@ -99,7 +99,7 @@ func formatOutputForNamespace2(namespace string, resources map[string][]Resource
 	return fmt.Sprintf("Unused resources in namespace: %q\n%s\n", namespace, buf.String())
 }
 
-func formatOutputForResource2(resource string, resources map[string][]ResourceInfo, opts Opts) string {
+func formatOutputForResource(resource string, resources map[string][]ResourceInfo, opts Opts) string {
 	if len(resources) == 0 {
 		if opts.Verbose {
 			return fmt.Sprintf("No unused %ss found\n", resource)
@@ -125,7 +125,7 @@ func formatOutputForResource2(resource string, resources map[string][]ResourceIn
 	return fmt.Sprintf("Unused %ss:\n%s", resource, buf.String())
 }
 
-func appendResources2(resources map[string]map[string][]ResourceInfo, resourceType, namespace string, diff []ResourceInfo) {
+func appendResources(resources map[string]map[string][]ResourceInfo, resourceType, namespace string, diff []ResourceInfo) {
 	for _, d := range diff {
 		if _, ok := resources[resourceType]; !ok {
 			resources[resourceType] = make(map[string][]ResourceInfo)

@@ -55,7 +55,7 @@ func GetUnusedPvs(filterOpts *filters.Options, clientset kubernetes.Interface, o
 		resources[""] = make(map[string][]ResourceInfo)
 		resources[""]["Pv"] = diff
 	case "resource":
-		appendResources2(resources, "Pv", "", diff)
+		appendResources(resources, "Pv", "", diff)
 	}
 	if opts.DeleteFlag {
 		if diff, err = DeleteResource2(diff, clientset, "", "PV", opts.NoInteractive); err != nil {
@@ -67,7 +67,7 @@ func GetUnusedPvs(filterOpts *filters.Options, clientset kubernetes.Interface, o
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput2(resources, opts)
+		outputBuffer = FormatOutput(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {

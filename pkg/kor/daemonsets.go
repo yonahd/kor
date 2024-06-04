@@ -67,7 +67,7 @@ func GetUnusedDaemonSets(filterOpts *filters.Options, clientset kubernetes.Inter
 			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["DaemonSet"] = diff
 		case "resource":
-			appendResources2(resources, "DaemonSet", namespace, diff)
+			appendResources(resources, "DaemonSet", namespace, diff)
 		}
 		if opts.DeleteFlag {
 			if diff, err = DeleteResource2(diff, clientset, namespace, "DaemonSet", opts.NoInteractive); err != nil {
@@ -80,7 +80,7 @@ func GetUnusedDaemonSets(filterOpts *filters.Options, clientset kubernetes.Inter
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput2(resources, opts)
+		outputBuffer = FormatOutput(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {

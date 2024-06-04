@@ -18,11 +18,19 @@
     },
     {
       "Namespace": "kube-system",
+      "ResourceName": "amazon-vpc-cni"
+    },
+    {
+      "Namespace": "kube-system",
       "ResourceName": "aws-auth"
     },
     {
       "Namespace": "kube-system",
       "ResourceName": "cluster-autoscaler-status"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "cluster-dns"
     },
     {
       "Namespace": "kube-system",
@@ -59,6 +67,14 @@
     {
       "Namespace": "kube-system",
       "ResourceName": "kube-dns-autoscaler"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "kube-proxy"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "kube-proxy-config"
     },
     {
       "Namespace": "kube-system",

@@ -198,7 +198,7 @@ func GetUnusedSecrets(filterOpts *filters.Options, clientset kubernetes.Interfac
 			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Secret"] = diff
 		case "resource":
-			appendResources2(resources, "Secret", namespace, diff)
+			appendResources(resources, "Secret", namespace, diff)
 		}
 		if opts.DeleteFlag {
 			if diff, err = DeleteResource2(diff, clientset, namespace, "Secret", opts.NoInteractive); err != nil {
@@ -211,7 +211,7 @@ func GetUnusedSecrets(filterOpts *filters.Options, clientset kubernetes.Interfac
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput2(resources, opts)
+		outputBuffer = FormatOutput(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {

@@ -35,6 +35,7 @@ type Config struct {
 	ExceptionServiceAccounts []ExceptionResource `json:"exceptionServiceAccounts"`
 	ExceptionServices        []ExceptionResource `json:"exceptionServices"`
 	ExceptionStorageClasses  []ExceptionResource `json:"exceptionStorageClasses"`
+	ExceptionJobs            []ExceptionResource `json:"exceptionJobs"`
 	// Add other configurations if needed
 }
 
@@ -126,15 +127,6 @@ func GetDynamicClient(kubeconfig string) *dynamic.DynamicClient {
 		os.Exit(1)
 	}
 	return clientset
-}
-
-func appendResources(resources map[string]map[string][]ResourceInfo, resourceType, namespace string, diff []ResourceInfo) {
-	for _, d := range diff {
-		if _, ok := resources[resourceType]; !ok {
-			resources[resourceType] = make(map[string][]ResourceInfo)
-		}
-		resources[resourceType][namespace] = append(resources[resourceType][namespace], d)
-	}
 }
 
 func getTableRow(index int, columns ...string) []string {

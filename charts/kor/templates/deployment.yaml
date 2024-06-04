@@ -18,6 +18,7 @@ spec:
   template:
     metadata:
       labels:
+        {{- include "kor.labels" . | nindent 8 }}
         app: {{ .Values.prometheusExporter.name }}
     spec: 
       serviceAccountName: {{ include "kor.serviceAccountName" . }}

@@ -113,7 +113,7 @@ func GetUnusedRoles(filterOpts *filters.Options, clientset kubernetes.Interface,
 			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Role"] = diff
 		case "resource":
-			appendResources2(resources, "Role", namespace, diff)
+			appendResources(resources, "Role", namespace, diff)
 		}
 		if opts.DeleteFlag {
 			if diff, err = DeleteResource2(diff, clientset, namespace, "Role", opts.NoInteractive); err != nil {
@@ -126,7 +126,7 @@ func GetUnusedRoles(filterOpts *filters.Options, clientset kubernetes.Interface,
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput2(resources, opts)
+		outputBuffer = FormatOutput(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {

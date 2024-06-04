@@ -93,7 +93,7 @@ func GetUnusedHpas(filterOpts *filters.Options, clientset kubernetes.Interface, 
 			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Hpa"] = diff
 		case "resource":
-			appendResources2(resources, "Hpa", namespace, diff)
+			appendResources(resources, "Hpa", namespace, diff)
 		}
 		if opts.DeleteFlag {
 			if diff, err = DeleteResource2(diff, clientset, namespace, "HPA", opts.NoInteractive); err != nil {
@@ -106,7 +106,7 @@ func GetUnusedHpas(filterOpts *filters.Options, clientset kubernetes.Interface, 
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput2(resources, opts)
+		outputBuffer = FormatOutput(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {

@@ -3,18 +3,28 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
 
+	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+//go:embed exceptions/jobs/jobs.json
+var jobsConfig []byte
+
 func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	jobsList, err := clientset.BatchV1().Jobs(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := unmarshalConfig(jobsConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -27,10 +37,24 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 		}
 
 		// If the job has CompletionTime and Succeeded count greater than zero, the job is completed
+		if isResourceException(job.Name, job.Namespace, config.ExceptionJobs) {
+			continue
+		}
+
+		// if the job has completionTime and succeeded count greater than zero, think the job is completed
 		if job.Status.CompletionTime != nil && job.Status.Succeeded > 0 {
 			reason := "Job has completed"
 			unusedJobNames = append(unusedJobNames, ResourceInfo{Name: job.Name, Reason: reason})
 			continue
+		} else {
+			// Check if the job has a condition indicating it has exceeded the backoff limit
+			for _, condition := range job.Status.Conditions {
+				if condition.Type == batchv1.JobFailed && condition.Reason == "BackoffLimitExceeded" {
+					reason := "Job has exceeded backoff limit"
+					unusedJobNames = append(unusedJobNames, ResourceInfo{Name: job.Name, Reason: reason})
+					break
+				}
+			}
 		}
 	}
 
@@ -50,7 +74,7 @@ func GetUnusedJobs(filterOpts *filters.Options, clientset kubernetes.Interface, 
 			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Job"] = diff
 		case "resource":
-			appendResources2(resources, "Job", namespace, diff)
+			appendResources(resources, "Job", namespace, diff)
 		}
 		if opts.DeleteFlag {
 			if diff, err = DeleteResource2(diff, clientset, namespace, "Job", opts.NoInteractive); err != nil {
@@ -63,7 +87,7 @@ func GetUnusedJobs(filterOpts *filters.Options, clientset kubernetes.Interface, 
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput2(resources, opts)
+		outputBuffer = FormatOutput(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {

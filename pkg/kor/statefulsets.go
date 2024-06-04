@@ -59,7 +59,7 @@ func GetUnusedStatefulSets(filterOpts *filters.Options, clientset kubernetes.Int
 			}
 		case "resource":
 			if diff != nil {
-				appendResources2(resources, "StatefulSet", namespace, diff)
+				appendResources(resources, "StatefulSet", namespace, diff)
 			}
 		}
 		if opts.DeleteFlag {
@@ -73,7 +73,7 @@ func GetUnusedStatefulSets(filterOpts *filters.Options, clientset kubernetes.Int
 	var jsonResponse []byte
 	switch outputFormat {
 	case "table":
-		outputBuffer = FormatOutput2(resources, opts)
+		outputBuffer = FormatOutput(resources, opts)
 	case "json", "yaml":
 		var err error
 		if jsonResponse, err = json.MarshalIndent(resources, "", "  "); err != nil {
