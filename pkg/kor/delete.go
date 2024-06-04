@@ -253,11 +253,10 @@ func DeleteResourceWithFinalizer(resources []ResourceInfo, dynamicClient dynamic
 			Patch(context.TODO(), resource.Name, types.MergePatchType,
 				[]byte(`{"metadata":{"finalizers":null}}`),
 				metav1.PatchOptions{}); err != nil {
-			resource.Reason = fmt.Sprintf("failed to delete: %v", err)
-			remainingResources = append(remainingResources, resource)
+			fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", gvr.Resource, resource.Name, namespace, err)
 			continue
 		}
-		resource.Reason = "deleted"
+		resource.Name = resource.Name + "-DELETED"
 		remainingResources = append(remainingResources, resource)
 	}
 
