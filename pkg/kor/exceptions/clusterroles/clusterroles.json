@@ -26,6 +26,10 @@
     },
     {
       "Namespace": "",
+      "ResourceName": "system:aggregated-metrics-reader"
+    },
+    {
+      "Namespace": "",
       "ResourceName": "system:auth-delegator"
     },
     {
@@ -74,6 +78,10 @@
     },
     {
       "Namespace": "",
+      "ResourceName": "system:node-bootstrapper"
+    },
+    {
+      "Namespace": "",
       "ResourceName": "system:node-problem-detector"
     },
     {
@@ -83,14 +91,6 @@
     {
       "Namespace": "",
       "ResourceName": "view"
-    },
-    {
-      "Namespace": "",
-      "ResourceName": "system:node-bootstrapper"
-    },
-    {
-      "Namespace": "",
-      "ResourceName": "system:aggregated-metrics-reader"
     }
   ]
 }
