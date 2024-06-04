@@ -107,7 +107,7 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 	if len(noNamespaceDiff) != 0 {
 		for _, diff := range noNamespaceDiff {
 			if len(diff.diff) != 0 {
-				output := FormatOutputAll2("", []ResourceDiff{diff}, opts)
+				output := FormatOutputAll("", []ResourceDiff{diff}, opts)
 				outputBuffer.WriteString(output)
 				outputBuffer.WriteString("\n")
 

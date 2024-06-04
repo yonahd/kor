@@ -144,13 +144,6 @@ func getTableRow(index int, columns ...string) []string {
 	return row
 }
 
-func getTableRowResourceInfo(index int, resourceType string, resource ResourceInfo) []string {
-	row := make([]string, 0, 4)
-	row = append(row, fmt.Sprintf("%d", index+1))
-	row = append(row, resource.Name, resourceType, resource.Reason)
-	return row
-}
-
 // TODO create formatter by resource "#", "Resource Name", "Namespace"
 // TODO Functions that use this object are accompanied by repeated data acquisition operations and can be optimized.
 func CalculateResourceDifference(usedResourceNames []string, allResourceNames []string) []string {

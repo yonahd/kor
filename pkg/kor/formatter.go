@@ -169,15 +169,28 @@ func getTableHeader(groupBy string, showReason bool) []string {
 	}
 }
 
+func getTableRowResourceInfo(index int, resourceType string, resource ResourceInfo, printReason bool) []string {
+	row := []string{
+		fmt.Sprintf("%d", index+1),
+		resourceType,
+		resource.Name,
+	}
+	if printReason && resource.Reason != "" {
+		row = append(row, resource.Reason)
+	}
+	return row
+}
+
 func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	table := tablewriter.NewWriter(&buf)
+	table.SetColWidth(60)
 	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
 	allEmpty := true
 	var index int
 	for _, data := range allDiffs {
-		for _, val := range data.diff {
-			row := getTableRowResourceInfo(index, data.resourceType, val)
+		for _, info := range data.diff {
+			row := getTableRowResourceInfo(index, data.resourceType, info, opts.PrintReason)
 			table.Append(row)
 			allEmpty = false
 			index++
@@ -189,6 +202,7 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) strin
 		}
 		return ""
 	}
+
 	table.Render()
-	return fmt.Sprintf("Unused resources in namespace: %q\n%s", namespace, buf.String())
+	return fmt.Sprintf("Unused resources in namespace: %q\n%s\n", namespace, buf.String())
 }
