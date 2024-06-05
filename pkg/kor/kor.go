@@ -47,7 +47,7 @@ type Opts struct {
 	Channel       string
 	Token         string
 	GroupBy       string
-	PrintReason   bool
+	ShowReason    bool
 }
 
 func RemoveDuplicatesAndSort(slice []string) []string {

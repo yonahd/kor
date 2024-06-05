@@ -24,7 +24,7 @@ func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opt
 			return "", err
 		}
 
-		if !opts.PrintReason && outputFormat == "json" {
+		if !opts.ShowReason && outputFormat == "json" {
 			// Create a map of namespaces with their corresponding maps of resource types and lists of resource names
 			namespaces := make(map[string]map[string][]string)
 			for namespace, resourceMap := range resources {
@@ -75,13 +75,13 @@ func formatOutputForNamespace(namespace string, resources map[string][]ResourceI
 	var buf strings.Builder
 	table := tablewriter.NewWriter(&buf)
 	table.SetColWidth(60)
-	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
+	table.SetHeader(getTableHeader(opts.GroupBy, opts.ShowReason))
 	allEmpty := true
 	var index int
 	for resourceType, diff := range resources {
 		for _, info := range diff {
 			row := getTableRow(index, resourceType, info.Name)
-			if opts.PrintReason && info.Reason != "" {
+			if opts.ShowReason && info.Reason != "" {
 				row = append(row, info.Reason)
 			}
 			table.Append(row)
@@ -110,12 +110,12 @@ func formatOutputForResource(resource string, resources map[string][]ResourceInf
 	var buf bytes.Buffer
 	table := tablewriter.NewWriter(&buf)
 	table.SetColWidth(20)
-	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
+	table.SetHeader(getTableHeader(opts.GroupBy, opts.ShowReason))
 	var index int
 	for _, infos := range resources {
 		for _, info := range infos {
 			row := []string{info.Name}
-			if opts.PrintReason && info.Reason != "" {
+			if opts.ShowReason && info.Reason != "" {
 				row = append(row, info.Reason)
 			}
 			table.Append(row)
@@ -170,13 +170,13 @@ func getTableHeader(groupBy string, showReason bool) []string {
 	}
 }
 
-func getTableRowResourceInfo(index int, resourceType string, resource ResourceInfo, printReason bool) []string {
+func getTableRowResourceInfo(index int, resourceType string, resource ResourceInfo, ShowReason bool) []string {
 	row := []string{
 		fmt.Sprintf("%d", index+1),
 		resourceType,
 		resource.Name,
 	}
-	if printReason && resource.Reason != "" {
+	if ShowReason && resource.Reason != "" {
 		row = append(row, resource.Reason)
 	}
 	return row
@@ -186,12 +186,12 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) strin
 	var buf strings.Builder
 	table := tablewriter.NewWriter(&buf)
 	table.SetColWidth(60)
-	table.SetHeader(getTableHeader(opts.GroupBy, opts.PrintReason))
+	table.SetHeader(getTableHeader(opts.GroupBy, opts.ShowReason))
 	allEmpty := true
 	var index int
 	for _, data := range allDiffs {
 		for _, info := range data.diff {
-			row := getTableRowResourceInfo(index, data.resourceType, info, opts.PrintReason)
+			row := getTableRowResourceInfo(index, data.resourceType, info, opts.ShowReason)
 			table.Append(row)
 			allEmpty = false
 			index++
