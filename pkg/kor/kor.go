@@ -291,7 +291,7 @@ func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opt
 	return string(jsonResponse), nil
 }
 
-func isResourceException(resourceName, namespace string, exceptions []ExceptionResource) (bool, error) {
+func isResourceException(resourceName string, namespace string, exceptions []ExceptionResource) (bool, error) {
 	var match bool
 	for _, e := range exceptions {
 		if e.ResourceName == resourceName && e.Namespace == namespace {
