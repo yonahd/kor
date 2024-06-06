@@ -26,6 +26,10 @@
     },
     {
       "Namespace": "",
+      "ResourceName": "local-path"
+    },
+    {
+      "Namespace": "",
       "ResourceName": "managed"
     },
     {
@@ -51,10 +55,6 @@
     {
       "Namespace": "",
       "ResourceName": "standard-rwo"
-    },
-    {
-      "Namespace": "",
-      "ResourceName": "local-path"
     }
   ]
 }
