@@ -2,11 +2,11 @@
   "exceptionClusterRoles": [
     {
       "Namespace": "",
-      "ResourceName": "admin"
+      "ResourceName": "cloud-provider"
     },
     {
       "Namespace": "",
-      "ResourceName": "cloud-provider"
+      "ResourceName": "admin"
     },
     {
       "Namespace": "",
