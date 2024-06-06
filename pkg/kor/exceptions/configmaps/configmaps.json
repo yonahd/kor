@@ -1,7 +1,7 @@
 {
   "exceptionConfigMaps": [
     {
-      "Namespace": "\\.*",
+      "Namespace": ".*",
       "ResourceName": "kube-root-ca\\.crt",
       "MatchRegex": true
     },
