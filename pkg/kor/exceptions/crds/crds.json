@@ -2,11 +2,11 @@
   "exceptionCrds": [
     {
       "Namespace": "",
-      "ResourceName": "allowlistedv2workloads.auto.gke.io"
+      "ResourceName": "allowlistedworkloads.auto.gke.io"
     },
     {
       "Namespace": "",
-      "ResourceName": "allowlistedworkloads.auto.gke.io"
+      "ResourceName": "allowlistedv2workloads.auto.gke.io"
     },
     {
       "Namespace": "",

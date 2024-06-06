@@ -22,20 +22,10 @@ sort-exception-files:
 	' \;
 
 validate-exception-sorting:
-	@$(eval FAILED_FILES := $(shell \
-		find $(EXCEPTIONS_DIR) -name '$(EXCEPTIONS_FILE_PATTERN)' -exec sh -c ' \
-			SORTED=$$(jq "with_entries(.value |= sort_by(.Namespace, .ResourceName))" "$$1"); \
-			if [ "$$(jq . "$$1")" != "$$SORTED" ]; then \
-				echo "$$1"; \
-			fi \
-		' sh {} \; \
-	))
-
-	@if [ -z "$(FAILED_FILES)" ]; then \
-		echo "All files sorted correctly."; \
-	else \
-		echo "The following JSON files are not sorted:"; \
-		for file in $(FAILED_FILES); do \
-			echo "\t$$file"; \
-		done \
-	fi
+	@$(foreach file, $(wildcard $(EXCEPTIONS_DIR)/*/*.json), \
+		$(eval SORTED := $(shell jq "with_entries(.value |= sort_by(.Namespace, .ResourceName))" "$(file)")) \
+		$(eval CURRENT_FILE := $(shell jq . $(file))) \
+		if [ "$(CURRENT_FILE)" != "$(SORTED)" ]; then \
+			echo $(file); \
+		fi; \
+	)
