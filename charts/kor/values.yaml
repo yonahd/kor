@@ -61,28 +61,28 @@ prometheusExporter:
 
   serviceMonitor:
     enabled: true
-    # Set the namespace the ServiceMonitor should be deployed, if empty namespace will be .Release.Namespace
+    # -- Set the namespace the ServiceMonitor should be deployed, if empty namespace will be `.Release.Namespace`
     namespace: ""
-    # Service monitor labels
+    # -- Service monitor labels
     labels: {}
-    # Set how frequently Prometheus should scrape
+    # -- Set how frequently Prometheus should scrape
     interval: 30s
     telemetryPath: /metrics
-    # Set timeout for scrape
+    # -- Set timeout for scrape
     timeout: 10s
     relabelings: []
-    # Set of labels to transfer on the Kubernetes Service onto the target.
+    # -- Set of labels to transfer on the Kubernetes Service onto the target.
     targetLabels: []
     metricRelabelings: []
 
-# Custom labels to add into metadata
+# -- Custom labels to add into metadata
 additionalLabels: {}
 
 serviceAccount:
-  # Specifies whether a service account should be created
+  # -- Specifies whether a service account should be created
   create: true
-  # Annotations to add to the service account
+  # -- Annotations to add to the service account
   annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
+  # -- The name of the service account to use.
+  # -- If not set and create is true, a name is generated using the fullname template
   name: ""

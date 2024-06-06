@@ -18,6 +18,14 @@
     },
     {
       "Namespace": "",
+      "ResourceName": "gp2"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "local-path"
+    },
+    {
+      "Namespace": "",
       "ResourceName": "managed"
     },
     {
