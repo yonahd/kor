@@ -33,4 +33,7 @@ validate-exception-sorting:
 			fi; \
 			echo "\t$$file"; \
 		fi; \
-	done
+	done; \
+	if [ "$$PRINT_ERR" = 0 ]; then \
+		echo "Run the following command to sort all files recursively: make validate-exception-sorting"; \
+	fi; \
