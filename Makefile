@@ -35,5 +35,5 @@ validate-exception-sorting:
 		fi; \
 	done; \
 	if [ "$$PRINT_ERR" = 0 ]; then \
-		echo "Run the following command to sort all files recursively: make validate-exception-sorting"; \
+		echo "Run the following command to sort all files recursively: make sort-exception-files"; \
 	fi; \
