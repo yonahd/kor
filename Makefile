@@ -17,13 +17,13 @@ test:
 
 sort-exception-files:
 	@echo "Sorting exception files..."
-	@find pkg/kor/exceptions -name '*.json' -exec sh -c ' \
+	@find $(EXCEPTIONS_DIR) -name '$(EXCEPTIONS_FILE_PATTERN)' -exec sh -c ' \
 		jq "with_entries(.value |= sort_by(.Namespace, .ResourceName))" {} > {}.tmp && mv {}.tmp {} \
 	' \;
 
 validate-exception-sorting:
 	@PRINT_ERR=1; \
-	for file in $(wildcard $(EXCEPTIONS_DIR)/*/*.json); do \
+	for file in $(wildcard $(EXCEPTIONS_DIR)/*/$(EXCEPTIONS_FILE_PATTERN)); do \
 		SORTED=$$(jq "with_entries(.value |= sort_by(.Namespace, .ResourceName))" "$$file"); \
 		CURRENT_FILE=$$(jq . "$$file"); \
 		if [ "$$CURRENT_FILE" != "$$SORTED" ]; then \
