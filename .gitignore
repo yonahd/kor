@@ -1,6 +1,7 @@
-.vscode
+gvscode
 *.iml
 .idea/
+.vscode/
 dist/**
 main.exe
 coverage.*
@@ -9,3 +10,4 @@ kor
 !kor/
 *.swp
 hack/exceptions
+.envrc
