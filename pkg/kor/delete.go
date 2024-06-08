@@ -265,6 +265,13 @@ func DeleteResourceWithFinalizer(diff []string, dynamicClient dynamic.Interface,
 	return deletedDiff, nil
 }
 
+func namespacedMessageSuffix(namespace string) string {
+	if namespace != "" {
+		return " in namespace " + namespace
+	}
+	return ""
+}
+
 func DeleteResource(diff []string, clientset kubernetes.Interface, namespace, resourceType string, noInteractive bool) ([]string, error) {
 	deletedDiff := []string{}
 
