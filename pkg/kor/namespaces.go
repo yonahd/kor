@@ -132,7 +132,6 @@ func processNamespaces(
 	dynamicClient dynamic.Interface,
 	filterOpts *filters.Options,
 ) ([]string, error) {
-
 	var unusedNamespaces []string
 
 	namespaces, err := clientset.CoreV1().Namespaces().List(
@@ -156,7 +155,7 @@ func processNamespaces(
 			continue
 		}
 
-		// skipping two namespaces and default resources here
+		// skipping default resources here
 		resourceFound, err := isErrorOrNamespaceContainsResources(
 			ctx,
 			clientset,
@@ -172,7 +171,6 @@ func processNamespaces(
 		if !resourceFound {
 			unusedNamespaces = append(unusedNamespaces, namespace.Name)
 		}
-
 	}
 	return unusedNamespaces, nil
 }
