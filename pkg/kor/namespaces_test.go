@@ -10,7 +10,7 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func TestIgnoreResourceType(t *testing.T) {
+func Test_namespaces_IgnoreResourceType(t *testing.T) {
 	type args struct {
 		resource        string
 		ignoreResources []string
@@ -60,7 +60,7 @@ func TestIgnoreResourceType(t *testing.T) {
 	}
 }
 
-func TestGetGVR(t *testing.T) {
+func Test_namespaces_GetGVR(t *testing.T) {
 	type args struct {
 		name    string
 		splitGV []string
@@ -137,7 +137,7 @@ func TestGetGVR(t *testing.T) {
 		})
 	}
 }
-func TestIgnorePredefinedResource(t *testing.T) {
+func Test_namespaces_IgnorePredefinedResource(t *testing.T) {
 	tests := []struct {
 		name           string
 		gr             GenericResource
@@ -265,7 +265,7 @@ func TestIgnorePredefinedResource(t *testing.T) {
 	}
 }
 
-func TestIsNamespaceNotEmpty(t *testing.T) {
+func Test_namespaces_IsNamespaceNotEmpty(t *testing.T) {
 	tests := []struct {
 		name           string
 		gvr            *schema.GroupVersionResource
