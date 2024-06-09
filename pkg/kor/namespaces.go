@@ -51,6 +51,20 @@ func ignoreResourceType(resource string, ignoreResourceTypes []string) bool {
 	return false
 }
 
+func ignorePredefinedResource(gr GenericResource) bool {
+	// Specific list of resources to ignore - resources created in all namespaced by default
+	if gr.GVR.Resource == "configmaps" && gr.GVR.Version == "v1" && gr.NamespacedName.Name == "kube-root-ca.crt" {
+		return true
+	}
+	if gr.GVR.Resource == "serviceaccounts" && gr.GVR.Version == "v1" && gr.NamespacedName.Name == "default" {
+		return true
+	}
+	if gr.GVR.Resource == "events" {
+		return true
+	}
+	return false
+}
+
 func isErrorOrNamespaceContainsResources(
 	ctx context.Context,
 	clientset kubernetes.Interface,
@@ -85,14 +99,8 @@ func isErrorOrNamespaceContainsResources(
 						Name:      unstructuredObj.GetName(),
 					},
 				}
-				// Specific list of resources to ignore - resources created in all namespaced by default
-				if gr.GVR.Resource == "configmaps" && gr.GVR.Version == "v1" && gr.NamespacedName.Name == "kube-root-ca.crt" {
-					continue
-				}
-				if gr.GVR.Resource == "serviceaccounts" && gr.GVR.Version == "v1" && gr.NamespacedName.Name == "default" {
-					continue
-				}
-				if gr.GVR.Resource == "events" {
+				// Ignore default cluster resources
+				if ignorePredefinedResource(gr) {
 					continue
 				}
 				// User specified resource type ignore list
@@ -100,7 +108,6 @@ func isErrorOrNamespaceContainsResources(
 					continue
 				}
 
-				// Some resource found - immediately finish
 				return true, nil
 			}
 		}

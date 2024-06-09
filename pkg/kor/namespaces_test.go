@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 func TestIgnoreResourceType(t *testing.T) {
@@ -129,6 +130,133 @@ func TestGetGVR(t *testing.T) {
 			}
 			if got != nil && *got != *tt.want {
 				t.Errorf("getGVR() = %+v, want %+v", got, tt.want)
+			}
+		})
+	}
+}
+func TestIgnorePredefinedResource(t *testing.T) {
+	tests := []struct {
+		name           string
+		gr             GenericResource
+		expectedReturn bool
+	}{
+		{
+			name: "configmap kube-root-ca.crt in default",
+			gr: GenericResource{
+				NamespacedName: types.NamespacedName{
+					Name:      "kube-root-ca.crt",
+					Namespace: "default",
+				},
+				GVR: schema.GroupVersionResource{
+					Resource: "configmaps",
+					Version:  "v1",
+				},
+			},
+			expectedReturn: true,
+		},
+		{
+			name: "configmap kube-root-ca.crt in abc",
+			gr: GenericResource{
+				NamespacedName: types.NamespacedName{
+					Name:      "kube-root-ca.crt",
+					Namespace: "abc",
+				},
+				GVR: schema.GroupVersionResource{
+					Resource: "configmaps",
+					Version:  "v1",
+				},
+			},
+			expectedReturn: true,
+		},
+		{
+			name: "sa default in default",
+			gr: GenericResource{
+				NamespacedName: types.NamespacedName{
+					Name:      "default",
+					Namespace: "default",
+				},
+				GVR: schema.GroupVersionResource{
+					Resource: "serviceaccounts",
+					Version:  "v1",
+				},
+			},
+			expectedReturn: true,
+		},
+		{
+			name: "sa default in cde",
+			gr: GenericResource{
+				NamespacedName: types.NamespacedName{
+					Name:      "default",
+					Namespace: "cde",
+				},
+				GVR: schema.GroupVersionResource{
+					Resource: "serviceaccounts",
+					Version:  "v1",
+				},
+			},
+			expectedReturn: true,
+		},
+		{
+			name: "event in default",
+			gr: GenericResource{
+				NamespacedName: types.NamespacedName{
+					Name:      "test-event",
+					Namespace: "default",
+				},
+				GVR: schema.GroupVersionResource{
+					Resource: "events",
+				},
+			},
+			expectedReturn: true,
+		},
+		{
+			name: "event in qqq",
+			gr: GenericResource{
+				NamespacedName: types.NamespacedName{
+					Name:      "test-event",
+					Namespace: "qqq",
+				},
+				GVR: schema.GroupVersionResource{
+					Resource: "events",
+				},
+			},
+			expectedReturn: true,
+		},
+		{
+			name: "test-configmap in default",
+			gr: GenericResource{
+				NamespacedName: types.NamespacedName{
+					Name:      "test-configmap",
+					Namespace: "default",
+				},
+				GVR: schema.GroupVersionResource{
+					Resource: "configmaps",
+					Version:  "v1",
+				},
+			},
+			expectedReturn: false,
+		},
+		{
+			name: "test-serviceaccount in default",
+			gr: GenericResource{
+				NamespacedName: types.NamespacedName{
+					Name:      "test-serviceaccount",
+					Namespace: "default",
+				},
+				GVR: schema.GroupVersionResource{
+					Resource: "serviceaccounts",
+					Version:  "v1",
+				},
+			},
+			expectedReturn: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ignorePredefinedResource(tt.gr)
+			if got != tt.expectedReturn {
+				t.Errorf("ignorePredefinedResource() = %t, want %t", got, tt.expectedReturn)
 			}
 		})
 	}
