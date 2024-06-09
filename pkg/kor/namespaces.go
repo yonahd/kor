@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -65,6 +66,32 @@ func ignorePredefinedResource(gr GenericResource) bool {
 	return false
 }
 
+func isNamespaceNotEmpty(
+	gvr *schema.GroupVersionResource,
+	unstructuredList *unstructured.UnstructuredList,
+	filterOpts *filters.Options,
+) bool {
+	for _, unstructuredObj := range unstructuredList.Items {
+		gr := GenericResource{
+			GVR: *gvr,
+			NamespacedName: types.NamespacedName{
+				Namespace: unstructuredObj.GetNamespace(),
+				Name:      unstructuredObj.GetName(),
+			},
+		}
+		// Ignore default cluster resources
+		if ignorePredefinedResource(gr) {
+			continue
+		}
+		// User specified resource type ignore list
+		if ignoreResourceType(gr.GVR.Resource, filterOpts.IgnoreResourceTypes) {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
 func isErrorOrNamespaceContainsResources(
 	ctx context.Context,
 	clientset kubernetes.Interface,
@@ -91,23 +118,7 @@ func isErrorOrNamespaceContainsResources(
 				continue
 			}
 
-			for _, unstructuredObj := range unstructuredList.Items {
-				gr := GenericResource{
-					GVR: *gvr,
-					NamespacedName: types.NamespacedName{
-						Namespace: unstructuredObj.GetNamespace(),
-						Name:      unstructuredObj.GetName(),
-					},
-				}
-				// Ignore default cluster resources
-				if ignorePredefinedResource(gr) {
-					continue
-				}
-				// User specified resource type ignore list
-				if ignoreResourceType(gr.GVR.Resource, filterOpts.IgnoreResourceTypes) {
-					continue
-				}
-
+			if isNamespaceNotEmpty(gvr, unstructuredList, filterOpts) {
 				return true, nil
 			}
 		}

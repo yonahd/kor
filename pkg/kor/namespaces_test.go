@@ -3,8 +3,11 @@ package kor
 import (
 	"testing"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func TestIgnoreResourceType(t *testing.T) {
@@ -257,6 +260,128 @@ func TestIgnorePredefinedResource(t *testing.T) {
 			got := ignorePredefinedResource(tt.gr)
 			if got != tt.expectedReturn {
 				t.Errorf("ignorePredefinedResource() = %t, want %t", got, tt.expectedReturn)
+			}
+		})
+	}
+}
+
+func TestIsNamespaceNotEmpty(t *testing.T) {
+	tests := []struct {
+		name           string
+		gvr            *schema.GroupVersionResource
+		objects        *unstructured.UnstructuredList
+		filterOpts     *filters.Options
+		expectedReturn bool
+	}{
+		{
+			name: "deployment exists, ignoring secrets and configmaps",
+			gvr: &schema.GroupVersionResource{
+				Group:    "apps",
+				Version:  "v1",
+				Resource: "deployments",
+			},
+			objects: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					{
+						Object: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "Deployment",
+							"metadata": map[string]interface{}{
+								"name":      "test-deployment",
+								"namespace": "default",
+							},
+						},
+					},
+				},
+			},
+			filterOpts: &filters.Options{
+				IgnoreResourceTypes: []string{"configmaps", "secrets"},
+			},
+			expectedReturn: true,
+		},
+		{
+			name: "deployment exists, ignoring deployments",
+			gvr: &schema.GroupVersionResource{
+				Group:    "apps",
+				Version:  "v1",
+				Resource: "deployments",
+			},
+			objects: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					{
+						Object: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "Deployment",
+							"metadata": map[string]interface{}{
+								"name":      "test-deployment",
+								"namespace": "default",
+							},
+						},
+					},
+				},
+			},
+			filterOpts: &filters.Options{
+				IgnoreResourceTypes: []string{"deployments"},
+			},
+			expectedReturn: false,
+		},
+		{
+			name: "event exists but ignored, ignoring deployments",
+			gvr: &schema.GroupVersionResource{
+				Group:    "",
+				Version:  "v1",
+				Resource: "events",
+			},
+			objects: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Event",
+							"metadata": map[string]interface{}{
+								"name":      "pod-event",
+								"namespace": "abc",
+							},
+						},
+					},
+				},
+			},
+			filterOpts: &filters.Options{
+				IgnoreResourceTypes: []string{"deployments"},
+			},
+			expectedReturn: false,
+		},
+		{
+			name: "default sa exists but ignored",
+			gvr: &schema.GroupVersionResource{
+				Group:    "",
+				Version:  "v1",
+				Resource: "serviceaccounts",
+			},
+			objects: &unstructured.UnstructuredList{
+				Items: []unstructured.Unstructured{
+					{
+						Object: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "ServiceAccount",
+							"metadata": map[string]interface{}{
+								"name":      "default",
+								"namespace": "cde",
+							},
+						},
+					},
+				},
+			},
+			filterOpts:     &filters.Options{},
+			expectedReturn: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isNamespaceNotEmpty(tt.gvr, tt.objects, tt.filterOpts)
+			if got != tt.expectedReturn {
+				t.Errorf("Expected namespace to be not empty (%t), but result is %t", tt.expectedReturn, got)
 			}
 		})
 	}
