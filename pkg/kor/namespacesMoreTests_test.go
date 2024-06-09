@@ -153,8 +153,8 @@ func createHappyDeployFakeClientInterfaces(ctx context.Context, t *testing.T, ns
 	}
 
 	listKinds := map[schema.GroupVersionResource]string{
-		schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
-		schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
+		{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
+		{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
 	}
 	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, deployment, namespace)
 
@@ -174,8 +174,8 @@ func createHappyEmptyFakeClientInterfaces(ctx context.Context, t *testing.T, ns,
 	}
 
 	listKinds := map[schema.GroupVersionResource]string{
-		schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
-		schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
+		{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
+		{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
 	}
 	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace)
 
@@ -195,8 +195,8 @@ func createUnhappyDiscoveryFakeClientInterfaces(ctx context.Context, t *testing.
 	}
 
 	listKinds := map[schema.GroupVersionResource]string{
-		schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
-		schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
+		{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
+		{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
 	}
 	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace)
 
@@ -216,8 +216,8 @@ func createBrokenAPIResourceListDiscoveryFakeClientInterfaces(ctx context.Contex
 	}
 
 	listKinds := map[schema.GroupVersionResource]string{
-		schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
-		schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
+		{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
+		{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
 	}
 	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace)
 
@@ -243,8 +243,8 @@ func createDynamicDeployListForcedErrorFakeClientInterfaces(ctx context.Context,
 	}
 
 	listKinds := map[schema.GroupVersionResource]string{
-		schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
-		schema.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
+		{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
+		{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
 	}
 	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds)
 	dynamicClient.PrependReactor("list", "deployments", func(action ktesting.Action) (handled bool, ret runtime.Object, err error) {
