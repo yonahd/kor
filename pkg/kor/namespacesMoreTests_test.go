@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/yonahd/kor/pkg/filters"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +16,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	ktesting "k8s.io/client-go/testing"
+
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 type fakeHappyDiscovery struct {
@@ -119,15 +120,26 @@ func defineNamespaceObject(nsName string) *corev1.Namespace {
 	}
 }
 
+func getNamespaceTestSchema(t *testing.T) *runtime.Scheme {
+	scheme := runtime.NewScheme()
+	err := corev1.AddToScheme(scheme)
+	if err != nil {
+		t.Errorf("Failed to add corev1 to scheme: %v", err)
+	}
+	err = appsv1.AddToScheme(scheme)
+	if err != nil {
+		t.Errorf("Failed to add appsv1 to scheme: %v", err)
+	}
+	return scheme
+
+}
+
 func createHappyDeployFakeClientInterfaces(ctx context.Context, t *testing.T, ns, name string) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
 	realClientset := fake.NewSimpleClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 
-	scheme := runtime.NewScheme()
-	corev1.AddToScheme(scheme)
-	appsv1.AddToScheme(scheme)
-
+	scheme := getNamespaceTestSchema(t)
 	namespace := defineNamespaceObject(ns)
 	_, err := clientset.CoreV1().Namespaces().Create(ctx, namespace, metav1.CreateOptions{})
 	if err != nil {
@@ -154,10 +166,7 @@ func createHappyEmptyFakeClientInterfaces(ctx context.Context, t *testing.T, ns,
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 
-	scheme := runtime.NewScheme()
-	corev1.AddToScheme(scheme)
-	appsv1.AddToScheme(scheme)
-
+	scheme := getNamespaceTestSchema(t)
 	namespace := defineNamespaceObject(ns)
 	_, err := clientset.CoreV1().Namespaces().Create(ctx, namespace, metav1.CreateOptions{})
 	if err != nil {
@@ -178,10 +187,7 @@ func createUnhappyDiscoveryFakeClientInterfaces(ctx context.Context, t *testing.
 	fakeDisc := &fakeUnhappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 
-	scheme := runtime.NewScheme()
-	corev1.AddToScheme(scheme)
-	appsv1.AddToScheme(scheme)
-
+	scheme := getNamespaceTestSchema(t)
 	namespace := defineNamespaceObject(ns)
 	_, err := clientset.CoreV1().Namespaces().Create(ctx, namespace, metav1.CreateOptions{})
 	if err != nil {
@@ -202,10 +208,7 @@ func createBrokenAPIResourceListDiscoveryFakeClientInterfaces(ctx context.Contex
 	fakeDisc := &fakeBrokenAPIResourceListDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 
-	scheme := runtime.NewScheme()
-	corev1.AddToScheme(scheme)
-	appsv1.AddToScheme(scheme)
-
+	scheme := getNamespaceTestSchema(t)
 	namespace := defineNamespaceObject(ns)
 	_, err := clientset.CoreV1().Namespaces().Create(ctx, namespace, metav1.CreateOptions{})
 	if err != nil {
@@ -226,10 +229,7 @@ func createDynamicDeployListForcedErrorFakeClientInterfaces(ctx context.Context,
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 
-	scheme := runtime.NewScheme()
-	corev1.AddToScheme(scheme)
-	appsv1.AddToScheme(scheme)
-
+	scheme := getNamespaceTestSchema(t)
 	namespace := defineNamespaceObject(ns)
 	_, err := clientset.CoreV1().Namespaces().Create(ctx, namespace, metav1.CreateOptions{})
 	if err != nil {
