@@ -130,3 +130,95 @@ func TestGetKubeClientFromInput(t *testing.T) {
 		t.Errorf("Expected valid clientSet")
 	}
 }
+
+func TestNamespacedMessageSuffix(t *testing.T) {
+	type args struct {
+		namespace string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "empty string passed",
+			args: args{
+				namespace: "",
+			},
+			want: "",
+		},
+		{
+			name: "namespace name passed",
+			args: args{
+				namespace: "test-ns1",
+			},
+			want: " in namespace test-ns1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := namespacedMessageSuffix(tt.args.namespace); got != tt.want {
+				t.Errorf(
+					"namespacedMessageSuffix() = '%v', want '%v'",
+					got,
+					tt.want,
+				)
+			}
+		})
+	}
+}
+
+// func TestFormatOutput(t *testing.T) {
+// 	type args struct {
+// 		namespace string
+// 		resources []string
+// 		verbose   bool
+// 	}
+// 	tests := []struct {
+// 		name string
+// 		args args
+// 		want string
+// 	}{
+// 		{
+// 			name: "verbose, empty namespace, empty resource list",
+// 			args: args{
+// 				namespace: "",
+// 				resources: []string{},
+// 				verbose:   true,
+// 			},
+// 			want: "No unused TestType found\n",
+// 		},
+// 		{
+// 			name: "verbose, non empty namespace, empty resource list",
+// 			args: args{
+// 				namespace: "test-ns",
+// 				resources: []string{},
+// 				verbose:   true,
+// 			},
+// 			want: "No unused TestType found in namespace test-ns\n",
+// 		},
+// 		{
+// 			name: "non verbose, empty namespace, empty resource list",
+// 			args: args{
+// 				namespace: "",
+// 				resources: []string{},
+// 				verbose:   false,
+// 			},
+// 			want: "",
+// 		},
+// 	}
+
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			if got := FormatOutput(
+// 				tt.args.namespace,
+// 				tt.args.resources,
+// 				"TestType",
+// 				Opts{Verbose: tt.args.verbose},
+// 			); got != tt.want {
+// 				t.Errorf("FormatOutput() = '%v', want '%v'", got, tt.want)
+// 			}
+// 		})
+// 	}
+
+// }
