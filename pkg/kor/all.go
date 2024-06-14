@@ -254,7 +254,7 @@ func getUnusedStorageClasses(clientset kubernetes.Interface, filterOpts *filters
 func getUnusedNetworkPolicies(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	netpolDiff, err := processNamespaceNetworkPolicies(clientset, namespace, filterOpts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "NetworkPolicy", namespace, err)
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "NetworkPolicies", namespace, err)
 	}
 	namespaceNetpolDiff := ResourceDiff{
 		"NetworkPolicy",
