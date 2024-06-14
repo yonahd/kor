@@ -11,7 +11,7 @@ import (
 
 var jobCmd = &cobra.Command{
 	Use:     "job",
-	Aliases: []string{"job", "jobs"},
+	Aliases: []string{"jobs"},
 	Short:   "Gets unused jobs",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
