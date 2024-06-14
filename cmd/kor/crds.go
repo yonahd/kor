@@ -11,7 +11,7 @@ import (
 
 var crdCmd = &cobra.Command{
 	Use:     "customresourcedefinition",
-	Aliases: []string{"crd", "customresourcedefinitions"},
+	Aliases: []string{"crd", "crds", "customresourcedefinitions"},
 	Short:   "Gets unused crds",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {

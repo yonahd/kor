@@ -11,7 +11,7 @@ import (
 
 var secretCmd = &cobra.Command{
 	Use:     "secret",
-	Aliases: []string{"scrt", "secrets"},
+	Aliases: []string{"secrets"},
 	Short:   "Gets unused secrets",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
