@@ -252,15 +252,15 @@ func getUnusedStorageClasses(clientset kubernetes.Interface, filterOpts *filters
 }
 
 func getUnusedNetworkPolicies(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	npDiff, err := processNamespaceNetworkPolicies(clientset, namespace, filterOpts)
+	netpolDiff, err := processNamespaceNetworkPolicies(clientset, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "NetworkPolicy", namespace, err)
 	}
-	namespaceNPDiff := ResourceDiff{
+	namespaceNetpolDiff := ResourceDiff{
 		"NetworkPolicy",
-		npDiff,
+		netpolDiff,
 	}
-	return namespaceNPDiff
+	return namespaceNetpolDiff
 }
 
 func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {

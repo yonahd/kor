@@ -8,7 +8,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -20,8 +20,8 @@ func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 	clientset := fake.NewSimpleClientset()
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
-	}, metav1.CreateOptions{})
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
 
 	if err != nil {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
@@ -40,7 +40,7 @@ func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 	}
 
 	for _, pod := range pods {
-		_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod, metav1.CreateOptions{})
+		_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod, v1.CreateOptions{})
 		if err != nil {
 			t.Fatalf("Error creating fake pod: %v", err)
 		}
@@ -48,21 +48,21 @@ func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 
 	netpols := []*networkingv1.NetworkPolicy{
 		// all pods are selected
-		CreateTestNetworkPolicies("netpol-1", testNamespace, metav1.LabelSelector{}, AppLabels),
-		CreateTestNetworkPolicies("netpol-2", testNamespace, metav1.LabelSelector{}, UsedLabels),
-		CreateTestNetworkPolicies("netpol-3", testNamespace, metav1.LabelSelector{}, UnusedLabels),
+		CreateTestNetworkPolicy("netpol-1", testNamespace, v1.LabelSelector{}, AppLabels),
+		CreateTestNetworkPolicy("netpol-2", testNamespace, v1.LabelSelector{}, UsedLabels),
+		CreateTestNetworkPolicy("netpol-3", testNamespace, v1.LabelSelector{}, UnusedLabels),
 		// some pods are selected
-		CreateTestNetworkPolicies("netpol-4", testNamespace, *metav1.SetAsLabelSelector(podLabels), AppLabels),
-		CreateTestNetworkPolicies("netpol-5", testNamespace, *metav1.SetAsLabelSelector(podLabels), UnusedLabels),
-		CreateTestNetworkPolicies("netpol-6", testNamespace, *metav1.SetAsLabelSelector(podLabels), UsedLabels),
+		CreateTestNetworkPolicy("netpol-4", testNamespace, *v1.SetAsLabelSelector(podLabels), AppLabels),
+		CreateTestNetworkPolicy("netpol-5", testNamespace, *v1.SetAsLabelSelector(podLabels), UnusedLabels),
+		CreateTestNetworkPolicy("netpol-6", testNamespace, *v1.SetAsLabelSelector(podLabels), UsedLabels),
 		// no pods are selected
-		CreateTestNetworkPolicies("netpol-7", testNamespace, *metav1.SetAsLabelSelector(noMatchLabels), AppLabels),
-		CreateTestNetworkPolicies("netpol-8", testNamespace, *metav1.SetAsLabelSelector(noMatchLabels), UnusedLabels),
-		CreateTestNetworkPolicies("netpol-9", testNamespace, *metav1.SetAsLabelSelector(noMatchLabels), UsedLabels),
+		CreateTestNetworkPolicy("netpol-7", testNamespace, *v1.SetAsLabelSelector(noMatchLabels), AppLabels),
+		CreateTestNetworkPolicy("netpol-8", testNamespace, *v1.SetAsLabelSelector(noMatchLabels), UnusedLabels),
+		CreateTestNetworkPolicy("netpol-9", testNamespace, *v1.SetAsLabelSelector(noMatchLabels), UsedLabels),
 	}
 
 	for _, netpol := range netpols {
-		_, err = clientset.NetworkingV1().NetworkPolicies(netpol.Namespace).Create(context.TODO(), netpol, metav1.CreateOptions{})
+		_, err = clientset.NetworkingV1().NetworkPolicies(netpol.Namespace).Create(context.TODO(), netpol, v1.CreateOptions{})
 		if err != nil {
 			t.Fatalf("Error creating fake networkpolicy: %v", err)
 		}
@@ -87,7 +87,7 @@ func TestProcessNamespaceNetworkPolicies(t *testing.T) {
 	}
 
 	if len(unusedNetpols) != len(expectedUnusedNetpols) {
-		t.Errorf("Expected %d  unused networkpolicies, got %d", len(expectedUnusedNetpols), len(unusedNetpols))
+		t.Errorf("Expected %d unused networkpolicies, got %d", len(expectedUnusedNetpols), len(unusedNetpols))
 	}
 
 	for i, netpol := range unusedNetpols {

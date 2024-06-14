@@ -7,14 +7,14 @@ import (
 	"fmt"
 	"os"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/yonahd/kor/pkg/filters"
 )
 
 func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
-	netpolList, err := clientset.NetworkingV1().NetworkPolicies(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
+	netpolList, err := clientset.NetworkingV1().NetworkPolicies(namespace).List(context.TODO(), v1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
@@ -32,11 +32,11 @@ func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace s
 		}
 
 		// retrieve pods selected by the NetworkPolicy
-		labelSelector, err := metav1.LabelSelectorAsSelector(&netpol.Spec.PodSelector)
+		labelSelector, err := v1.LabelSelectorAsSelector(&netpol.Spec.PodSelector)
 		if err != nil {
 			return nil, err
 		}
-		podList, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
+		podList, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), v1.ListOptions{
 			LabelSelector: labelSelector.String(),
 		})
 		if err != nil {
@@ -89,10 +89,10 @@ func GetUnusedNetworkPolicies(filterOpts *filters.Options, clientset kubernetes.
 		}
 	}
 
-	unusedNetworkPolcies, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
+	unusedNetworkPolicies, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
 
-	return unusedNetworkPolcies, nil
+	return unusedNetworkPolicies, nil
 }

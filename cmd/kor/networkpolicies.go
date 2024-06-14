@@ -11,7 +11,7 @@ import (
 
 var netpolCmd = &cobra.Command{
 	Use:     "networkpolicy",
-	Aliases: []string{"networkpolicies", "netpol"},
+	Aliases: []string{"netpol", "networkpolicies"},
 	Short:   "Gets unused networkpolicies",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
