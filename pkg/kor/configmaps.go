@@ -74,17 +74,6 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 		}
 	}
 
-	config, err := unmarshalConfig(configMapsConfig)
-	if err != nil {
-		return nil, nil, nil, nil, nil, err
-	}
-
-	for _, resource := range config.ExceptionConfigMaps {
-		if resource.Namespace == namespace || resource.Namespace == "*" {
-			volumesCM = append(volumesCM, resource.ResourceName)
-		}
-	}
-
 	return volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, nil
 }
 
@@ -117,6 +106,10 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 	if err != nil {
 		return nil, err
 	}
+	config, err := unmarshalConfig(configMapsConfig)
+	if err != nil {
+		return nil, err
+	}
 
 	volumesCM = RemoveDuplicatesAndSort(volumesCM)
 	envCM = RemoveDuplicatesAndSort(envCM)
@@ -145,8 +138,20 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 	diff := CalculateResourceDifference(usedConfigMaps, configMapNames)
 	diff = append(diff, unusedConfigmapNames...)
 
-	return diff, nil
+	var result []string
+	for _, cmName := range diff {
+		exceptionFound, err := isResourceException(cmName, namespace, config.ExceptionConfigMaps)
+		if err != nil {
+			return nil, err
+		}
 
+		if exceptionFound {
+			continue
+		}
+		result = append(result, cmName)
+	}
+
+	return result, nil
 }
 
 func GetUnusedConfigmaps(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {

@@ -1,8 +1,9 @@
 {
   "exceptionConfigMaps": [
     {
-      "Namespace": "*",
-      "ResourceName": "kube-root-ca.crt"
+      "Namespace": ".*",
+      "ResourceName": "kube-root-ca\\.crt",
+      "MatchRegex": true
     },
     {
       "Namespace": "gmp-system",
@@ -27,6 +28,10 @@
     {
       "Namespace": "kube-system",
       "ResourceName": "cluster-autoscaler-status"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "cluster-dns"
     },
     {
       "Namespace": "kube-system",

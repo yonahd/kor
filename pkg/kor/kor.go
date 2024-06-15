@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
-	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -22,6 +22,7 @@ import (
 type ExceptionResource struct {
 	Namespace    string
 	ResourceName string
+	MatchRegex   bool
 }
 type IncludeExcludeLists struct {
 	IncludeListStr string
@@ -290,22 +291,30 @@ func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opt
 	return string(jsonResponse), nil
 }
 
-func isResourceException(resourceName, namespace string, exceptions []ExceptionResource) bool {
+func isResourceException(resourceName string, namespace string, exceptions []ExceptionResource) (bool, error) {
 	var match bool
 	for _, e := range exceptions {
 		if e.ResourceName == resourceName && e.Namespace == namespace {
 			match = true
 			break
 		}
-		if strings.HasSuffix(e.ResourceName, "*") {
-			resourceNameMatched := strings.HasPrefix(resourceName, strings.TrimSuffix(e.ResourceName, "*"))
-			if resourceNameMatched && e.Namespace == namespace {
+
+		if e.MatchRegex {
+			namespaceRegexp, err := regexp.Compile(e.Namespace)
+			if err != nil {
+				return false, err
+			}
+			nameRegexp, err := regexp.Compile(e.ResourceName)
+			if err != nil {
+				return false, err
+			}
+			if nameRegexp.MatchString(resourceName) && namespaceRegexp.MatchString(namespace) {
 				match = true
 				break
 			}
 		}
 	}
-	return match
+	return match, nil
 }
 
 func unmarshalConfig(data []byte) (*Config, error) {

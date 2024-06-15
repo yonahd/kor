@@ -86,17 +86,6 @@ func retrieveUsedSA(clientset kubernetes.Interface, namespace string) ([]string,
 		}
 	}
 
-	config, err := unmarshalConfig(serviceAccountsConfig)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	for _, resource := range config.ExceptionServiceAccounts {
-		if resource.Namespace == namespace || resource.Namespace == "*" {
-			podServiceAccounts = append(podServiceAccounts, resource.ResourceName)
-		}
-	}
-
 	roleServiceAccounts, err := getServiceAccountsFromRoleBindings(clientset, namespace)
 	if err != nil {
 		return nil, nil, nil, err
@@ -136,6 +125,10 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string, filter
 	if err != nil {
 		return nil, err
 	}
+	config, err := unmarshalConfig(serviceAccountsConfig)
+	if err != nil {
+		return nil, err
+	}
 
 	usedServiceAccounts = RemoveDuplicatesAndSort(usedServiceAccounts)
 	roleServiceAccounts = RemoveDuplicatesAndSort(roleServiceAccounts)
@@ -150,7 +143,20 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string, filter
 
 	diff := CalculateResourceDifference(usedServiceAccounts, serviceAccountNames)
 	diff = append(diff, unusedServiceAccountNames...)
-	return diff, nil
+
+	var result []string
+	for _, saName := range diff {
+		exceptionFound, err := isResourceException(saName, namespace, config.ExceptionServiceAccounts)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
+			continue
+		}
+		result = append(result, saName)
+	}
+	return result, nil
 
 }
 
