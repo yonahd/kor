@@ -46,7 +46,6 @@ func processNamespaceServices(clientset kubernetes.Interface, namespace string, 
 
 		status := ResourceInfo{Name: endpoints.Name}
 
-
 		if endpoints.Labels["kor/used"] == "false" {
 			status.Reason = "Marked with unused label"
 			endpointsWithoutSubsets = append(endpointsWithoutSubsets, status)
