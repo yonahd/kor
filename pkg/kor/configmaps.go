@@ -138,6 +138,14 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 	var diff []ResourceInfo
 
 	for _, name := range CalculateResourceDifference(usedConfigMaps, configMapNames) {
+		exceptionFound, err := isResourceException(name, namespace, config.ExceptionConfigMaps)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
+			continue
+		}
 		reason := "ConfigMap is not used in any pod or container"
 		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
 	}
@@ -147,20 +155,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
 	}
 
-	var result []string
-	for _, cmName := range diff {
-		exceptionFound, err := isResourceException(cmName, namespace, config.ExceptionConfigMaps)
-		if err != nil {
-			return nil, err
-		}
-
-		if exceptionFound {
-			continue
-		}
-		result = append(result, cmName)
-	}
-
-	return result, nil
+	return diff, nil
 }
 
 func GetUnusedConfigmaps(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {

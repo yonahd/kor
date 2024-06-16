@@ -34,7 +34,8 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 
 		selector := pdb.Spec.Selector
 		if selector == nil {
-			unusedPdbs = append(unusedPdbs, pdb.Name)
+			reason := "Pdb has no selector"
+			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
 			continue
 		}
 		if len(selector.MatchLabels) == 0 {
