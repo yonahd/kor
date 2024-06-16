@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
+	"sigs.k8s.io/yaml"
 )
 
 type ResourceInfo struct {
@@ -14,17 +15,29 @@ type ResourceInfo struct {
 	Reason string `json:"reason,omitempty"`
 }
 
+func getTableRow(index int, columns ...string) []string {
+	row := make([]string, 0, len(columns)+1)
+	row = append(row, fmt.Sprintf("%d", index+1))
+	row = append(row, columns...)
+	return row
+}
+
 func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opts Opts, jsonResponse []byte) (string, error) {
 	switch outputFormat {
 	case "table":
-		return outputBuffer.String(), nil
+		if opts.WebhookURL == "" || opts.Channel == "" || opts.Token != "" {
+			return outputBuffer.String(), nil
+		}
+		if err := SendToSlack(SlackMessage{}, opts, outputBuffer.String()); err != nil {
+			return "", fmt.Errorf("failed to send message to slack: %w", err)
+		}
 	case "json", "yaml":
 		var resources map[string]map[string][]ResourceInfo
 		if err := json.Unmarshal(jsonResponse, &resources); err != nil {
 			return "", err
 		}
 
-		if !opts.ShowReason && outputFormat == "json" {
+		if !opts.ShowReason {
 			// Create a map of namespaces with their corresponding maps of resource types and lists of resource names
 			namespaces := make(map[string]map[string][]string)
 			for namespace, resourceMap := range resources {
@@ -42,18 +55,30 @@ func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opt
 			if err != nil {
 				return "", err
 			}
+			if outputFormat == "yaml" {
+				modifiedJSONResponse, err = yaml.JSONToYAML(modifiedJSONResponse)
+				if err != nil {
+					return "", err
+				}
+			}
 			return string(modifiedJSONResponse), nil
 		}
 
-		// Marshal JSON response with reasons
 		modifiedJSONResponse, err := json.MarshalIndent(resources, "", "  ")
 		if err != nil {
 			return "", err
+		}
+		if outputFormat == "yaml" {
+			modifiedJSONResponse, err = yaml.JSONToYAML(modifiedJSONResponse)
+			if err != nil {
+				return "", err
+			}
 		}
 		return string(modifiedJSONResponse), nil
 	default:
 		return "", fmt.Errorf("unsupported output format: %s", outputFormat)
 	}
+	return "", fmt.Errorf("unsupported output format: %s", outputFormat)
 }
 
 func FormatOutput(resources map[string]map[string][]ResourceInfo, opts Opts) bytes.Buffer {
@@ -109,12 +134,12 @@ func formatOutputForResource(resource string, resources map[string][]ResourceInf
 	}
 	var buf bytes.Buffer
 	table := tablewriter.NewWriter(&buf)
-	table.SetColWidth(20)
+	table.SetColWidth(60)
 	table.SetHeader(getTableHeader(opts.GroupBy, opts.ShowReason))
 	var index int
-	for _, infos := range resources {
+	for ns, infos := range resources {
 		for _, info := range infos {
-			row := []string{info.Name}
+			row := getTableRow(index, ns, info.Name)
 			if opts.ShowReason && info.Reason != "" {
 				row = append(row, info.Reason)
 			}

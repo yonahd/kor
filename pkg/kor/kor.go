@@ -129,13 +129,6 @@ func GetDynamicClient(kubeconfig string) *dynamic.DynamicClient {
 	return clientset
 }
 
-func getTableRow(index int, columns ...string) []string {
-	row := make([]string, 0, len(columns)+1)
-	row = append(row, fmt.Sprintf("%d", index+1))
-	row = append(row, columns...)
-	return row
-}
-
 // TODO create formatter by resource "#", "Resource Name", "Namespace"
 // TODO Functions that use this object are accompanied by repeated data acquisition operations and can be optimized.
 func CalculateResourceDifference(usedResourceNames []string, allResourceNames []string) []string {
