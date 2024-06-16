@@ -119,12 +119,12 @@ func TestRetrieveUsedSA(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(serviceAccountUsedByPod) != 2 {
+	if len(serviceAccountUsedByPod) != 1 {
 		t.Errorf("Expected 2 serviceAccount Used by pod, got %d", len(serviceAccountUsedByPod))
 	}
 
-	if serviceAccountUsedByPod[0] != "test-sa1" || serviceAccountUsedByPod[1] != "default" {
-		t.Errorf("Expected 'test-sa1' and 'default', got %s", serviceAccountUsedByPod[0])
+	if serviceAccountUsedByPod[0] != "test-sa1" {
+		t.Errorf("Expected 'test-sa1', got %s", serviceAccountUsedByPod[0])
 	}
 
 }

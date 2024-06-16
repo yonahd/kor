@@ -218,7 +218,7 @@ func getUnusedJobs(clientset kubernetes.Interface, namespace string, filterOpts 
 func getUnusedReplicaSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	replicaSetDiff, err := processNamespaceReplicaSets(clientset, namespace, filterOpts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "jobs", namespace, err)
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "ReplicaSets", namespace, err)
 	}
 	namespaceRSDiff := ResourceDiff{
 		"ReplicaSet",

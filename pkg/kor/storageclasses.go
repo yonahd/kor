@@ -73,9 +73,13 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 		if err != nil {
 			return nil, err
 		}
-		exceptionStorageClasses := config.ExceptionStorageClasses
 
-		if isResourceException(sc.Name, sc.Namespace, exceptionStorageClasses) {
+		exceptionFound, err := isResourceException(sc.Name, sc.Namespace, config.ExceptionStorageClasses)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
 			continue
 		}
 

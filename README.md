@@ -98,24 +98,24 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `all` - Gets all unused resources for the specified namespace or all namespaces.
 - `configmap` - Gets unused ConfigMaps for the specified namespace or all namespaces.
 - `secret` - Gets unused Secrets for the specified namespace or all namespaces.
-- `services` - Gets unused Services for the specified namespace or all namespaces.
+- `service` - Gets unused Services for the specified namespace or all namespaces.
 - `serviceaccount` - Gets unused ServiceAccounts for the specified namespace or all namespaces.
-- `deployments` - Gets unused Deployments for the specified namespace or all namespaces.
-- `statefulsets` - Gets unused StatefulSets for the specified namespace or all namespaces.
+- `deployment` - Gets unused Deployments for the specified namespace or all namespaces.
+- `statefulset` - Gets unused StatefulSets for the specified namespace or all namespaces.
 - `role` - Gets unused Roles for the specified namespace or all namespaces.
 - `clusterrole` - Gets unused ClusterRoles for the specified namespace or all namespaces (namespace refers to RoleBinding).
 - `hpa` - Gets unused HPAs for the specified namespace or all namespaces.
-- `pods` - Gets unused Pods for the specified namespace or all namespaces.
+- `pod` - Gets unused Pods for the specified namespace or all namespaces.
 - `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
 - `pv` - Gets unused PVs in the cluster (non namespaced resource).
-- `storageclasses` - Gets unused StorageClasses in the cluster (non namespaced resource).
+- `storageclass` - Gets unused StorageClasses in the cluster (non namespaced resource).
 - `ingress` - Gets unused Ingresses for the specified namespace or all namespaces.
 - `pdb` - Gets unused PDBs for the specified namespace or all namespaces.
 - `crd` - Gets unused CRDs in the cluster (non namespaced resource).
-- `jobs` - Gets unused jobs for the specified namespace or all namespaces.
-- `replicasets` - Gets unused replicaSets for the specified namespace or all namespaces.
-- `daemonsets`- Gets unused DaemonSets for the specified namespace or all namespaces.
-- `finalizers` - Gets unused pending deletion resources for the specified namespace or all namespaces.
+- `job` - Gets unused jobs for the specified namespace or all namespaces.
+- `replicaset` - Gets unused replicaSets for the specified namespace or all namespaces.
+- `daemonset`- Gets unused DaemonSets for the specified namespace or all namespaces.
+- `finalizer` - Gets unused pending deletion resources for the specified namespace or all namespaces.
 - `exporter` - Export Prometheus metrics.
 - `version` - Print kor version information.
 
@@ -218,7 +218,7 @@ Will be cleaned always. This is a good way to mark resources for later cleanup.
 
 ### Output Formats
 
-Kor supports three output formats: `table`, `json`, and `yaml`. The default output format is `table`.  
+Kor supports three output formats: `table`, `json`, and `yaml`. The default output format is `table`.
 Additionally, you can use the `--group-by` flag to group the output by `namespace` or `resource`.
 
 #### Group by resource

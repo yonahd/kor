@@ -63,10 +63,14 @@ func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterO
 			return nil, nil, err
 		}
 
-		if isResourceException(role.Name, "", config.ExceptionRoles) {
-			continue
+		exceptionFound, err := isResourceException(role.Name, role.Namespace, config.ExceptionRoles)
+		if err != nil {
+			return nil, nil, err
 		}
 
+		if exceptionFound {
+			continue
+		}
 		names = append(names, role.Name)
 	}
 	return names, unusedRoleNames, nil

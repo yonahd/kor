@@ -38,6 +38,10 @@
     },
     {
       "Namespace": "",
+      "ResourceName": "etcdsnapshotfiles.k3s.cattle.io"
+    },
+    {
+      "Namespace": "",
       "ResourceName": "frontendconfigs.networking.gke.io"
     },
     {
@@ -54,7 +58,19 @@
     },
     {
       "Namespace": "",
+      "ResourceName": "helmchartconfigs.helm.cattle.io"
+    },
+    {
+      "Namespace": "",
       "ResourceName": "ingressroutes.traefik.containo.us"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "ingressroutes.traefik.containo.us"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "ingressroutetcps.traefik.containo.us"
     },
     {
       "Namespace": "",
@@ -66,7 +82,19 @@
     },
     {
       "Namespace": "",
+      "ResourceName": "ingressroutetcps.traefik.io"
+    },
+    {
+      "Namespace": "",
       "ResourceName": "ingressrouteudps.traefik.containo.us"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "ingressrouteudps.traefik.containo.us"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "ingressrouteudps.traefik.io"
     },
     {
       "Namespace": "",
@@ -86,11 +114,27 @@
     },
     {
       "Namespace": "",
+      "ResourceName": "middlewares.traefik.containo.us"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "middlewares.traefik.io"
+    },
+    {
+      "Namespace": "",
       "ResourceName": "middlewares.traefik.io"
     },
     {
       "Namespace": "",
       "ResourceName": "middlewaretcps.traefik.containo.us"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "middlewaretcps.traefik.containo.us"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "middlewaretcps.traefik.io"
     },
     {
       "Namespace": "",
@@ -126,7 +170,19 @@
     },
     {
       "Namespace": "",
+      "ResourceName": "serverstransports.traefik.containo.us"
+    },
+    {
+      "Namespace": "",
       "ResourceName": "serverstransports.traefik.io"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "serverstransports.traefik.io"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "serverstransporttcps.traefik.io"
     },
     {
       "Namespace": "",
@@ -146,7 +202,19 @@
     },
     {
       "Namespace": "",
+      "ResourceName": "tlsoptions.traefik.containo.us"
+    },
+    {
+      "Namespace": "",
       "ResourceName": "tlsoptions.traefik.io"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "tlsoptions.traefik.io"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "tlsstores.traefik.containo.us"
     },
     {
       "Namespace": "",
@@ -158,7 +226,19 @@
     },
     {
       "Namespace": "",
+      "ResourceName": "tlsstores.traefik.io"
+    },
+    {
+      "Namespace": "",
       "ResourceName": "traefikservices.traefik.containo.us"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "traefikservices.traefik.containo.us"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "traefikservices.traefik.io"
     },
     {
       "Namespace": "",

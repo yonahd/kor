@@ -130,7 +130,16 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 			return nil, nil, err
 		}
 
-		if !slices.Contains(exceptionSecretTypes, string(secret.Type)) && !isResourceException(secret.Name, namespace, config.ExceptionSecrets) {
+		exceptionFound, err := isResourceException(secret.Name, secret.Namespace, config.ExceptionSecrets)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if exceptionFound {
+			continue
+		}
+
+		if !slices.Contains(exceptionSecretTypes, string(secret.Type)) && !exceptionFound {
 			names = append(names, secret.Name)
 		}
 	}

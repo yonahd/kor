@@ -35,11 +35,17 @@ func processNamespaceServices(clientset kubernetes.Interface, namespace string, 
 			return nil, err
 		}
 
-		if isResourceException(endpoints.Name, namespace, config.ExceptionServices) {
+		exceptionFound, err := isResourceException(endpoints.Name, endpoints.Namespace, config.ExceptionServices)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
 			continue
 		}
 
 		status := ResourceInfo{Name: endpoints.Name}
+
 
 		if endpoints.Labels["kor/used"] == "false" {
 			status.Reason = "Marked with unused label"

@@ -21,7 +21,7 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 
 	for counter, resource := range resourceList {
 		switch resource {
-		case "crd", "customresourcedefinition", "customresourcedefinitions":
+		case "crd", "crds", "customresourcedefinition", "customresourcedefinitions":
 			crdDiff := getUnusedCrds(apiExtClient, dynamicClient, filterOpts)
 			noNamespaceDiff = append(noNamespaceDiff, crdDiff)
 			markedForRemoval[counter] = true
@@ -60,7 +60,7 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 			diffResult = getUnusedCMs(clientset, namespace, filterOpts)
 		case "svc", "service", "services":
 			diffResult = getUnusedSVCs(clientset, namespace, filterOpts)
-		case "scrt", "secret", "secrets":
+		case "secret", "secrets":
 			diffResult = getUnusedSecrets(clientset, namespace, filterOpts)
 		case "sa", "serviceaccount", "serviceaccounts":
 			diffResult = getUnusedServiceAccounts(clientset, namespace, filterOpts)

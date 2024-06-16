@@ -1,13 +1,12 @@
 {
-    "exceptionJobs": [
-      {
-        "Namespace": "kube-system",
-        "ResourceName": "helm-install-traefik-crd"
-      },
-      {
-        "Namespace": "kube-system",
-        "ResourceName": "helm-install-traefik"
-      }
-    ]
-  }
-  
+  "exceptionJobs": [
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "helm-install-traefik"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "helm-install-traefik-crd"
+    }
+  ]
+}

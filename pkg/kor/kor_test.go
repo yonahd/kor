@@ -130,3 +130,55 @@ func TestGetKubeClientFromInput(t *testing.T) {
 		t.Errorf("Expected valid clientSet")
 	}
 }
+
+func getFakeExceptions() []ExceptionResource {
+	return []ExceptionResource{
+		{
+			ResourceName: "no-regex",
+			Namespace:    "default",
+		},
+		{
+			ResourceName: "with-regex.*",
+			Namespace:    "default",
+			MatchRegex:   true,
+		},
+		{
+			ResourceName: "with-namespace-regex",
+			Namespace:    ".*",
+			MatchRegex:   true,
+		},
+	}
+}
+
+func TestResourceExceptionNoRegex(t *testing.T) {
+	exceptions := getFakeExceptions()
+	exceptionFound, err := isResourceException("no-regex", "default", exceptions)
+	if err != nil {
+		t.Error(err)
+	}
+	if !exceptionFound {
+		t.Error("Expected to find exception")
+	}
+}
+
+func TestResourceExceptionWithRegexInName(t *testing.T) {
+	exceptions := getFakeExceptions()
+	exceptionFound, err := isResourceException("with-regex-extra-text", "default", exceptions)
+	if err != nil {
+		t.Error(err)
+	}
+	if !exceptionFound {
+		t.Error("Expected to find exception")
+	}
+}
+
+func TestResourceExceptionWithRegexInNamespace(t *testing.T) {
+	exceptions := getFakeExceptions()
+	exceptionFound, err := isResourceException("with-namespace-regex", "default", exceptions)
+	if err != nil {
+		t.Error(err)
+	}
+	if !exceptionFound {
+		t.Error("Expected to find exception")
+	}
+}

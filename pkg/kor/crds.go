@@ -39,7 +39,12 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 			return nil, err
 		}
 
-		if isResourceException(crd.Name, crd.Namespace, config.ExceptionCrds) {
+		exceptionFound, err := isResourceException(crd.Name, crd.Namespace, config.ExceptionCrds)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
 			continue
 		}
 

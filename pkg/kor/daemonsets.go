@@ -35,7 +35,12 @@ func processNamespaceDaemonSets(clientset kubernetes.Interface, namespace string
 			return nil, err
 		}
 
-		if isResourceException(daemonSet.Name, daemonSet.Namespace, config.ExceptionDaemonSets) {
+		exceptionFound, err := isResourceException(daemonSet.Name, daemonSet.Namespace, config.ExceptionDaemonSets)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
 			continue
 		}
 

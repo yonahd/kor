@@ -36,8 +36,12 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 			continue
 		}
 
-		// If the job has CompletionTime and Succeeded count greater than zero, the job is completed
-		if isResourceException(job.Name, job.Namespace, config.ExceptionJobs) {
+		exceptionFound, err := isResourceException(job.Name, job.Namespace, config.ExceptionJobs)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
 			continue
 		}
 
