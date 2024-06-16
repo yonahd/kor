@@ -134,6 +134,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
       --no-interactive               Do not prompt for confirmation when deleting resources. Be careful using this flag!
       --older-than string            The minimum age of the resources to be considered unused. This flag cannot be used together with newer-than flag. Example: --older-than=1h2m
   -o, --output string                Output format (table, json or yaml) (default "table")
+  -r, --show-reason                  Print reason resource is considered unused
       --slack-auth-token string      Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.
       --slack-channel string         Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.
       --slack-webhook-url string     Slack webhook URL to send notifications to
