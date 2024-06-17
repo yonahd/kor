@@ -62,7 +62,7 @@ func processNamespaceHpas(clientset kubernetes.Interface, namespace string, filt
 		}
 
 		if hpa.Labels["kor/used"] == "false" {
-			unusedHpas = append(unusedHpas, ResourceInfo{Name: hpa.Name, Reason: "Marked as unused by label"})
+			unusedHpas = append(unusedHpas, ResourceInfo{Name: hpa.Name, Reason: "Marked with unused label"})
 			continue
 		}
 

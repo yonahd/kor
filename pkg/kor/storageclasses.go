@@ -65,7 +65,7 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 		}
 
 		if sc.Labels["kor/used"] == "false" {
-			unusedStorageClasses = append(unusedStorageClasses, ResourceInfo{Name: sc.Name, Reason: "Unused StorageClass"})
+			unusedStorageClasses = append(unusedStorageClasses, ResourceInfo{Name: sc.Name, Reason: "Marked with unused label"})
 			continue
 		}
 
