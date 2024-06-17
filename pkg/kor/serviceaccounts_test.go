@@ -170,7 +170,7 @@ func TestProcessNamespaceSA(t *testing.T) {
 		t.Errorf("Expected 2 serviceAccount Used by pod, got %d", len(unusedServiceAccounts))
 	}
 
-	if unusedServiceAccounts[0] != "test-sa2" {
+	if unusedServiceAccounts[0].Name != "test-sa2" {
 		t.Errorf("Expected 'test-sa2', got %s", unusedServiceAccounts[0])
 	}
 }

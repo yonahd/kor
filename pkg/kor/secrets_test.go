@@ -267,7 +267,7 @@ func TestProcessNamespaceSecret(t *testing.T) {
 		t.Errorf("Expected 2 used Secret objects, got %d", len(unusedSecrets))
 	}
 
-	if !contains(unusedSecrets, "test-secret3") {
+	if !resourceInfoContains(unusedSecrets, "test-secret3") {
 		t.Error("Expected specific Secret  in the list")
 	}
 
@@ -315,6 +315,18 @@ func equalSlices(a, b []string) bool {
 	}
 	for i, v := range a {
 		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func equalResourceInfoSlices(a, b []ResourceInfo) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v.Name != b[i].Name || v.Reason != b[i].Reason {
 			return false
 		}
 	}

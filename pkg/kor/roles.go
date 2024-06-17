@@ -76,7 +76,7 @@ func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterO
 	return names, unusedRoleNames, nil
 }
 
-func processNamespaceRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func processNamespaceRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	usedRoles, err := retrieveUsedRoles(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
@@ -84,19 +84,28 @@ func processNamespaceRoles(clientset kubernetes.Interface, namespace string, fil
 
 	usedRoles = RemoveDuplicatesAndSort(usedRoles)
 
-	roleNames, rolesUnusedFromLabel, err := retrieveRoleNames(clientset, namespace, filterOpts)
+	roleInfos, rolesUnusedFromLabel, err := retrieveRoleNames(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	diff := CalculateResourceDifference(usedRoles, roleNames)
-	diff = append(diff, rolesUnusedFromLabel...)
-	return diff, nil
+	var diff []ResourceInfo
 
+	for _, name := range CalculateResourceDifference(usedRoles, roleInfos) {
+		reason := "ServiceAccount is not in use"
+		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
+	}
+
+	for _, name := range rolesUnusedFromLabel {
+		reason := "Marked with unused label"
+		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
+	}
+
+	return diff, nil
 }
 
 func GetUnusedRoles(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceRoles(clientset, namespace, filterOpts)
 		if err != nil {
@@ -105,13 +114,13 @@ func GetUnusedRoles(filterOpts *filters.Options, clientset kubernetes.Interface,
 		}
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
+			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Role"] = diff
 		case "resource":
 			appendResources(resources, "Role", namespace, diff)
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Role", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource2(diff, clientset, namespace, "Role", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Role %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}

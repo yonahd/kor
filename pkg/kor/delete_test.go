@@ -48,6 +48,7 @@ func TestDeleteDeleteResourceWithFinalizer(t *testing.T) {
 	scheme := runtime.NewScheme()
 	gvr := schema.GroupVersionResource{Group: "testgroup", Version: "v1", Resource: "TestResource"}
 	testResource := CreateTestUnstructered(gvr.Resource, gvr.GroupVersion().String(), testNamespace, "test-resource")
+	testResouceInfo := ResourceInfo{Name: testResource.GetName()}
 	dynamicClient := fakedynamic.NewSimpleDynamicClient(scheme, testResource)
 
 	_, err := dynamicClient.Resource(gvr).
@@ -70,14 +71,14 @@ func TestDeleteDeleteResourceWithFinalizer(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		diff          []string
+		diff          []ResourceInfo
 		resourceType  string
 		expectedDiff  []string
 		expectedError bool
 	}{
 		{
 			name:          "Test deletion confirmation",
-			diff:          []string{testResource.GetName()},
+			diff:          []ResourceInfo{testResouceInfo},
 			expectedDiff:  []string{testResource.GetName() + "-DELETED"},
 			expectedError: false,
 		},
@@ -88,11 +89,11 @@ func TestDeleteDeleteResourceWithFinalizer(t *testing.T) {
 			deletedDiff, _ := DeleteResourceWithFinalizer(test.diff, dynamicClient, testNamespace, gvr, true)
 
 			for i, deleted := range deletedDiff {
-				if deleted != test.expectedDiff[i] {
+				if deleted.Name != test.expectedDiff[i] {
 					t.Errorf("Expected: %s, Got: %s", test.expectedDiff[i], deleted)
 					resource, err := dynamicClient.Resource(gvr).
 						Namespace(testNamespace).
-						Get(context.TODO(), deleted, metav1.GetOptions{})
+						Get(context.TODO(), deleted.Name, metav1.GetOptions{})
 					if err != nil {
 						t.Error(err)
 					}

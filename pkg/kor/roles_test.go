@@ -101,7 +101,7 @@ func TestProcessNamespaceRoles(t *testing.T) {
 		t.Errorf("Expected 2 unused roles, got %d", len(unusedRoles))
 	}
 
-	if unusedRoles[0] != "test-role2" || unusedRoles[1] != "test-role4" {
+	if unusedRoles[0].Name != "test-role2" || unusedRoles[1].Name != "test-role4" {
 		t.Errorf("Expected 'test-role2', 'test-role4', got %s %s", unusedRoles[0], unusedRoles[1])
 	}
 }

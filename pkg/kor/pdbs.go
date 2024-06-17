@@ -14,8 +14,8 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
-	var unusedPdbs []string
+func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+	var unusedPdbs []ResourceInfo
 	pdbs, err := clientset.PolicyV1().PodDisruptionBudgets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
@@ -27,17 +27,20 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 		}
 
 		if pdb.Labels["kor/used"] == "false" {
-			unusedPdbs = append(unusedPdbs, pdb.Name)
+			reason := "Marked with unused label"
+			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
 			continue
 		}
 
 		selector := pdb.Spec.Selector
 		if selector == nil {
-			unusedPdbs = append(unusedPdbs, pdb.Name)
+			reason := "Pdb has no selector"
+			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
 			continue
 		}
 		if len(selector.MatchLabels) == 0 {
-			unusedPdbs = append(unusedPdbs, pdb.Name)
+			reason := "Pdb has no selector"
+			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
 			continue
 		}
 		deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{
@@ -53,14 +56,15 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 			return nil, err
 		}
 		if len(deployments.Items) == 0 && len(statefulSets.Items) == 0 {
-			unusedPdbs = append(unusedPdbs, pdb.Name)
+			reason := "Pdb is not referencing any deployments or statefulsets"
+			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
 		}
 	}
 	return unusedPdbs, nil
 }
 
 func GetUnusedPdbs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespacePdbs(clientset, namespace, filterOpts)
 		if err != nil {
@@ -69,13 +73,13 @@ func GetUnusedPdbs(filterOpts *filters.Options, clientset kubernetes.Interface, 
 		}
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
+			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Pdb"] = diff
 		case "resource":
 			appendResources(resources, "Pdb", namespace, diff)
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "PDB", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource2(diff, clientset, namespace, "PDB", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete PDB %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}

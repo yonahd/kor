@@ -17,13 +17,13 @@ import (
 //go:embed exceptions/services/services.json
 var servicesConfig []byte
 
-func processNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func processNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	endpointsList, err := clientset.CoreV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 
-	var endpointsWithoutSubsets []string
+	var endpointsWithoutSubsets []ResourceInfo
 
 	for _, endpoints := range endpointsList.Items {
 		if pass, _ := filter.Run(filterOpts); pass {
@@ -44,13 +44,15 @@ func processNamespaceServices(clientset kubernetes.Interface, namespace string, 
 			continue
 		}
 
-		if endpoints.Labels["kor/used"] == "false" {
-			endpointsWithoutSubsets = append(endpointsWithoutSubsets, endpoints.Name)
-			continue
-		}
+		status := ResourceInfo{Name: endpoints.Name}
 
-		if len(endpoints.Subsets) == 0 {
-			endpointsWithoutSubsets = append(endpointsWithoutSubsets, endpoints.Name)
+		if endpoints.Labels["kor/used"] == "false" {
+			status.Reason = "Marked with unused label"
+			endpointsWithoutSubsets = append(endpointsWithoutSubsets, status)
+			continue
+		} else if len(endpoints.Subsets) == 0 {
+			status.Reason = "Service has no endpoints"
+			endpointsWithoutSubsets = append(endpointsWithoutSubsets, status)
 		}
 	}
 
@@ -58,22 +60,30 @@ func processNamespaceServices(clientset kubernetes.Interface, namespace string, 
 }
 
 func GetUnusedServices(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
+
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceServices(clientset, namespace, filterOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
-			resources[namespace]["Service"] = diff
+			if diff != nil {
+				resources[namespace] = make(map[string][]ResourceInfo)
+				resources[namespace]["Service"] = diff
+			}
 		case "resource":
-			appendResources(resources, "Service", namespace, diff)
+			if diff != nil {
+				appendResources(resources, "Service", namespace, diff)
+			}
+
 		}
+
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Service", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource2(diff, clientset, namespace, "Service", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Service %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}

@@ -90,7 +90,7 @@ func retrieveIngressNames(clientset kubernetes.Interface, namespace string, filt
 	return names, unusedIngressNames, nil
 }
 
-func processNamespaceIngresses(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func processNamespaceIngresses(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	usedIngresses, err := retrieveUsedIngress(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
@@ -100,14 +100,24 @@ func processNamespaceIngresses(clientset kubernetes.Interface, namespace string,
 		return nil, err
 	}
 
-	diff := CalculateResourceDifference(usedIngresses, ingressNames)
-	diff = append(diff, unusedIngressNames...)
+	var diff []ResourceInfo
+
+	for _, name := range CalculateResourceDifference(usedIngresses, ingressNames) {
+		reason := "Ingress does not have a valid backend service"
+		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
+	}
+
+	for _, name := range unusedIngressNames {
+		reason := "Marked with unused label"
+		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
+	}
+
 	return diff, nil
 
 }
 
 func GetUnusedIngresses(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceIngresses(clientset, namespace, filterOpts)
 		if err != nil {
@@ -116,13 +126,13 @@ func GetUnusedIngresses(filterOpts *filters.Options, clientset kubernetes.Interf
 		}
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
+			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Ingress"] = diff
 		case "resource":
 			appendResources(resources, "Ingress", namespace, diff)
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Ingress", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource2(diff, clientset, namespace, "Ingress", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Ingress %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}

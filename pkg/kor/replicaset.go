@@ -13,13 +13,13 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	replicaSetList, err := clientset.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 
-	var unusedReplicaSetNames []string
+	var unusedReplicaSetNames []ResourceInfo
 
 	for _, replicaSet := range replicaSetList.Items {
 		if pass, _ := filter.Run(filterOpts); pass {
@@ -28,7 +28,8 @@ func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace strin
 
 		// if the replicaSet is specified 0 replica and current available & ready & fullyLabeled replica count is all 0, think the replicaSet is completed
 		if *replicaSet.Spec.Replicas == 0 && replicaSet.Status.AvailableReplicas == 0 && replicaSet.Status.ReadyReplicas == 0 && replicaSet.Status.FullyLabeledReplicas == 0 {
-			unusedReplicaSetNames = append(unusedReplicaSetNames, replicaSet.Name)
+			reason := "ReplicaSet is not in use"
+			unusedReplicaSetNames = append(unusedReplicaSetNames, ResourceInfo{Name: replicaSet.Name, Reason: reason})
 		}
 	}
 
@@ -36,7 +37,7 @@ func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace strin
 }
 
 func GetUnusedReplicaSets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceReplicaSets(clientset, namespace, filterOpts)
 		if err != nil {
@@ -45,13 +46,13 @@ func GetUnusedReplicaSets(filterOpts *filters.Options, clientset kubernetes.Inte
 		}
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
+			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["ReplicaSet"] = diff
 		case "resource":
 			appendResources(resources, "ReplicaSet", namespace, diff)
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "ReplicaSet", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource2(diff, clientset, namespace, "ReplicaSet", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete ReplicaSet %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}

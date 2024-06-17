@@ -39,7 +39,7 @@ func getStatefulSetNames(clientset kubernetes.Interface, namespace string) ([]st
 	return names, nil
 }
 
-func processNamespaceHpas(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func processNamespaceHpas(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	deploymentNames, err := getDeploymentNames(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -55,25 +55,25 @@ func processNamespaceHpas(clientset kubernetes.Interface, namespace string, filt
 		return nil, err
 	}
 
-	var unusedHpas []string
+	var unusedHpas []ResourceInfo
 	for _, hpa := range hpas.Items {
 		if pass, _ := filter.SetObject(&hpa).Run(filterOpts); pass {
 			continue
 		}
 
 		if hpa.Labels["kor/used"] == "false" {
-			unusedHpas = append(unusedHpas, hpa.Name)
+			unusedHpas = append(unusedHpas, ResourceInfo{Name: hpa.Name, Reason: "Marked with unused label"})
 			continue
 		}
 
 		switch hpa.Spec.ScaleTargetRef.Kind {
 		case "Deployment":
 			if !slices.Contains(deploymentNames, hpa.Spec.ScaleTargetRef.Name) {
-				unusedHpas = append(unusedHpas, hpa.Name)
+				unusedHpas = append(unusedHpas, ResourceInfo{Name: hpa.Name, Reason: "Scale target Deployment does not exist"})
 			}
 		case "StatefulSet":
 			if !slices.Contains(statefulsetNames, hpa.Spec.ScaleTargetRef.Name) {
-				unusedHpas = append(unusedHpas, hpa.Name)
+				unusedHpas = append(unusedHpas, ResourceInfo{Name: hpa.Name, Reason: "Scale target StatefulSet does not exist"})
 			}
 		}
 	}
@@ -81,7 +81,7 @@ func processNamespaceHpas(clientset kubernetes.Interface, namespace string, filt
 }
 
 func GetUnusedHpas(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceHpas(clientset, namespace, filterOpts)
 		if err != nil {
@@ -90,13 +90,13 @@ func GetUnusedHpas(filterOpts *filters.Options, clientset kubernetes.Interface, 
 		}
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
+			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Hpa"] = diff
 		case "resource":
 			appendResources(resources, "Hpa", namespace, diff)
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "HPA", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource2(diff, clientset, namespace, "HPA", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete HPA %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
