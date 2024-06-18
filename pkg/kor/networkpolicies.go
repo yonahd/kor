@@ -13,21 +13,22 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	netpolList, err := clientset.NetworkingV1().NetworkPolicies(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 
-	var unusedNetpols []string
+	var unusedNetpols []ResourceInfo
 
 	for _, netpol := range netpolList.Items {
-		if pass := filters.KorLabelFilter(&netpol, filterOpts); pass {
+		if pass, _ := filter.SetObject(&netpol).Run(filterOpts); pass {
 			continue
 		}
 
 		if netpol.Labels["kor/used"] == "false" {
-			unusedNetpols = append(unusedNetpols, netpol.Name)
+			reason := "Marked with unused label"
+			unusedNetpols = append(unusedNetpols, ResourceInfo{Name: netpol.Name, Reason: reason})
 			continue
 		}
 
@@ -44,7 +45,8 @@ func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace s
 		}
 
 		if len(podList.Items) == 0 {
-			unusedNetpols = append(unusedNetpols, netpol.Name)
+			reason := "NetworkPolicy selects no pods"
+			unusedNetpols = append(unusedNetpols, ResourceInfo{Name: netpol.Name, Reason: reason})
 		}
 	}
 
@@ -52,7 +54,7 @@ func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace s
 }
 
 func GetUnusedNetworkPolicies(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceNetworkPolicies(clientset, namespace, filterOpts)
@@ -63,14 +65,14 @@ func GetUnusedNetworkPolicies(filterOpts *filters.Options, clientset kubernetes.
 
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
+			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["NetworkPolicy"] = diff
 		case "resource":
 			appendResources(resources, "NetworkPolicy", namespace, diff)
 		}
 
 		if opts.DeleteFlag {
-			if diff, err := DeleteResource(diff, clientset, namespace, "NetworkPolicy", opts.NoInteractive); err != nil {
+			if diff, err := DeleteResource2(diff, clientset, namespace, "NetworkPolicy", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete NetworkPolicy %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}

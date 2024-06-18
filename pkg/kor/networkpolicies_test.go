@@ -91,7 +91,7 @@ func TestProcessNamespaceNetworkPolicies(t *testing.T) {
 	}
 
 	for i, netpol := range unusedNetpols {
-		if netpol != expectedUnusedNetpols[i] {
+		if netpol.Name != expectedUnusedNetpols[i] {
 			t.Errorf("Expected unused networkpolicy %s, got %s", expectedUnusedNetpols[i], netpol)
 		}
 	}
