@@ -1,0 +1,9 @@
+{
+  "exceptionPdbs": [
+    {
+      "Namespace": "openshift-.*",
+      "ResourceName": ".*",
+      "MatchRegex": true
+    }
+  ]
+}

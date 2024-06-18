@@ -15,6 +15,11 @@
     {
       "Namespace": "kube-system",
       "ResourceName": "vpa-recommender"
+    },
+    {
+      "Namespace": "openshift-.*",
+      "ResourceName": ".*",
+      "MatchRegex": true
     }
   ]
 }

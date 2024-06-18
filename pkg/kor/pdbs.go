@@ -3,6 +3,7 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,6 +15,9 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+//go:embed exceptions/pdbs/pdbs.json
+var pdbsConfig []byte
+
 func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	var unusedPdbs []ResourceInfo
 	pdbs, err := clientset.PolicyV1().PodDisruptionBudgets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
@@ -23,6 +27,20 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 
 	for _, pdb := range pdbs.Items {
 		if pass, _ := filter.SetObject(&pdb).Run(filterOpts); pass {
+			continue
+		}
+
+		config, err := unmarshalConfig(pdbsConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		exceptionFound, err := isResourceException(pdb.Name, pdb.Namespace, config.ExceptionPdbs)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
 			continue
 		}
 
