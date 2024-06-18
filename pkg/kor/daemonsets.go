@@ -23,16 +23,16 @@ func processNamespaceDaemonSets(clientset kubernetes.Interface, namespace string
 		return nil, err
 	}
 
+	config, err := unmarshalConfig(daemonsetsConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	var daemonSetsWithoutReplicas []ResourceInfo
 
 	for _, daemonSet := range daemonSetsList.Items {
 		if pass, _ := filter.SetObject(&daemonSet).Run(filterOpts); pass {
 			continue
-		}
-
-		config, err := unmarshalConfig(daemonsetsConfig)
-		if err != nil {
-			return nil, err
 		}
 
 		exceptionFound, err := isResourceException(daemonSet.Name, daemonSet.Namespace, config.ExceptionDaemonSets)

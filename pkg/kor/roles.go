@@ -47,6 +47,12 @@ func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterO
 	if err != nil {
 		return nil, nil, err
 	}
+
+	config, err := unmarshalConfig(rolesConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	var unusedRoleNames []string
 	names := make([]string, 0, len(roles.Items))
 	for _, role := range roles.Items {
@@ -56,11 +62,6 @@ func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterO
 		if role.Labels["kor/used"] == "false" {
 			unusedRoleNames = append(unusedRoleNames, role.Name)
 			continue
-		}
-
-		config, err := unmarshalConfig(rolesConfig)
-		if err != nil {
-			return nil, nil, err
 		}
 
 		exceptionFound, err := isResourceException(role.Name, role.Namespace, config.ExceptionRoles)

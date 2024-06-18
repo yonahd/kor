@@ -37,6 +37,7 @@ type Config struct {
 	ExceptionServices        []ExceptionResource `json:"exceptionServices"`
 	ExceptionStorageClasses  []ExceptionResource `json:"exceptionStorageClasses"`
 	ExceptionJobs            []ExceptionResource `json:"exceptionJobs"`
+	ExceptionPdbs            []ExceptionResource `json:"exceptionPdbs"`
 	// Add other configurations if needed
 }
 

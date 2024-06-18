@@ -29,14 +29,14 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 		return nil, err
 	}
 
+	config, err := unmarshalConfig(crdsConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, crd := range crds.Items {
 		if pass := filters.KorLabelFilter(&crd, &filters.Options{}); pass {
 			continue
-		}
-
-		config, err := unmarshalConfig(crdsConfig)
-		if err != nil {
-			return nil, err
 		}
 
 		exceptionFound, err := isResourceException(crd.Name, crd.Namespace, config.ExceptionCrds)

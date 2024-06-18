@@ -19,6 +19,7 @@ import (
 var exceptionSecretTypes = []string{
 	`helm.sh/release.v1`,
 	`kubernetes.io/dockerconfigjson`,
+	`kubernetes.io/dockercfg`,
 	`kubernetes.io/service-account-token`,
 }
 
@@ -113,6 +114,11 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 		return nil, nil, err
 	}
 
+	config, err := unmarshalConfig(secretsConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	var unusedSecretNames []string
 	names := make([]string, 0, len(secrets.Items))
 	for _, secret := range secrets.Items {
@@ -123,11 +129,6 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 		if secret.Labels["kor/used"] == "false" {
 			unusedSecretNames = append(unusedSecretNames, secret.Name)
 			continue
-		}
-
-		config, err := unmarshalConfig(secretsConfig)
-		if err != nil {
-			return nil, nil, err
 		}
 
 		exceptionFound, err := isResourceException(secret.Name, secret.Namespace, config.ExceptionSecrets)

@@ -124,6 +124,11 @@ func retrieveClusterRoleNames(clientset kubernetes.Interface, filterOpts *filter
 		return nil, nil, err
 	}
 
+	config, err := unmarshalConfig(clusterRolesConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	var unusedClusterRoles []string
 	names := make([]string, 0, len(clusterRoles.Items))
 
@@ -135,11 +140,6 @@ func retrieveClusterRoleNames(clientset kubernetes.Interface, filterOpts *filter
 		if clusterRole.Labels["kor/used"] == "false" {
 			unusedClusterRoles = append(unusedClusterRoles, clusterRole.Name)
 			continue
-		}
-
-		config, err := unmarshalConfig(clusterRolesConfig)
-		if err != nil {
-			return nil, nil, err
 		}
 
 		exceptionFound, err := isResourceException(clusterRole.Name, clusterRole.Namespace, config.ExceptionClusterRoles)

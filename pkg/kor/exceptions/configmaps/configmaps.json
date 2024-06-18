@@ -6,6 +6,11 @@
       "MatchRegex": true
     },
     {
+      "Namespace": ".*",
+      "ResourceName": "openshift-service-ca\\.crt",
+      "MatchRegex": true
+    },
+    {
       "Namespace": "gmp-system",
       "ResourceName": "config-images"
     },
@@ -27,7 +32,15 @@
     },
     {
       "Namespace": "kube-system",
+      "ResourceName": "bootstrap"
+    },
+    {
+      "Namespace": "kube-system",
       "ResourceName": "cluster-autoscaler-status"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "cluster-config-v1"
     },
     {
       "Namespace": "kube-system",
@@ -98,8 +111,17 @@
       "ResourceName": "overlay-upgrade-data"
     },
     {
+      "Namespace": "kube-system",
+      "ResourceName": "root-ca"
+    },
+    {
       "Namespace": "kubernetes-dashboard",
       "ResourceName": "kubernetes-dashboard-settings"
+    },
+    {
+      "Namespace": "openshift-.*",
+      "ResourceName": ".*",
+      "MatchRegex": true
     }
   ]
 }

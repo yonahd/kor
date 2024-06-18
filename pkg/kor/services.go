@@ -23,16 +23,16 @@ func processNamespaceServices(clientset kubernetes.Interface, namespace string, 
 		return nil, err
 	}
 
+	config, err := unmarshalConfig(servicesConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	var endpointsWithoutSubsets []ResourceInfo
 
 	for _, endpoints := range endpointsList.Items {
 		if pass, _ := filter.Run(filterOpts); pass {
 			continue
-		}
-
-		config, err := unmarshalConfig(servicesConfig)
-		if err != nil {
-			return nil, err
 		}
 
 		exceptionFound, err := isResourceException(endpoints.Name, endpoints.Namespace, config.ExceptionServices)
