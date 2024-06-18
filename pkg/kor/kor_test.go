@@ -147,6 +147,11 @@ func getFakeExceptions() []ExceptionResource {
 			Namespace:    ".*",
 			MatchRegex:   true,
 		},
+		{
+			ResourceName: ".*",
+			Namespace:    "with-namespace-regex-prefix-.*",
+			MatchRegex:   true,
+		},
 	}
 }
 
@@ -175,6 +180,17 @@ func TestResourceExceptionWithRegexInName(t *testing.T) {
 func TestResourceExceptionWithRegexInNamespace(t *testing.T) {
 	exceptions := getFakeExceptions()
 	exceptionFound, err := isResourceException("with-namespace-regex", "default", exceptions)
+	if err != nil {
+		t.Error(err)
+	}
+	if !exceptionFound {
+		t.Error("Expected to find exception")
+	}
+}
+
+func TestResourceExceptionWithRegexPrefixInNamespace(t *testing.T) {
+	exceptions := getFakeExceptions()
+	exceptionFound, err := isResourceException("default", "with-namespace-regex-prefix-extra-text", exceptions)
 	if err != nil {
 		t.Error(err)
 	}
