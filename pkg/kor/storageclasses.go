@@ -56,6 +56,11 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 		return nil, err
 	}
 
+	config, err := unmarshalConfig(storageClassesConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	var unusedStorageClasses []ResourceInfo
 	storageClassNames := make([]string, 0, len(scs.Items))
 
@@ -67,11 +72,6 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 		if sc.Labels["kor/used"] == "false" {
 			unusedStorageClasses = append(unusedStorageClasses, ResourceInfo{Name: sc.Name, Reason: "Marked with unused label"})
 			continue
-		}
-
-		config, err := unmarshalConfig(storageClassesConfig)
-		if err != nil {
-			return nil, err
 		}
 
 		exceptionFound, err := isResourceException(sc.Name, sc.Namespace, config.ExceptionStorageClasses)

@@ -23,16 +23,16 @@ func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace strin
 		return nil, err
 	}
 
+	config, err := unmarshalConfig(replicaSetsConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	var unusedReplicaSetNames []ResourceInfo
 
 	for _, replicaSet := range replicaSetList.Items {
 		if pass, _ := filter.Run(filterOpts); pass {
 			continue
-		}
-
-		config, err := unmarshalConfig(replicaSetsConfig)
-		if err != nil {
-			return nil, err
 		}
 
 		exceptionFound, err := isResourceException(replicaSet.Name, replicaSet.Namespace, config.ExceptionReplicaSets)

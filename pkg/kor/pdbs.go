@@ -25,14 +25,14 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 		return nil, err
 	}
 
+	config, err := unmarshalConfig(pdbsConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, pdb := range pdbs.Items {
 		if pass, _ := filter.SetObject(&pdb).Run(filterOpts); pass {
 			continue
-		}
-
-		config, err := unmarshalConfig(pdbsConfig)
-		if err != nil {
-			return nil, err
 		}
 
 		exceptionFound, err := isResourceException(pdb.Name, pdb.Namespace, config.ExceptionPdbs)
