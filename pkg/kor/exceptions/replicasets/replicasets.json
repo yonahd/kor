@@ -1,9 +1,0 @@
-{
-  "exceptionReplicaSets": [
-    {
-      "Namespace": "openshift-.*",
-      "ResourceName": ".*",
-      "MatchRegex": true
-    }
-  ]
-}

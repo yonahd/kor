@@ -3,7 +3,6 @@ package kor
 import (
 	"bytes"
 	"context"
-	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,16 +13,8 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-//go:embed exceptions/replicasets/replicasets.json
-var replicaSetsConfig []byte
-
 func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	replicaSetList, err := clientset.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
-	if err != nil {
-		return nil, err
-	}
-
-	config, err := unmarshalConfig(replicaSetsConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -32,15 +23,6 @@ func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace strin
 
 	for _, replicaSet := range replicaSetList.Items {
 		if pass, _ := filter.Run(filterOpts); pass {
-			continue
-		}
-
-		exceptionFound, err := isResourceException(replicaSet.Name, replicaSet.Namespace, config.ExceptionReplicaSets)
-		if err != nil {
-			return nil, err
-		}
-
-		if exceptionFound {
 			continue
 		}
 
