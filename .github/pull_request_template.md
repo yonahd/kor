@@ -22,7 +22,7 @@
 
 ## GitHub Issue
 
-[XX-XX]
+Closes [XX-XX]
 
 <!-- Notes that may be helpful for anyone reviewing this PR -->
 
