@@ -78,6 +78,9 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 		"StorageClass": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.StorageV1().StorageClasses().Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
+		"NetworkPolicy": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.NetworkingV1().NetworkPolicies(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
 	}
 
 	return deleteResourceApiMap
@@ -165,6 +168,8 @@ func updateResource(clientset kubernetes.Interface, namespace, resourceType stri
 		return clientset.AppsV1().DaemonSets(namespace).Update(context.TODO(), resource.(*appsv1.DaemonSet), metav1.UpdateOptions{})
 	case "StorageClass":
 		return clientset.StorageV1().StorageClasses().Update(context.TODO(), resource.(*storagev1.StorageClass), metav1.UpdateOptions{})
+	case "NetworkPolicy":
+		return clientset.NetworkingV1().NetworkPolicies(namespace).Update(context.TODO(), resource.(*networkingv1.NetworkPolicy), metav1.UpdateOptions{})
 	}
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }
@@ -207,6 +212,8 @@ func getResource(clientset kubernetes.Interface, namespace, resourceType, resour
 		return clientset.AppsV1().DaemonSets(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "StorageClass":
 		return clientset.StorageV1().StorageClasses().Get(context.TODO(), resourceName, metav1.GetOptions{})
+	case "NetworkPolicy":
+		return clientset.NetworkingV1().NetworkPolicies(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	}
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }

@@ -29,6 +29,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - ReplicaSets
 - DaemonSets
 - StorageClasses
+- NetworkPolicies
 
 ![Kor Screenshot](/images/screenshot.png)
 
@@ -116,6 +117,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `replicaset` - Gets unused replicaSets for the specified namespace or all namespaces.
 - `daemonset`- Gets unused DaemonSets for the specified namespace or all namespaces.
 - `finalizer` - Gets unused pending deletion resources for the specified namespace or all namespaces.
+- `networkpolicy` - Gets unused NetworkPolicies for the specified namespace or all namespaces.
 - `exporter` - Export Prometheus metrics.
 - `version` - Print kor version information.
 
@@ -175,6 +177,7 @@ kor [subcommand] --help
 | ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work                                                                                                                                                        |
 | DaemonSets      | DaemonSets not scheduled on any nodes                                                                                                                                                                                             |
 | StorageClasses  | StorageClasses not used by any PVs/PVCs                                                                                                                                                                                           |
+| NetworkPolicies  | NetworkPolicies with no Pods selected                                                                                                                                                                                           |
 
 ### Deleting Unused resources
 

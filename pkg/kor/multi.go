@@ -86,6 +86,8 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 			diffResult = getUnusedReplicaSets(clientset, namespace, filterOpts)
 		case "ds", "daemonset", "daemonsets":
 			diffResult = getUnusedDaemonSets(clientset, namespace, filterOpts)
+		case "netpol", "networkpolicy", "networkpolicies":
+			diffResult = getUnusedNetworkPolicies(clientset, namespace, filterOpts)
 		default:
 			fmt.Printf("resource type %q is not supported\n", resource)
 		}
