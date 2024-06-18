@@ -408,6 +408,9 @@ func CreateTestNetworkPolicy(name, namespace string, podSelector v1.LabelSelecto
 		},
 		Spec: networkingv1.NetworkPolicySpec{
 			PodSelector: podSelector,
+			PolicyTypes: []networkingv1.PolicyType{
+				networkingv1.PolicyTypeIngress,
+			},
 		},
 	}
 }
