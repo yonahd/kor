@@ -31,7 +31,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - StorageClasses
 - NetworkPolicies
 
-![Kor Screenshot](/images/screenshot.png)
+![Kor Screenshot](/images/show_reason_screenshot.png)
 
 ## Installation
 
@@ -223,6 +223,27 @@ Will be cleaned always. This is a good way to mark resources for later cleanup.
 
 Kor supports three output formats: `table`, `json`, and `yaml`. The default output format is `table`.
 Additionally, you can use the `--group-by` flag to group the output by `namespace` or `resource`.
+
+#### Show reason
+
+```sh
+kor all -n test --show-reason
+```
+```
+Unused resources in namespace: "test"
++---+----------------+----------------------------------------------+--------------------------------------------------------+
+| # | RESOURCE TYPE  |                RESOURCE NAME                 |                         REASON                         |
++---+----------------+----------------------------------------------+--------------------------------------------------------+
+| 1 | Service        | do-not-delete                                | Marked with unused label                               |
+| 2 | Ingress        | example-ingress                              | Ingress does not have a valid backend service          |
+| 3 | Ingress        | example-ingress2                             | Ingress does not have a valid backend service          |
+| 4 | ConfigMap      | prober-blackbox-config                       | ConfigMap is not used in any pod or container          |
+| 5 | ConfigMap      | release-name-prober-operator-blackbox-config | ConfigMap is not used in any pod or container          |
+| 6 | ConfigMap      | unused-cm                                    | ConfigMap is not used in any pod or container          |
+| 7 | ServiceAccount | my-service-account2                          | ServiceAccount is not in use                           |
+| 8 | Pdb            | my-pdb                                       | Pdb is not referencing any deployments or statefulsets |
++---+----------------+----------------------------------------------+--------------------------------------------------------+
+```
 
 #### Group by resource
 
