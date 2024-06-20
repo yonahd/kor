@@ -37,78 +37,72 @@ func retrievePodsForSelector(clientset kubernetes.Interface, namespace string, s
 	return podList.Items, nil
 }
 
-func isAnyPodMatchedInSources(clientset kubernetes.Interface, sources []networkingv1.NetworkPolicyPeer) (*bool, error) {
+func isAnyPodMatchedInSources(clientset kubernetes.Interface, sources []networkingv1.NetworkPolicyPeer) (bool, error) {
 	for _, netpolPeer := range sources {
 		labelSelector, err := metav1.LabelSelectorAsSelector(netpolPeer.NamespaceSelector)
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 
 		nsList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{
 			LabelSelector: labelSelector.String(),
 		})
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 
 		for _, ns := range nsList.Items {
 			podList, err := retrievePodsForSelector(clientset, ns.Name, netpolPeer.PodSelector)
 			if err != nil {
-				return nil, err
+				return false, err
 			}
 
 			if len(podList) > 0 {
-				used := true
-				return &used, nil
+				return true, nil
 			}
 		}
 	}
 
-	unused := false
-	return &unused, nil
+	return false, nil
 }
 
-func isAnyIngressRuleUsed(clientset kubernetes.Interface, netpol networkingv1.NetworkPolicy) (*bool, error) {
+func isAnyIngressRuleUsed(clientset kubernetes.Interface, netpol networkingv1.NetworkPolicy) (bool, error) {
 	// Deny all ingress traffic
 	if len(netpol.Spec.Ingress) == 0 && slices.Contains(netpol.Spec.PolicyTypes, networkingv1.PolicyTypeIngress) {
-		used := true
-		return &used, nil
+		return true, nil
 	}
 	for _, ingressRule := range netpol.Spec.Ingress {
 		podsMatched, err := isAnyPodMatchedInSources(clientset, ingressRule.From)
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 
-		if *podsMatched {
+		if podsMatched {
 			return podsMatched, nil
 		}
 	}
 
-	unused := false
-	return &unused, nil
+	return false, nil
 }
 
-func isAnyEgressRuleUsed(clientset kubernetes.Interface, netpol networkingv1.NetworkPolicy) (*bool, error) {
+func isAnyEgressRuleUsed(clientset kubernetes.Interface, netpol networkingv1.NetworkPolicy) (bool, error) {
 	// Deny all egress traffic
 	if len(netpol.Spec.Egress) == 0 && slices.Contains(netpol.Spec.PolicyTypes, networkingv1.PolicyTypeEgress) {
-		used := true
-		return &used, nil
+		return true, nil
 	}
 
 	for _, egressRule := range netpol.Spec.Egress {
 		podsMatched, err := isAnyPodMatchedInSources(clientset, egressRule.To)
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 
-		if *podsMatched {
+		if podsMatched {
 			return podsMatched, nil
 		}
 	}
 
-	unused := false
-	return &unused, nil
+	return false, nil
 }
 
 func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
@@ -141,13 +135,13 @@ func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace s
 
 		if used, err := isAnyIngressRuleUsed(clientset, netpol); err != nil {
 			return nil, err
-		} else if *used {
+		} else if used {
 			continue
 		}
 
 		if used, err := isAnyEgressRuleUsed(clientset, netpol); err != nil {
 			return nil, err
-		} else if *used {
+		} else if used {
 			continue
 		}
 
