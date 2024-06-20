@@ -19,50 +19,84 @@ import (
 func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 	clientset := fake.NewSimpleClientset()
 
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
+	anotherNs := "another-namespace"
+	namespaces := []string{testNamespace, anotherNs}
 
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	for _, ns := range namespaces {
+		_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+			ObjectMeta: v1.ObjectMeta{Name: ns},
+		}, v1.CreateOptions{})
+
+		if err != nil {
+			t.Fatalf("Error creating namespace %s: %v", ns, err)
+		}
 	}
 
-	podLabels := map[string]string{
+	podLabels0 := map[string]string{
 		"app.kubernetes.io/name":    "my-app",
 		"app.kubernetes.io/version": "v1",
 		"product.my-org/name":       "my-app",
 	}
-	noMatchLabels := map[string]string{"app.kubernetes.io/version": "v2"}
+	podLabels1 := map[string]string{"app.kubernetes.io/version": "v2"}
 
 	pods := []*corev1.Pod{
-		CreateTestPod(testNamespace, "pod-1", "", nil, podLabels),
+		CreateTestPod(testNamespace, "pod-1", "", nil, podLabels0),
 		CreateTestPod(testNamespace, "pod-2", "", nil, AppLabels),
+		CreateTestPod(anotherNs, "pod-1", "", nil, podLabels1),
+		CreateTestPod(anotherNs, "pod-2", "", nil, AppLabels),
 	}
 
 	for _, pod := range pods {
-		_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod, v1.CreateOptions{})
+		_, err := clientset.CoreV1().Pods(pod.Namespace).Create(context.TODO(), pod, v1.CreateOptions{})
 		if err != nil {
 			t.Fatalf("Error creating fake pod: %v", err)
 		}
 	}
 
 	netpols := []*networkingv1.NetworkPolicy{
-		// all pods are selected
-		CreateTestNetworkPolicy("netpol-1", testNamespace, v1.LabelSelector{}, AppLabels),
-		CreateTestNetworkPolicy("netpol-2", testNamespace, v1.LabelSelector{}, UsedLabels),
-		CreateTestNetworkPolicy("netpol-3", testNamespace, v1.LabelSelector{}, UnusedLabels),
-		// some pods are selected
-		CreateTestNetworkPolicy("netpol-4", testNamespace, *v1.SetAsLabelSelector(podLabels), AppLabels),
-		CreateTestNetworkPolicy("netpol-5", testNamespace, *v1.SetAsLabelSelector(podLabels), UnusedLabels),
-		CreateTestNetworkPolicy("netpol-6", testNamespace, *v1.SetAsLabelSelector(podLabels), UsedLabels),
-		// no pods are selected
-		CreateTestNetworkPolicy("netpol-7", testNamespace, *v1.SetAsLabelSelector(noMatchLabels), AppLabels),
-		CreateTestNetworkPolicy("netpol-8", testNamespace, *v1.SetAsLabelSelector(noMatchLabels), UnusedLabels),
-		CreateTestNetworkPolicy("netpol-9", testNamespace, *v1.SetAsLabelSelector(noMatchLabels), UsedLabels),
+		// with kor labels
+		CreateTestNetworkPolicy("netpol-1", testNamespace, UsedLabels, v1.LabelSelector{}, nil, nil),
+		CreateTestNetworkPolicy("netpol-2", testNamespace, UnusedLabels, v1.LabelSelector{}, nil, nil),
+		// with pod selectors
+		CreateTestNetworkPolicy("netpol-3", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels1), nil, nil), // no pods are selected
+
+		// with ingress/egress rules
+		CreateTestNetworkPolicy("netpol-4", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), nil, nil),                                         // deny-all ingress
+		CreateTestNetworkPolicy("netpol-5", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), []networkingv1.NetworkPolicyIngressRule{{}}, nil), // allow-all ingress
+		CreateTestNetworkPolicy("netpol-6", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), []networkingv1.NetworkPolicyIngressRule{{
+			From: []networkingv1.NetworkPolicyPeer{
+				{
+					PodSelector: &v1.LabelSelector{
+						MatchLabels: podLabels1,
+					},
+				},
+			},
+		}}, nil), // allow ingress to some pods
+		CreateTestNetworkPolicy("netpol-7", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), []networkingv1.NetworkPolicyIngressRule{{
+			From: []networkingv1.NetworkPolicyPeer{
+				{
+					PodSelector: &v1.LabelSelector{
+						MatchLabels: map[string]string{"product.my-org/name": "unknown"},
+					},
+				},
+			},
+		}}, nil), // ingress matches 0 pods
 	}
 
+	netpol8 := CreateTestNetworkPolicy("netpol-8", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), nil, []networkingv1.NetworkPolicyEgressRule{{
+		To: []networkingv1.NetworkPolicyPeer{
+			{
+				PodSelector: &v1.LabelSelector{
+					MatchLabels: map[string]string{"product.my-org/name": "unknown"},
+				},
+			},
+		},
+	}}) // egress only - matches 0 pods
+	netpol8.Spec.PolicyTypes = []networkingv1.PolicyType{networkingv1.PolicyTypeEgress}
+	netpols = append(netpols, netpol8)
+
 	for _, netpol := range netpols {
-		_, err = clientset.NetworkingV1().NetworkPolicies(netpol.Namespace).Create(context.TODO(), netpol, v1.CreateOptions{})
+		_, err := clientset.NetworkingV1().NetworkPolicies(netpol.Namespace).Create(context.TODO(), netpol, v1.CreateOptions{})
 		if err != nil {
 			t.Fatalf("Error creating fake networkpolicy: %v", err)
 		}
@@ -125,7 +159,7 @@ func TestIsAnyPodMatchedInSources(t *testing.T) {
 func TestIsAnyIngressRuleUsed(t *testing.T) {
 	clientset := createTestNetworkPolicies(t)
 
-	netpol := CreateTestNetworkPolicy("netpol-0", testNamespace, v1.LabelSelector{}, AppLabels)
+	netpol := CreateTestNetworkPolicy("netpol-0", testNamespace, AppLabels, v1.LabelSelector{}, nil, nil)
 
 	used, err := isAnyIngressRuleUsed(clientset, *netpol)
 	if err != nil {
@@ -140,7 +174,7 @@ func TestIsAnyIngressRuleUsed(t *testing.T) {
 func TestIsAnyEgressRuleUsed(t *testing.T) {
 	clientset := createTestNetworkPolicies(t)
 
-	netpol := CreateTestNetworkPolicy("netpol-0", testNamespace, v1.LabelSelector{}, AppLabels)
+	netpol := CreateTestNetworkPolicy("netpol-0", testNamespace, AppLabels, v1.LabelSelector{}, nil, nil)
 
 	used, err := isAnyEgressRuleUsed(clientset, *netpol)
 	if err != nil {
@@ -161,8 +195,8 @@ func TestProcessNamespaceNetworkPolicies(t *testing.T) {
 	}
 
 	expectedUnusedNetpols := []string{
+		"netpol-2",
 		"netpol-3",
-		"netpol-5",
 		"netpol-7",
 		"netpol-8",
 	}
@@ -198,8 +232,8 @@ func TestGetUnusedNetworkPolicies(t *testing.T) {
 	expectedOutput := map[string]map[string][]string{
 		testNamespace: {
 			"NetworkPolicy": []string{
+				"netpol-2",
 				"netpol-3",
-				"netpol-5",
 				"netpol-7",
 				"netpol-8",
 			},
