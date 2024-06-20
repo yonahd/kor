@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -69,7 +70,7 @@ func isAnyPodMatchedInSources(clientset kubernetes.Interface, sources []networki
 
 func isAnyIngressRuleUsed(clientset kubernetes.Interface, netpol networkingv1.NetworkPolicy) (*bool, error) {
 	// Deny all ingress traffic
-	if len(netpol.Spec.Ingress) == 0 && isPolicyTypeEnabled(netpol, networkingv1.PolicyTypeIngress) {
+	if len(netpol.Spec.Ingress) == 0 && slices.Contains(netpol.Spec.PolicyTypes, networkingv1.PolicyTypeIngress) {
 		used := true
 		return &used, nil
 	}
@@ -90,7 +91,7 @@ func isAnyIngressRuleUsed(clientset kubernetes.Interface, netpol networkingv1.Ne
 
 func isAnyEgressRuleUsed(clientset kubernetes.Interface, netpol networkingv1.NetworkPolicy) (*bool, error) {
 	// Deny all egress traffic
-	if len(netpol.Spec.Egress) == 0 && isPolicyTypeEnabled(netpol, networkingv1.PolicyTypeEgress) {
+	if len(netpol.Spec.Egress) == 0 && slices.Contains(netpol.Spec.PolicyTypes, networkingv1.PolicyTypeEgress) {
 		used := true
 		return &used, nil
 	}
@@ -108,15 +109,6 @@ func isAnyEgressRuleUsed(clientset kubernetes.Interface, netpol networkingv1.Net
 
 	unused := false
 	return &unused, nil
-}
-
-func isPolicyTypeEnabled(netpol networkingv1.NetworkPolicy, policyType networkingv1.PolicyType) bool {
-	for _, enabledPolicyType := range netpol.Spec.PolicyTypes {
-		if enabledPolicyType == policyType {
-			return true
-		}
-	}
-	return false
 }
 
 func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
