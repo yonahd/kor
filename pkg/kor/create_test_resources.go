@@ -399,7 +399,14 @@ func CreateTestUnstructered(kind, apiVersion, namespace, name string) *unstructu
 	}
 }
 
-func CreateTestNetworkPolicy(name, namespace string, podSelector v1.LabelSelector, labels map[string]string) *networkingv1.NetworkPolicy {
+func CreateTestNetworkPolicy(name, namespace string, labels map[string]string, podSelector v1.LabelSelector, ingress []networkingv1.NetworkPolicyIngressRule, egress []networkingv1.NetworkPolicyEgressRule) *networkingv1.NetworkPolicy {
+	policies := []networkingv1.PolicyType{
+		networkingv1.PolicyTypeIngress,
+	}
+	if len(egress) > 0 {
+		policies = append(policies, networkingv1.PolicyTypeEgress)
+	}
+
 	return &networkingv1.NetworkPolicy{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
@@ -408,9 +415,9 @@ func CreateTestNetworkPolicy(name, namespace string, podSelector v1.LabelSelecto
 		},
 		Spec: networkingv1.NetworkPolicySpec{
 			PodSelector: podSelector,
-			PolicyTypes: []networkingv1.PolicyType{
-				networkingv1.PolicyTypeIngress,
-			},
+			PolicyTypes: policies,
+			Ingress:     ingress,
+			Egress:      egress,
 		},
 	}
 }
