@@ -38,6 +38,11 @@ func retrievePodsForSelector(clientset kubernetes.Interface, namespace string, s
 }
 
 func isAnyPodMatchedInSources(clientset kubernetes.Interface, sources []networkingv1.NetworkPolicyPeer) (bool, error) {
+	// If this field is empty or missing, this rule matches all pods
+	if len(sources) == 0 {
+		return true, nil
+	}
+
 	for _, netpolPeer := range sources {
 		labelSelector, err := metav1.LabelSelectorAsSelector(netpolPeer.NamespaceSelector)
 		if err != nil {
