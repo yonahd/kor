@@ -71,6 +71,87 @@ func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
+func TestRetrievePodsForSelector(t *testing.T) {
+	clientset := createTestNetworkPolicies(t)
+
+	selector := &v1.LabelSelector{
+		MatchLabels: map[string]string{
+			"app.kubernetes.io/version": "v1",
+		},
+	}
+	pods, err := retrievePodsForSelector(clientset, testNamespace, selector)
+	if err != nil {
+		t.Errorf("Error retrieving pods for selector %v: %v", selector, err)
+	}
+
+	expectedPods := []string{
+		"pod-1",
+	}
+
+	if len(pods) != len(expectedPods) {
+		t.Errorf("Expected %d pods, got %d", len(expectedPods), len(pods))
+	}
+
+	for i, pod := range pods {
+		if pod.Name != expectedPods[i] {
+			t.Errorf("Expected pod %s, got %v", expectedPods[i], pod)
+		}
+	}
+}
+
+func TestIsAnyPodMatchedInSources(t *testing.T) {
+	clientset := createTestNetworkPolicies(t)
+
+	sources := []networkingv1.NetworkPolicyPeer{
+		{
+			PodSelector: &v1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app.kubernetes.io/version": "v1",
+				},
+			},
+		},
+	}
+
+	matched, err := isAnyPodMatchedInSources(clientset, sources)
+	if err != nil {
+		t.Errorf("Error checking if sources match any pods: %v", err)
+	}
+
+	if !matched {
+		t.Error("Expected matching pods, got none")
+	}
+}
+
+func TestIsAnyIngressRuleUsed(t *testing.T) {
+	clientset := createTestNetworkPolicies(t)
+
+	netpol := CreateTestNetworkPolicy("netpol-0", testNamespace, v1.LabelSelector{}, AppLabels)
+
+	used, err := isAnyIngressRuleUsed(clientset, *netpol)
+	if err != nil {
+		t.Errorf("Error checking if any ingress rule is used: %v", err)
+	}
+
+	if !used {
+		t.Error("Expected ingress rules in use, got none")
+	}
+}
+
+func TestIsAnyEgressRuleUsed(t *testing.T) {
+	clientset := createTestNetworkPolicies(t)
+
+	netpol := CreateTestNetworkPolicy("netpol-0", testNamespace, v1.LabelSelector{}, AppLabels)
+
+	used, err := isAnyEgressRuleUsed(clientset, *netpol)
+	if err != nil {
+		t.Errorf("Error checking if any egress rule is used: %v", err)
+	}
+
+	if used {
+		t.Error("Expected ingress rules not in use, got used rules")
+	}
+}
+
 func TestProcessNamespaceNetworkPolicies(t *testing.T) {
 	clientset := createTestNetworkPolicies(t)
 
