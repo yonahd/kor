@@ -1,7 +1,6 @@
 package kor
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -9,14 +8,12 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/olekukonko/tablewriter"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-	"sigs.k8s.io/yaml"
 )
 
 type ExceptionResource struct {
@@ -40,6 +37,7 @@ type Config struct {
 	ExceptionServices        []ExceptionResource `json:"exceptionServices"`
 	ExceptionStorageClasses  []ExceptionResource `json:"exceptionStorageClasses"`
 	ExceptionJobs            []ExceptionResource `json:"exceptionJobs"`
+	ExceptionPdbs            []ExceptionResource `json:"exceptionPdbs"`
 	// Add other configurations if needed
 }
 
@@ -51,6 +49,7 @@ type Opts struct {
 	Channel       string
 	Token         string
 	GroupBy       string
+	ShowReason    bool
 }
 
 func RemoveDuplicatesAndSort(slice []string) []string {
@@ -132,127 +131,6 @@ func GetDynamicClient(kubeconfig string) *dynamic.DynamicClient {
 	return clientset
 }
 
-func appendResources(resources map[string]map[string][]string, resourceType, namespace string, diff []string) {
-	for _, d := range diff {
-		if _, ok := resources[resourceType]; !ok {
-			resources[resourceType] = make(map[string][]string)
-		}
-		resources[resourceType][namespace] = append(resources[resourceType][namespace], d)
-	}
-}
-
-func getTableHeader(groupBy string) []string {
-	switch groupBy {
-	case "namespace":
-		return []string{
-			"#",
-			"RESOURCE TYPE",
-			"RESOURCE NAME",
-		}
-	case "resource":
-		return []string{
-			"#",
-			"NAMESPACE",
-			"RESOURCE NAME",
-		}
-	default:
-		return nil
-	}
-}
-
-func getTableRow(index int, columns ...string) []string {
-	row := make([]string, 0, len(columns)+1)
-	row = append(row, fmt.Sprintf("%d", index+1))
-	row = append(row, columns...)
-	return row
-}
-
-// FormatOutput formats the output based on the group by option
-func FormatOutput(resources map[string]map[string][]string, opts Opts) bytes.Buffer {
-	var output bytes.Buffer
-	switch opts.GroupBy {
-	case "namespace":
-		for namespace, diffs := range resources {
-			output.WriteString(formatOutputForNamespace(namespace, diffs, opts))
-		}
-	case "resource":
-		for resource, diffs := range resources {
-			output.WriteString(formatOutputForResource(resource, diffs, opts))
-		}
-	}
-	return output
-}
-
-func formatOutputForResource(resource string, resources map[string][]string, opts Opts) string {
-	if len(resources) == 0 {
-		if opts.Verbose {
-			return fmt.Sprintf("No unused %ss found\n", resource)
-		}
-		return ""
-	}
-	var buf bytes.Buffer
-	table := tablewriter.NewWriter(&buf)
-	table.SetHeader(getTableHeader(opts.GroupBy))
-	var index int
-	for ns, diffs := range resources {
-		for _, d := range diffs {
-			row := getTableRow(index, ns, d)
-			table.Append(row)
-			index++
-		}
-	}
-	table.Render()
-	return fmt.Sprintf("Unused %ss:\n%s\n", resource, buf.String())
-}
-
-func formatOutputForNamespace(namespace string, resources map[string][]string, opts Opts) string {
-	var buf bytes.Buffer
-	table := tablewriter.NewWriter(&buf)
-	table.SetHeader(getTableHeader(opts.GroupBy))
-	allEmpty := true
-	var index int
-	for resourceType, diff := range resources {
-		for _, val := range diff {
-			row := getTableRow(index, resourceType, val)
-			table.Append(row)
-			allEmpty = false
-			index++
-		}
-	}
-	if allEmpty {
-		if opts.Verbose {
-			return fmt.Sprintf("No unused resources found in the namespace: %q\n", namespace)
-		}
-		return ""
-	}
-	table.Render()
-	return fmt.Sprintf("Unused resources in namespace: %q\n%s\n", namespace, buf.String())
-}
-
-func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) string {
-	var buf bytes.Buffer
-	table := tablewriter.NewWriter(&buf)
-	table.SetHeader(getTableHeader(opts.GroupBy))
-	allEmpty := true
-	var index int
-	for _, data := range allDiffs {
-		for _, val := range data.diff {
-			row := getTableRow(index, data.resourceType, val)
-			table.Append(row)
-			allEmpty = false
-			index++
-		}
-	}
-	if allEmpty {
-		if opts.Verbose {
-			return fmt.Sprintf("No unused resources found in the namespace: %q\n", namespace)
-		}
-		return ""
-	}
-	table.Render()
-	return fmt.Sprintf("Unused resources in namespace: %q\n%s\n", namespace, buf.String())
-}
-
 // TODO create formatter by resource "#", "Resource Name", "Namespace"
 // TODO Functions that use this object are accompanied by repeated data acquisition operations and can be optimized.
 func CalculateResourceDifference(usedResourceNames []string, allResourceNames []string) []string {
@@ -272,26 +150,7 @@ func CalculateResourceDifference(usedResourceNames []string, allResourceNames []
 	return difference
 }
 
-func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opts Opts, jsonResponse []byte) (string, error) {
-	switch outputFormat {
-	case "table":
-		if opts.WebhookURL == "" || opts.Channel == "" || opts.Token != "" {
-			return outputBuffer.String(), nil
-		}
-		if err := SendToSlack(SlackMessage{}, opts, outputBuffer.String()); err != nil {
-			return "", fmt.Errorf("failed to send message to slack: %w", err)
-		}
-	case "yaml":
-		yamlResponse, err := yaml.JSONToYAML(jsonResponse)
-		if err != nil {
-			return "", fmt.Errorf("failed to convert json to yaml: %w", err)
-		}
-		return string(yamlResponse), nil
-	}
-	return string(jsonResponse), nil
-}
-
-func isResourceException(resourceName string, namespace string, exceptions []ExceptionResource) (bool, error) {
+func isResourceException(resourceName, namespace string, exceptions []ExceptionResource) (bool, error) {
 	var match bool
 	for _, e := range exceptions {
 		if e.ResourceName == resourceName && e.Namespace == namespace {
@@ -323,4 +182,22 @@ func unmarshalConfig(data []byte) (*Config, error) {
 		return nil, err
 	}
 	return &config, nil
+}
+
+func contains(slice []string, item string) bool {
+	for _, element := range slice {
+		if element == item {
+			return true
+		}
+	}
+	return false
+}
+
+func resourceInfoContains(slice []ResourceInfo, item string) bool {
+	for _, element := range slice {
+		if element.Name == item {
+			return true
+		}
+	}
+	return false
 }

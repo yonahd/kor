@@ -13,13 +13,13 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func processNamespaceDeployments(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func processNamespaceDeployments(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	deploymentsList, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 
-	var deploymentsWithoutReplicas []string
+	var deploymentsWithoutReplicas []ResourceInfo
 
 	for _, deployment := range deploymentsList.Items {
 		if pass, _ := filter.SetObject(&deployment).Run(filterOpts); pass {
@@ -27,12 +27,14 @@ func processNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 		}
 
 		if deployment.Labels["kor/used"] == "false" {
-			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, deployment.Name)
+			reason := "Marked with unused label"
+			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, ResourceInfo{Name: deployment.Name, Reason: reason})
 			continue
 		}
 
 		if *deployment.Spec.Replicas == 0 {
-			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, deployment.Name)
+			reason := "Deployment has no replicas"
+			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, ResourceInfo{Name: deployment.Name, Reason: reason})
 		}
 	}
 
@@ -40,7 +42,7 @@ func processNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 }
 
 func GetUnusedDeployments(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceDeployments(clientset, namespace, filterOpts)
 		if err != nil {
@@ -49,13 +51,13 @@ func GetUnusedDeployments(filterOpts *filters.Options, clientset kubernetes.Inte
 		}
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
+			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["Deployment"] = diff
 		case "resource":
 			appendResources(resources, "Deployment", namespace, diff)
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Deployment", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource2(diff, clientset, namespace, "Deployment", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Deployment %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}

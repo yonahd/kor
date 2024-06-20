@@ -20,7 +20,7 @@ type GetUnusedResourceJSONResponse struct {
 
 type ResourceDiff struct {
 	resourceType string
-	diff         []string
+	diff         []ResourceInfo
 }
 
 func getUnusedCMs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
@@ -251,12 +251,24 @@ func getUnusedStorageClasses(clientset kubernetes.Interface, filterOpts *filters
 	return allScDiff
 }
 
+func getUnusedNetworkPolicies(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
+	netpolDiff, err := processNamespaceNetworkPolicies(clientset, namespace, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "NetworkPolicies", namespace, err)
+	}
+	namespaceNetpolDiff := ResourceDiff{
+		"NetworkPolicy",
+		netpolDiff,
+	}
+	return namespaceNetpolDiff
+}
+
 func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]string)
+			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["ConfigMap"] = getUnusedCMs(clientset, namespace, filterOpts).diff
 			resources[namespace]["Service"] = getUnusedSVCs(clientset, namespace, filterOpts).diff
 			resources[namespace]["Secret"] = getUnusedSecrets(clientset, namespace, filterOpts).diff
@@ -272,6 +284,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 			resources[namespace]["Job"] = getUnusedJobs(clientset, namespace, filterOpts).diff
 			resources[namespace]["ReplicaSet"] = getUnusedReplicaSets(clientset, namespace, filterOpts).diff
 			resources[namespace]["DaemonSet"] = getUnusedDaemonSets(clientset, namespace, filterOpts).diff
+			resources[namespace]["NetworkPolicy"] = getUnusedNetworkPolicies(clientset, namespace, filterOpts).diff
 		case "resource":
 			appendResources(resources, "ConfigMap", namespace, getUnusedCMs(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "Service", namespace, getUnusedSVCs(clientset, namespace, filterOpts).diff)
@@ -288,6 +301,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 			appendResources(resources, "Job", namespace, getUnusedJobs(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "ReplicaSet", namespace, getUnusedReplicaSets(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "DaemonSet", namespace, getUnusedDaemonSets(clientset, namespace, filterOpts).diff)
+			appendResources(resources, "NetworkPolicy", namespace, getUnusedNetworkPolicies(clientset, namespace, filterOpts).diff)
 		}
 	}
 
@@ -312,10 +326,10 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 }
 
 func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	switch opts.GroupBy {
 	case "namespace":
-		resources[""] = make(map[string][]string)
+		resources[""] = make(map[string][]ResourceInfo)
 		resources[""]["Crd"] = getUnusedCrds(apiExtClient, dynamicClient, filterOpts).diff
 		resources[""]["Pv"] = getUnusedPvs(clientset, filterOpts).diff
 		resources[""]["ClusterRole"] = getUnusedClusterRoles(clientset, filterOpts).diff

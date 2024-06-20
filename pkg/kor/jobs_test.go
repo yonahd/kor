@@ -104,11 +104,8 @@ func TestProcessNamespaceJobs(t *testing.T) {
 		t.Errorf("Expected 3 jobs unused got %d", len(unusedJobs))
 	}
 
-	expectedJobs := []string{"test-job2", "test-job4", "test-job5"}
-	for _, jobName := range expectedJobs {
-		if !contains(unusedJobs, jobName) {
-			t.Errorf("Expected job %s to be considered unused, but it was not found", jobName)
-		}
+	if unusedJobs[0].Name != "test-job2" && unusedJobs[1].Name != "test-job4" && unusedJobs[2].Name != "test-job5" {
+		t.Errorf("job2', got %s", unusedJobs[0])
 	}
 }
 

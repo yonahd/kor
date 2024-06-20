@@ -66,7 +66,7 @@ func TestProcessNamespaceStatefulSets(t *testing.T) {
 		t.Errorf("Expected 2 deployment without replicas, got %d", len(statefulSetsWithoutReplicas))
 	}
 
-	if statefulSetsWithoutReplicas[0] != "test-sts1" || statefulSetsWithoutReplicas[1] != "test-sts4" {
+	if statefulSetsWithoutReplicas[0].Name != "test-sts1" || statefulSetsWithoutReplicas[1].Name != "test-sts4" {
 		t.Errorf("Expected 'test-sts1' and 'test-sts4, got %s, %s", statefulSetsWithoutReplicas[0], statefulSetsWithoutReplicas[1])
 	}
 }

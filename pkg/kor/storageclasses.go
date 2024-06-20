@@ -50,13 +50,18 @@ func retrieveUsedStorageClasses(clientset kubernetes.Interface) ([]string, error
 	return usedStorageClasses, err
 }
 
-func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.Options) ([]string, error) {
+func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	scs, err := clientset.StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 
-	var unusedStorageClassNames []string
+	config, err := unmarshalConfig(storageClassesConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	var unusedStorageClasses []ResourceInfo
 	storageClassNames := make([]string, 0, len(scs.Items))
 
 	for _, sc := range scs.Items {
@@ -65,13 +70,8 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 		}
 
 		if sc.Labels["kor/used"] == "false" {
-			unusedStorageClassNames = append(unusedStorageClassNames, sc.Name)
+			unusedStorageClasses = append(unusedStorageClasses, ResourceInfo{Name: sc.Name, Reason: "Marked with unused label"})
 			continue
-		}
-
-		config, err := unmarshalConfig(storageClassesConfig)
-		if err != nil {
-			return nil, err
 		}
 
 		exceptionFound, err := isResourceException(sc.Name, sc.Namespace, config.ExceptionStorageClasses)
@@ -92,25 +92,27 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 	}
 
 	diff := CalculateResourceDifference(usedStorageClasses, storageClassNames)
-	diff = append(diff, unusedStorageClassNames...)
-	return diff, nil
+	for _, name := range diff {
+		unusedStorageClasses = append(unusedStorageClasses, ResourceInfo{Name: name, Reason: "Not in Use"})
+	}
+	return unusedStorageClasses, nil
 }
 
 func GetUnusedStorageClasses(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
-	resources := make(map[string]map[string][]string)
+	resources := make(map[string]map[string][]ResourceInfo)
 	diff, err := processStorageClasses(clientset, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to process storageClasses: %v\n", err)
 	}
 	switch opts.GroupBy {
 	case "namespace":
-		resources[""] = make(map[string][]string)
+		resources[""] = make(map[string][]ResourceInfo)
 		resources[""]["StorageClass"] = diff
 	case "resource":
 		appendResources(resources, "StorageClass", "", diff)
 	}
 	if opts.DeleteFlag {
-		if diff, err = DeleteResource(diff, clientset, "", "StorageClass", opts.NoInteractive); err != nil {
+		if diff, err = DeleteResource2(diff, clientset, "", "StorageClass", opts.NoInteractive); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to delete StorageClass %s: %v\n", diff, err)
 		}
 	}

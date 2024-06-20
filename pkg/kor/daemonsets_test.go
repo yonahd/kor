@@ -74,7 +74,7 @@ func TestProcessNamespaceDaemonSets(t *testing.T) {
 		t.Errorf("Expected 1 DaemonSet without replicas, got %d", len(daemonSetsWithoutReplicas))
 	}
 
-	if daemonSetsWithoutReplicas[0] != "test-ds1" && daemonSetsWithoutReplicas[1] != "test-ds4" {
+	if daemonSetsWithoutReplicas[0].Name != "test-ds1" && daemonSetsWithoutReplicas[1].Name != "test-ds4" {
 		t.Errorf("Expected 'test-ds1', 'test-ds4', got %s, %s", daemonSetsWithoutReplicas[0], daemonSetsWithoutReplicas[1])
 	}
 }

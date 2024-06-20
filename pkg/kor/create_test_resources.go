@@ -398,3 +398,16 @@ func CreateTestUnstructered(kind, apiVersion, namespace, name string) *unstructu
 		},
 	}
 }
+
+func CreateTestNetworkPolicy(name, namespace string, podSelector v1.LabelSelector, labels map[string]string) *networkingv1.NetworkPolicy {
+	return &networkingv1.NetworkPolicy{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels:    labels,
+		},
+		Spec: networkingv1.NetworkPolicySpec{
+			PodSelector: podSelector,
+		},
+	}
+}

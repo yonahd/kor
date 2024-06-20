@@ -1,12 +1,21 @@
 {
   "exceptionJobs": [
     {
+      "Namespace": "assisted-installer",
+      "ResourceName": "assisted-installer-controller"
+    },
+    {
       "Namespace": "kube-system",
       "ResourceName": "helm-install-traefik"
     },
     {
       "Namespace": "kube-system",
       "ResourceName": "helm-install-traefik-crd"
+    },
+    {
+      "Namespace": "openshift-.*",
+      "ResourceName": ".*",
+      "MatchRegex": true
     }
   ]
 }

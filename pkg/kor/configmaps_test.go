@@ -147,11 +147,11 @@ func TestProcessNamespaceCM(t *testing.T) {
 		t.Fatalf("Error processing namespace CM: %v", err)
 	}
 
-	unusedConfigmaps := []string{
-		"configmap-3",
-		"configmap-5",
+	unusedConfigmaps := []ResourceInfo{
+		{Name: "configmap-3", Reason: "ConfigMap is not used in any pod or container"},
+		{Name: "configmap-5", Reason: "Marked with unused label"},
 	}
-	if !equalSlices(diff, unusedConfigmaps) {
+	if !equalResourceInfoSlices(diff, unusedConfigmaps) {
 		t.Errorf("Expected diff %v, got %v", unusedConfigmaps, diff)
 	}
 }

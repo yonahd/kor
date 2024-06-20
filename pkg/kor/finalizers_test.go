@@ -92,10 +92,19 @@ func TestRetrievePendingDeletionResources(t *testing.T) {
 				t.Errorf("Expected error: %v, Got: %v", test.expectedError, err)
 			}
 			if deletedResources, ok := result[testNamespace][gvr.GroupVersion().WithResource("testresources")]; ok {
-				if !slices.Equal(deletedResources, test.expectedResult) {
+				deletedResourceNames := extractNames(deletedResources)
+				if !slices.Equal(deletedResourceNames, test.expectedResult) {
 					t.Errorf("Expected result: %v, Got: %v", test.expectedResult, deletedResources)
 				}
 			}
 		})
 	}
+}
+
+func extractNames(resources []ResourceInfo) []string {
+	names := make([]string, len(resources))
+	for i, resource := range resources {
+		names[i] = resource.Name
+	}
+	return names
 }

@@ -29,8 +29,9 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - ReplicaSets
 - DaemonSets
 - StorageClasses
+- NetworkPolicies
 
-![Kor Screenshot](/images/screenshot.png)
+![Kor Screenshot](/images/show_reason_screenshot.png)
 
 ## Installation
 
@@ -116,6 +117,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `replicaset` - Gets unused replicaSets for the specified namespace or all namespaces.
 - `daemonset`- Gets unused DaemonSets for the specified namespace or all namespaces.
 - `finalizer` - Gets unused pending deletion resources for the specified namespace or all namespaces.
+- `networkpolicy` - Gets unused NetworkPolicies for the specified namespace or all namespaces.
 - `exporter` - Export Prometheus metrics.
 - `version` - Print kor version information.
 
@@ -134,6 +136,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
       --no-interactive               Do not prompt for confirmation when deleting resources. Be careful using this flag!
       --older-than string            The minimum age of the resources to be considered unused. This flag cannot be used together with newer-than flag. Example: --older-than=1h2m
   -o, --output string                Output format (table, json or yaml) (default "table")
+      --show-reason                  Print reason resource is considered unused
       --slack-auth-token string      Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.
       --slack-channel string         Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.
       --slack-webhook-url string     Slack webhook URL to send notifications to
@@ -174,6 +177,7 @@ kor [subcommand] --help
 | ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work                                                                                                                                                        |
 | DaemonSets      | DaemonSets not scheduled on any nodes                                                                                                                                                                                             |
 | StorageClasses  | StorageClasses not used by any PVs/PVCs                                                                                                                                                                                           |
+| NetworkPolicies  | NetworkPolicies with no Pods selected                                                                                                                                                                                           |
 
 ### Deleting Unused resources
 
@@ -219,6 +223,27 @@ Will be cleaned always. This is a good way to mark resources for later cleanup.
 
 Kor supports three output formats: `table`, `json`, and `yaml`. The default output format is `table`.
 Additionally, you can use the `--group-by` flag to group the output by `namespace` or `resource`.
+
+#### Show reason
+
+```sh
+kor all -n test --show-reason
+```
+```
+Unused resources in namespace: "test"
++---+----------------+----------------------------------------------+--------------------------------------------------------+
+| # | RESOURCE TYPE  |                RESOURCE NAME                 |                         REASON                         |
++---+----------------+----------------------------------------------+--------------------------------------------------------+
+| 1 | Service        | do-not-delete                                | Marked with unused label                               |
+| 2 | Ingress        | example-ingress                              | Ingress does not have a valid backend service          |
+| 3 | Ingress        | example-ingress2                             | Ingress does not have a valid backend service          |
+| 4 | ConfigMap      | prober-blackbox-config                       | ConfigMap is not used in any pod or container          |
+| 5 | ConfigMap      | release-name-prober-operator-blackbox-config | ConfigMap is not used in any pod or container          |
+| 6 | ConfigMap      | unused-cm                                    | ConfigMap is not used in any pod or container          |
+| 7 | ServiceAccount | my-service-account2                          | ServiceAccount is not in use                           |
+| 8 | Pdb            | my-pdb                                       | Pdb is not referencing any deployments or statefulsets |
++---+----------------+----------------------------------------------+--------------------------------------------------------+
+```
 
 #### Group by resource
 

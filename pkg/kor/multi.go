@@ -86,6 +86,8 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 			diffResult = getUnusedReplicaSets(clientset, namespace, filterOpts)
 		case "ds", "daemonset", "daemonsets":
 			diffResult = getUnusedDaemonSets(clientset, namespace, filterOpts)
+		case "netpol", "networkpolicy", "networkpolicies":
+			diffResult = getUnusedNetworkPolicies(clientset, namespace, filterOpts)
 		default:
 			fmt.Printf("resource type %q is not supported\n", resource)
 		}
@@ -100,7 +102,7 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 	var unusedMulti string
 	resourceList := strings.Split(resourceNames, ",")
 	namespaces := filterOpts.Namespaces(clientset)
-	response := make(map[string]map[string][]string)
+	response := make(map[string]map[string][]ResourceInfo)
 	var err error
 
 	noNamespaceDiff, resourceList := retrieveNoNamespaceDiff(clientset, apiExtClient, dynamicClient, resourceList, filterOpts)
@@ -110,13 +112,13 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 				output := FormatOutputAll("", []ResourceDiff{diff}, opts)
 				outputBuffer.WriteString(output)
 
-				resourceMap := make(map[string][]string)
+				resourceMap := make(map[string][]ResourceInfo)
 				resourceMap[diff.resourceType] = diff.diff
 				response[""] = resourceMap
 			}
 		}
 
-		resourceMap := make(map[string][]string)
+		resourceMap := make(map[string][]ResourceInfo)
 		for _, diff := range noNamespaceDiff {
 			resourceMap[diff.resourceType] = diff.diff
 		}
@@ -129,7 +131,7 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 
 		if opts.DeleteFlag {
 			for _, diff := range allDiffs {
-				if diff.diff, err = DeleteResource(diff.diff, clientset, namespace, diff.resourceType, opts.NoInteractive); err != nil {
+				if diff.diff, err = DeleteResource2(diff.diff, clientset, namespace, diff.resourceType, opts.NoInteractive); err != nil {
 					fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", diff.resourceType, diff.diff, namespace, err)
 				}
 			}
@@ -139,7 +141,7 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 		if output != "" {
 			outputBuffer.WriteString(output)
 
-			resourceMap := make(map[string][]string)
+			resourceMap := make(map[string][]ResourceInfo)
 			for _, diff := range allDiffs {
 				resourceMap[diff.resourceType] = diff.diff
 			}
