@@ -177,7 +177,7 @@ kor [subcommand] --help
 | ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work                                                                                                                                                        |
 | DaemonSets      | DaemonSets not scheduled on any nodes                                                                                                                                                                                             |
 | StorageClasses  | StorageClasses not used by any PVs/PVCs                                                                                                                                                                                           |
-| NetworkPolicies  | NetworkPolicies with no Pods selected                                                                                                                                                                                           |
+| NetworkPolicies  | NetworkPolicies with no Pods selected by podSelector or Ingress/Egress rules                                                                                                                                                                                           |
 
 ### Deleting Unused resources
 
