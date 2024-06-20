@@ -53,3 +53,14 @@ jobs:
 
       - name: Update new version in krew-index
         uses: rajatjindal/krew-release-bot@v0.0.46
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.6.0
+        env:
+          CR_TOKEN: "${{ secrets.RELEASE_GITHUB_TOKEN }}"
+          
