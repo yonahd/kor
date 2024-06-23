@@ -51,7 +51,7 @@ func GetUnusedPvs(filterOpts *filters.Options, clientset kubernetes.Interface, o
 		fmt.Fprintf(os.Stderr, "Failed to process pvs: %v\n", err)
 	}
 	if opts.DeleteFlag {
-		if diff, err = DeleteResource2(diff, clientset, "", "PV", opts.NoInteractive); err != nil {
+		if diff, err = DeleteResource(diff, clientset, "", "PV", opts.NoInteractive); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to delete PV %s: %v\n", diff, err)
 		}
 	}

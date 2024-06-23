@@ -69,7 +69,7 @@ func GetUnusedServices(filterOpts *filters.Options, clientset kubernetes.Interfa
 			continue
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource2(diff, clientset, namespace, "Service", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource(diff, clientset, namespace, "Service", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Service %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}

@@ -89,7 +89,7 @@ func GetUnusedHpas(filterOpts *filters.Options, clientset kubernetes.Interface, 
 			continue
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource2(diff, clientset, namespace, "HPA", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource(diff, clientset, namespace, "HPA", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete HPA %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}

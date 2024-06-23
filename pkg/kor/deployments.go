@@ -50,7 +50,7 @@ func GetUnusedDeployments(filterOpts *filters.Options, clientset kubernetes.Inte
 			continue
 		}
 		if opts.DeleteFlag {
-			if diff, err = DeleteResource2(diff, clientset, namespace, "Deployment", opts.NoInteractive); err != nil {
+			if diff, err = DeleteResource(diff, clientset, namespace, "Deployment", opts.NoInteractive); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to delete Deployment %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
