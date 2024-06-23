@@ -334,7 +334,7 @@ func DeleteResource2(diff []ResourceInfo, clientset kubernetes.Interface, namesp
 		if !noInteractive {
 			fmt.Printf("Do you want to delete %s %s in namespace %s? (Y/N): ", resourceType, resource.Name, namespace)
 			var confirmation string
-			_, err := fmt.Scanf("%s", &confirmation)
+			_, err := fmt.Scanf("%s\n", &confirmation)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to read input: %v\n", err)
 				continue
@@ -345,7 +345,7 @@ func DeleteResource2(diff []ResourceInfo, clientset kubernetes.Interface, namesp
 
 				fmt.Printf("Do you want flag the resource %s %s in namespace %s as In Use? (Y/N): ", resourceType, resource.Name, namespace)
 				var inUse string
-				_, err := fmt.Scanf("%s", &inUse)
+				_, err := fmt.Scanf("%s\n", &inUse)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Failed to read input: %v\n", err)
 					continue
