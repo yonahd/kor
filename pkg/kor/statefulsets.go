@@ -51,6 +51,11 @@ func GetUnusedStatefulSets(filterOpts *filters.Options, clientset kubernetes.Int
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+		if opts.DeleteFlag {
+			if diff, err = DeleteResource2(diff, clientset, namespace, "StatefulSet", opts.NoInteractive); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete Statefulset %s in namespace %s: %v\n", diff, namespace, err)
+			}
+		}
 		switch opts.GroupBy {
 		case "namespace":
 			if diff != nil {
@@ -60,11 +65,6 @@ func GetUnusedStatefulSets(filterOpts *filters.Options, clientset kubernetes.Int
 		case "resource":
 			if diff != nil {
 				appendResources(resources, "StatefulSet", namespace, diff)
-			}
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource2(diff, clientset, namespace, "StatefulSet", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Statefulset %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
 	}
