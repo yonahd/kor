@@ -148,7 +148,7 @@ func formatOutputForResource(resource string, resources map[string][]ResourceInf
 		}
 	}
 	table.Render()
-	return fmt.Sprintf("Unused %ss:\n%s", resource, buf.String())
+	return fmt.Sprintf("Unused %ss:\n%s\n", resource, buf.String())
 }
 
 func appendResources(resources map[string]map[string][]ResourceInfo, resourceType, namespace string, diff []ResourceInfo) {
