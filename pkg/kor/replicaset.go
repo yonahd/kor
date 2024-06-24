@@ -22,7 +22,7 @@ func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace strin
 	var unusedReplicaSetNames []ResourceInfo
 
 	for _, replicaSet := range replicaSetList.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
+		if pass := filters.KorLabelFilter(&replicaSet, &filters.Options{}); pass { 
 			continue
 		}
 
