@@ -15,26 +15,42 @@ import (
 func TestDeleteResource(t *testing.T) {
 	clientset := fake.NewSimpleClientset()
 
+	configmap1 := CreateTestConfigmap(testNamespace, "configmap-1", AppLabels)
+	_, err := clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake configmap: %v", err)
+	}
+	configmap2 := CreateTestConfigmap(testNamespace, "configmap-2", AppLabels)
+	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap2, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake configmap: %v", err)
+	}
+
 	tests := []struct {
 		name          string
-		diff          []string
+		diff          []ResourceInfo
 		resourceType  string
-		expectedDiff  []string
+		expectedDiff  []ResourceInfo
 		expectedError bool
 	}{
 		{
-			name:          "Test deletion confirmation",
-			diff:          []string{"resource1", "resource2"},
-			resourceType:  "ConfigMap",
-			expectedDiff:  []string{"resource1-DELETED", "resource2"},
+			name: "Test deletion confirmation",
+			diff: []ResourceInfo{
+				{Name: configmap1.Name, Reason: "ConfigMap is not used in any pod or container"},
+				{Name: configmap2.Name, Reason: "Marked with unused label"},
+			},
+			resourceType: "ConfigMap",
+			expectedDiff: []ResourceInfo{
+				{Name: configmap1.Name + "-DELETED", Reason: "ConfigMap is not used in any pod or container"},
+				{Name: configmap2.Name + "-DELETED", Reason: "Marked with unused label"},
+			},
 			expectedError: false,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			deletedDiff, _ := DeleteResource(test.diff, clientset, "namespace", test.resourceType, true)
-
+			deletedDiff, _ := DeleteResource(test.diff, clientset, testNamespace, test.resourceType, true)
 			for i, deleted := range deletedDiff {
 				if deleted != test.expectedDiff[i] {
 					t.Errorf("Expected: %s, Got: %s", test.expectedDiff[i], deleted)

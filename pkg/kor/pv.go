@@ -50,17 +50,17 @@ func GetUnusedPvs(filterOpts *filters.Options, clientset kubernetes.Interface, o
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to process pvs: %v\n", err)
 	}
+	if opts.DeleteFlag {
+		if diff, err = DeleteResource(diff, clientset, "", "PV", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete PV %s: %v\n", diff, err)
+		}
+	}
 	switch opts.GroupBy {
 	case "namespace":
 		resources[""] = make(map[string][]ResourceInfo)
 		resources[""]["Pv"] = diff
 	case "resource":
 		appendResources(resources, "Pv", "", diff)
-	}
-	if opts.DeleteFlag {
-		if diff, err = DeleteResource2(diff, clientset, "", "PV", opts.NoInteractive); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to delete PV %s: %v\n", diff, err)
-		}
 	}
 
 	var outputBuffer bytes.Buffer

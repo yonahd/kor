@@ -44,17 +44,17 @@ func GetUnusedReplicaSets(filterOpts *filters.Options, clientset kubernetes.Inte
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+		if opts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "ReplicaSet", opts.NoInteractive); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete ReplicaSet %s in namespace %s: %v\n", diff, namespace, err)
+			}
+		}
 		switch opts.GroupBy {
 		case "namespace":
 			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["ReplicaSet"] = diff
 		case "resource":
 			appendResources(resources, "ReplicaSet", namespace, diff)
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource2(diff, clientset, namespace, "ReplicaSet", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete ReplicaSet %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 	}
 

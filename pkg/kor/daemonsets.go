@@ -67,17 +67,17 @@ func GetUnusedDaemonSets(filterOpts *filters.Options, clientset kubernetes.Inter
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+		if opts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "DaemonSet", opts.NoInteractive); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete DaemonSet %s in namespace %s: %v\n", diff, namespace, err)
+			}
+		}
 		switch opts.GroupBy {
 		case "namespace":
 			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["DaemonSet"] = diff
 		case "resource":
 			appendResources(resources, "DaemonSet", namespace, diff)
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource2(diff, clientset, namespace, "DaemonSet", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete DaemonSet %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 	}
 

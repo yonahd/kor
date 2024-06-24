@@ -171,17 +171,17 @@ func GetUnusedServiceAccounts(filterOpts *filters.Options, clientset kubernetes.
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
+		if opts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "ServiceAccount", opts.NoInteractive); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete Serviceaccount %s in namespace %s: %v\n", diff, namespace, err)
+			}
+		}
 		switch opts.GroupBy {
 		case "namespace":
 			resources[namespace] = make(map[string][]ResourceInfo)
 			resources[namespace]["ServiceAccount"] = diff
 		case "resource":
 			appendResources(resources, "ServiceAccount", namespace, diff)
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource2(diff, clientset, namespace, "ServiceAccount", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Serviceaccount %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 	}
 
