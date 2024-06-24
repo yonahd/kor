@@ -68,7 +68,11 @@ func GetUnusedServices(filterOpts *filters.Options, clientset kubernetes.Interfa
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-
+		if opts.DeleteFlag {
+			if diff, err = DeleteResource(diff, clientset, namespace, "Service", opts.NoInteractive); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to delete Service %s in namespace %s: %v\n", diff, namespace, err)
+			}
+		}
 		switch opts.GroupBy {
 		case "namespace":
 			if diff != nil {
@@ -78,13 +82,6 @@ func GetUnusedServices(filterOpts *filters.Options, clientset kubernetes.Interfa
 		case "resource":
 			if diff != nil {
 				appendResources(resources, "Service", namespace, diff)
-			}
-
-		}
-
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource2(diff, clientset, namespace, "Service", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Service %s in namespace %s: %v\n", diff, namespace, err)
 			}
 		}
 	}
