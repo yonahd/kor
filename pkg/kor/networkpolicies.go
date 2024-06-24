@@ -83,7 +83,7 @@ func isAnyIngressRuleUsed(clientset kubernetes.Interface, netpol networkingv1.Ne
 		}
 
 		if podsMatched {
-			return podsMatched, nil
+			return true, nil
 		}
 	}
 
@@ -103,7 +103,7 @@ func isAnyEgressRuleUsed(clientset kubernetes.Interface, netpol networkingv1.Net
 		}
 
 		if podsMatched {
-			return podsMatched, nil
+			return true, nil
 		}
 	}
 
