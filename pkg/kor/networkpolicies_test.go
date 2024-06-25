@@ -81,9 +81,18 @@ func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 				},
 			},
 		}}, nil), // ingress matches 0 pods
+		CreateTestNetworkPolicy("netpol-8", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), []networkingv1.NetworkPolicyIngressRule{{
+			From: []networkingv1.NetworkPolicyPeer{
+				{
+					IPBlock: &networkingv1.IPBlock{
+						CIDR: "172.17.0.0/16",
+					},
+				},
+			},
+		}}, nil), // with ipBlock
 	}
 
-	netpol8 := CreateTestNetworkPolicy("netpol-8", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), nil, []networkingv1.NetworkPolicyEgressRule{{
+	netpol9 := CreateTestNetworkPolicy("netpol-9", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), nil, []networkingv1.NetworkPolicyEgressRule{{
 		To: []networkingv1.NetworkPolicyPeer{
 			{
 				PodSelector: &v1.LabelSelector{
@@ -92,8 +101,8 @@ func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 			},
 		},
 	}}) // egress only - matches 0 pods
-	netpol8.Spec.PolicyTypes = []networkingv1.PolicyType{networkingv1.PolicyTypeEgress}
-	netpols = append(netpols, netpol8)
+	netpol9.Spec.PolicyTypes = []networkingv1.PolicyType{networkingv1.PolicyTypeEgress}
+	netpols = append(netpols, netpol9)
 
 	for _, netpol := range netpols {
 		_, err := clientset.NetworkingV1().NetworkPolicies(netpol.Namespace).Create(context.TODO(), netpol, v1.CreateOptions{})
@@ -198,7 +207,7 @@ func TestProcessNamespaceNetworkPolicies(t *testing.T) {
 		"netpol-2",
 		"netpol-3",
 		"netpol-7",
-		"netpol-8",
+		"netpol-9",
 	}
 
 	if len(unusedNetpols) != len(expectedUnusedNetpols) {
@@ -235,7 +244,7 @@ func TestGetUnusedNetworkPolicies(t *testing.T) {
 				"netpol-2",
 				"netpol-3",
 				"netpol-7",
-				"netpol-8",
+				"netpol-9",
 			},
 		},
 	}
