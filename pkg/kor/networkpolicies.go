@@ -44,6 +44,11 @@ func isAnyPodMatchedInSources(clientset kubernetes.Interface, sources []networki
 	}
 
 	for _, netpolPeer := range sources {
+		// If ipBlock is specified, assume the source is in use
+		if netpolPeer.IPBlock != nil {
+			return true, nil
+		}
+
 		labelSelector, err := metav1.LabelSelectorAsSelector(netpolPeer.NamespaceSelector)
 		if err != nil {
 			return false, err
