@@ -18,7 +18,7 @@ import (
 //go:embed exceptions/roles/roles.json
 var rolesConfig []byte
 
-func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, error) {
+func retrieveUsedRoles(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	// Get a list of all role bindings in the specified namespace
 	roleBindings, err := clientset.RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -27,10 +27,6 @@ func retrieveUsedRoles(clientset kubernetes.Interface, namespace string, filterO
 
 	usedRoles := make(map[string]bool)
 	for _, rb := range roleBindings.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
-			continue
-		}
-
 		usedRoles[rb.RoleRef.Name] = true
 	}
 
@@ -78,7 +74,7 @@ func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterO
 }
 
 func processNamespaceRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
-	usedRoles, err := retrieveUsedRoles(clientset, namespace, filterOpts)
+	usedRoles, err := retrieveUsedRoles(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}

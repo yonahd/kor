@@ -47,7 +47,7 @@ func retrievePendingDeletionResources(resourceTypes []*metav1.APIResourceList, d
 					continue
 				}
 				for _, item := range resourceList.Items {
-					if pass, _ := filter.Run(filterOpts); pass {
+					if pass, _ := filter.SetObject(&item).Run(filterOpts); pass {
 						continue
 					}
 					if CheckFinalizers(item.GetFinalizers(), item.GetDeletionTimestamp()) {
