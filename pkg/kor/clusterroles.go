@@ -44,9 +44,6 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 	usedClusterRoles := make(map[string]bool)
 
 	for _, rb := range roleBindingsAllNameSpaces {
-		if pass, _ := filter.Run(filterOpts); pass {
-			continue
-		}
 		usedClusterRoles[rb.RoleRef.Name] = true
 		if rb.RoleRef.Kind == "ClusterRole" {
 			usedClusterRoles[rb.RoleRef.Name] = true
@@ -61,9 +58,6 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 	}
 
 	for _, crb := range clusterRoleBindings.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
-			continue
-		}
 		usedClusterRoles[crb.RoleRef.Name] = true
 	}
 

@@ -22,7 +22,7 @@ func processNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 	var statefulSetsWithoutReplicas []ResourceInfo
 
 	for _, statefulSet := range statefulSetsList.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
+		if pass, _ := filter.SetObject(&statefulSet).Run(filterOpts); pass {
 			continue
 		}
 

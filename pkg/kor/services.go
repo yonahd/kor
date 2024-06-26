@@ -31,7 +31,7 @@ func processNamespaceServices(clientset kubernetes.Interface, namespace string, 
 	var endpointsWithoutSubsets []ResourceInfo
 
 	for _, endpoints := range endpointsList.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
+		if pass, _ := filter.SetObject(&endpoints).Run(filterOpts); pass {
 			continue
 		}
 

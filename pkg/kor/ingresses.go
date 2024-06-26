@@ -36,7 +36,7 @@ func retrieveUsedIngress(clientset kubernetes.Interface, namespace string, filte
 	usedIngresses := []string{}
 
 	for _, ingress := range ingresses.Items {
-		if pass, _ := filter.Run(filterOpts); pass {
+		if pass, _ := filter.SetObject(&ingress).Run(filterOpts); pass {
 			continue
 		}
 
