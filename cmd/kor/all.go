@@ -11,7 +11,7 @@ import (
 
 var allCmd = &cobra.Command{
 	Use:   "all",
-	Short: "Gets unused resources",
+	Short: "Gets unused namespaced resources",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
