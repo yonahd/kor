@@ -19,8 +19,8 @@ import (
 func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 	clientset := fake.NewSimpleClientset()
 
-	anotherNs := "another-namespace"
-	namespaces := []string{testNamespace, anotherNs}
+	testNamespace2 := "another-namespace"
+	namespaces := []string{testNamespace, testNamespace2}
 
 	for _, ns := range namespaces {
 		_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
@@ -32,18 +32,18 @@ func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 		}
 	}
 
-	podLabels0 := map[string]string{
+	podLabels1 := map[string]string{
 		"app.kubernetes.io/name":    "my-app",
 		"app.kubernetes.io/version": "v1",
 		"product.my-org/name":       "my-app",
 	}
-	podLabels1 := map[string]string{"app.kubernetes.io/version": "v2"}
+	podLabels2 := map[string]string{"app.kubernetes.io/version": "v2"}
 
 	pods := []*corev1.Pod{
-		CreateTestPod(testNamespace, "pod-1", "", nil, podLabels0),
+		CreateTestPod(testNamespace, "pod-1", "", nil, podLabels1),
 		CreateTestPod(testNamespace, "pod-2", "", nil, AppLabels),
-		CreateTestPod(anotherNs, "pod-1", "", nil, podLabels1),
-		CreateTestPod(anotherNs, "pod-2", "", nil, AppLabels),
+		CreateTestPod(testNamespace2, "pod-1", "", nil, podLabels2),
+		CreateTestPod(testNamespace2, "pod-2", "", nil, AppLabels),
 	}
 
 	for _, pod := range pods {
@@ -57,22 +57,28 @@ func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 		// with kor labels
 		CreateTestNetworkPolicy("netpol-1", testNamespace, UsedLabels, v1.LabelSelector{}, nil, nil),
 		CreateTestNetworkPolicy("netpol-2", testNamespace, UnusedLabels, v1.LabelSelector{}, nil, nil),
+
 		// with pod selectors
-		CreateTestNetworkPolicy("netpol-3", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels1), nil, nil), // no pods are selected
+		// no pods are selected
+		CreateTestNetworkPolicy("netpol-3", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels2), nil, nil),
 
 		// with ingress/egress rules
-		CreateTestNetworkPolicy("netpol-4", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), nil, nil),                                         // deny-all ingress
-		CreateTestNetworkPolicy("netpol-5", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), []networkingv1.NetworkPolicyIngressRule{{}}, nil), // allow-all ingress
-		CreateTestNetworkPolicy("netpol-6", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), []networkingv1.NetworkPolicyIngressRule{{
+		// deny-all ingress
+		CreateTestNetworkPolicy("netpol-4", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels1), nil, nil),
+		// allow-all ingress
+		CreateTestNetworkPolicy("netpol-5", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels1), []networkingv1.NetworkPolicyIngressRule{{}}, nil),
+		// allow ingress to some pods
+		CreateTestNetworkPolicy("netpol-6", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels1), []networkingv1.NetworkPolicyIngressRule{{
 			From: []networkingv1.NetworkPolicyPeer{
 				{
 					PodSelector: &v1.LabelSelector{
-						MatchLabels: podLabels1,
+						MatchLabels: podLabels2,
 					},
 				},
 			},
-		}}, nil), // allow ingress to some pods
-		CreateTestNetworkPolicy("netpol-7", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), []networkingv1.NetworkPolicyIngressRule{{
+		}}, nil),
+		// ingress matches 0 pods
+		CreateTestNetworkPolicy("netpol-7", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels1), []networkingv1.NetworkPolicyIngressRule{{
 			From: []networkingv1.NetworkPolicyPeer{
 				{
 					PodSelector: &v1.LabelSelector{
@@ -80,8 +86,9 @@ func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 					},
 				},
 			},
-		}}, nil), // ingress matches 0 pods
-		CreateTestNetworkPolicy("netpol-8", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), []networkingv1.NetworkPolicyIngressRule{{
+		}}, nil),
+		// with ipBlock
+		CreateTestNetworkPolicy("netpol-8", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels1), []networkingv1.NetworkPolicyIngressRule{{
 			From: []networkingv1.NetworkPolicyPeer{
 				{
 					IPBlock: &networkingv1.IPBlock{
@@ -89,10 +96,10 @@ func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 					},
 				},
 			},
-		}}, nil), // with ipBlock
+		}}, nil),
 	}
 
-	netpol9 := CreateTestNetworkPolicy("netpol-9", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels0), nil, []networkingv1.NetworkPolicyEgressRule{{
+	netpol9 := CreateTestNetworkPolicy("netpol-9", testNamespace, AppLabels, *v1.SetAsLabelSelector(podLabels1), nil, []networkingv1.NetworkPolicyEgressRule{{
 		To: []networkingv1.NetworkPolicyPeer{
 			{
 				PodSelector: &v1.LabelSelector{
