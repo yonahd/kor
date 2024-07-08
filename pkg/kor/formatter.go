@@ -8,6 +8,8 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 	"sigs.k8s.io/yaml"
+
+	"github.com/yonahd/kor/pkg/utils"
 )
 
 type ResourceInfo struct {
@@ -28,7 +30,7 @@ func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opt
 		if opts.WebhookURL == "" || opts.Channel == "" || opts.Token != "" {
 			return outputBuffer.String(), nil
 		}
-		if err := SendToSlack(SlackMessage{}, opts, outputBuffer.String()); err != nil {
+		if err := utils.SendToSlack(utils.SlackMessage{}, opts, outputBuffer.String()); err != nil {
 			return "", fmt.Errorf("failed to send message to slack: %w", err)
 		}
 	case "json", "yaml":

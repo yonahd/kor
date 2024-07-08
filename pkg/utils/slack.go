@@ -1,4 +1,4 @@
-package kor
+package utils
 
 import (
 	"bytes"
