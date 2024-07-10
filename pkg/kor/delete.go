@@ -81,6 +81,9 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 		"NetworkPolicy": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.NetworkingV1().NetworkPolicies(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
+		"Namespace": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.CoreV1().Namespaces().Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
 	}
 
 	return deleteResourceApiMap
@@ -270,6 +273,13 @@ func DeleteResourceWithFinalizer(resources []ResourceInfo, dynamicClient dynamic
 	return remainingResources, nil
 }
 
+func namespacedMessageSuffix(namespace string) string {
+	if namespace != "" {
+		return " in namespace " + namespace
+	}
+	return ""
+}
+
 func DeleteResource(diff []ResourceInfo, clientset kubernetes.Interface, namespace, resourceType string, noInteractive bool) ([]ResourceInfo, error) {
 	deletedDiff := []ResourceInfo{}
 
@@ -281,7 +291,12 @@ func DeleteResource(diff []ResourceInfo, clientset kubernetes.Interface, namespa
 		}
 
 		if !noInteractive {
-			fmt.Printf("Do you want to delete %s %s in namespace %s? (Y/N): ", resourceType, resource.Name, namespace)
+			fmt.Printf(
+				"Do you want to delete %s %s%s? (Y/N): ",
+				resourceType,
+				resource.Name,
+				namespacedMessageSuffix(namespace),
+			)
 			var confirmation string
 			_, err := fmt.Scanf("%s\n", &confirmation)
 			if err != nil {
@@ -292,7 +307,12 @@ func DeleteResource(diff []ResourceInfo, clientset kubernetes.Interface, namespa
 			if strings.ToLower(confirmation) != "y" && strings.ToLower(confirmation) != "yes" {
 				deletedDiff = append(deletedDiff, resource)
 
-				fmt.Printf("Do you want flag the resource %s %s in namespace %s as In Use? (Y/N): ", resourceType, resource.Name, namespace)
+				fmt.Printf(
+					"Do you want flag the resource %s %s%s as In Use? (Y/N): ",
+					resourceType,
+					resource.Name,
+					namespacedMessageSuffix(namespace),
+				)
 				var inUse string
 				_, err := fmt.Scanf("%s\n", &inUse)
 				if err != nil {
@@ -302,7 +322,14 @@ func DeleteResource(diff []ResourceInfo, clientset kubernetes.Interface, namespa
 
 				if strings.ToLower(inUse) == "y" || strings.ToLower(inUse) == "yes" {
 					if err := FlagResource(clientset, namespace, resourceType, resource.Name); err != nil {
-						fmt.Fprintf(os.Stderr, "Failed to flag resource %s %s in namespace %s as In Use: %v\n", resourceType, resource.Name, namespace, err)
+						fmt.Fprintf(
+							os.Stderr,
+							"Failed to flag resource %s %s%s as In Use: %v\n",
+							resourceType,
+							resource.Name,
+							namespacedMessageSuffix(namespace),
+							err,
+						)
 					}
 					continue
 				}
@@ -310,9 +337,17 @@ func DeleteResource(diff []ResourceInfo, clientset kubernetes.Interface, namespa
 			}
 		}
 
-		fmt.Printf("Deleting %s %s in namespace %s\n", resourceType, resource.Name, namespace)
+		fmt.Printf("Deleting %s %s%s\n", resourceType, resource.Name, namespacedMessageSuffix(namespace))
+
 		if err := deleteFunc(clientset, namespace, resource.Name); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", resourceType, resource.Name, namespace, err)
+			fmt.Fprintf(
+				os.Stderr,
+				"Failed to delete %s %s%s: %v\n",
+				resourceType,
+				resource.Name,
+				namespacedMessageSuffix(namespace),
+				err,
+			)
 			continue
 		}
 		deletedResource := resource
