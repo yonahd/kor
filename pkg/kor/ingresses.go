@@ -116,7 +116,7 @@ func processNamespaceIngresses(clientset kubernetes.Interface, namespace string,
 
 }
 
-func GetUnusedIngresses(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedIngresses(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceIngresses(clientset, namespace, filterOpts)

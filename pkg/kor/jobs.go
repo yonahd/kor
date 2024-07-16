@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/yonahd/kor/pkg/common"
 	"os"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -65,7 +66,7 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 	return unusedJobNames, nil
 }
 
-func GetUnusedJobs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedJobs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceJobs(clientset, namespace, filterOpts)

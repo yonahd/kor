@@ -65,7 +65,7 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 	return unusedCRDs, nil
 }
 
-func GetUnusedCrds(_ *filters.Options, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedCrds(_ *filters.Options, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	diff, err := processCrds(apiExtClient, dynamicClient, &filters.Options{})
 	if err != nil {

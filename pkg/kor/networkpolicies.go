@@ -53,7 +53,7 @@ func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace s
 	return unusedNetpols, nil
 }
 
-func GetUnusedNetworkPolicies(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedNetworkPolicies(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 
 	for _, namespace := range filterOpts.Namespaces(clientset) {

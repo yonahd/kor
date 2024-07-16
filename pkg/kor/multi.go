@@ -96,7 +96,7 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 	return allDiffs
 }
 
-func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resourceList := strings.Split(resourceNames, ",")
 	namespaces := filterOpts.Namespaces(clientset)
 	resources := make(map[string]map[string][]ResourceInfo)

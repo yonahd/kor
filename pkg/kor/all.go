@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/yonahd/kor/pkg/common"
 	"os"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -263,7 +264,7 @@ func getUnusedNetworkPolicies(clientset kubernetes.Interface, namespace string, 
 	return namespaceNetpolDiff
 }
 
-func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		switch opts.GroupBy {
@@ -325,7 +326,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 	return unusedAllNamespaced, nil
 }
 
-func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	switch opts.GroupBy {
 	case "namespace":
@@ -361,7 +362,7 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 	return unusedAllNonNamespaced, nil
 }
 
-func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)

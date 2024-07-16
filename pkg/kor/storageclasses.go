@@ -98,7 +98,7 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 	return unusedStorageClasses, nil
 }
 
-func GetUnusedStorageClasses(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedStorageClasses(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	diff, err := processStorageClasses(clientset, filterOpts)
 	if err != nil {

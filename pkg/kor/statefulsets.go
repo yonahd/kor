@@ -43,7 +43,7 @@ func processNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 	return statefulSetsWithoutReplicas, nil
 }
 
-func GetUnusedStatefulSets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedStatefulSets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespaceStatefulSets(clientset, namespace, filterOpts)

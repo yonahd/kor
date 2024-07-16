@@ -81,7 +81,7 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 	return unusedPdbs, nil
 }
 
-func GetUnusedPdbs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedPdbs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		diff, err := processNamespacePdbs(clientset, namespace, filterOpts)

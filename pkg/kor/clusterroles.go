@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/yonahd/kor/pkg/common"
 	"os"
 	"strconv"
 
@@ -179,7 +180,7 @@ func processClusterRoles(clientset kubernetes.Interface, filterOpts *filters.Opt
 
 }
 
-func GetUnusedClusterRoles(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts Opts) (string, error) {
+func GetUnusedClusterRoles(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	diff, err := processClusterRoles(clientset, filterOpts)
 	if err != nil {
