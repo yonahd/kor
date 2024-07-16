@@ -3,6 +3,7 @@ package kor
 import (
 	"context"
 	"encoding/json"
+	"github.com/yonahd/kor/pkg/common"
 	"reflect"
 	"sort"
 	"testing"
@@ -138,7 +139,7 @@ func TestProcessClusterRoles(t *testing.T) {
 func TestGetUnusedClusterRolesStructured(t *testing.T) {
 	clientset := createTestClusterRoles(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

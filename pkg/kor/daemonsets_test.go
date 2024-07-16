@@ -3,6 +3,7 @@ package kor
 import (
 	"context"
 	"encoding/json"
+	"github.com/yonahd/kor/pkg/common"
 	"reflect"
 	"testing"
 
@@ -82,7 +83,7 @@ func TestProcessNamespaceDaemonSets(t *testing.T) {
 func TestGetUnusedDaemonSetsStructured(t *testing.T) {
 	clientset := createTestDaemonSets(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

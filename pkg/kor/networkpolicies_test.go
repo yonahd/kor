@@ -100,7 +100,7 @@ func TestProcessNamespaceNetworkPolicies(t *testing.T) {
 func TestGetUnusedNetworkPolicies(t *testing.T) {
 	clientset := createTestNetworkPolicies(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

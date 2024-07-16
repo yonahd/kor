@@ -99,7 +99,7 @@ func TestProcessNamespacePvcs(t *testing.T) {
 func TestGetUnusedPvcsStructured(t *testing.T) {
 	clientset := createTestPvcs(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

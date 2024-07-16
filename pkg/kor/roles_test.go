@@ -109,7 +109,7 @@ func TestProcessNamespaceRoles(t *testing.T) {
 func TestGetUnusedRolesStructured(t *testing.T) {
 	clientset := createTestRoles(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

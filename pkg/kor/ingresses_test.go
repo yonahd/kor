@@ -81,7 +81,7 @@ func TestRetrieveUsedIngress(t *testing.T) {
 func TestGetUnusedIngressesStructured(t *testing.T) {
 	clientset := createTestIngresses(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

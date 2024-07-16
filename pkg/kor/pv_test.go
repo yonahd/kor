@@ -61,7 +61,7 @@ func TestProcessPvs(t *testing.T) {
 func TestGetUnusedPvs(t *testing.T) {
 	clientset := createTestPvs(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

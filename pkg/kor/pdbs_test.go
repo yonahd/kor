@@ -93,7 +93,7 @@ func TestProcessNamespacePdbs(t *testing.T) {
 func TestGetUnusedPdbsStructured(t *testing.T) {
 	clientset := createTestPdbs(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

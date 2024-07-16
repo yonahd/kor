@@ -115,7 +115,7 @@ func TestProcessNamespacePods(t *testing.T) {
 func TestGetUnusedPodsStructured(t *testing.T) {
 	clientset := createTestPods(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

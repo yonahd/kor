@@ -83,7 +83,7 @@ func TestExtractUnusedHpas(t *testing.T) {
 func TestGetUnusedHpasStructured(t *testing.T) {
 	clientset := createTestHpas(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

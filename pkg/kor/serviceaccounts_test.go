@@ -3,6 +3,7 @@ package kor
 import (
 	"context"
 	"encoding/json"
+	"github.com/yonahd/kor/pkg/common"
 	"reflect"
 	"testing"
 
@@ -184,7 +185,7 @@ func TestGetUnusedServiceAccountsStructured(t *testing.T) {
 		t.Fatalf("Error creating fake %s: %v", "clusterRoleBinding", err)
 	}
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

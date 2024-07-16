@@ -57,7 +57,7 @@ func createTestReplicaSets(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceReplicaSets(t *testing.T) {
 	clientset := createTestReplicaSets(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

@@ -69,7 +69,7 @@ func TestProcessStorageClasses(t *testing.T) {
 func TestGetUnusedStorageClassesStructured(t *testing.T) {
 	clientset := createTestStorageClass(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

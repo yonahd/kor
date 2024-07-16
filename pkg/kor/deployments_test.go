@@ -3,6 +3,7 @@ package kor
 import (
 	"context"
 	"encoding/json"
+	"github.com/yonahd/kor/pkg/common"
 	"reflect"
 	"testing"
 
@@ -74,7 +75,7 @@ func TestProcessNamespaceDeployments(t *testing.T) {
 func TestGetUnusedDeploymentsStructured(t *testing.T) {
 	clientset := createTestDeployments(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

@@ -74,7 +74,7 @@ func TestProcessNamespaceStatefulSets(t *testing.T) {
 func TestGetUnusedStatefulSetsStructured(t *testing.T) {
 	clientset := createTestStatefulSets(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",
