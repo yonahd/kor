@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 	"github.com/yonahd/kor/pkg/kor"
 	"github.com/yonahd/kor/pkg/utils"
@@ -46,7 +47,7 @@ var rootCmd = &cobra.Command{
 var (
 	outputFormat  string
 	kubeconfig    string
-	opts          kor.Opts
+	opts          common.Opts
 	filterOptions = &filters.Options{}
 )
 
