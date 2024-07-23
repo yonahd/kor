@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/yonahd/kor/pkg/common"
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	"sigs.k8s.io/yaml"
 
+	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/utils"
 )
 
