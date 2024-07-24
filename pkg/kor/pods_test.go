@@ -12,6 +12,7 @@ import (
 	fake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 
+	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 )
 
@@ -115,7 +116,7 @@ func TestProcessNamespacePods(t *testing.T) {
 func TestGetUnusedPodsStructured(t *testing.T) {
 	clientset := createTestPods(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

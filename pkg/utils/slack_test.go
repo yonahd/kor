@@ -1,4 +1,4 @@
-package kor
+package utils
 
 import (
 	"bytes"
@@ -6,25 +6,27 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/yonahd/kor/pkg/common"
 )
 
 type SendToSlackTestCase struct {
 	Name         string
-	Opts         Opts
+	Opts         common.Opts
 	OutputBuffer string
 }
 
 var testCases = []SendToSlackTestCase{
 	{
 		Name: "Test using WebhookURL",
-		Opts: Opts{
+		Opts: common.Opts{
 			WebhookURL: "slack.webhookurl.com",
 		},
 		OutputBuffer: "Test message",
 	},
 	{
 		Name: "Test using Channel and Token",
-		Opts: Opts{
+		Opts: common.Opts{
 			Channel: "your_channel",
 			Token:   "your_token",
 		},
@@ -32,7 +34,7 @@ var testCases = []SendToSlackTestCase{
 	},
 	{
 		Name:         "Test with empty Opts",
-		Opts:         Opts{},
+		Opts:         common.Opts{},
 		OutputBuffer: "Test message",
 	},
 }

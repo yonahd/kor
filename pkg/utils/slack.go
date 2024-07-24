@@ -1,4 +1,4 @@
-package kor
+package utils
 
 import (
 	"bytes"
@@ -9,20 +9,22 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/yonahd/kor/pkg/common"
 )
 
 type SendMessageToSlack interface {
-	SendToSlack(opts Opts, outputBuffer string) error
+	SendToSlack(opts common.Opts, outputBuffer string) error
 }
 
 type SlackMessage struct {
 }
 
-func SendToSlack(sm SendMessageToSlack, opts Opts, outputBuffer string) error {
+func SendToSlack(sm SendMessageToSlack, opts common.Opts, outputBuffer string) error {
 	return sm.SendToSlack(opts, outputBuffer)
 }
 
-func (sm SlackMessage) SendToSlack(opts Opts, outputBuffer string) error {
+func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error {
 	if opts.WebhookURL != "" {
 		payload := []byte(`{"text": "` + outputBuffer + `"}`)
 		_, err := http.Post(opts.WebhookURL, "application/json", bytes.NewBuffer(payload))

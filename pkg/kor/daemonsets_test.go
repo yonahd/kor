@@ -13,6 +13,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 
+	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 )
 
@@ -82,7 +83,7 @@ func TestProcessNamespaceDaemonSets(t *testing.T) {
 func TestGetUnusedDaemonSetsStructured(t *testing.T) {
 	clientset := createTestDaemonSets(t)
 
-	opts := Opts{
+	opts := common.Opts{
 		WebhookURL:    "",
 		Channel:       "",
 		Token:         "",

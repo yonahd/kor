@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 )
 
@@ -33,7 +34,7 @@ func init() {
 }
 
 // TODO: add option to change port / url !?
-func Exporter(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts, resourceList []string) {
+func Exporter(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts, resourceList []string) {
 	http.Handle("/metrics", promhttp.Handler())
 	fmt.Println("Server listening on :8080")
 	go exportMetrics(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts, resourceList) // Start exporting metrics in the background
@@ -42,7 +43,7 @@ func Exporter(filterOptions *filters.Options, clientset kubernetes.Interface, ap
 	}
 }
 
-func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts, resourceList []string) {
+func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts, resourceList []string) {
 	exporterInterval := os.Getenv("EXPORTER_INTERVAL")
 	if exporterInterval == "" {
 		exporterInterval = "10"
@@ -79,7 +80,7 @@ func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interfac
 	}
 }
 
-func getUnusedResources(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts Opts, resourceList []string) (string, error) {
+func getUnusedResources(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts, resourceList []string) (string, error) {
 	if len(resourceList) == 0 || (len(resourceList) == 1 && resourceList[0] == "all") {
 		return GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts)
 	}

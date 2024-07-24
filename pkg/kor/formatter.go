@@ -8,6 +8,9 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 	"sigs.k8s.io/yaml"
+
+	"github.com/yonahd/kor/pkg/common"
+	"github.com/yonahd/kor/pkg/utils"
 )
 
 type ResourceInfo struct {
@@ -22,13 +25,13 @@ func getTableRow(index int, columns ...string) []string {
 	return row
 }
 
-func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opts Opts, jsonResponse []byte) (string, error) {
+func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opts common.Opts, jsonResponse []byte) (string, error) {
 	switch outputFormat {
 	case "table":
 		if opts.WebhookURL == "" || opts.Channel == "" || opts.Token != "" {
 			return outputBuffer.String(), nil
 		}
-		if err := SendToSlack(SlackMessage{}, opts, outputBuffer.String()); err != nil {
+		if err := utils.SendToSlack(utils.SlackMessage{}, opts, outputBuffer.String()); err != nil {
 			return "", fmt.Errorf("failed to send message to slack: %w", err)
 		}
 	case "json", "yaml":
@@ -81,7 +84,7 @@ func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opt
 	return "", fmt.Errorf("unsupported output format: %s", outputFormat)
 }
 
-func FormatOutput(resources map[string]map[string][]ResourceInfo, opts Opts) bytes.Buffer {
+func FormatOutput(resources map[string]map[string][]ResourceInfo, opts common.Opts) bytes.Buffer {
 	var output bytes.Buffer
 	switch opts.GroupBy {
 	case "namespace":
@@ -96,7 +99,7 @@ func FormatOutput(resources map[string]map[string][]ResourceInfo, opts Opts) byt
 	return output
 }
 
-func formatOutputForNamespace(namespace string, resources map[string][]ResourceInfo, opts Opts) string {
+func formatOutputForNamespace(namespace string, resources map[string][]ResourceInfo, opts common.Opts) string {
 	var buf strings.Builder
 	table := tablewriter.NewWriter(&buf)
 	table.SetColWidth(60)
@@ -125,7 +128,7 @@ func formatOutputForNamespace(namespace string, resources map[string][]ResourceI
 	return fmt.Sprintf("Unused resources in namespace: %q\n%s\n", namespace, buf.String())
 }
 
-func formatOutputForResource(resource string, resources map[string][]ResourceInfo, opts Opts) string {
+func formatOutputForResource(resource string, resources map[string][]ResourceInfo, opts common.Opts) string {
 	if len(resources) == 0 {
 		if opts.Verbose {
 			return fmt.Sprintf("No unused %ss found\n", resource)
@@ -207,7 +210,7 @@ func getTableRowResourceInfo(index int, resourceType string, resource ResourceIn
 	return row
 }
 
-func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts Opts) string {
+func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts common.Opts) string {
 	var buf strings.Builder
 	table := tablewriter.NewWriter(&buf)
 	table.SetColWidth(60)
