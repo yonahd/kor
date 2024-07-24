@@ -37,3 +37,26 @@ validate-exception-sorting:
 	if [ "$$PRINT_ERR" = 0 ]; then \
 		echo "Run the following command to sort all files recursively: make sort-exception-files"; \
 	fi; \
+
+dedup-exception-files:
+	@echo "Deduplicating exception files..."
+	@find $(EXCEPTIONS_DIR) -type f -name '$(EXCEPTIONS_FILE_PATTERN)' -exec sh -c ' \
+		jq '\''keys[0] as $$key | { ($$key): (.[$$key] | group_by(.Namespace, .ResourceName) | map(.[0])) }'\'' "$$1" > "$$1.tmp" && mv "$$1.tmp" "$$1" \
+	' sh {} \;
+
+
+validate-exception-duplications:
+	@PRINT_ERR=1; \
+	for file in $(wildcard $(EXCEPTIONS_DIR)/*/$(EXCEPTIONS_FILE_PATTERN)); do \
+		DUPLICATES=$$(jq 'keys[0] as $$key | .[$$key] | group_by(.Namespace, .ResourceName) | map(select(length > 1))' "$$file"); \
+		if [ "$$DUPLICATES" != "[]" ]; then \
+			if [ "$$PRINT_ERR" = 1 ]; then \
+				echo "The following JSON files contain duplications:"; \
+				PRINT_ERR=0; \
+			fi; \
+			echo "\t$$file"; \
+		fi; \
+	done; \
+	if [ "$$PRINT_ERR" = 0 ]; then \
+		echo "Run the following command to deduplicate all files recursively: make dedup-exception-files"; \
+	fi; \

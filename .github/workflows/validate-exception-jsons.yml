@@ -1,0 +1,22 @@
+name: Validate Exception JSONs
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "pkg/kor/exceptions/**"
+
+jobs:
+  sort_json:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Validate Exception JSON Sorting
+        run: make validate-exception-sorting
+
+      - name: Validate Exception Deduplication
+        run: make validate-exception-duplications
