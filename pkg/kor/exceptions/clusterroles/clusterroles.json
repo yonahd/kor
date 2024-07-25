@@ -134,10 +134,6 @@
     },
     {
       "Namespace": "",
-      "ResourceName": "system:aggregated-metrics-reader"
-    },
-    {
-      "Namespace": "",
       "ResourceName": "system:auth-delegator"
     },
     {
@@ -199,10 +195,6 @@
     {
       "Namespace": "",
       "ResourceName": "system:kubelet-api-admin"
-    },
-    {
-      "Namespace": "",
-      "ResourceName": "system:node-bootstrapper"
     },
     {
       "Namespace": "",

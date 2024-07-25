@@ -48,10 +48,6 @@
     },
     {
       "Namespace": "kube-system",
-      "ResourceName": "cluster-dns"
-    },
-    {
-      "Namespace": "kube-system",
       "ResourceName": "cluster-kubestore"
     },
     {

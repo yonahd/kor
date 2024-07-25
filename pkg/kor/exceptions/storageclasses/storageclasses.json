@@ -26,10 +26,6 @@
     },
     {
       "Namespace": "",
-      "ResourceName": "local-path"
-    },
-    {
-      "Namespace": "",
       "ResourceName": "managed"
     },
     {
