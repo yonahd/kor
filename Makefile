@@ -17,7 +17,7 @@ test:
 
 sort-exception-files:
 	@echo "Sorting exception files..."
-	@find $(EXCEPTIONS_DIR) -name '$(EXCEPTIONS_FILE_PATTERN)' -exec sh -c ' \
+	@find $(EXCEPTIONS_DIR) -name '$(EXCEPTIONS_FILE_PATTERN)' | xargs -I{} -P 4 sh -c ' \
 		jq "with_entries(.value |= sort_by(.Namespace, .ResourceName))" {} > {}.tmp && mv {}.tmp {} \
 	' \;
 
@@ -40,7 +40,7 @@ validate-exception-sorting:
 
 dedup-exception-files:
 	@echo "Deduplicating exception files..."
-	@find $(EXCEPTIONS_DIR) -type f -name '$(EXCEPTIONS_FILE_PATTERN)' -exec sh -c ' \
+	@find $(EXCEPTIONS_DIR) -type f -name '$(EXCEPTIONS_FILE_PATTERN)' | xargs -I{} -P 4 sh -c ' \
 		jq '\''keys[0] as $$key | { ($$key): (.[$$key] | group_by(.Namespace, .ResourceName) | map(.[0])) }'\'' "$$1" > "$$1.tmp" && mv "$$1.tmp" "$$1" \
 	' sh {} \;
 
