@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,10 +53,12 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 			unusedJobNames = append(unusedJobNames, ResourceInfo{Name: job.Name, Reason: reason})
 			continue
 		} else {
-			// Check if the job has a condition indicating it has exceeded the backoff limit
+			reasons := []string{"BackoffLimitExceeded", "DeadlineExceeded"}
+
+			// Check if the job has a condition indicating it has failed
 			for _, condition := range job.Status.Conditions {
-				if condition.Type == batchv1.JobFailed && condition.Reason == "BackoffLimitExceeded" {
-					reason := "Job has exceeded backoff limit"
+				if condition.Type == batchv1.JobFailed && slices.Contains(reasons, condition.Reason) {
+					reason := condition.Message
 					unusedJobNames = append(unusedJobNames, ResourceInfo{Name: job.Name, Reason: reason})
 					break
 				}
