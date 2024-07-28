@@ -5,6 +5,8 @@ on:
       - "*"
 jobs:
   chart-release:
+    permissions:
+        contents: write
     name: Chart Release
     runs-on: ubuntu-latest
     steps:
