@@ -53,11 +53,11 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 			unusedJobNames = append(unusedJobNames, ResourceInfo{Name: job.Name, Reason: reason})
 			continue
 		} else {
-			reasons := []string{"BackoffLimitExceeded", "DeadlineExceeded", "FailedIndexes"}
+			failureReasons := []string{"BackoffLimitExceeded", "DeadlineExceeded", "FailedIndexes"}
 
 			// Check if the job has a condition indicating it has failed
 			for _, condition := range job.Status.Conditions {
-				if condition.Type == batchv1.JobFailed && slices.Contains(reasons, condition.Reason) {
+				if condition.Type == batchv1.JobFailed && slices.Contains(failureReasons, condition.Reason) {
 					unusedJobNames = append(unusedJobNames, ResourceInfo{Name: job.Name, Reason: condition.Message})
 					break
 				}
