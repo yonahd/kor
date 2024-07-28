@@ -126,6 +126,24 @@ func createTestJobs(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating fake job: %v", err)
 	}
 
+	job8 := CreateTestJob(testNamespace, "test-job8", &batchv1.JobStatus{
+		Succeeded: 0,
+		Failed:    1,
+		Conditions: []batchv1.JobCondition{
+			{
+				Type:    batchv1.JobSuspended,
+				Status:  corev1.ConditionTrue,
+				Reason:  "JobSuspended",
+				Message: "Job suspended",
+			},
+		},
+	}, AppLabels)
+
+	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job8, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake job: %v", err)
+	}
+
 	return clientset
 }
 
@@ -137,7 +155,7 @@ func TestProcessNamespaceJobs(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	expectedJobsNames := []string{"test-job2", "test-job4", "test-job5", "test-job6", "test-job7"}
+	expectedJobsNames := []string{"test-job2", "test-job4", "test-job5", "test-job6", "test-job7", "test-job8"}
 
 	if len(unusedJobs) != len(expectedJobsNames) {
 		t.Errorf("Expected %d jobs unused got %d", len(expectedJobsNames), len(unusedJobs))
@@ -175,6 +193,7 @@ func TestGetUnusedJobsStructured(t *testing.T) {
 				"test-job5",
 				"test-job6",
 				"test-job7",
+				"test-job8",
 			},
 		},
 	}
