@@ -108,6 +108,24 @@ func createTestJobs(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating fake job: %v", err)
 	}
 
+	job7 := CreateTestJob(testNamespace, "test-job7", &batchv1.JobStatus{
+		Succeeded: 0,
+		Failed:    1,
+		Conditions: []batchv1.JobCondition{
+			{
+				Type:    batchv1.JobFailed,
+				Status:  corev1.ConditionTrue,
+				Reason:  "FailedIndexes",
+				Message: "Job has failed indexes",
+			},
+		},
+	}, AppLabels)
+
+	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job7, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake job: %v", err)
+	}
+
 	return clientset
 }
 
@@ -119,12 +137,16 @@ func TestProcessNamespaceJobs(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(unusedJobs) != 4 {
-		t.Errorf("Expected 4 jobs unused got %d", len(unusedJobs))
+	expectedJobsNames := []string{"test-job2", "test-job4", "test-job5", "test-job6", "test-job7"}
+
+	if len(unusedJobs) != len(expectedJobsNames) {
+		t.Errorf("Expected %d jobs unused got %d", len(expectedJobsNames), len(unusedJobs))
 	}
 
-	if unusedJobs[0].Name != "test-job2" && unusedJobs[1].Name != "test-job4" && unusedJobs[2].Name != "test-job5" && unusedJobs[3].Name != "test-job6" {
-		t.Errorf("job2', got %s", unusedJobs[0])
+	for i, job := range unusedJobs {
+		if job.Name != expectedJobsNames[i] {
+			t.Errorf("expected %s, got %s", expectedJobsNames[i], job.Name)
+		}
 	}
 }
 
@@ -152,6 +174,7 @@ func TestGetUnusedJobsStructured(t *testing.T) {
 				"test-job4",
 				"test-job5",
 				"test-job6",
+				"test-job7",
 			},
 		},
 	}
