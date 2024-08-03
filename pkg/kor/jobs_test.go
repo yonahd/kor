@@ -90,6 +90,60 @@ func createTestJobs(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating fake job: %v", err)
 	}
 
+	job6 := CreateTestJob(testNamespace, "test-job6", &batchv1.JobStatus{
+		Succeeded: 0,
+		Failed:    1,
+		Conditions: []batchv1.JobCondition{
+			{
+				Type:    batchv1.JobFailed,
+				Status:  corev1.ConditionTrue,
+				Reason:  "DeadlineExceeded",
+				Message: "Job was active longer than specified deadline",
+			},
+		},
+	}, AppLabels)
+
+	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job6, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake job: %v", err)
+	}
+
+	job7 := CreateTestJob(testNamespace, "test-job7", &batchv1.JobStatus{
+		Succeeded: 0,
+		Failed:    1,
+		Conditions: []batchv1.JobCondition{
+			{
+				Type:    batchv1.JobFailed,
+				Status:  corev1.ConditionTrue,
+				Reason:  "FailedIndexes",
+				Message: "Job has failed indexes",
+			},
+		},
+	}, AppLabels)
+
+	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job7, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake job: %v", err)
+	}
+
+	job8 := CreateTestJob(testNamespace, "test-job8", &batchv1.JobStatus{
+		Succeeded: 0,
+		Failed:    1,
+		Conditions: []batchv1.JobCondition{
+			{
+				Type:    batchv1.JobSuspended,
+				Status:  corev1.ConditionTrue,
+				Reason:  "JobSuspended",
+				Message: "Job suspended",
+			},
+		},
+	}, AppLabels)
+
+	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), job8, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake job: %v", err)
+	}
+
 	return clientset
 }
 
@@ -101,12 +155,16 @@ func TestProcessNamespaceJobs(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(unusedJobs) != 3 {
-		t.Errorf("Expected 3 jobs unused got %d", len(unusedJobs))
+	expectedJobsNames := []string{"test-job2", "test-job4", "test-job5", "test-job6", "test-job7", "test-job8"}
+
+	if len(unusedJobs) != len(expectedJobsNames) {
+		t.Errorf("Expected %d jobs unused got %d", len(expectedJobsNames), len(unusedJobs))
 	}
 
-	if unusedJobs[0].Name != "test-job2" && unusedJobs[1].Name != "test-job4" && unusedJobs[2].Name != "test-job5" {
-		t.Errorf("job2', got %s", unusedJobs[0])
+	for i, job := range unusedJobs {
+		if job.Name != expectedJobsNames[i] {
+			t.Errorf("Expected %s, got %s", expectedJobsNames[i], job.Name)
+		}
 	}
 }
 
@@ -133,6 +191,9 @@ func TestGetUnusedJobsStructured(t *testing.T) {
 				"test-job2",
 				"test-job4",
 				"test-job5",
+				"test-job6",
+				"test-job7",
+				"test-job8",
 			},
 		},
 	}
