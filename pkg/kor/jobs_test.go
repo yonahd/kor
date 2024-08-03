@@ -163,7 +163,7 @@ func TestProcessNamespaceJobs(t *testing.T) {
 
 	for i, job := range unusedJobs {
 		if job.Name != expectedJobsNames[i] {
-			t.Errorf("expected %s, got %s", expectedJobsNames[i], job.Name)
+			t.Errorf("Expected %s, got %s", expectedJobsNames[i], job.Name)
 		}
 	}
 }
