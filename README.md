@@ -72,6 +72,10 @@ kubectl krew install kor
 
 ### Helm
 
+```sh
+helm repo add kor https://yonahd.github.io/kor
+```
+
 Run as a cronjob in your Cluster (with an option for sending slack updates)
 
 ```sh
