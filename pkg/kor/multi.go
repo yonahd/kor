@@ -103,6 +103,10 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 	resources := make(map[string]map[string][]ResourceInfo)
 	var err error
 
+	if opts.GroupBy == "namespace" {
+		resources[""] = make(map[string][]ResourceInfo)
+	}
+
 	noNamespaceDiff, resourceList := retrieveNoNamespaceDiff(clientset, apiExtClient, dynamicClient, resourceList, filterOpts)
 	if len(noNamespaceDiff) != 0 {
 		for _, diff := range noNamespaceDiff {
@@ -114,7 +118,6 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 				}
 				switch opts.GroupBy {
 				case "namespace":
-					resources[""] = make(map[string][]ResourceInfo)
 					resources[""][diff.resourceType] = diff.diff
 				case "resource":
 					appendResources(resources, diff.resourceType, "", diff.diff)
@@ -125,6 +128,10 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 
 	for _, namespace := range namespaces {
 		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList, filterOpts)
+		if opts.GroupBy == "namespace" {
+			resources[namespace] = make(map[string][]ResourceInfo)
+		}
+
 		for _, diff := range allDiffs {
 			if opts.DeleteFlag {
 				if diff.diff, err = DeleteResource(diff.diff, clientset, namespace, diff.resourceType, opts.NoInteractive); err != nil {
@@ -133,7 +140,6 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 			}
 			switch opts.GroupBy {
 			case "namespace":
-				resources[namespace] = make(map[string][]ResourceInfo)
 				resources[namespace][diff.resourceType] = diff.diff
 			case "resource":
 				appendResources(resources, diff.resourceType, namespace, diff.diff)
