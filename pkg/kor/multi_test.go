@@ -6,12 +6,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/yonahd/kor/pkg/common"
-	"github.com/yonahd/kor/pkg/filters"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"k8s.io/client-go/kubernetes/fake"
+
+	"github.com/yonahd/kor/pkg/common"
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestMultiResources(t *testing.T) *fake.Clientset {
@@ -20,6 +20,10 @@ func createTestMultiResources(t *testing.T) *fake.Clientset {
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
 	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
 
 	deployment1 := CreateTestDeployment(testNamespace, "test-deployment1", 0, AppLabels)
 	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
