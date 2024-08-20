@@ -21,6 +21,10 @@ func createTestMultiResources(t *testing.T) *fake.Clientset {
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
 	}, v1.CreateOptions{})
 
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
 	deployment1 := CreateTestDeployment(testNamespace, "test-deployment1", 0, AppLabels)
 	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
 	if err != nil {
