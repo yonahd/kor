@@ -6,12 +6,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/yonahd/kor/pkg/common"
-	"github.com/yonahd/kor/pkg/filters"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"k8s.io/client-go/kubernetes/fake"
+
+	"github.com/yonahd/kor/pkg/common"
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestMultiResources(t *testing.T) *fake.Clientset {
