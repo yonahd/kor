@@ -77,6 +77,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		errorMsg := fmt.Sprintf("Failure: %v\n", err)
 		json.NewEncoder(w).Encode(SimpleResponse{Message: errorMsg})
+		return
 	}
 	json.NewEncoder(w).Encode(SimpleResponse{Message: "OK"})
 }
@@ -161,7 +162,7 @@ func main() {
 
 	// Base path for the API is /api/v1
 	api := router.PathPrefix("/api/v1").Subrouter()
-	
+
 	router.HandleFunc("/healthcheck", healthCheckHandler).Methods("GET")
 	api.Handle("/configmaps", authMiddleware(http.HandlerFunc(getUnusedConfigmaps))).Methods("GET")
 	api.Handle("/namespaces/{namespace}/configmaps", authMiddleware(http.HandlerFunc(getUnusedConfigmapsForNamespace))).Methods("GET")
