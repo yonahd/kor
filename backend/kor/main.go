@@ -159,12 +159,12 @@ func main() {
 	router := mux.NewRouter()
 	clientset = kor.GetKubeClient("")
 
-	router.HandleFunc("/healthcheck", healthCheckHandler).Methods("GET")
 	// Base path for the API is /api/v1
 	api := router.PathPrefix("/api/v1").Subrouter()
+	
+	router.HandleFunc("/healthcheck", healthCheckHandler).Methods("GET")
 	api.Handle("/configmaps", authMiddleware(http.HandlerFunc(getUnusedConfigmaps))).Methods("GET")
 	api.Handle("/namespaces/{namespace}/configmaps", authMiddleware(http.HandlerFunc(getUnusedConfigmapsForNamespace))).Methods("GET")
-	api.Handle("/example-post", authMiddleware(http.HandlerFunc(examplePostHandler))).Methods("POST")
 
 	// Swagger documentation route
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
