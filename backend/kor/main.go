@@ -3,9 +3,14 @@ package main
 import (
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"github.com/swaggo/http-swagger"
+	"github.com/yonahd/kor/pkg/common"
+	"github.com/yonahd/kor/pkg/filters"
+	"github.com/yonahd/kor/pkg/kor"
+	"k8s.io/client-go/kubernetes"
 	"log"
 	_ "main/docs"
 	"net/http"
@@ -14,13 +19,15 @@ import (
 
 var jwtSecret = []byte(os.Getenv("KOR_API_SECRET"))
 
-type response struct {
+type SimpleResponse struct {
 	Message string `json:"message"`
 }
 
 type postRequest struct {
 	Data string `json:"data"`
 }
+
+var clientset *kubernetes.Clientset
 
 // Auth middleware that verifies the JWT token using golang-jwt/jwt
 func authMiddleware(next http.Handler) http.Handler {
@@ -29,7 +36,7 @@ func authMiddleware(next http.Handler) http.Handler {
 			tokenHeader := r.Header.Get("Authorization")
 			if tokenHeader == "" {
 				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(response{Message: "Missing token"})
+				json.NewEncoder(w).Encode(SimpleResponse{Message: "Missing token"})
 				return
 			}
 
@@ -40,7 +47,7 @@ func authMiddleware(next http.Handler) http.Handler {
 
 			if err != nil || !token.Valid {
 				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(response{Message: "Invalid token"})
+				json.NewEncoder(w).Encode(SimpleResponse{Message: "Invalid token"})
 				return
 			}
 
@@ -56,7 +63,7 @@ func authMiddleware(next http.Handler) http.Handler {
 // @Success 200 {object} response
 // @Router /healthcheck [get]
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(response{Message: "OK"})
+	json.NewEncoder(w).Encode(SimpleResponse{Message: "OK"})
 }
 
 // @Summary Example GET endpoint
@@ -64,10 +71,42 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Success 200 {object} response
-// @Router /api/v1/example-get [get]
+// @Router /api/v1/configmaps [get]
 // @Param Authorization header string false "Authorization token"
-func exampleGetHandler(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(response{Message: "This is a GET response"})
+func getUnusedConfigmaps(w http.ResponseWriter, r *http.Request) {
+	// Defer function to recover from any panic
+	defer func() {
+		if err := recover(); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			errorMsg := fmt.Sprintf("A fatal error occurred: %v", err)
+			json.NewEncoder(w).Encode(SimpleResponse{Message: errorMsg})
+			log.Printf("Recovered from panic: %v", err) // Optionally log the error
+		}
+	}()
+
+	// Your normal business logic
+	outputFormat := "json"
+	opts := common.Opts{
+		WebhookURL:    "",
+		Channel:       "",
+		Token:         "",
+		DeleteFlag:    false,
+		NoInteractive: true,
+		GroupBy:       "namespace",
+	}
+
+	// Try to get unused configmaps
+	response, err := kor.GetUnusedConfigmaps(&filters.Options{}, clientset, outputFormat, opts)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		errorMsg := fmt.Sprintf("Failed to get configmaps: %v\n", err)
+		json.NewEncoder(w).Encode(SimpleResponse{Message: errorMsg})
+		return
+	}
+
+	// If successful, encode the response
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 // @Summary Example POST endpoint
@@ -83,10 +122,10 @@ func examplePostHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response{Message: "Invalid request"})
+		json.NewEncoder(w).Encode(SimpleResponse{Message: "Invalid request"})
 		return
 	}
-	json.NewEncoder(w).Encode(response{Message: "Received: " + req.Data})
+	json.NewEncoder(w).Encode("")
 }
 
 // @title KOR API Swagger
@@ -94,11 +133,12 @@ func examplePostHandler(w http.ResponseWriter, r *http.Request) {
 // @description KOR API Swagger
 func main() {
 	router := mux.NewRouter()
+	clientset = kor.GetKubeClient("")
 
-	// Base path for the API is /api/v1
 	router.HandleFunc("/healthcheck", healthCheckHandler).Methods("GET")
+	// Base path for the API is /api/v1
 	api := router.PathPrefix("/api/v1").Subrouter()
-	api.Handle("/example-get", authMiddleware(http.HandlerFunc(exampleGetHandler))).Methods("GET")
+	api.Handle("/configmaps", authMiddleware(http.HandlerFunc(getUnusedConfigmaps))).Methods("GET")
 	api.Handle("/example-post", authMiddleware(http.HandlerFunc(examplePostHandler))).Methods("POST")
 	// Swagger documentation route
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
