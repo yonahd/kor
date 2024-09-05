@@ -15,16 +15,15 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/example-get": {
+        "/api/v1/configmaps": {
             "get": {
-                "description": "An example GET API",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Example GET endpoint",
+                "summary": "Get Unused configmaps from all namespaces",
                 "parameters": [
                     {
                         "type": "string",
@@ -33,36 +32,20 @@ const docTemplate = `{
                         "in": "header"
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.response"
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
-        "/api/v1/example-post": {
-            "post": {
-                "description": "An example POST API",
+        "/api/v1/namespaces/{namespace}/configmaps": {
+            "get": {
+                "description": "asd",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Example POST endpoint",
+                "summary": "Get Unused configmaps from a specific namespace",
                 "parameters": [
-                    {
-                        "description": "Post Request Data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/main.postRequest"
-                        }
-                    },
                     {
                         "type": "string",
                         "description": "Authorization token",
@@ -70,46 +53,14 @@ const docTemplate = `{
                         "in": "header"
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.response"
-                        }
-                    }
-                }
+                "responses": {}
             }
         },
         "/healthcheck": {
             "get": {
                 "description": "Returns the status of the server",
                 "summary": "Health Check",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.response"
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "definitions": {
-        "main.postRequest": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "string"
-                }
-            }
-        },
-        "main.response": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                }
+                "responses": {}
             }
         }
     }

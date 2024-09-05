@@ -69,7 +69,6 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 
 // @Summary Health Check
 // @Description Returns the status of the server
-// @Success 200 {object} response
 // @Router /healthcheck [get]
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := clientset.Discovery().ServerVersion()
@@ -85,7 +84,6 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 // @Summary Get Unused configmaps from all namespaces
 // @Accept json
 // @Produce json
-// @Success 200 {object} response
 // @Router /api/v1/configmaps [get]
 // @Param Authorization header string false "Authorization token"
 func getUnusedConfigmaps(w http.ResponseWriter, r *http.Request) {
@@ -103,9 +101,9 @@ func getUnusedConfigmaps(w http.ResponseWriter, r *http.Request) {
 }
 
 // @Summary Get Unused configmaps from a specific namespace
+// @Description asd
 // @Accept json
 // @Produce json
-// @Success 200 {object} response
 // @Router /api/v1/namespaces/{namespace}/configmaps [get]
 // @Param Authorization header string false "Authorization token"
 func getUnusedConfigmapsForNamespace(w http.ResponseWriter, r *http.Request) {

@@ -1,25 +1,13 @@
-definitions:
-  main.postRequest:
-    properties:
-      data:
-        type: string
-    type: object
-  main.response:
-    properties:
-      message:
-        type: string
-    type: object
 info:
   contact: {}
   description: KOR API Swagger
   title: KOR API Swagger
   version: "1.0"
 paths:
-  /api/v1/example-get:
+  /api/v1/configmaps:
     get:
       consumes:
       - application/json
-      description: An example GET API
       parameters:
       - description: Authorization token
         in: header
@@ -27,43 +15,25 @@ paths:
         type: string
       produces:
       - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/main.response'
-      summary: Example GET endpoint
-  /api/v1/example-post:
-    post:
+      responses: {}
+      summary: Get Unused configmaps from all namespaces
+  /api/v1/namespaces/{namespace}/configmaps:
+    get:
       consumes:
       - application/json
-      description: An example POST API
+      description: asd
       parameters:
-      - description: Post Request Data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/main.postRequest'
       - description: Authorization token
         in: header
         name: Authorization
         type: string
       produces:
       - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/main.response'
-      summary: Example POST endpoint
+      responses: {}
+      summary: Get Unused configmaps from a specific namespace
   /healthcheck:
     get:
       description: Returns the status of the server
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/main.response'
+      responses: {}
       summary: Health Check
 swagger: "2.0"
