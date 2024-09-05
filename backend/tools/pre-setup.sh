@@ -12,5 +12,4 @@ go run main.go
 go install github.com/swaggo/swag/cmd/swag@latest
 # Regenerate swagger
 swag init
-#Swagger ui
-https://localhost:8080/swagger/index.html
+
