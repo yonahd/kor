@@ -1,11 +1,14 @@
 package main
 
+//How to use:
+//export USER_SECRET=abcd12; go run generate_token.go
 import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"os"
 )
 
-var jwtSecret = []byte("XXXX") // Replace with your actual secret key
+var jwtSecret = []byte(os.Getenv("KOR_API_SECRET")) // Replace with your actual secret key
 
 // GenerateJWT generates a JWT token that doesn't expire
 func GenerateJWT() (string, error) {
@@ -37,5 +40,5 @@ func main() {
 	}
 
 	// Print the generated token (Bearer token)
-	fmt.Println("Bearer token:", token)
+	fmt.Println(token)
 }
