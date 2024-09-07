@@ -27,6 +27,11 @@ paths:
         in: header
         name: Authorization
         type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
       produces:
       - application/json
       responses: {}

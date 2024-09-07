@@ -106,6 +106,7 @@ func getUnusedConfigmaps(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Router /api/v1/namespaces/{namespace}/configmaps [get]
 // @Param Authorization header string false "Authorization token"
+// @Param namespace path string true "namespace"
 func getUnusedConfigmapsForNamespace(w http.ResponseWriter, r *http.Request) {
 	// Extract the "namespace" parameter from the path
 	namespaceArr := []string{mux.Vars(r)["namespace"]}

@@ -51,6 +51,13 @@ const docTemplate = `{
                         "description": "Authorization token",
                         "name": "Authorization",
                         "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}
