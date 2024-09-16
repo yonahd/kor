@@ -16,6 +16,9 @@ import (
 	"net/http"
 	"os"
 )
+// move configmap functions to a separate configmap.go file
+// emptyOpts is a common value - separate file
+// jwtSecret is a common value - separate file
 
 var jwtSecret = []byte(os.Getenv("KOR_API_SECRET"))
 
@@ -25,6 +28,14 @@ type SimpleResponse struct {
 
 var clientset *kubernetes.Clientset
 
+emptyOpts := common.Opts{
+WebhookURL:    "",
+Channel:       "",
+Token:         "",
+DeleteFlag:    false,
+NoInteractive: true,
+GroupBy:       "namespace",
+}
 // Auth middleware that verifies the JWT token using golang-jwt/jwt
 func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -110,15 +121,6 @@ func getUnusedConfigmaps(w http.ResponseWriter, r *http.Request) {
 func getUnusedConfigmapsForNamespace(w http.ResponseWriter, r *http.Request) {
 	// Extract the "namespace" parameter from the path
 	namespaceArr := []string{mux.Vars(r)["namespace"]}
-
-	opts := common.Opts{
-		WebhookURL:    "",
-		Channel:       "",
-		Token:         "",
-		DeleteFlag:    false,
-		NoInteractive: true,
-		GroupBy:       "namespace",
-	}
 
 	getUnusedConfigMapWithFilters(w, opts, &filters.Options{
 		IncludeNamespaces: namespaceArr,
