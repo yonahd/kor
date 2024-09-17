@@ -134,7 +134,7 @@ func (o *Options) Namespaces(clientset kubernetes.Interface) []string {
 			namespaceList, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
-				os.Exit(1)
+				return
 			}
 
 			for _, ns := range namespaceList.Items {
