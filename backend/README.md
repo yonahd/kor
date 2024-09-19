@@ -18,7 +18,5 @@ docker buildx build -t kor-backend:latest .
 ## Development
 ```bash
 export NO_AUTH=true
-```
-```bash
-go run main.go
+go run .
 ```
