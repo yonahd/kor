@@ -1,5 +1,12 @@
-## Start without a token
+# KOR Backend
 
+Kor Backend is an API wrapper designed to expose Kor.
+
+A tool that identifies unused resources in Kubernetes clusters - over HTTPS.
+
+This backend allows users to access Kor's functionality via RESTful API calls,
+
+making it easier to integrate into web services, dashboards, and automation pipelines.
 
 ## Swagger
 ```swag init```
