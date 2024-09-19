@@ -1,0 +1,44 @@
+info:
+  contact: {}
+  description: KOR API Swagger
+  title: KOR API Swagger
+  version: "1.0"
+paths:
+  /api/v1/configmaps:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Authorization token
+        in: header
+        name: Authorization
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get Unused configmaps from all namespaces
+  /api/v1/namespaces/{namespace}/configmaps:
+    get:
+      consumes:
+      - application/json
+      description: asd
+      parameters:
+      - description: Authorization token
+        in: header
+        name: Authorization
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get Unused configmaps from a specific namespace
+  /healthcheck:
+    get:
+      description: Returns the status of the server
+      responses: {}
+      summary: Health Check
+swagger: "2.0"

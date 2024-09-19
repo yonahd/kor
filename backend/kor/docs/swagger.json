@@ -1,0 +1,66 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "KOR API Swagger",
+        "title": "KOR API Swagger",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/api/v1/configmaps": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get Unused configmaps from all namespaces",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization token",
+                        "name": "Authorization",
+                        "in": "header"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/v1/namespaces/{namespace}/configmaps": {
+            "get": {
+                "description": "asd",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get Unused configmaps from a specific namespace",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authorization token",
+                        "name": "Authorization",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/healthcheck": {
+            "get": {
+                "description": "Returns the status of the server",
+                "summary": "Health Check",
+                "responses": {}
+            }
+        }
+    }
+}
