@@ -33,6 +33,17 @@ func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace stri
 		roleNames[role.Name] = true
 	}
 
+	// TODO is this list too big ?
+	clusterRoleList, err := clientset.RbacV1().ClusterRoles().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	clusterRoleNames := make(map[string]bool)
+	for _, cr := range clusterRoleList.Items {
+		clusterRoleNames[cr.Name] = true
+	}
+
 	config, err := unmarshalConfig(roleBindingsConfig)
 	if err != nil {
 		return nil, err
@@ -54,8 +65,14 @@ func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace stri
 			continue
 		}
 
-		if !roleNames[rb.RoleRef.Name] {
-			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "Role does not exists"})
+		if rb.RoleRef.Kind == "Role" && !roleNames[rb.RoleRef.Name] {
+			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "Referenced Role does not exists"})
+			continue
+		}
+
+		if rb.RoleRef.Kind == "ClusterRole" && !clusterRoleNames[rb.RoleRef.Name] {
+			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "Referenced Cluster role does not exists"})
+			continue
 		}
 	}
 
