@@ -18,7 +18,8 @@ import (
 //go:embed exceptions/rolebindings/rolebindings.json
 var roleBindingsConfig []byte
 
-func createNamesMap(names []string, _ []string, err error) (map[string]bool, error) {
+// Convert a slice of names into a map for fast lookup
+func convertNamesToPresenseMap(names []string, _ []string, err error) (map[string]bool, error) {
 	if err != nil {
 		return nil, err
 	}
@@ -58,17 +59,17 @@ func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace stri
 		return nil, err
 	}
 
-	roleNames, err := createNamesMap(retrieveRoleNames(clientset, namespace, filterOpts))
+	roleNames, err := convertNamesToPresenseMap(retrieveRoleNames(clientset, namespace, filterOpts))
 	if err != nil {
 		return nil, err
 	}
 
-	clusterRoleNames, err := createNamesMap(retrieveClusterRoleNames(clientset, filterOpts))
+	clusterRoleNames, err := convertNamesToPresenseMap(retrieveClusterRoleNames(clientset, filterOpts))
 	if err != nil {
 		return nil, err
 	}
 
-	serviceAccountNames, err := createNamesMap(retrieveServiceAccountNames(clientset, namespace, filterOpts))
+	serviceAccountNames, err := convertNamesToPresenseMap(retrieveServiceAccountNames(clientset, namespace, filterOpts))
 	if err != nil {
 		return nil, err
 	}
