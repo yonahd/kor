@@ -23,6 +23,16 @@ func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace stri
 		return nil, err
 	}
 
+	roleList, err := clientset.RbacV1().Roles(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
+	if err != nil {
+		return nil, err
+	}
+
+	roleNames := make(map[string]bool)
+	for _, role := range roleList.Items {
+		roleNames[role.Name] = true
+	}
+
 	config, err := unmarshalConfig(roleBindingsConfig)
 	if err != nil {
 		return nil, err
@@ -44,8 +54,9 @@ func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace stri
 			continue
 		}
 
-		// TODO write the logic to determine if this is unused
-		unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "d"})
+		if !roleNames[rb.RoleRef.Name] {
+			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "Role does not exists"})
+		}
 	}
 
 	return unusedRoleBindingNames, nil
