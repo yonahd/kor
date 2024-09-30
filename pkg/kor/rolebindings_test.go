@@ -2,8 +2,11 @@ package kor
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
 	"testing"
 
+	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -27,7 +30,7 @@ func createTestRoleBindings(t *testing.T) *fake.Clientset {
 
 	rb1 := CreateTestRoleBinding(
 		testNamespace,
-		"rb1",
+		"test-rb1",
 		"sa1",
 		&rbacv1.RoleRef{
 			Kind: "Role",
@@ -40,7 +43,7 @@ func createTestRoleBindings(t *testing.T) *fake.Clientset {
 
 	rb2 := CreateTestRoleBinding(
 		testNamespace,
-		"rb2",
+		"test-rb2",
 		"sa2",
 		&rbacv1.RoleRef{
 			Kind: "ClusterRole",
@@ -59,7 +62,7 @@ func createTestRoleBindings(t *testing.T) *fake.Clientset {
 
 	rb3 := CreateTestRoleBinding(
 		testNamespace,
-		"rb3",
+		"test-rb3",
 		"non-existing-service-account",
 		&rbacv1.RoleRef{
 			Kind: "Role",
@@ -72,7 +75,7 @@ func createTestRoleBindings(t *testing.T) *fake.Clientset {
 
 	rb4 := CreateTestRoleBinding(
 		testNamespace,
-		"rb4",
+		"test-rb4",
 		"non-existing-service-account",
 		&rbacv1.RoleRef{
 			Kind: "Role",
@@ -102,7 +105,7 @@ func TestProcessNamespaceRoleBindings(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	expectedRoleBindingNames := []string{"rb1", "rb2", "rb3"}
+	expectedRoleBindingNames := []string{"test-rb1", "test-rb2", "test-rb3"}
 
 	if len(unusedRoleBindings) != len(expectedRoleBindingNames) {
 		t.Errorf("Expected %d unused role bindings, got %d", len(expectedRoleBindingNames), len(unusedRoleBindings))
@@ -114,6 +117,43 @@ func TestProcessNamespaceRoleBindings(t *testing.T) {
 		}
 	}
 
+}
+
+func TestGetUnusedRoleBindingStructured(t *testing.T) {
+	clientset := createTestRoleBindings(t)
+
+	opts := common.Opts{
+		WebhookURL:    "",
+		Channel:       "",
+		Token:         "",
+		DeleteFlag:    false,
+		NoInteractive: true,
+		GroupBy:       "namespace",
+	}
+
+	output, err := GetUnusedRoleBindings(&filters.Options{}, clientset, "json", opts)
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedRoleBindingStructured: %v", err)
+	}
+
+	expectedOutput := map[string]map[string][]string{
+		testNamespace: {
+			"RoleBinding": {
+				"test-rb1",
+				"test-rb2",
+				"test-rb3",
+			},
+		},
+	}
+
+	var actualOutput map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &actualOutput); err != nil {
+		t.Fatalf("Error unmarshaling actual output: %v", err)
+	}
+
+	if !reflect.DeepEqual(expectedOutput, actualOutput) {
+		t.Errorf("Expected output does not match actual output")
+	}
 }
 
 func init() {
