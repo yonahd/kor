@@ -25,32 +25,72 @@ func createTestRoleBindings(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
 	}
 
-	testRoleBindings1 := CreateTestRoleBinding(
+	rb1 := CreateTestRoleBinding(
 		testNamespace,
-		"role-ref-rb",
-		"test-rb-sa",
+		"rb1",
+		"sa1",
 		&rbacv1.RoleRef{
 			Kind: "Role",
-			Name: "empty-role",
+			Name: "non-exists-role",
 		})
-	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), testRoleBindings1, v1.CreateOptions{})
+	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), rb1, v1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("Error creating fake %s: %v", "RoleBinding: testRoleBindings1", err)
+		t.Fatalf("Error creating fake %s: %v", "RoleBinding: rb1", err)
 	}
 
-	testRoleBindings2 := CreateTestRoleBinding(
+	rb2 := CreateTestRoleBinding(
 		testNamespace,
-		"cluster-role-ref-rb",
-		"test-rb-sa",
+		"rb2",
+		"sa2",
 		&rbacv1.RoleRef{
 			Kind: "ClusterRole",
-			Name: "empty-cluster-rule",
+			Name: "non-existing-cluster-rule",
 		})
-	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), testRoleBindings2, v1.CreateOptions{})
+	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), rb2, v1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("Error creating fake %s: %v", "RoleBinding: testRoleBindings2", err)
+		t.Fatalf("Error creating fake %s: %v", "RoleBinding: rb2", err)
 	}
 
+	testRole := CreateTestRole(testNamespace, "existing-role", AppLabels)
+	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), testRole, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Role", err)
+	}
+
+	rb3 := CreateTestRoleBinding(
+		testNamespace,
+		"rb3",
+		"non-existing-service-account",
+		&rbacv1.RoleRef{
+			Kind: "Role",
+			Name: "existing-role",
+		})
+	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), rb3, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "RoleBinding: rb3", err)
+	}
+
+	rb4 := CreateTestRoleBinding(
+		testNamespace,
+		"rb4",
+		"non-existing-service-account",
+		&rbacv1.RoleRef{
+			Kind: "Role",
+			Name: "existing-role",
+		})
+
+	sa4 := CreateTestServiceAccount(testNamespace, "existing-service-account", AppLabels)
+	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa4, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "ServiceAccount", err)
+	}
+
+	rbacSubject := CreateTestRbacSubject(testNamespace, "existing-service-account")
+	rb4.Subjects = append(rb4.Subjects, *rbacSubject)
+	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), rb4, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "RoleBinding: rb4", err)
+	}
 	return clientset
 }
 
@@ -62,9 +102,18 @@ func TestProcessNamespaceRoleBindings(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(unusedRoleBindings) != 2 {
-		t.Errorf("Expected 2 unused role bindings, got %d", len(unusedRoleBindings))
+	expectedRoleBindingNames := []string{"rb1", "rb2", "rb3"}
+
+	if len(unusedRoleBindings) != len(expectedRoleBindingNames) {
+		t.Errorf("Expected %d unused role bindings, got %d", len(expectedRoleBindingNames), len(unusedRoleBindings))
 	}
+
+	for i, rb := range unusedRoleBindings {
+		if rb.Name != expectedRoleBindingNames[i] {
+			t.Errorf("Expected %s, got %s", expectedRoleBindingNames[i], rb.Name)
+		}
+	}
+
 }
 
 func init() {
