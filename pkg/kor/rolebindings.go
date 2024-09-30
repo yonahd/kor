@@ -10,6 +10,7 @@ import (
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
+	v1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -17,31 +18,59 @@ import (
 //go:embed exceptions/rolebindings/rolebindings.json
 var roleBindingsConfig []byte
 
+func createNamesMap(names []string, _ []string, err error) (map[string]bool, error) {
+	if err != nil {
+		return nil, err
+	}
+
+	namesMap := make(map[string]bool)
+	for _, n := range names {
+		namesMap[n] = true
+	}
+
+	return namesMap, nil
+}
+
+// Filter out subjects base on Kind, can be later used for User and Group
+func filterSubjects(subjects []v1.Subject, kind string) []v1.Subject {
+	var serviceAccountSubjects []v1.Subject
+	for _, subject := range subjects {
+		if subject.Kind == kind {
+			serviceAccountSubjects = append(serviceAccountSubjects, subject)
+		}
+	}
+	return serviceAccountSubjects
+}
+
+// Check if any valid service accounts exist in the RoleBinding
+func isUsingValidServiceAccount(serviceAccounts []v1.Subject, serviceAccountNames map[string]bool) bool {
+	for _, sa := range serviceAccounts {
+		if serviceAccountNames[sa.Name] {
+			return true
+		}
+	}
+	return false
+}
+
 func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	roleBindingsList, err := clientset.RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
 
-	roleList, err := clientset.RbacV1().Roles(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
+	roleNames, err := createNamesMap(retrieveRoleNames(clientset, namespace, filterOpts))
 	if err != nil {
 		return nil, err
 	}
 
-	roleNames := make(map[string]bool)
-	for _, role := range roleList.Items {
-		roleNames[role.Name] = true
-	}
-
-	// TODO is this list too big ?
-	clusterRoleList, err := clientset.RbacV1().ClusterRoles().List(context.TODO(), metav1.ListOptions{})
+	clusterRoleNames, err := createNamesMap(retrieveClusterRoleNames(clientset, filterOpts))
 	if err != nil {
 		return nil, err
 	}
 
-	clusterRoleNames := make(map[string]bool)
-	for _, cr := range clusterRoleList.Items {
-		clusterRoleNames[cr.Name] = true
+	serviceAccountNames, err := createNamesMap(retrieveServiceAccountNames(clientset, namespace, filterOpts))
+	if err != nil {
+		return nil, err
 	}
 
 	config, err := unmarshalConfig(roleBindingsConfig)
@@ -56,23 +85,32 @@ func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace stri
 			continue
 		}
 
-		exceptionFound, err := isResourceException(rb.Name, rb.Namespace, config.ExceptionRoleBindings)
-		if err != nil {
+		if exceptionFound, err := isResourceException(rb.Name, rb.Namespace, config.ExceptionRoleBindings); err != nil {
 			return nil, err
-		}
-
-		if exceptionFound {
+		} else if exceptionFound {
 			continue
 		}
 
 		if rb.RoleRef.Kind == "Role" && !roleNames[rb.RoleRef.Name] {
-			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "Referenced Role does not exists"})
+			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "RoleBinding references a non-existing Role"})
 			continue
 		}
 
 		if rb.RoleRef.Kind == "ClusterRole" && !clusterRoleNames[rb.RoleRef.Name] {
-			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "Referenced Cluster role does not exists"})
+			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "RoleBinding references a non-existing ClusterRole"})
 			continue
+		}
+
+		serviceAccountSubjects := filterSubjects(rb.Subjects, "ServiceAccount")
+
+		// If other kinds (Users/Groups) are used, we assume they exists for now
+		if len(serviceAccountSubjects) != len(rb.Subjects) {
+			continue
+		}
+
+		// Check if RoleBinding uses a valid service account
+		if !isUsingValidServiceAccount(serviceAccountSubjects, serviceAccountNames) {
+			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "RoleBinding references a non-existing ServiceAccount"})
 		}
 	}
 
