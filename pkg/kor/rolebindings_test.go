@@ -6,8 +6,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/yonahd/kor/pkg/common"
-	"github.com/yonahd/kor/pkg/filters"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -15,6 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/yonahd/kor/pkg/common"
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestRoleBindings(t *testing.T) *fake.Clientset {

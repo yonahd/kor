@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/yonahd/kor/pkg/common"
-	"github.com/yonahd/kor/pkg/filters"
 	v1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/yonahd/kor/pkg/common"
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 //go:embed exceptions/rolebindings/rolebindings.json
