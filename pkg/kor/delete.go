@@ -81,6 +81,9 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 		"NetworkPolicy": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.NetworkingV1().NetworkPolicies(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
+		"RoleBinding": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.RbacV1().RoleBindings(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
 	}
 
 	return deleteResourceApiMap
@@ -170,6 +173,8 @@ func updateResource(clientset kubernetes.Interface, namespace, resourceType stri
 		return clientset.StorageV1().StorageClasses().Update(context.TODO(), resource.(*storagev1.StorageClass), metav1.UpdateOptions{})
 	case "NetworkPolicy":
 		return clientset.NetworkingV1().NetworkPolicies(namespace).Update(context.TODO(), resource.(*networkingv1.NetworkPolicy), metav1.UpdateOptions{})
+	case "RoleBinding":
+		return clientset.RbacV1().RoleBindings(namespace).Update(context.TODO(), resource.(*rbacv1.RoleBinding), metav1.UpdateOptions{})
 	}
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }
@@ -214,6 +219,8 @@ func getResource(clientset kubernetes.Interface, namespace, resourceType, resour
 		return clientset.StorageV1().StorageClasses().Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "NetworkPolicy":
 		return clientset.NetworkingV1().NetworkPolicies(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
+	case "RoleBinding":
+		return clientset.RbacV1().RoleBindings(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	}
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }

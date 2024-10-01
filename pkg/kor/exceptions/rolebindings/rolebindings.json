@@ -1,0 +1,34 @@
+{
+    "exceptionRoleBindings": [
+        {
+            "Namespace": "kube-public",
+            "ResourceName": "kubeadm:bootstrap-signer-clusterinfo"
+        },
+        {
+            "Namespace": "kube-public",
+            "ResourceName": "system:controller:bootstrap-signer"
+        },
+        {
+            "Namespace": "kube-system",
+            "ResourceName": "kube-proxy"
+        },
+        {
+            "Namespace": "kube-system",
+            "ResourceName": "kubeadm:kubelet-config"
+        },
+        {
+            "Namespace": "kube-system",
+            "ResourceName": "kubeadm:nodes-kubeadm-config"
+        },
+        {
+            "Namespace": "kube-system",
+            "ResourceName": "system::*",
+            "MatchRegex": true
+        },
+        {
+            "Namespace": "kube-system",
+            "ResourceName": "system:controller:*",
+            "MatchRegex": true
+        }
+    ]
+}
