@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/argoproj/argo-rollouts/pkg/apis/rollouts/v1alpha1"
+	"github.com/argoproj/argo-rollouts/pkg/client/clientset/versioned"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -86,6 +88,16 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 	return deleteResourceApiMap
 }
 
+func DeleteArgoRolloutsResourceCmd() map[string]func(clientset versioned.Interface, namespace, name string) error {
+	var deleteResourceApiMap = map[string]func(clientset versioned.Interface, namespace, name string) error{
+		"ArgoRollout": func(clientset versioned.Interface, namespace, name string) error {
+			return clientset.ArgoprojV1alpha1().Rollouts(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
+	}
+
+	return deleteResourceApiMap
+}
+
 func FlagDynamicResource(dynamicClient dynamic.Interface, namespace string, gvr schema.GroupVersionResource, resourceName string) error {
 	resource, err := dynamicClient.
 		Resource(gvr).
@@ -127,6 +139,28 @@ func FlagResource(clientset kubernetes.Interface, namespace, resourceType, resou
 	}
 
 	_, err = updateResource(clientset, namespace, resourceType, resource)
+	return err
+}
+
+func FlagArgoRolloutsResource(clientset versioned.Interface, namespace, resourceType, resourceName string) error {
+	resource, err := getArgoRolloutsResource(clientset, namespace, resourceType, resourceName)
+	if err != nil {
+		return err
+	}
+
+	labelField := reflect.ValueOf(resource).Elem().FieldByName("Labels")
+	if labelField.IsValid() {
+		labels := labelField.Interface().(map[string]string)
+		if labels == nil {
+			labels = make(map[string]string)
+		}
+		labels["kor/used"] = "true"
+		labelField.Set(reflect.ValueOf(labels))
+	} else {
+		return fmt.Errorf("unable to set labels for resource type: %s", resourceType)
+	}
+
+	_, err = updateArgoRolloutsResource(clientset, namespace, resourceType, resource)
 	return err
 }
 
@@ -174,6 +208,14 @@ func updateResource(clientset kubernetes.Interface, namespace, resourceType stri
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }
 
+func updateArgoRolloutsResource(clientset versioned.Interface, namespace, resourceType string, resource interface{}) (interface{}, error) {
+	switch resourceType {
+	case "ArgoRollout":
+		return clientset.ArgoprojV1alpha1().Rollouts(namespace).Update(context.TODO(), resource.(*v1alpha1.Rollout), metav1.UpdateOptions{})
+	}
+	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
+}
+
 func getResource(clientset kubernetes.Interface, namespace, resourceType, resourceName string) (interface{}, error) {
 	switch resourceType {
 	case "ConfigMap":
@@ -214,6 +256,14 @@ func getResource(clientset kubernetes.Interface, namespace, resourceType, resour
 		return clientset.StorageV1().StorageClasses().Get(context.TODO(), resourceName, metav1.GetOptions{})
 	case "NetworkPolicy":
 		return clientset.NetworkingV1().NetworkPolicies(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
+	}
+	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
+}
+
+func getArgoRolloutsResource(clientset versioned.Interface, namespace, resourceType, resourceName string) (interface{}, error) {
+	switch resourceType {
+	case "ArgoRollout":
+		return clientset.ArgoprojV1alpha1().Rollouts(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
 	}
 	return nil, fmt.Errorf("resource type '%s' is not supported", resourceType)
 }
@@ -302,6 +352,59 @@ func DeleteResource(diff []ResourceInfo, clientset kubernetes.Interface, namespa
 
 				if strings.ToLower(inUse) == "y" || strings.ToLower(inUse) == "yes" {
 					if err := FlagResource(clientset, namespace, resourceType, resource.Name); err != nil {
+						fmt.Fprintf(os.Stderr, "Failed to flag resource %s %s in namespace %s as In Use: %v\n", resourceType, resource.Name, namespace, err)
+					}
+					continue
+				}
+				continue
+			}
+		}
+
+		fmt.Printf("Deleting %s %s in namespace %s\n", resourceType, resource.Name, namespace)
+		if err := deleteFunc(clientset, namespace, resource.Name); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", resourceType, resource.Name, namespace, err)
+			continue
+		}
+		deletedResource := resource
+		deletedResource.Name += "-DELETED"
+		deletedDiff = append(deletedDiff, deletedResource)
+	}
+
+	return deletedDiff, nil
+}
+
+func DeleteArgoRolloutsResource(diff []ResourceInfo, clientset versioned.Interface, namespace, resourceType string, noInteractive bool) ([]ResourceInfo, error) {
+	deletedDiff := []ResourceInfo{}
+
+	for _, resource := range diff {
+		deleteFunc, exists := DeleteArgoRolloutsResourceCmd()[resourceType]
+		if !exists {
+			fmt.Printf("Resource type '%s' is not supported\n", resource.Name)
+			continue
+		}
+
+		if !noInteractive {
+			fmt.Printf("Do you want to delete %s %s in namespace %s? (Y/N): ", resourceType, resource.Name, namespace)
+			var confirmation string
+			_, err := fmt.Scanf("%s\n", &confirmation)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to read input: %v\n", err)
+				continue
+			}
+
+			if strings.ToLower(confirmation) != "y" && strings.ToLower(confirmation) != "yes" {
+				deletedDiff = append(deletedDiff, resource)
+
+				fmt.Printf("Do you want flag the resource %s %s in namespace %s as In Use? (Y/N): ", resourceType, resource.Name, namespace)
+				var inUse string
+				_, err := fmt.Scanf("%s\n", &inUse)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to read input: %v\n", err)
+					continue
+				}
+
+				if strings.ToLower(inUse) == "y" || strings.ToLower(inUse) == "yes" {
+					if err := FlagArgoRolloutsResource(clientset, namespace, resourceType, resource.Name); err != nil {
 						fmt.Fprintf(os.Stderr, "Failed to flag resource %s %s in namespace %s as In Use: %v\n", resourceType, resource.Name, namespace, err)
 					}
 					continue

@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/argoproj/argo-rollouts/pkg/client/clientset/versioned"
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 )
@@ -72,8 +73,8 @@ func getUnusedServiceAccounts(clientset kubernetes.Interface, namespace string, 
 	return namespaceSADiff
 }
 
-func getUnusedDeployments(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
-	deployDiff, err := processNamespaceDeployments(clientset, namespace, filterOpts)
+func getUnusedDeployments(clientset kubernetes.Interface, clientsetargorollouts versioned.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
+	deployDiff, err := processNamespaceDeployments(clientset, clientsetargorollouts, namespace, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "deployments", namespace, err)
 	}
@@ -264,7 +265,19 @@ func getUnusedNetworkPolicies(clientset kubernetes.Interface, namespace string, 
 	return namespaceNetpolDiff
 }
 
-func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
+func getUnusedArgoRollouts(clientset kubernetes.Interface, clientsetargorollouts versioned.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
+	argoRolloutsDiff, err := processNamespaceArgoRollouts(clientset, clientsetargorollouts, namespace, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "argorollouts", namespace, err)
+	}
+	namespaceSADiff := ResourceDiff{
+		"ArgoRollout",
+		argoRolloutsDiff,
+	}
+	return namespaceSADiff
+}
+
+func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, clientsetargorollouts versioned.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		switch opts.GroupBy {
@@ -274,7 +287,8 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 			resources[namespace]["Service"] = getUnusedSVCs(clientset, namespace, filterOpts).diff
 			resources[namespace]["Secret"] = getUnusedSecrets(clientset, namespace, filterOpts).diff
 			resources[namespace]["ServiceAccount"] = getUnusedServiceAccounts(clientset, namespace, filterOpts).diff
-			resources[namespace]["Deployment"] = getUnusedDeployments(clientset, namespace, filterOpts).diff
+			resources[namespace]["Deployment"] = getUnusedDeployments(clientset, clientsetargorollouts, namespace, filterOpts).diff
+			resources[namespace]["ArgoRollout"] = getUnusedArgoRollouts(clientset, clientsetargorollouts, namespace, filterOpts).diff
 			resources[namespace]["StatefulSet"] = getUnusedStatefulSets(clientset, namespace, filterOpts).diff
 			resources[namespace]["Role"] = getUnusedRoles(clientset, namespace, filterOpts).diff
 			resources[namespace]["Hpa"] = getUnusedHpas(clientset, namespace, filterOpts).diff
@@ -291,7 +305,8 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 			appendResources(resources, "Service", namespace, getUnusedSVCs(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "Secret", namespace, getUnusedSecrets(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "ServiceAccount", namespace, getUnusedServiceAccounts(clientset, namespace, filterOpts).diff)
-			appendResources(resources, "Deployment", namespace, getUnusedDeployments(clientset, namespace, filterOpts).diff)
+			appendResources(resources, "Deployment", namespace, getUnusedDeployments(clientset, clientsetargorollouts, namespace, filterOpts).diff)
+			appendResources(resources, "ArgoRollout", namespace, getUnusedArgoRollouts(clientset, clientsetargorollouts, namespace, filterOpts).diff)
 			appendResources(resources, "StatefulSet", namespace, getUnusedStatefulSets(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "Role", namespace, getUnusedRoles(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "Hpa", namespace, getUnusedHpas(clientset, namespace, filterOpts).diff)
@@ -362,8 +377,8 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 	return unusedAllNonNamespaced, nil
 }
 
-func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
-	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
+func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, clientsetargorollouts versioned.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
+	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, clientsetargorollouts, outputFormat, opts)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

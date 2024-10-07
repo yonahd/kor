@@ -43,10 +43,11 @@ func createTestMultiResources(t *testing.T) *fake.Clientset {
 
 func TestRetrieveNamespaceDiff(t *testing.T) {
 	clientset := createTestMultiResources(t)
+	clientsetargorollouts := createClientSetTestArgoRollouts(t)
 	resourceList := []string{"cm", "pdb", "deployment"}
 	filterOpts := &filters.Options{}
 
-	namespaceDiff := retrieveNamespaceDiffs(clientset, testNamespace, resourceList, filterOpts)
+	namespaceDiff := retrieveNamespaceDiffs(clientset, clientsetargorollouts, testNamespace, resourceList, filterOpts)
 
 	if len(namespaceDiff) != 3 {
 		t.Fatalf("Expected 3 diffs, got %d", len(namespaceDiff))
@@ -68,6 +69,7 @@ func TestRetrieveNamespaceDiff(t *testing.T) {
 
 func TestGetUnusedMulti(t *testing.T) {
 	clientset := createTestMultiResources(t)
+	clientsetargorollouts := createClientSetTestArgoRollouts(t)
 	resourceList := "cm,pdb,deployment"
 
 	opts := common.Opts{
@@ -79,7 +81,7 @@ func TestGetUnusedMulti(t *testing.T) {
 		GroupBy:       "namespace",
 	}
 
-	output, err := GetUnusedMulti(resourceList, &filters.Options{}, clientset, nil, nil, "json", opts)
+	output, err := GetUnusedMulti(resourceList, &filters.Options{}, clientset, clientsetargorollouts, nil, nil, "json", opts)
 
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedMulti: %v", err)
