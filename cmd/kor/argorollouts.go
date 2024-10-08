@@ -9,15 +9,15 @@ import (
 	"github.com/yonahd/kor/pkg/utils"
 )
 
-var deployCmd = &cobra.Command{
-	Use:     "deployment",
-	Aliases: []string{"deploy", "deployments"},
-	Short:   "Gets unused deployments",
+var argoRolloutsCmd = &cobra.Command{
+	Use:     "argorollouts",
+	Aliases: []string{"argorollouts"},
+	Short:   "Gets unused argo rollouts",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
 		clientsetargorollouts := kor.GetKubeClientArgoRollouts(kubeconfig)
-		if response, err := kor.GetUnusedDeployments(filterOptions, clientset, clientsetargorollouts, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedArgoRollouts(filterOptions, clientset, clientsetargorollouts, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			utils.PrintLogo(outputFormat)
@@ -27,5 +27,5 @@ var deployCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(deployCmd)
+	rootCmd.AddCommand(argoRolloutsCmd)
 }

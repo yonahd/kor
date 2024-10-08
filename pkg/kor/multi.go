@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/argoproj/argo-rollouts/pkg/client/clientset/versioned"
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 )
@@ -52,7 +53,7 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 	return noNamespaceDiff, clearedResourceList
 }
 
-func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *filters.Options) []ResourceDiff {
+func retrieveNamespaceDiffs(clientset kubernetes.Interface, clientsetargorollouts versioned.Interface, namespace string, resourceList []string, filterOpts *filters.Options) []ResourceDiff {
 	var allDiffs []ResourceDiff
 	for _, resource := range resourceList {
 		var diffResult ResourceDiff
@@ -66,7 +67,7 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 		case "sa", "serviceaccount", "serviceaccounts":
 			diffResult = getUnusedServiceAccounts(clientset, namespace, filterOpts)
 		case "deploy", "deployment", "deployments":
-			diffResult = getUnusedDeployments(clientset, namespace, filterOpts)
+			diffResult = getUnusedDeployments(clientset, clientsetargorollouts, namespace, filterOpts)
 		case "sts", "statefulset", "statefulsets":
 			diffResult = getUnusedStatefulSets(clientset, namespace, filterOpts)
 		case "role", "roles":
@@ -89,6 +90,8 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 			diffResult = getUnusedDaemonSets(clientset, namespace, filterOpts)
 		case "netpol", "networkpolicy", "networkpolicies":
 			diffResult = getUnusedNetworkPolicies(clientset, namespace, filterOpts)
+		case "argorollouts":
+			diffResult = getUnusedArgoRollouts(clientset, clientsetargorollouts, namespace, filterOpts)
 		default:
 			fmt.Printf("resource type %q is not supported\n", resource)
 		}
@@ -97,7 +100,7 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 	return allDiffs
 }
 
-func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
+func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset kubernetes.Interface, clientsetargorollouts versioned.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resourceList := strings.Split(resourceNames, ",")
 	namespaces := filterOpts.Namespaces(clientset)
 	resources := make(map[string]map[string][]ResourceInfo)
@@ -115,6 +118,9 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 					if diff.diff, err = DeleteResource(diff.diff, clientset, "", diff.resourceType, opts.NoInteractive); err != nil {
 						fmt.Fprintf(os.Stderr, "Failed to delete %s %s: %v\n", diff.resourceType, diff.diff, err)
 					}
+					if diff.diff, err = DeleteArgoRolloutsResource(diff.diff, clientsetargorollouts, "", diff.resourceType, opts.NoInteractive); err != nil {
+						fmt.Fprintf(os.Stderr, "Failed to delete %s %s: %v\n", diff.resourceType, diff.diff, err)
+					}
 				}
 				switch opts.GroupBy {
 				case "namespace":
@@ -127,15 +133,18 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 	}
 
 	for _, namespace := range namespaces {
-		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList, filterOpts)
+		allDiffs := retrieveNamespaceDiffs(clientset, clientsetargorollouts, namespace, resourceList, filterOpts)
 		if opts.GroupBy == "namespace" {
 			resources[namespace] = make(map[string][]ResourceInfo)
 		}
-
 		for _, diff := range allDiffs {
 			if opts.DeleteFlag {
 				if diff.diff, err = DeleteResource(diff.diff, clientset, namespace, diff.resourceType, opts.NoInteractive); err != nil {
 					fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", diff.resourceType, diff.diff, namespace, err)
+				}
+
+				if diff.diff, err = DeleteArgoRolloutsResource(diff.diff, clientsetargorollouts, namespace, diff.resourceType, opts.NoInteractive); err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to delete %s %s: %v\n", diff.resourceType, diff.diff, err)
 				}
 			}
 			switch opts.GroupBy {

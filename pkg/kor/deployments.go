@@ -7,14 +7,14 @@ import (
 	"fmt"
 	"os"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-
+	"github.com/argoproj/argo-rollouts/pkg/client/clientset/versioned"
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
-func processNamespaceDeployments(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceDeployments(clientset kubernetes.Interface, clientsetrollout versioned.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	deploymentsList, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
@@ -29,23 +29,30 @@ func processNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 
 		if deployment.Labels["kor/used"] == "false" {
 			reason := "Marked with unused label"
-			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, ResourceInfo{Name: deployment.Name, Reason: reason})
-			continue
+
+			rolloutWithSameNameDeployment, _ := RetrieveArgoRolloutsWithDeploymentWithSameName(clientsetrollout, deployment.Name, namespace)
+			if rolloutWithSameNameDeployment == "" {
+				deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, ResourceInfo{Name: deployment.Name, Reason: reason})
+				continue
+			}
 		}
 
 		if *deployment.Spec.Replicas == 0 {
-			reason := "Deployment has no replicas"
-			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, ResourceInfo{Name: deployment.Name, Reason: reason})
+			rolloutWithSameNameDeployment, _ := RetrieveArgoRolloutsWithDeploymentWithSameName(clientsetrollout, deployment.Name, namespace)
+			if rolloutWithSameNameDeployment == "" {
+				reason := "Deployment has no replicas"
+				deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, ResourceInfo{Name: deployment.Name, Reason: reason})
+			}
 		}
 	}
 
 	return deploymentsWithoutReplicas, nil
 }
 
-func GetUnusedDeployments(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
+func GetUnusedDeployments(filterOpts *filters.Options, clientset kubernetes.Interface, clientsetargorollouts versioned.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceDeployments(clientset, namespace, filterOpts)
+		diff, err := processNamespaceDeployments(clientset, clientsetargorollouts, namespace, filterOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
@@ -82,4 +89,13 @@ func GetUnusedDeployments(filterOpts *filters.Options, clientset kubernetes.Inte
 	}
 
 	return unusedDeployments, nil
+}
+
+func RetrieveArgoRolloutsWithDeploymentWithSameName(clientset versioned.Interface, rolloutname string, namespace string) (string, error) {
+	rollout, err := clientset.ArgoprojV1alpha1().Rollouts(namespace).Get(context.TODO(), rolloutname, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	return rollout.GetName(), nil
 }

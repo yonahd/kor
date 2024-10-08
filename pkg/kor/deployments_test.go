@@ -8,11 +8,12 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 
+	fakeargorollouts "github.com/argoproj/argo-rollouts/pkg/client/clientset/versioned/fake"
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 )
@@ -55,10 +56,15 @@ func createTestDeployments(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
+func createClientSetTestArgoRollouts(t *testing.T) *fakeargorollouts.Clientset {
+	return fakeargorollouts.NewSimpleClientset()
+}
+
 func TestProcessNamespaceDeployments(t *testing.T) {
 	clientset := createTestDeployments(t)
+	clientsetargorollouts := createClientSetTestArgoRollouts(t)
 
-	deploymentsWithoutReplicas, err := processNamespaceDeployments(clientset, testNamespace, &filters.Options{})
+	deploymentsWithoutReplicas, err := processNamespaceDeployments(clientset, clientsetargorollouts, testNamespace, &filters.Options{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -74,6 +80,7 @@ func TestProcessNamespaceDeployments(t *testing.T) {
 
 func TestGetUnusedDeploymentsStructured(t *testing.T) {
 	clientset := createTestDeployments(t)
+	clientsetargorollouts := createClientSetTestArgoRollouts(t)
 
 	opts := common.Opts{
 		WebhookURL:    "",
@@ -84,7 +91,7 @@ func TestGetUnusedDeploymentsStructured(t *testing.T) {
 		GroupBy:       "namespace",
 	}
 
-	output, err := GetUnusedDeployments(&filters.Options{}, clientset, "json", opts)
+	output, err := GetUnusedDeployments(&filters.Options{}, clientset, clientsetargorollouts, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedDeploymentsStructured: %v", err)
 	}
@@ -103,6 +110,57 @@ func TestGetUnusedDeploymentsStructured(t *testing.T) {
 		t.Fatalf("Error unmarshaling actual output: %v", err)
 	}
 
+	if !reflect.DeepEqual(expectedOutput, actualOutput) {
+		t.Errorf("Expected output does not match actual output")
+	}
+}
+
+func TestGetUnusedDeploymentsWithArgoRolloutStructured(t *testing.T) {
+	clientset := fake.NewSimpleClientset()
+
+	opts := common.Opts{
+		WebhookURL:    "",
+		Channel:       "",
+		Token:         "",
+		DeleteFlag:    false,
+		NoInteractive: true,
+		GroupBy:       "namespace",
+	}
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+	deploymentName := "test-deployment1"
+	deplomentWorkLoadRefNoReplicas := CreateTestDeployment(testNamespace, deploymentName, 0, AppLabels)
+	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deplomentWorkLoadRefNoReplicas, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake deployment: %v", err)
+	}
+
+	clientsetargorollouts := createClientSetTestArgoRollouts(t)
+	CreateTestArgoRolloutWithDeployment(testNamespace, deploymentName, deplomentWorkLoadRefNoReplicas, AppLabels)
+
+	output, err := GetUnusedDeployments(&filters.Options{}, clientset, clientsetargorollouts, "json", opts)
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedDeploymentsStructured: %v", err)
+	}
+
+	expectedOutput := map[string]map[string][]string{
+		testNamespace: {
+			"Deployment": {
+				deploymentName,
+			},
+		},
+	}
+
+	var actualOutput map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &actualOutput); err != nil {
+		t.Fatalf("Error unmarshaling actual output: %v", err)
+	}
 	if !reflect.DeepEqual(expectedOutput, actualOutput) {
 		t.Errorf("Expected output does not match actual output")
 	}

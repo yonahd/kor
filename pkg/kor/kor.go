@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"sort"
 
+	clientargorollouts "github.com/argoproj/argo-rollouts/pkg/client/clientset/versioned"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -85,6 +86,21 @@ func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+		os.Exit(1)
+	}
+	return clientset
+}
+
+func GetKubeClientArgoRollouts(kubeconfig string) *clientargorollouts.Clientset {
+	config, err := GetConfig(kubeconfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
+		os.Exit(1)
+	}
+
+	clientset, err := clientargorollouts.NewForConfig(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client for argo rollouts: %v\n", err)
 		os.Exit(1)
 	}
 	return clientset

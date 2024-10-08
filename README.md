@@ -123,6 +123,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `daemonset`- Gets unused DaemonSets for the specified namespace or all namespaces.
 - `finalizer` - Gets unused pending deletion resources for the specified namespace or all namespaces.
 - `networkpolicy` - Gets unused NetworkPolicies for the specified namespace or all namespaces.
+- `argorollouts` - Gets unused Argo Rolouts for the specified namespace or all namespaces.
 - `exporter` - Export Prometheus metrics.
 - `version` - Print kor version information.
 
@@ -167,22 +168,23 @@ kor [subcommand] --help
 | ConfigMaps      | ConfigMaps not used in the following places:<br/>- Pods<br/>- Containers<br/>- ConfigMaps used through Volumes<br/>- ConfigMaps used through environment variables                                                                | ConfigMaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically OPA policies fluentd configs CRD configs |
 | Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers<br/>- Secrets used through volumes<br/>- Secrets used through environment variables<br/>- Secrets used by Ingress TLS<br/>- Secrets used by ServiceAccounts | Secrets used by resources which don't explicitly state them in the config e.g. secrets used by CRDs                                                                   |
 | Services        | Services with no endpoints                                                                                                                                                                                                        |                                                                                                                                                                       |
-| Deployments     | Deployments with no Replicas                                                                                                                                                                                                      |                                                                                                                                                                       |
+| Deployments     | Deployments with no Replicas and non existent ArgoRollout Owner (WorkloadRef)                                                                                                                                                     |                                                                                                                                                                       |
 | ServiceAccounts | ServiceAccounts unused by Pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                    |                                                                                                                                                                       |
 | StatefulSets    | Statefulsets with no Replicas                                                                                                                                                                                                     |                                                                                                                                                                       |
 | Roles           | Roles not used in roleBinding                                                                                                                                                                                                     |                                                                                                                                                                       |
-| ClusterRoles    | ClusterRoles not used in roleBinding or clusterRoleBinding<br/>ClusterRoles not used in ClusterRole aggregation                                                                                                                                                                        |                                                                                                                                                                       |
+| ClusterRoles    | ClusterRoles not used in roleBinding or clusterRoleBinding<br/>ClusterRoles not used in ClusterRole aggregation                                                                                                                   |                                                                                                                                                                       |
 | PVCs            | PVCs not used in Pods                                                                                                                                                                                                             |                                                                                                                                                                       |
 | Ingresses       | Ingresses not pointing at any Service                                                                                                                                                                                             |                                                                                                                                                                       |
 | Hpas            | HPAs not used in Deployments<br/> HPAs not used in StatefulSets                                                                                                                                                                   |                                                                                                                                                                       |
 | CRDs            | CRDs not used the cluster                                                                                                                                                                                                         |                                                                                                                                                                       |
 | Pvs             | PVs not bound to a PVC                                                                                                                                                                                                            |                                                                                                                                                                       |
 | Pdbs            | PDBs not used in Deployments<br/> PDBs not used in StatefulSets                                                                                                                                                                   |                                                                                                                                                                       |
-| Jobs            | Jobs status is completed<br/>  Jobs status is suspended<br/>  Jobs failed with backoff limit exceeded (including indexed jobs) <br/> Jobs failed with dedaline exceeded                                                                                                                                              |                                                                                                                                                                       |
-| ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work                                                                                                                                                        |
-| DaemonSets      | DaemonSets not scheduled on any nodes                                                                                                                                                                                             |
-| StorageClasses  | StorageClasses not used by any PVs/PVCs                                                                                                                                                                                           |
-| NetworkPolicies  | NetworkPolicies with no Pods selected by podSelector or Ingress/Egress rules                                                                                                                                                                                           |
+| Jobs            | Jobs status is completed<br/>  Jobs status is suspended<br/>  Jobs failed with backoff limit exceeded (including indexed jobs) <br/> Jobs failed with dedaline exceeded                                                           |                                                                                                                                                                       |
+| ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work                                                                                                                                                        |                                                                                                                                                                       |
+| DaemonSets      | DaemonSets not scheduled on any nodes                                                                                                                                                                                             |                                                                                                                                                                       |
+| StorageClasses  | StorageClasses not used by any PVs/PVCs                                                                                                                                                                                           |                                                                                                                                                                       |
+| NetworkPolicies | NetworkPolicies with no Pods selected by podSelector or Ingress/Egress rules                                                                                                                                                      |                                                                                                                                                                       |
+| ArgoRollout     | Argo Rollouts with WorkloadRef deployment non existent in cluster                                                                                                                                                                 | When deployment from Argo Rollouts has deleted, replicasets keep pods alive, attention to this                                                                        |
 
 ### Deleting Unused resources
 
@@ -247,6 +249,7 @@ Unused resources in namespace: "test"
 | 6 | ConfigMap      | unused-cm                                    | ConfigMap is not used in any pod or container          |
 | 7 | ServiceAccount | my-service-account2                          | ServiceAccount is not in use                           |
 | 8 | Pdb            | my-pdb                                       | Pdb is not referencing any deployments or statefulsets |
+| 9 | ArgoRollout   | rollout-ref-deployment                        | Rollout has no deployments                             |
 +---+----------------+----------------------------------------------+--------------------------------------------------------+
 ```
 
@@ -296,13 +299,14 @@ Unused resources in namespace: "ns1"
 | 4 | Deployment    | deploy1            |
 +---+---------------+--------------------+
 Unused resources in namespace: "ns2"
-+---+---------------+--------------------+
-| # | RESOURCE TYPE |   RESOURCE NAME    |
-+---+---------------+--------------------+
-| 1 | ReplicaSet    | deploy2-79f48888c6 |
-| 2 | ConfigMap     | cm3                |
-| 3 | Deployment    | deploy2            |
-+---+---------------+--------------------+
++---+---------------+-------------------------+
+| # | RESOURCE TYPE |   RESOURCE NAME         |
++---+---------------+-------------------------+
+| 1 | ReplicaSet    | deploy2-79f48888c6      |
+| 2 | ConfigMap     | cm3                     |
+| 3 | Deployment    | deploy2                 |
+| 4 | ArgoRollout   | rollout-ref-deployment  |
++---+---------------+-------------------------+
 ```
 
 ## In Cluster Usage
