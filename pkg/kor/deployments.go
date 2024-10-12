@@ -8,10 +8,11 @@ import (
 	"os"
 
 	"github.com/argoproj/argo-rollouts/pkg/client/clientset/versioned"
-	"github.com/yonahd/kor/pkg/common"
-	"github.com/yonahd/kor/pkg/filters"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/yonahd/kor/pkg/common"
+	"github.com/yonahd/kor/pkg/filters"
 )
 
 func processNamespaceDeployments(clientset kubernetes.Interface, clientsetrollout versioned.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
