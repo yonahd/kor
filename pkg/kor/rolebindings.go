@@ -40,7 +40,7 @@ func isUsingValidServiceAccount(serviceAccounts []v1.Subject, serviceAccountName
 	return false
 }
 
-func checkRoleReferences(rb v1.RoleBinding, roleNames, clusterRoleNames map[string]bool) *ResourceInfo {
+func validateRoleReference(rb v1.RoleBinding, roleNames, clusterRoleNames map[string]bool) *ResourceInfo {
 	if rb.RoleRef.Kind == "Role" && !roleNames[rb.RoleRef.Name] {
 		return &ResourceInfo{Name: rb.Name, Reason: "RoleBinding references a non-existing Role"}
 	}
@@ -91,9 +91,9 @@ func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace stri
 			continue
 		}
 
-		unusedRoleReference := checkRoleReferences(rb, roleNames, clusterRoleNames)
-		if unusedRoleReference != nil {
-			unusedRoleBindingNames = append(unusedRoleBindingNames, *unusedRoleReference)
+		roleReferenceIssue := validateRoleReference(rb, roleNames, clusterRoleNames)
+		if roleReferenceIssue != nil {
+			unusedRoleBindingNames = append(unusedRoleBindingNames, *roleReferenceIssue)
 			continue
 		}
 
