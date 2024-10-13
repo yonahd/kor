@@ -11,7 +11,7 @@ import (
 
 var roleBindingCmd = &cobra.Command{
 	Use:     "rolebinding",
-	Aliases: []string{"rb", "rolebindings"},
+	Aliases: []string{"rolebindings"},
 	Short:   "Gets unused role bindings",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
