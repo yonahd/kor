@@ -38,6 +38,7 @@ type Config struct {
 	ExceptionStorageClasses  []ExceptionResource `json:"exceptionStorageClasses"`
 	ExceptionJobs            []ExceptionResource `json:"exceptionJobs"`
 	ExceptionPdbs            []ExceptionResource `json:"exceptionPdbs"`
+	ExceptionRoleBindings    []ExceptionResource `json:"exceptionRoleBindings"`
 	// Add other configurations if needed
 }
 
@@ -189,4 +190,18 @@ func resourceInfoContains(slice []ResourceInfo, item string) bool {
 		}
 	}
 	return false
+}
+
+// Convert a slice of names into a map for fast lookup
+func convertNamesToPresenseMap(names []string, _ []string, err error) (map[string]bool, error) {
+	if err != nil {
+		return nil, err
+	}
+
+	namesMap := make(map[string]bool)
+	for _, n := range names {
+		namesMap[n] = true
+	}
+
+	return namesMap, nil
 }
