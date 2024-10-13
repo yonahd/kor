@@ -19,20 +19,6 @@ import (
 //go:embed exceptions/rolebindings/rolebindings.json
 var roleBindingsConfig []byte
 
-// Convert a slice of names into a map for fast lookup
-func convertNamesToPresenseMap(names []string, _ []string, err error) (map[string]bool, error) {
-	if err != nil {
-		return nil, err
-	}
-
-	namesMap := make(map[string]bool)
-	for _, n := range names {
-		namesMap[n] = true
-	}
-
-	return namesMap, nil
-}
-
 // Filter out subjects base on Kind, can be later used for User and Group
 func filterSubjects(subjects []v1.Subject, kind string) []v1.Subject {
 	var serviceAccountSubjects []v1.Subject
@@ -52,6 +38,18 @@ func isUsingValidServiceAccount(serviceAccounts []v1.Subject, serviceAccountName
 		}
 	}
 	return false
+}
+
+func checkRoleReferences(rb v1.RoleBinding, roleNames, clusterRoleNames map[string]bool) *ResourceInfo {
+	if rb.RoleRef.Kind == "Role" && !roleNames[rb.RoleRef.Name] {
+		return &ResourceInfo{Name: rb.Name, Reason: "RoleBinding references a non-existing Role"}
+	}
+
+	if rb.RoleRef.Kind == "ClusterRole" && !clusterRoleNames[rb.RoleRef.Name] {
+		return &ResourceInfo{Name: rb.Name, Reason: "RoleBinding references a non-existing ClusterRole"}
+	}
+
+	return nil
 }
 
 func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
@@ -93,13 +91,9 @@ func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace stri
 			continue
 		}
 
-		if rb.RoleRef.Kind == "Role" && !roleNames[rb.RoleRef.Name] {
-			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "RoleBinding references a non-existing Role"})
-			continue
-		}
-
-		if rb.RoleRef.Kind == "ClusterRole" && !clusterRoleNames[rb.RoleRef.Name] {
-			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "RoleBinding references a non-existing ClusterRole"})
+		unusedRoleReference := checkRoleReferences(rb, roleNames, clusterRoleNames)
+		if unusedRoleReference != nil {
+			unusedRoleBindingNames = append(unusedRoleBindingNames, *unusedRoleReference)
 			continue
 		}
 
