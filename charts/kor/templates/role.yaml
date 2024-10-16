@@ -26,6 +26,7 @@ rules:
       - replicasets
       - daemonsets
       - networkpolicies
+      - rollouts
     verbs:
       - get
       - list
@@ -58,6 +59,7 @@ rules:
       - replicasets
       - daemonsets
       - networkpolicies
+      - rollouts
       {{/* cluster-scoped resources */}}
       - namespaces
       - clusterroles

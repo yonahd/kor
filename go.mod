@@ -5,6 +5,7 @@ go 1.22.0
 toolchain go1.22.2
 
 require (
+	github.com/argoproj/argo-rollouts v1.7.2
 	github.com/fatih/color v1.17.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/prometheus/client_golang v1.20.4
