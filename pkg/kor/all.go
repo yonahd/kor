@@ -265,6 +265,19 @@ func getUnusedNetworkPolicies(clientset kubernetes.Interface, namespace string, 
 	return namespaceNetpolDiff
 }
 
+func getUnusedRoleBindings(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
+	roleBindingDiff, err := processNamespaceRoleBindings(clientset, namespace, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "RoleBindings", namespace, err)
+	}
+
+	namespaceRoleBindingDiff := ResourceDiff{
+		"RoleBinding",
+		roleBindingDiff,
+	}
+	return namespaceRoleBindingDiff
+}
+
 func getUnusedArgoRollouts(clientset kubernetes.Interface, clientsetargorollouts versioned.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	argoRolloutsDiff, err := processNamespaceArgoRollouts(clientset, clientsetargorollouts, namespace, filterOpts)
 	if err != nil {
@@ -300,6 +313,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 			resources[namespace]["ReplicaSet"] = getUnusedReplicaSets(clientset, namespace, filterOpts).diff
 			resources[namespace]["DaemonSet"] = getUnusedDaemonSets(clientset, namespace, filterOpts).diff
 			resources[namespace]["NetworkPolicy"] = getUnusedNetworkPolicies(clientset, namespace, filterOpts).diff
+			resources[namespace]["RoleBinding"] = getUnusedRoleBindings(clientset, namespace, filterOpts).diff
 		case "resource":
 			appendResources(resources, "ConfigMap", namespace, getUnusedCMs(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "Service", namespace, getUnusedSVCs(clientset, namespace, filterOpts).diff)
@@ -318,6 +332,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 			appendResources(resources, "ReplicaSet", namespace, getUnusedReplicaSets(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "DaemonSet", namespace, getUnusedDaemonSets(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "NetworkPolicy", namespace, getUnusedNetworkPolicies(clientset, namespace, filterOpts).diff)
+			appendResources(resources, "RoleBinding", namespace, getUnusedRoleBindings(clientset, namespace, filterOpts).diff)
 		}
 	}
 

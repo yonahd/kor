@@ -90,6 +90,8 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, clientsetargorollout
 			diffResult = getUnusedDaemonSets(clientset, namespace, filterOpts)
 		case "netpol", "networkpolicy", "networkpolicies":
 			diffResult = getUnusedNetworkPolicies(clientset, namespace, filterOpts)
+		case "rolebinding", "rolebindings":
+			diffResult = getUnusedNetworkPolicies(clientset, namespace, filterOpts)
 		case "argorollouts":
 			diffResult = getUnusedArgoRollouts(clientset, clientsetargorollouts, namespace, filterOpts)
 		default:
