@@ -41,6 +41,8 @@ As adding new orphaned resources capabilities requires the addition or modificat
 ├── cmd/kor
 │   └── <resource>s.go
 ├── pkg/kor
+│   ├── <resource>s
+│   │   └── <resource>s.json
 │   ├── all.go
 │   ├── create_test_resources.go
 │   ├── delete.go
@@ -56,6 +58,7 @@ As adding new orphaned resources capabilities requires the addition or modificat
 - `pkg/kor/all.go` - add your new resource to `kor all` command to map all unused resources.
 - `pkg/kor/delete.go` - add a deletion functionality to apply on unused instances of type \<resource>.
 - `pkg/kor/multi.go` - allow finding your new resource in a comma-separated query along other resources.
+- `pkg/kor/exceptions/<resource>s/<resource>s.json` - list default unused instances of type \<resource> to avoid false-positive results.
 - `cmd/kor/<resource>s.go` - add your new functionanilities to `kor` command-line.
 - `charts/kor/templates/role.yaml` - grant get/list/watch permissions to the new resource in a namespaces/cluster-scoped level.
 - `README.md` - introduce your added capabilities to `kor`.
