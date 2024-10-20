@@ -9,6 +9,7 @@ import (
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	labels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 
@@ -52,34 +53,57 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 		}
 
 		selector := pdb.Spec.Selector
-		if selector == nil {
+		if selector == nil || len(selector.MatchLabels) == 0 {
 			reason := "Pdb has no selector"
 			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
 			continue
 		}
-		if len(selector.MatchLabels) == 0 {
-			reason := "Pdb has no selector"
-			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
-			continue
-		}
-		deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{
-			LabelSelector: metav1.FormatLabelSelector(selector),
-		})
+
+		labelSelector, err := metav1.LabelSelectorAsSelector(selector)
 		if err != nil {
 			return nil, err
 		}
-		statefulSets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{
-			LabelSelector: metav1.FormatLabelSelector(selector),
-		})
+
+		isPdbUsed, err := hasMatchedResources(clientset, namespace, filterOpts, labelSelector)
 		if err != nil {
 			return nil, err
 		}
-		if len(deployments.Items) == 0 && len(statefulSets.Items) == 0 {
+
+		if !isPdbUsed {
 			reason := "Pdb is not referencing any deployments or statefulsets"
 			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
 		}
 	}
+
 	return unusedPdbs, nil
+}
+
+func hasMatchedResources(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, labelSelector labels.Selector) (bool, error) {
+	deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	for _, deployment := range deployments.Items {
+		deploymentLabels := labels.Set(deployment.Spec.Template.Labels)
+		if labelSelector.Matches(deploymentLabels) {
+			return true, nil
+		}
+	}
+
+	statefulSets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	for _, statefulSet := range statefulSets.Items {
+		statefulSetLabels := labels.Set(statefulSet.Spec.Template.Labels)
+		if labelSelector.Matches(statefulSetLabels) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func GetUnusedPdbs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
