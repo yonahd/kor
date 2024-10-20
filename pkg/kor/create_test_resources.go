@@ -27,6 +27,11 @@ func CreateTestDeployment(namespace, name string, replicas int32, labels map[str
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: labels,
+				},
+			},
 		},
 	}
 }
@@ -40,6 +45,11 @@ func CreateTestStatefulSet(namespace, name string, replicas int32, labels map[st
 		},
 		Spec: appsv1.StatefulSetSpec{
 			Replicas: &replicas,
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: labels,
+				},
+			},
 		},
 	}
 }
