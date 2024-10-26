@@ -53,24 +53,35 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 		}
 
 		selector := pdb.Spec.Selector
+		var hasMatchingTemplates, hasMatchingWorkloads bool
+
+		// Validate empty selector
 		if selector == nil || len(selector.MatchLabels) == 0 {
-			reason := "Pdb has no selector"
-			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
+			hasRunningPods, err := validateRunningPods(clientset, namespace)
+			if err != nil {
+				return nil, err
+			}
+
+			if !hasRunningPods {
+				reason := "Pdb matches every pod (empty selector) but 0 pods run"
+				unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
+			}
+
 			continue
+		} else {
+			hasMatchingTemplates, err = validateMatchingTemplates(clientset, namespace, selector)
+			if err != nil {
+				return nil, err
+			}
+
+			hasMatchingWorkloads, err = validateMatchingWorkloads(clientset, namespace, selector)
+			if err != nil {
+				return nil, err
+			}
 		}
 
-		labelSelector, err := metav1.LabelSelectorAsSelector(selector)
-		if err != nil {
-			return nil, err
-		}
-
-		isPdbUsed, err := hasMatchedResources(clientset, namespace, filterOpts, labelSelector)
-		if err != nil {
-			return nil, err
-		}
-
-		if !isPdbUsed {
-			reason := "Pdb is not referencing any deployments or statefulsets"
+		if !hasMatchingTemplates && !hasMatchingWorkloads {
+			reason := "Pdb is not referencing any deployments, statefulsets or pods"
 			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
 		}
 	}
@@ -78,7 +89,31 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 	return unusedPdbs, nil
 }
 
-func hasMatchedResources(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, labelSelector labels.Selector) (bool, error) {
+func validateRunningPods(clientset kubernetes.Interface, namespace string) (bool, error) {
+	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
+		FieldSelector: "status.phase=Running",
+	})
+	if err != nil {
+		return false, err
+	}
+
+	// Field status.phase=Running can still reference Terminating pods
+	// Return true if at least one pod is running
+	for _, pod := range pods.Items {
+		if pod.ObjectMeta.DeletionTimestamp == nil {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func validateMatchingTemplates(clientset kubernetes.Interface, namespace string, selector *metav1.LabelSelector) (bool, error) {
+	labelSelector, err := metav1.LabelSelectorAsSelector(selector)
+	if err != nil {
+		return false, err
+	}
+
 	deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return false, err
@@ -101,6 +136,20 @@ func hasMatchedResources(clientset kubernetes.Interface, namespace string, filte
 		if labelSelector.Matches(statefulSetLabels) {
 			return true, nil
 		}
+	}
+
+	return false, nil
+}
+
+func validateMatchingWorkloads(clientset kubernetes.Interface, namespace string, selector *metav1.LabelSelector) (bool, error) {
+	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(selector),
+	})
+	if err != nil {
+		return false, err
+	}
+	if len(pods.Items) > 0 {
+		return true, nil
 	}
 
 	return false, nil
