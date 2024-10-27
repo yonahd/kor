@@ -9,9 +9,9 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/prometheus/client_golang v1.20.5
 	github.com/spf13/cobra v1.8.1
-	k8s.io/api v0.31.1
+	k8s.io/api v0.31.2
 	k8s.io/apiextensions-apiserver v0.31.1
-	k8s.io/apimachinery v0.31.1
+	k8s.io/apimachinery v0.31.2
 	k8s.io/client-go v0.31.1
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
 	sigs.k8s.io/yaml v1.4.0
