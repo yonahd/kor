@@ -11,6 +11,28 @@ entries:
         - name: Grafana Dashboard
           url: https://grafana.com/grafana/dashboards/19863-kor-dashboard/
     apiVersion: v2
+    appVersion: 0.5.6
+    created: "2024-10-28T17:56:46.73549465Z"
+    description: A Kubernetes Helm Chart to discover orphaned resources using kor
+    digest: 189f9444249334bcf311f6657e87de4d8108729c629e25e5f0d882a7438670fe
+    maintainers:
+    - name: yonahd
+      url: https://github.com/yonahd/kor
+    name: kor
+    type: application
+    urls:
+    - https://github.com/yonahd/kor/releases/download/kor-0.1.14/kor-0.1.14.tgz
+    version: 0.1.14
+  - annotations:
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: Application Source
+          url: https://github.com/yonahd/kor
+        - name: Chart Source
+          url: https://github.com/yonahd/kor/tree/main/charts/kor
+        - name: Grafana Dashboard
+          url: https://grafana.com/grafana/dashboards/19863-kor-dashboard/
+    apiVersion: v2
     appVersion: 0.5.5
     created: "2024-08-20T19:24:40.994356531Z"
     description: A Kubernetes Helm Chart to discover orphaned resources using kor
@@ -67,4 +89,4 @@ entries:
     urls:
     - https://github.com/yonahd/kor/releases/download/kor-0.1.10/kor-0.1.10.tgz
     version: 0.1.10
-generated: "2024-08-20T19:24:40.994373522Z"
+generated: "2024-10-28T17:56:46.73551578Z"
