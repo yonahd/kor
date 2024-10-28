@@ -9,6 +9,7 @@ import (
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	labels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 
@@ -52,34 +53,106 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 		}
 
 		selector := pdb.Spec.Selector
-		if selector == nil {
-			reason := "Pdb has no selector"
-			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
+		var hasMatchingTemplates, hasMatchingWorkloads bool
+
+		// Validate empty selector
+		if selector == nil || len(selector.MatchLabels) == 0 {
+			hasRunningPods, err := validateRunningPods(clientset, namespace)
+			if err != nil {
+				return nil, err
+			}
+
+			if !hasRunningPods {
+				reason := "Pdb matches every pod (empty selector) but 0 pods run"
+				unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
+			}
+
 			continue
+		} else {
+			hasMatchingTemplates, err = validateMatchingTemplates(clientset, namespace, selector)
+			if err != nil {
+				return nil, err
+			}
+
+			hasMatchingWorkloads, err = validateMatchingWorkloads(clientset, namespace, selector)
+			if err != nil {
+				return nil, err
+			}
 		}
-		if len(selector.MatchLabels) == 0 {
-			reason := "Pdb has no selector"
-			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
-			continue
-		}
-		deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{
-			LabelSelector: metav1.FormatLabelSelector(selector),
-		})
-		if err != nil {
-			return nil, err
-		}
-		statefulSets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{
-			LabelSelector: metav1.FormatLabelSelector(selector),
-		})
-		if err != nil {
-			return nil, err
-		}
-		if len(deployments.Items) == 0 && len(statefulSets.Items) == 0 {
-			reason := "Pdb is not referencing any deployments or statefulsets"
+
+		if !hasMatchingTemplates && !hasMatchingWorkloads {
+			reason := "Pdb is not referencing any deployments, statefulsets or pods"
 			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
 		}
 	}
+
 	return unusedPdbs, nil
+}
+
+func validateRunningPods(clientset kubernetes.Interface, namespace string) (bool, error) {
+	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
+		FieldSelector: "status.phase=Running",
+	})
+	if err != nil {
+		return false, err
+	}
+
+	// Field status.phase=Running can still reference Terminating pods
+	// Return true if at least one pod is running
+	for _, pod := range pods.Items {
+		if pod.ObjectMeta.DeletionTimestamp == nil {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func validateMatchingTemplates(clientset kubernetes.Interface, namespace string, selector *metav1.LabelSelector) (bool, error) {
+	labelSelector, err := metav1.LabelSelectorAsSelector(selector)
+	if err != nil {
+		return false, err
+	}
+
+	deployments, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	for _, deployment := range deployments.Items {
+		deploymentLabels := labels.Set(deployment.Spec.Template.Labels)
+		if labelSelector.Matches(deploymentLabels) {
+			return true, nil
+		}
+	}
+
+	statefulSets, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	for _, statefulSet := range statefulSets.Items {
+		statefulSetLabels := labels.Set(statefulSet.Spec.Template.Labels)
+		if labelSelector.Matches(statefulSetLabels) {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func validateMatchingWorkloads(clientset kubernetes.Interface, namespace string, selector *metav1.LabelSelector) (bool, error) {
+	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(selector),
+	})
+	if err != nil {
+		return false, err
+	}
+	if len(pods.Items) > 0 {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func GetUnusedPdbs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
