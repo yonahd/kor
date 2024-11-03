@@ -32,6 +32,9 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - StorageClasses
 - NetworkPolicies
 - RoleBindings
+- Argo Rollouts
+- Argo Rollouts Analysis template
+- Argo Rollouts Cluster Analysis template
 
 ![Kor Screenshot](/images/show_reason_screenshot.png)
 
@@ -125,6 +128,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `daemonset`- Gets unused DaemonSets for the specified namespace or all namespaces.
 - `finalizer` - Gets unused pending deletion resources for the specified namespace or all namespaces.
 - `networkpolicy` - Gets unused NetworkPolicies for the specified namespace or all namespaces.
+- `argo-rollouts, argo-rollouts-analysis-templates, argo-rollouts-cluster-analysis-templates` - Gets unsed argo-rollouts, analysis-templates and cluster-analysis-templates
 - `exporter` - Export Prometheus metrics.
 - `version` - Print kor version information.
 
@@ -147,7 +151,9 @@ Kor provides various subcommands to identify and list unused resources. The avai
       --slack-auth-token string      Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.
       --slack-channel string         Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.
       --slack-webhook-url string     Slack webhook URL to send notifications to
+  --include-third-party-crds         To get unused argo-rollouts, analysis-templates and cluster-analysis-templates
   -v, --verbose                      Verbose output (print empty namespaces)
+
 ```
 
 To use a specific subcommand, run `kor [subcommand] [flags]`.
@@ -155,6 +161,13 @@ To use a specific subcommand, run `kor [subcommand] [flags]`.
 ```sh
 kor all --include-namespaces my-namespace
 ```
+
+To get all with Argo Rollouts
+
+```sh
+kor all --include-namespaces my-namespace --include-third-party-crds argo-rollouts,argo-rollouts-analysis-templates,argo-rollouts-cluster-analysis-templates
+```
+
 
 For more information about each subcommand and its available flags, you can use the `--help` flag.
 
@@ -179,13 +192,16 @@ kor [subcommand] --help
 | Ingresses       | Ingresses not pointing at any Service                                                                                                                                                                                             |                                                                                                                                                                       |
 | Hpas            | HPAs not used in Deployments<br/> HPAs not used in StatefulSets                                                                                                                                                                   |                                                                                                                                                                       |
 | CRDs            | CRDs not used the cluster                                                                                                                                                                                                         |                                                                                                                                                                       |
-| Pvs             | PVs not bound to a PVC                                                                                                                                                                                                            |                                                                                                                                                                       |
-| Pdbs            | PDBs not used in Deployments / StatefulSets (templates) or in arbitrary Pods<br/>PDBs with empty selectors (match every pod) but no running pods in namespace                                                                                                                                                                   |                                                                                                                                                                       |
+| Pvs             | PVs not bound to a PVC                                                                                                                                         
+| Pdbs            | PDBs not used in Deployments / StatefulSets (templates) or in arbitrary Pods<br/>PDBs with empty selectors (match every pod) but no running pods in namespace                                                                                                                                                                    |                                                                                                                                                                       |
 | Jobs            | Jobs status is completed<br/>  Jobs status is suspended<br/>  Jobs failed with backoff limit exceeded (including indexed jobs) <br/> Jobs failed with dedaline exceeded                                                                                                                                              |                                                                                                                                                                       |
 | ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work                                                                                                                                                        |
 | DaemonSets      | DaemonSets not scheduled on any nodes                                                                                                                                                                                             |
-| StorageClasses  | StorageClasses not used by any PVs/PVCs                                                                                                                                                                                           |
+| StorageClasses  | StorageClasses not used by any PVs/PVCs       
 | NetworkPolicies  | NetworkPolicies with no Pods selected by podSelector or Ingress/Egress rules                                                                                                                                                                                           |
+| ArgoRollouts    | ArgoRollouts not used by any deployment                                                                                                                                                                                           |
+| ArgoRollouts-AnalysisTemplate    | Analysys template not used by any Argo Rollout                                                                                                                                                                   |
+| ArgoRollouts-ClusterAnalysisTemplate  | Cluster analysys template not used by any Argo Rollout                                                                                                                                                      |
 
 ### Deleting Unused resources
 
@@ -253,6 +269,45 @@ Unused resources in namespace: "test"
 +---+----------------+----------------------------------------------+--------------------------------------------------------+
 ```
 
+```sh
+kor all --include-third-party-crds argo-rollouts,argo-rollouts-analysis-templates,argo-rollouts-cluster-analysis-templates --show-reason --show-reason
+```
+```
+Unused resources in namespace: "default"
++---+-------------------------------+------------------------------------+------------------------------------------------+
+| # |         RESOURCE TYPE         |           RESOURCE NAME            |                     REASON                     |
++---+-------------------------------+------------------------------------+------------------------------------------------+
+| 1 | ServiceAccount                | bookinfo-gateway-istio             | ServiceAccount is not in use                   |
+| 2 | ConfigMap                     | istio-ca-root-cert                 | ConfigMap is not used in any pod or container  |
+| 3 | Pvc                           | devlake-mysql-data-devlake-mysql-0 | PVC is not in use                              |
+| 4 | ReplicaSet                    | rollout-canary-679b8b5b4c          | ReplicaSet is not in use                       |
+| 5 | ArgoRollout                   | rollout-canary                     | Rollout has 0 replicas                         |
+| 6 | ArgoRollouts-AnalysisTemplate | pass                               | Argo Rollouts Analysis Templates is not in use |
++---+-------------------------------+------------------------------------+------------------------------------------------+
+
+Unused resources in namespace: ""
++----+--------------------------------------+----------------------------------+--------------------------------------------------------------+
+| #  |            RESOURCE TYPE             |          RESOURCE NAME           |                            REASON                            |
++----+--------------------------------------+----------------------------------+--------------------------------------------------------------+
+|  1 | ArgoRollouts-ClusterAnalysisTemplate | always-pass                      | Argo Rollouts Cluster Analysis Templates is not in use       |
+|  2 | ArgoRollouts-ClusterAnalysisTemplate | alert-template                   | Argo Rollouts Cluster Analysis Templates is not in use       |
+|  3 | Pv                                   | mongo-data-pv                    | Persistent Volume is not in use                              |
+|  4 | Pv                                   | config                           | Persistent Volume is not in use                              |
+|  5 | ClusterRole                          | cert-manager-cluster-view        | ClusterRole is not used by any RoleBinding or                |
+|    |                                      |                                  | ClusterRoleBinding                                           |
+|  6 | ClusterRole                          | cert-manager-view                | ClusterRole is not used by any RoleBinding or                |
+|    |                                      |                                  | ClusterRoleBinding                                           |
+|  7 | ClusterRole                          | cert-manager-edit                | ClusterRole is not used by any RoleBinding or                |
+|    |                                      |                                  | ClusterRoleBinding                                           |
+|  8 | ClusterRole                          | argo-rollouts-aggregate-to-admin | ClusterRole is not used by any RoleBinding or                |
+|    |                                      |                                  | ClusterRoleBinding                                           |
+|  9 | ClusterRole                          | argo-rollouts-aggregate-to-edit  | ClusterRole is not used by any RoleBinding or                |
+|    |                                      |                                  | ClusterRoleBinding                                           |
+| 10 | ClusterRole                          | argo-rollouts-aggregate-to-view  | ClusterRole is not used by any RoleBinding or                |
+|    |                                      |                                  | ClusterRoleBinding                                           |
++----+--------------------------------------+----------------------------------+--------------------------------------------------------------+
+```
+
 #### Group by resource
 
 ```sh
@@ -281,6 +336,33 @@ Unused ReplicaSets:
 | 1 | ns1       | deploy1-654d48b75f |
 | 2 | ns2       | deploy2-79f48888c6 |
 +---+-----------+--------------------+
+```
+
+```sh
+kor all --include-third-party-crds argo-rollouts,argo-rollouts-analysis-templates,argo-rollouts-cluster-analysis-templates --group-by=resource --output=table
+```
+```**
+Unused ArgoRollouts:
++---+-----------+----------------+
+| # | NAMESPACE | RESOURCE NAME  |
++---+-----------+----------------+
+| 1 | default   | rollout-canary |
++---+-----------+----------------+
+
+Unused ArgoRollouts-AnalysisTemplates:
++---+-----------+---------------+
+| # | NAMESPACE | RESOURCE NAME |
++---+-----------+---------------+
+| 1 | default   | pass          |
++---+-----------+---------------+
+
+Unused ArgoRollouts-ClusterAnalysisTemplates:
++---+-----------+----------------+
+| # | NAMESPACE | RESOURCE NAME  |
++---+-----------+----------------+
+| 1 |           | always-pass    |
+| 2 |           | alert-template |
++---+-----------+----------------+
 ```
 
 #### Group by namespace

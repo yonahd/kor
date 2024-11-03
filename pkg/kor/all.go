@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/yonahd/kor/pkg/clusterconfig"
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 )
@@ -277,7 +278,7 @@ func getUnusedRoleBindings(clientset kubernetes.Interface, namespace string, fil
 	return namespaceRoleBindingDiff
 }
 
-func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
+func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, clientsetinterface clusterconfig.ClientInterface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		switch opts.GroupBy {
@@ -300,6 +301,8 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 			resources[namespace]["DaemonSet"] = getUnusedDaemonSets(clientset, namespace, filterOpts).diff
 			resources[namespace]["NetworkPolicy"] = getUnusedNetworkPolicies(clientset, namespace, filterOpts).diff
 			resources[namespace]["RoleBinding"] = getUnusedRoleBindings(clientset, namespace, filterOpts).diff
+			GetUnusedCrdsThirdParty(opts.GroupBy, clientsetinterface, namespace, filterOpts, resources, true)
+
 		case "resource":
 			appendResources(resources, "ConfigMap", namespace, getUnusedCMs(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "Service", namespace, getUnusedSVCs(clientset, namespace, filterOpts).diff)
@@ -318,6 +321,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 			appendResources(resources, "DaemonSet", namespace, getUnusedDaemonSets(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "NetworkPolicy", namespace, getUnusedNetworkPolicies(clientset, namespace, filterOpts).diff)
 			appendResources(resources, "RoleBinding", namespace, getUnusedRoleBindings(clientset, namespace, filterOpts).diff)
+			GetUnusedCrdsThirdParty(opts.GroupBy, clientsetinterface, namespace, filterOpts, resources, true)
 		}
 	}
 
@@ -341,7 +345,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 	return unusedAllNamespaced, nil
 }
 
-func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
+func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, clientsetinterface clusterconfig.ClientInterface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	switch opts.GroupBy {
 	case "namespace":
@@ -350,11 +354,13 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 		resources[""]["Pv"] = getUnusedPvs(clientset, filterOpts).diff
 		resources[""]["ClusterRole"] = getUnusedClusterRoles(clientset, filterOpts).diff
 		resources[""]["StorageClass"] = getUnusedStorageClasses(clientset, filterOpts).diff
+		GetUnusedCrdsThirdParty(opts.GroupBy, clientsetinterface, "", filterOpts, resources, false)
 	case "resource":
 		appendResources(resources, "Crd", "", getUnusedCrds(apiExtClient, dynamicClient, filterOpts).diff)
 		appendResources(resources, "Pv", "", getUnusedPvs(clientset, filterOpts).diff)
 		appendResources(resources, "ClusterRole", "", getUnusedClusterRoles(clientset, filterOpts).diff)
 		appendResources(resources, "StorageClass", "", getUnusedStorageClasses(clientset, filterOpts).diff)
+		GetUnusedCrdsThirdParty(opts.GroupBy, clientsetinterface, "", filterOpts, resources, false)
 	}
 
 	var outputBuffer bytes.Buffer
@@ -377,8 +383,8 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 	return unusedAllNonNamespaced, nil
 }
 
-func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
-	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
+func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, clientsetinterface clusterconfig.ClientInterface, outputFormat string, opts common.Opts) (string, error) {
+	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, clientsetinterface, outputFormat, opts)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
@@ -388,7 +394,7 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 		return unusedAllNamespaced, nil
 	}
 
-	unusedAllNonNamespaced, err := GetUnusedAllNonNamespaced(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)
+	unusedAllNonNamespaced, err := GetUnusedAllNonNamespaced(filterOpts, clientset, clientsetinterface, apiExtClient, dynamicClient, outputFormat, opts)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
@@ -423,4 +429,38 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 
 		return string(jsonResponse), nil
 	}
+}
+
+func GetUnusedCrdsThirdParty(groupBy string, clientsetinterface clusterconfig.ClientInterface, namespace string, filterOpts *filters.Options, resources map[string]map[string][]ResourceInfo, namespaced bool) map[string]map[string][]ResourceInfo {
+	for _, crd := range filterOpts.CleanRepeatedCrds() {
+		if namespaced {
+			switch crd {
+			case "argo-rollouts":
+				unusedArgoRollouts := GetUnusedArgoRollouts(clientsetinterface, namespace, filterOpts)
+				separateItemsThirdParty(resources, namespace, groupBy, "ArgoRollout", unusedArgoRollouts.diff)
+			case "argo-rollouts-analysis-templates":
+				unusedArgoRolloutsAnalysisTemplates := GetUnusedArgoRolloutsAnalysisTemplates(clientsetinterface, namespace, filterOpts)
+				separateItemsThirdParty(resources, namespace, groupBy, "ArgoRollouts-AnalysisTemplate", unusedArgoRolloutsAnalysisTemplates.diff)
+			}
+		}
+		if !namespaced {
+			switch crd {
+			case "argo-rollouts-cluster-analysis-templates":
+				unusedArgoRolloutsClusterAnalysisTemplates := GetUnusedArgoRolloutsClusterAnalysisTemplates(clientsetinterface, "", filterOpts)
+				separateItemsThirdParty(resources, "", groupBy, "ArgoRollouts-ClusterAnalysisTemplate", unusedArgoRolloutsClusterAnalysisTemplates.diff)
+			}
+		}
+	}
+	return resources
+}
+
+func separateItemsThirdParty(resources map[string]map[string][]ResourceInfo, namespace string, groupBy string, name string, diff []ResourceInfo) map[string]map[string][]ResourceInfo {
+	switch groupBy {
+	case "namespace":
+		resources[namespace][name] = diff
+	case "resource":
+		appendResources(resources, name, namespace, diff)
+	}
+
+	return resources
 }

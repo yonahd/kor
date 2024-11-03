@@ -4,6 +4,8 @@ import (
 	"os"
 	"sort"
 	"testing"
+
+	"github.com/yonahd/kor/pkg/clusterconfig"
 )
 
 func stringSlicesEqual(a, b []string) bool {
@@ -99,7 +101,7 @@ func TestGetKubeClientFromEnvVar(t *testing.T) {
 	defer os.Setenv("KUBECONFIG", originalKCEnv)
 	os.Setenv("KUBECONFIG", configFile.Name())
 
-	kcs := GetKubeClient("")
+	kcs := clusterconfig.GetKubeClient("")
 	if kcs == nil {
 		t.Errorf("Expected valid clientSet")
 	}
@@ -125,7 +127,7 @@ func TestGetKubeClientFromInput(t *testing.T) {
 		os.Setenv("KUBERNETES_SERVICE_PORT", oldKubeServicePort)
 	}()
 
-	kcs := GetKubeClient(configFile.Name())
+	kcs := clusterconfig.GetKubeClient(configFile.Name())
 	if kcs == nil {
 		t.Errorf("Expected valid clientSet")
 	}

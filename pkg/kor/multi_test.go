@@ -8,14 +8,16 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/kubernetes"
 
+	"github.com/yonahd/kor/pkg/clusterconfig"
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func createTestMultiResources(t *testing.T) *fake.Clientset {
-	clientset := fake.NewClientset()
+func createTestMultiResources(t *testing.T) (kubernetes.Interface, clusterconfig.ClientInterface) {
+	clientsetinterface, _ := NewFakeClientSet(t)
+	clientset := clientsetinterface.GetKubernetesClient()
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
@@ -37,12 +39,12 @@ func createTestMultiResources(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating fake configmap: %v", err)
 	}
 
-	return clientset
+	return clientset, clientsetinterface
 
 }
 
 func TestRetrieveNamespaceDiff(t *testing.T) {
-	clientset := createTestMultiResources(t)
+	clientset, _ := createTestMultiResources(t)
 	resourceList := []string{"cm", "pdb", "deployment"}
 	filterOpts := &filters.Options{}
 
@@ -67,7 +69,7 @@ func TestRetrieveNamespaceDiff(t *testing.T) {
 }
 
 func TestGetUnusedMulti(t *testing.T) {
-	clientset := createTestMultiResources(t)
+	clientset, clientsetinterface := createTestMultiResources(t)
 	resourceList := "cm,pdb,deployment"
 
 	opts := common.Opts{
@@ -79,7 +81,7 @@ func TestGetUnusedMulti(t *testing.T) {
 		GroupBy:       "namespace",
 	}
 
-	output, err := GetUnusedMulti(resourceList, &filters.Options{}, clientset, nil, nil, "json", opts)
+	output, err := GetUnusedMulti(resourceList, &filters.Options{}, clientset, nil, nil, clientsetinterface, "json", opts)
 
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedMulti: %v", err)

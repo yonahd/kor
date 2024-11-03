@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/yonahd/kor/pkg/clusterconfig"
 	"github.com/yonahd/kor/pkg/kor"
 	"github.com/yonahd/kor/pkg/utils"
 )
@@ -15,8 +16,8 @@ var crdCmd = &cobra.Command{
 	Short:   "Gets unused crds",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
-		dynamicClient := kor.GetDynamicClient(kubeconfig)
+		apiExtClient := clusterconfig.GetAPIExtensionsClient(kubeconfig)
+		dynamicClient := clusterconfig.GetDynamicClient(kubeconfig)
 		if response, err := kor.GetUnusedCrds(filterOptions, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {

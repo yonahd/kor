@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/yonahd/kor/pkg/clusterconfig"
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 	"github.com/yonahd/kor/pkg/kor"
@@ -31,11 +32,12 @@ var rootCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		resourceNames := args[0]
-		clientset := kor.GetKubeClient(kubeconfig)
-		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
-		dynamicClient := kor.GetDynamicClient(kubeconfig)
+		clientset := clusterconfig.GetKubeClient(kubeconfig)
+		clientsetinterface, _ := clusterconfig.GetKubeClientForCrds(kubeconfig, clientset)
+		apiExtClient := clusterconfig.GetAPIExtensionsClient(kubeconfig)
+		dynamicClient := clusterconfig.GetDynamicClient(kubeconfig)
 
-		if response, err := kor.GetUnusedMulti(resourceNames, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedMulti(resourceNames, filterOptions, clientset, apiExtClient, dynamicClient, clientsetinterface, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			utils.PrintLogo(outputFormat)
@@ -85,4 +87,5 @@ func addFilterOptionsFlag(cmd *cobra.Command, opts *filters.Options) {
 	cmd.PersistentFlags().StringVar(&opts.IncludeLabels, "include-labels", opts.IncludeLabels, "Selector to filter in, Example: --include-labels key1=value1.(currently supports one label)")
 	cmd.PersistentFlags().StringSliceVarP(&opts.ExcludeNamespaces, "exclude-namespaces", "e", opts.ExcludeNamespaces, "Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored.")
 	cmd.PersistentFlags().StringSliceVarP(&opts.IncludeNamespaces, "include-namespaces", "n", opts.IncludeNamespaces, "Namespaces to run on, split by commas. Example: --include-namespaces ns1,ns2,ns3. If set, non-namespaced resources will be ignored.")
+	rootCmd.PersistentFlags().StringSliceVar(&opts.IncludeThirdPartyCrds, "include-third-party-crds", opts.IncludeThirdPartyCrds, "Custom resources defintions to search, split by commas. Example: --include-crds argo-rollouts. If set, the chosen crd will be returned (in addition to the other resources, of course)")
 }

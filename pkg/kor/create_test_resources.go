@@ -1,6 +1,7 @@
 package kor
 
 import (
+	argorollouts "github.com/argoproj/argo-rollouts/pkg/apis/rollouts/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	batchv1 "k8s.io/api/batch/v1"
@@ -428,6 +429,62 @@ func CreateTestNetworkPolicy(name, namespace string, labels map[string]string, p
 			PolicyTypes: policies,
 			Ingress:     ingress,
 			Egress:      egress,
+		},
+	}
+}
+
+func CreateTestArgoRolloutWithDeployment(namespace, name string, deplomentWorkLoadRef *appsv1.Deployment, labels map[string]string, implementationType string) *argorollouts.Rollout {
+	rollout := &argorollouts.Rollout{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+			Labels:    labels,
+		},
+	}
+	if implementationType == "canary" {
+		rollout.Spec = argorollouts.RolloutSpec{
+			WorkloadRef: &argorollouts.ObjectRef{
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+				Name:       deplomentWorkLoadRef.GetName(),
+			},
+			Strategy: argorollouts.RolloutStrategy{
+				Canary: &argorollouts.CanaryStrategy{},
+			},
+		}
+	}
+	if implementationType == "bluegreen" {
+		rollout.Spec = argorollouts.RolloutSpec{
+			WorkloadRef: &argorollouts.ObjectRef{
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+				Name:       deplomentWorkLoadRef.GetName(),
+			},
+			Strategy: argorollouts.RolloutStrategy{
+				BlueGreen: &argorollouts.BlueGreenStrategy{},
+			},
+		}
+	}
+	return rollout
+}
+
+func CreateTestArgoRolloutAnalysis(namespace, analysisName string, labels map[string]string) *argorollouts.AnalysisTemplate {
+
+	return &argorollouts.AnalysisTemplate{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      analysisName,
+			Labels:    labels,
+		},
+	}
+}
+
+func CreateTestArgoRolloutClusterAnalysis(analysisName string, labels map[string]string) *argorollouts.ClusterAnalysisTemplate {
+	return &argorollouts.ClusterAnalysisTemplate{
+		ObjectMeta: v1.ObjectMeta{
+
+			Name:   analysisName,
+			Labels: labels,
 		},
 	}
 }

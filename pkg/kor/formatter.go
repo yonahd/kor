@@ -235,3 +235,12 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts common.Opts
 	table.Render()
 	return fmt.Sprintf("Unused resources in namespace: %q\n%s\n", namespace, buf.String())
 }
+
+func SkipIfContainsValue(data []ResourceInfo, key string, value interface{}) bool {
+	for _, item := range data {
+		if item.Name == value {
+			return true
+		}
+	}
+	return false
+}
