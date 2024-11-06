@@ -30,6 +30,9 @@ prometheusExporter:
     image:
       repository: yonahdissen/kor
       tag: latest
+    ## @param podAnnotations Annotations for Solr pods
+    ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+    podAnnotations: {}
     restartPolicy: Always
     imagePullPolicy: Always
     imagePullSecrets: []
