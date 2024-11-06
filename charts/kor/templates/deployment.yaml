@@ -17,6 +17,10 @@ spec:
       app: {{ .Values.prometheusExporter.name }}
   template:
     metadata:
+      {{- with .Values.prometheusExporter.deployment.podAnnotations }}
+      annotations:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
         {{- include "kor.labels" . | nindent 8 }}
         app: {{ .Values.prometheusExporter.name }}
