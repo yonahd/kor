@@ -31,9 +31,9 @@ var rootCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		resourceNames := args[0]
-		clientset := kor.GetKubeClient(kubeconfig)
-		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
-		dynamicClient := kor.GetDynamicClient(kubeconfig)
+		clientset := kor.GetKubeClient(kubeConfig, kubeContext)
+		apiExtClient := kor.GetAPIExtensionsClient(kubeConfig)
+		dynamicClient := kor.GetDynamicClient(kubeConfig)
 
 		if response, err := kor.GetUnusedMulti(resourceNames, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
@@ -46,13 +46,15 @@ var rootCmd = &cobra.Command{
 
 var (
 	outputFormat  string
-	kubeconfig    string
+	kubeConfig    string
+	kubeContext   string
 	opts          common.Opts
 	filterOptions = &filters.Options{}
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
+	rootCmd.PersistentFlags().StringVarP(&kubeConfig, "kubeconfig", "k", "", "Path to kubeConfig file (optional)")
+	rootCmd.PersistentFlags().StringVarP(&kubeContext, "kubecontext", "c", "", "kubectl context to be used (optional)")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "Output format (table, json or yaml)")
 	rootCmd.PersistentFlags().StringVar(&opts.WebhookURL, "slack-webhook-url", "", "Slack webhook URL to send notifications to")
 	rootCmd.PersistentFlags().StringVar(&opts.Channel, "slack-channel", "", "Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.")
