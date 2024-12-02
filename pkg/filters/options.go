@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -120,6 +121,8 @@ func (o *Options) Namespaces(clientset kubernetes.Interface) []string {
 		excludeNamespaces := o.ExcludeNamespaces
 
 		if len(o.IncludeNamespaces) > 0 {
+			slices.Sort(includeNamespaces)
+			includeNamespaces = slices.Compact(includeNamespaces)
 
 			for _, ns := range includeNamespaces {
 
@@ -135,10 +138,6 @@ func (o *Options) Namespaces(clientset kubernetes.Interface) []string {
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to retrieve namespaces: %v\n", err)
 				return
-			}
-
-			for _, ns := range namespaceList.Items {
-				namespacesMap[ns.Name] = false
 			}
 
 			for _, ns := range namespaceList.Items {
