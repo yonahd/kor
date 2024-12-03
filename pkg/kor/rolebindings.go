@@ -85,6 +85,12 @@ func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace stri
 			continue
 		}
 
+		if rb.Labels["kor/used"] == "false" {
+			reason := "Marked with unused label"
+			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: reason})
+			continue
+		}
+
 		if exceptionFound, err := isResourceException(rb.Name, rb.Namespace, config.ExceptionRoleBindings); err != nil {
 			return nil, err
 		} else if exceptionFound {

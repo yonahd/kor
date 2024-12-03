@@ -38,6 +38,12 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 			continue
 		}
 
+		if job.Labels["kor/used"] == "false" {
+			reason := "Marked with unused label"
+			unusedJobNames = append(unusedJobNames, ResourceInfo{Name: job.Name, Reason: reason})
+			continue
+		}
+
 		exceptionFound, err := isResourceException(job.Name, job.Namespace, config.ExceptionJobs)
 		if err != nil {
 			return nil, err

@@ -24,7 +24,7 @@ func processNamespacePods(clientset kubernetes.Interface, namespace string, filt
 	var evictedPods []ResourceInfo
 
 	for _, pod := range podsList.Items {
-		if pass := filters.KorLabelFilter(&pod, &filters.Options{}); pass {
+		if pass, _ := filter.SetObject(&pod).Run(filterOpts); pass {
 			continue
 		}
 
