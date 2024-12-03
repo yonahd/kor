@@ -42,7 +42,7 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filt
 	var unusedPvcNames []string
 	pvcNames := make([]string, 0, len(pvcs.Items))
 	for _, pvc := range pvcs.Items {
-		if pass := filters.KorLabelFilter(&pvc, &filters.Options{}); pass {
+		if pass, _ := filter.SetObject(&pvc).Run(filterOpts); pass {
 			continue
 		}
 

@@ -66,7 +66,7 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 	storageClassNames := make([]string, 0, len(scs.Items))
 
 	for _, sc := range scs.Items {
-		if pass := filters.KorLabelFilter(&sc, &filters.Options{}); pass {
+		if pass, _ := filter.SetObject(&sc).Run(filterOpts); pass {
 			continue
 		}
 

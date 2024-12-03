@@ -27,6 +27,12 @@ func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace strin
 			continue
 		}
 
+		if replicaSet.Labels["kor/used"] == "false" {
+			reason := "Marked with unused label"
+			unusedReplicaSetNames = append(unusedReplicaSetNames, ResourceInfo{Name: replicaSet.Name, Reason: reason})
+			continue
+		}
+
 		// if the replicaSet is specified 0 replica and current available & ready & fullyLabeled replica count is all 0, think the replicaSet is completed
 		if *replicaSet.Spec.Replicas == 0 && replicaSet.Status.AvailableReplicas == 0 && replicaSet.Status.ReadyReplicas == 0 && replicaSet.Status.FullyLabeledReplicas == 0 {
 			reason := "ReplicaSet is not in use"

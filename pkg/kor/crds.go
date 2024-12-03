@@ -36,7 +36,13 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 	}
 
 	for _, crd := range crds.Items {
-		if pass := filters.KorLabelFilter(&crd, &filters.Options{}); pass {
+		if pass, _ := filter.SetObject(&crd).Run(filterOpts); pass {
+			continue
+		}
+
+		if crd.Labels["kor/used"] == "false" {
+			reason := "Marked with unused label"
+			unusedCRDs = append(unusedCRDs, ResourceInfo{Name: crd.Name, Reason: reason})
 			continue
 		}
 

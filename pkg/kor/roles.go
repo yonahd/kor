@@ -53,9 +53,10 @@ func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterO
 	var unusedRoleNames []string
 	names := make([]string, 0, len(roles.Items))
 	for _, role := range roles.Items {
-		if pass := filters.KorLabelFilter(&role, &filters.Options{}); pass {
+		if pass, _ := filter.SetObject(&role).Run(filterOpts); pass {
 			continue
 		}
+
 		if role.Labels["kor/used"] == "false" {
 			unusedRoleNames = append(unusedRoleNames, role.Name)
 			continue

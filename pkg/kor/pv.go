@@ -24,7 +24,7 @@ func processPvs(clientset kubernetes.Interface, filterOpts *filters.Options) ([]
 	var unusedPvs []ResourceInfo
 
 	for _, pv := range pvs.Items {
-		if pass := filters.KorLabelFilter(&pv, &filters.Options{}); pass {
+		if pass, _ := filter.SetObject(&pv).Run(filterOpts); pass {
 			continue
 		}
 
