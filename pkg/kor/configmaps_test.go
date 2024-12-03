@@ -101,6 +101,12 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 					ValueFrom: &corev1.EnvVarSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: configmap2.ObjectMeta.Name}}},
 				},
 			},
+		},
+	}
+
+	pod5 := CreateTestPod(testNamespace, "pod-5", "", nil, AppLabels)
+	pod5.Spec.InitContainers = []corev1.Container{
+		{
 			EnvFrom: []corev1.EnvFromSource{
 				{
 					ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap6.ObjectMeta.Name}},
@@ -125,6 +131,11 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 	}
 
 	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod4, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake pod: %v", err)
+	}
+
+	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod5, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake pod: %v", err)
 	}

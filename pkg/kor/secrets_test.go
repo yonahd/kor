@@ -79,9 +79,6 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 					ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: secret1.ObjectMeta.Name}}},
 				},
 			},
-			EnvFrom: []corev1.EnvFromSource{
-				{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: secret6.ObjectMeta.Name}}},
-			},
 		},
 	}
 
@@ -89,6 +86,15 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 	pod6.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
 		{Name: secret1.ObjectMeta.Name},
 		{Name: secret2.ObjectMeta.Name},
+	}
+
+	pod7 := CreateTestPod(testNamespace, "pod-7", "", nil, AppLabels)
+	pod7.Spec.InitContainers = []corev1.Container{
+		{
+			EnvFrom: []corev1.EnvFromSource{
+				{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: secret6.ObjectMeta.Name}}},
+			},
+		},
 	}
 
 	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod1, v1.CreateOptions{})
@@ -117,6 +123,11 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 	}
 
 	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod6, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake pod: %v", err)
+	}
+
+	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod7, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake pod: %v", err)
 	}
