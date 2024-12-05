@@ -58,6 +58,12 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating fake configmap: %v", err)
 	}
 
+	configmap6 := CreateTestConfigmap(testNamespace, "configmap-6", AppLabels)
+	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap6, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake configmap: %v", err)
+	}
+
 	pod1 := CreateTestPod(testNamespace, "pod-1", "", []corev1.Volume{
 		{
 			Name:         "vol-1",
@@ -93,6 +99,11 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 				{
 					Name:      "INIT_ENV_VAR_1",
 					ValueFrom: &corev1.EnvVarSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: configmap2.ObjectMeta.Name}}},
+				},
+			},
+			EnvFrom: []corev1.EnvFromSource{
+				{
+					ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap6.ObjectMeta.Name}},
 				},
 			},
 		},
@@ -134,6 +145,7 @@ func TestRetrieveConfigMapNames(t *testing.T) {
 		"configmap-1",
 		"configmap-2",
 		"configmap-3",
+		"configmap-6",
 	}
 	if !equalSlices(configMapNames, expectedConfigMapNames) {
 		t.Errorf("Expected configmap names %v, got %v", expectedConfigMapNames, configMapNames)
@@ -188,11 +200,10 @@ func TestRetrieveUsedCM(t *testing.T) {
 		t.Errorf("Expected envFrom configmaps %v, got %v", expectedEnvFromContainerCM, envFromContainerCM)
 	}
 
-	expectedEnvFromInitContainerCM := []string{"configmap-2"}
+	expectedEnvFromInitContainerCM := []string{"configmap-2", "configmap-6"}
 	if !equalSlices(envFromInitContainerCM, expectedEnvFromInitContainerCM) {
 		t.Errorf("Expected initContainer env configmaps %v, got %v", expectedEnvFromInitContainerCM, envFromInitContainerCM)
 	}
-
 }
 
 func TestGetUnusedConfigmapsStructured(t *testing.T) {

@@ -79,6 +79,11 @@ func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]str
 					initContainerEnvSecrets = append(initContainerEnvSecrets, env.ValueFrom.SecretKeyRef.Name)
 				}
 			}
+			for _, envFrom := range initContainer.EnvFrom {
+				if envFrom.SecretRef != nil {
+					initContainerEnvSecrets = append(initContainerEnvSecrets, envFrom.SecretRef.Name)
+				}
+			}
 		}
 
 		for _, volume := range pod.Spec.Volumes {

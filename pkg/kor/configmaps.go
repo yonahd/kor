@@ -72,6 +72,11 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 					envFromInitContainerCM = append(envFromInitContainerCM, env.ValueFrom.ConfigMapKeyRef.Name)
 				}
 			}
+			for _, envFrom := range initContainer.EnvFrom {
+				if envFrom.ConfigMapRef != nil {
+					envFromInitContainerCM = append(envFromInitContainerCM, envFrom.ConfigMapRef.Name)
+				}
+			}
 		}
 	}
 
