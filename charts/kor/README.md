@@ -31,6 +31,7 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | prometheusExporter.args[0] | string | `"exporter"` |  |
 | prometheusExporter.command[0] | string | `"kor"` |  |
 | prometheusExporter.deployment.affinity | object | `{}` |  |
+| prometheusExporter.deployment.podAnnotations | object | `{}` |  |
 | prometheusExporter.deployment.image.repository | string | `"yonahdissen/kor"` |  |
 | prometheusExporter.deployment.image.tag | string | `"latest"` |  |
 | prometheusExporter.deployment.imagePullPolicy | string | `"Always"` |  |
