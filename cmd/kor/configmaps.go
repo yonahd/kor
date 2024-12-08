@@ -15,7 +15,7 @@ var configmapCmd = &cobra.Command{
 	Short:   "Gets unused configmaps",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		clientset := kor.GetKubeClient(kubeconfig)
+		clientset := kor.GetKubeClient(kubeConfig, kubeContext)
 		if response, err := kor.GetUnusedConfigmaps(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
