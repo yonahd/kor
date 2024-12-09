@@ -33,6 +33,7 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 	secret3 := CreateTestSecret(testNamespace, "test-secret3", AppLabels)
 	secret4 := CreateTestSecret(testNamespace, "test-secret4", UsedLabels)
 	secret5 := CreateTestSecret(testNamespace, "test-secret5", UnusedLabels)
+	secret6 := CreateTestSecret(testNamespace, "test-secret6", AppLabels)
 
 	pod1 := CreateTestPod(testNamespace, "pod-1", "", []corev1.Volume{
 		{
@@ -87,6 +88,15 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 		{Name: secret2.ObjectMeta.Name},
 	}
 
+	pod7 := CreateTestPod(testNamespace, "pod-7", "", nil, AppLabels)
+	pod7.Spec.InitContainers = []corev1.Container{
+		{
+			EnvFrom: []corev1.EnvFromSource{
+				{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: secret6.ObjectMeta.Name}}},
+			},
+		},
+	}
+
 	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake pod: %v", err)
@@ -117,6 +127,11 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating fake pod: %v", err)
 	}
 
+	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod7, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake pod: %v", err)
+	}
+
 	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Secret", err)
@@ -138,6 +153,11 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 	}
 
 	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret5, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Secret", err)
+	}
+
+	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret6, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Secret", err)
 	}
@@ -209,7 +229,7 @@ func TestRetrieveUsedSecret(t *testing.T) {
 		t.Errorf("Expected envFrom secrets %v, got %v", expectedEnvSecrets2, envSecrets2)
 	}
 
-	expectedInitContainerEnvSecrets := []string{"test-secret1"}
+	expectedInitContainerEnvSecrets := []string{"test-secret1", "test-secret6"}
 	if !equalSlices(initContainerEnvSecrets, expectedInitContainerEnvSecrets) {
 		t.Errorf("Expected initContainer env secrets %v, got %v", expectedInitContainerEnvSecrets, initContainerEnvSecrets)
 	}
@@ -265,11 +285,11 @@ func TestProcessNamespaceSecret(t *testing.T) {
 	}
 
 	if len(unusedSecrets) != 2 {
-		t.Errorf("Expected 2 used Secret objects, got %d", len(unusedSecrets))
+		t.Errorf("Expected 2 unused Secret objects, got %d", len(unusedSecrets))
 	}
 
 	if !resourceInfoContains(unusedSecrets, "test-secret3") {
-		t.Error("Expected specific Secret  in the list")
+		t.Error("Expected specific Secret in the list")
 	}
 
 }
