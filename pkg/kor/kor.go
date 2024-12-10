@@ -76,18 +76,28 @@ func GetConfig(kubeconfig string) (*rest.Config, error) {
 	return clientcmd.BuildConfigFromFlags("", kubeconfig)
 }
 
-func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
-	config, err := GetConfig(kubeconfig)
+func GetKubeClient(kubeconfig string, kubeContext string) *kubernetes.Clientset {
+	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
+		fmt.Fprintf(os.Stderr, "failed to load kubeconfig: %v\n", err)
 		os.Exit(1)
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
+	if kubeContext != "" {
+		config.CurrentContext = kubeContext
+	}
+
+	restConfig, err := clientcmd.NewDefaultClientConfig(*config, &clientcmd.ConfigOverrides{}).ClientConfig()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+		fmt.Fprintf(os.Stderr, "failed to create REST config: %v\n", err)
 		os.Exit(1)
 	}
+
+	clientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to create Kubernetes clientset: %v\n", err)
+	}
+
 	return clientset
 }
 
