@@ -39,6 +39,8 @@ type Options struct {
 	ExcludeNamespaces []string
 	// IncludeNamespaces is a namespace selector to include resources in matching namespaces
 	IncludeNamespaces []string
+	// IgnoreResourceTypes is a namespace selector to exclude specified resource type evaluation, only applicable to namespaces
+	IgnoreResourceTypes []string
 
 	namespace []string
 	once      sync.Once
