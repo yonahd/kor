@@ -136,7 +136,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
   -e, --exclude-namespaces strings   Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored.
       --group-by string              Group output by (namespace, resource) (default "namespace")
   -h, --help                         help for kor
-      --include-labels string        Selector to filter in, Example: --include-labels key1=value1.(currently supports one label)
+      --include-labels string        Selector to filter in, Example: --include-labels key1=value1. (currently supports one label)
   -n, --include-namespaces strings   Namespaces to run on, split by commas. Example: --include-namespaces ns1,ns2,ns3. If set, non-namespaced resources will be ignored.
   -k, --kubeconfig string            Path to kubeconfig file (optional)
       --newer-than string            The maximum age of the resources to be considered unused. This flag cannot be used together with older-than flag. Example: --newer-than=1h2m
@@ -201,7 +201,7 @@ You will be prompted with:
 Do you want to delete ConfigMap test-configmap in namespace my-namespace? (Y/N):
 ```
 
-To delete with no prompt ( ⚠️ use with caution):
+To delete with no prompt (⚠️ use with caution):
 
 ```sh
 kor configmap --include-namespaces my-namespace --delete --no-interactive
@@ -313,7 +313,7 @@ Unused resources in namespace: "ns2"
 
 ## In Cluster Usage
 
-To use this tool inside the cluster running as a CronJob and sending the results to a Slack Webhook as raw text(has characters limits of 4000) or to a Slack channel by uploading a file(recommended), you can use the following commands:
+To use this tool inside the cluster running as a CronJob and sending the results to a Slack Webhook as raw text (has characters limits of 4000) or to a Slack channel by uploading a file (recommended), you can use the following commands:
 
 ```sh
 # Send to a Slack webhook as raw text
