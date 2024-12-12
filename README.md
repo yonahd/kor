@@ -173,19 +173,19 @@ kor [subcommand] --help
 | ServiceAccounts | ServiceAccounts unused by Pods<br/>ServiceAccounts unused by roleBinding or clusterRoleBinding                                                                                                                                    |                                                                                                                                                                       |
 | StatefulSets    | Statefulsets with no Replicas                                                                                                                                                                                                     |                                                                                                                                                                       |
 | Roles           | Roles not used in roleBinding                                                                                                                                                                                                     |                                                                                                                                                                       |
-| ClusterRoles    | ClusterRoles not used in roleBinding or clusterRoleBinding<br/>ClusterRoles not used in ClusterRole aggregation                                                                                                                                                                        |                                                                                                                                                                       |
-| RoleBindings    | RoleBindings referencing invalid Role, ClusterRole, or ServiceAccounts                                                                                                                                           |                                                                                                                                                                       |
+| ClusterRoles    | ClusterRoles not used in roleBinding or clusterRoleBinding<br/>ClusterRoles not used in ClusterRole aggregation                                                                                                                   |                                                                                                                                                                       |
+| RoleBindings    | RoleBindings referencing invalid Role, ClusterRole, or ServiceAccounts                                                                                                                                                            |                                                                                                                                                                       |
 | PVCs            | PVCs not used in Pods                                                                                                                                                                                                             |                                                                                                                                                                       |
 | Ingresses       | Ingresses not pointing at any Service                                                                                                                                                                                             |                                                                                                                                                                       |
 | Hpas            | HPAs not used in Deployments<br/> HPAs not used in StatefulSets                                                                                                                                                                   |                                                                                                                                                                       |
 | CRDs            | CRDs not used the cluster                                                                                                                                                                                                         |                                                                                                                                                                       |
 | Pvs             | PVs not bound to a PVC                                                                                                                                                                                                            |                                                                                                                                                                       |
-| Pdbs            | PDBs not used in Deployments / StatefulSets (templates) or in arbitrary Pods<br/>PDBs with empty selectors (match every pod) but no running pods in namespace                                                                                                                                                                   |                                                                                                                                                                       |
-| Jobs            | Jobs status is completed<br/>  Jobs status is suspended<br/>  Jobs failed with backoff limit exceeded (including indexed jobs) <br/> Jobs failed with dedaline exceeded                                                                                                                                              |                                                                                                                                                                       |
+| Pdbs            | PDBs not used in Deployments / StatefulSets (templates) or in arbitrary Pods<br/>PDBs with empty selectors (match every pod) but no running pods in namespace                                                                     |                                                                                                                                                                       |
+| Jobs            | Jobs status is completed<br/> Jobs status is suspended<br/> Jobs failed with backoff limit exceeded (including indexed jobs) <br/> Jobs failed with dedaline exceeded                                                             |                                                                                                                                                                       |
 | ReplicaSets     | replicaSets that specify replicas to 0 and has already completed it's work                                                                                                                                                        |
 | DaemonSets      | DaemonSets not scheduled on any nodes                                                                                                                                                                                             |
 | StorageClasses  | StorageClasses not used by any PVs/PVCs                                                                                                                                                                                           |
-| NetworkPolicies  | NetworkPolicies with no Pods selected by podSelector or Ingress/Egress rules                                                                                                                                                                                           |
+| NetworkPolicies | NetworkPolicies with no Pods selected by podSelector or Ingress/Egress rules                                                                                                                                                      |
 
 ### Deleting Unused resources
 
@@ -237,6 +237,7 @@ Additionally, you can use the `--group-by` flag to group the output by `namespac
 ```sh
 kor all -n test --show-reason
 ```
+
 ```
 Unused resources in namespace: "test"
 +---+----------------+----------------------------------------------+--------------------------------------------------------+
@@ -258,6 +259,7 @@ Unused resources in namespace: "test"
 ```sh
 kor all --group-by=resource --output=table
 ```
+
 ```
 Unused ConfigMaps:
 +---+-----------+---------------+
@@ -288,6 +290,7 @@ Unused ReplicaSets:
 ```sh
 kor all --group-by=namespace --output=table
 ```
+
 ```
 Unused resources in namespace: "ns1"
 +---+---------------+--------------------+
