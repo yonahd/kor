@@ -47,12 +47,20 @@ For macOS users, you can install Kor using Homebrew:
 brew install kor
 ```
 
-### Build from source
+### Build from development branch
 
 Install the binary to your `$GOBIN` or `$GOPATH/bin`:
 
 ```sh
 go install github.com/yonahd/kor@latest
+```
+
+### Build from source
+
+Build the locally cloned source code:
+
+```sh
+go build main.go
 ```
 
 ### Docker
