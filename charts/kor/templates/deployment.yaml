@@ -9,7 +9,7 @@ metadata:
 spec:
   {{- with .Values.prometheusExporter.deployment.imagePullSecrets }}
   imagePullSecrets:
-    {{- toYaml . | nindent }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   replicas: {{ .Values.prometheusExporter.deployment.replicaCount | default 1 }}
   selector:
