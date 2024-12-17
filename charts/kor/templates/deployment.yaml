@@ -7,10 +7,6 @@ metadata:
     {{- include "kor.labels" . | nindent 4 }}
     app: {{ .Values.prometheusExporter.name }}
 spec:
-  {{- with .Values.prometheusExporter.deployment.imagePullSecrets }}
-  imagePullSecrets:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
   replicas: {{ .Values.prometheusExporter.deployment.replicaCount | default 1 }}
   selector:
     matchLabels:
@@ -20,7 +16,11 @@ spec:
       labels:
         {{- include "kor.labels" . | nindent 8 }}
         app: {{ .Values.prometheusExporter.name }}
-    spec: 
+    spec:
+      {{- with .Values.prometheusExporter.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       serviceAccountName: {{ include "kor.serviceAccountName" . }}
       containers:
         - name: "{{ .Values.prometheusExporter.name }}-container"
