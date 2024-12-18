@@ -55,10 +55,10 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "Output format (table, json or yaml)")
 	rootCmd.PersistentFlags().StringVar(&opts.WebhookURL, "slack-webhook-url", "", "Slack webhook URL to send notifications to")
-	rootCmd.PersistentFlags().StringVar(&opts.Channel, "slack-channel", "", "Slack channel to send notifications to. --slack-channel requires --slack-auth-token to be set.")
-	rootCmd.PersistentFlags().StringVar(&opts.Token, "slack-auth-token", "", "Slack auth token to send notifications to. --slack-auth-token requires --slack-channel to be set.")
+	rootCmd.PersistentFlags().StringVar(&opts.Channel, "slack-channel", "", "Slack channel to send notifications to, requires --slack-auth-token to be set")
+	rootCmd.PersistentFlags().StringVar(&opts.Token, "slack-auth-token", "", "Slack auth token to send notifications to, requires --slack-channel to be set")
 	rootCmd.PersistentFlags().BoolVar(&opts.DeleteFlag, "delete", false, "Delete unused resources")
-	rootCmd.PersistentFlags().BoolVar(&opts.NoInteractive, "no-interactive", false, "Do not prompt for confirmation when deleting resources. Be careful using this flag!")
+	rootCmd.PersistentFlags().BoolVar(&opts.NoInteractive, "no-interactive", false, "Do not prompt for confirmation when deleting resources. Be careful when using this flag!")
 	rootCmd.PersistentFlags().BoolVarP(&opts.Verbose, "verbose", "v", false, "Verbose output (print empty namespaces)")
 	rootCmd.PersistentFlags().StringVar(&opts.GroupBy, "group-by", "namespace", "Group output by (namespace, resource)")
 	rootCmd.PersistentFlags().BoolVar(&opts.ShowReason, "show-reason", false, "Print reason resource is considered unused")
@@ -79,10 +79,10 @@ func Execute() {
 }
 
 func addFilterOptionsFlag(cmd *cobra.Command, opts *filters.Options) {
-	cmd.PersistentFlags().StringSliceVarP(&opts.ExcludeLabels, "exclude-labels", "l", opts.ExcludeLabels, "Selector to filter out, Example: --exclude-labels key1=value1,key2=value2. If --include-labels is set, --exclude-labels will be ignored.")
+	cmd.PersistentFlags().StringSliceVarP(&opts.ExcludeLabels, "exclude-labels", "l", opts.ExcludeLabels, "Selector to filter out, Example: --exclude-labels key1=value1,key2=value2. If --include-labels is set, --exclude-labels will be ignored")
 	cmd.PersistentFlags().StringVar(&opts.NewerThan, "newer-than", opts.NewerThan, "The maximum age of the resources to be considered unused. This flag cannot be used together with older-than flag. Example: --newer-than=1h2m")
 	cmd.PersistentFlags().StringVar(&opts.OlderThan, "older-than", opts.OlderThan, "The minimum age of the resources to be considered unused. This flag cannot be used together with newer-than flag. Example: --older-than=1h2m")
-	cmd.PersistentFlags().StringVar(&opts.IncludeLabels, "include-labels", opts.IncludeLabels, "Selector to filter in, Example: --include-labels key1=value1. (currently supports one label)")
-	cmd.PersistentFlags().StringSliceVarP(&opts.ExcludeNamespaces, "exclude-namespaces", "e", opts.ExcludeNamespaces, "Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored.")
-	cmd.PersistentFlags().StringSliceVarP(&opts.IncludeNamespaces, "include-namespaces", "n", opts.IncludeNamespaces, "Namespaces to run on, split by commas. Example: --include-namespaces ns1,ns2,ns3. If set, non-namespaced resources will be ignored.")
+	cmd.PersistentFlags().StringVar(&opts.IncludeLabels, "include-labels", opts.IncludeLabels, "Selector to filter in, Example: --include-labels key1=value1 (currently supports one label)")
+	cmd.PersistentFlags().StringSliceVarP(&opts.ExcludeNamespaces, "exclude-namespaces", "e", opts.ExcludeNamespaces, "Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored")
+	cmd.PersistentFlags().StringSliceVarP(&opts.IncludeNamespaces, "include-namespaces", "n", opts.IncludeNamespaces, "Namespaces to run on, split by commas. Example: --include-namespaces ns1,ns2,ns3. If set, non-namespaced resources will be ignored")
 }
