@@ -15,8 +15,8 @@ var crdCmd = &cobra.Command{
 	Short:   "Gets unused crds",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
-		dynamicClient := kor.GetDynamicClient(kubeconfig)
+		apiExtClient := kor.GetAPIExtensionsClient(kubeConfig)
+		dynamicClient := kor.GetDynamicClient(kubeConfig)
 		if response, err := kor.GetUnusedCrds(filterOptions, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
