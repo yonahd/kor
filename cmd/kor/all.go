@@ -14,9 +14,9 @@ var allCmd = &cobra.Command{
 	Short: "Gets unused resources",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		clientset := kor.GetKubeClient(kubeconfig)
-		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
-		dynamicClient := kor.GetDynamicClient(kubeconfig)
+		clientset := kor.GetKubeClient(kubeConfig, kubeContext)
+		apiExtClient := kor.GetAPIExtensionsClient(kubeConfig)
+		dynamicClient := kor.GetDynamicClient(kubeConfig)
 
 		if response, err := kor.GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)

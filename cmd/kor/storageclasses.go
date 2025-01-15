@@ -15,7 +15,7 @@ var scCmd = &cobra.Command{
 	Short:   "Gets unused storageClasses",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		clientset := kor.GetKubeClient(kubeconfig)
+		clientset := kor.GetKubeClient(kubeConfig, kubeContext)
 
 		if response, err := kor.GetUnusedStorageClasses(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
