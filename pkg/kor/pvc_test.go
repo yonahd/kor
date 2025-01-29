@@ -57,7 +57,14 @@ func createTestPvcs(t *testing.T) *fake.Clientset {
 	volumeList = append(volumeList, *testVolume)
 	testPod := CreateTestPod(testNamespace, "test-pod", "test-sa", volumeList, AppLabels)
 
+	ephVolume := CreateEphemeralVolumeDefinition("test-ephemeral-volume", "1Gi")
+	testPodWEphemeralStorage := CreateTestPod(testNamespace, "test-pod-ephemeral-storage", "test-sa", []corev1.Volume{*ephVolume}, AppLabels)
+
 	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), testPod, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "Pvc", err)
+	}
+	_, err = clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), testPodWEphemeralStorage, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake %s: %v", "Pvc", err)
 	}
@@ -72,12 +79,16 @@ func TestRetrieveUsedPvcs(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	if len(usedPvcs) != 1 {
-		t.Errorf("Expected 1 used pvc, got %d", len(usedPvcs))
+	if len(usedPvcs) != 2 {
+		t.Errorf("Expected 2 used pvc, got %d", len(usedPvcs))
 	}
 
 	if usedPvcs[0] != "test-pvc1" {
 		t.Errorf("Expected 'test-pvc1', got %s", usedPvcs[0])
+	}
+
+	if usedPvcs[1] != "test-pod-ephemeral-storage-test-ephemeral-volume" {
+		t.Errorf("Expected 'test-pod-ephemeral-storage-test-ephemeral-volume', got %s", usedPvcs[1])
 	}
 }
 

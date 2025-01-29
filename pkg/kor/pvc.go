@@ -28,6 +28,11 @@ func retrieveUsedPvcs(clientset kubernetes.Interface, namespace string) ([]strin
 			if volume.PersistentVolumeClaim != nil {
 				usedPvcs = append(usedPvcs, volume.PersistentVolumeClaim.ClaimName)
 			}
+			// Include ephemeral PVC
+			if volume.Ephemeral != nil && volume.Ephemeral.VolumeClaimTemplate != nil {
+				// https://kubernetes.io/docs/concepts/storage/ephemeral-volumes/#persistentvolumeclaim-naming
+				usedPvcs = append(usedPvcs, pod.GetObjectMeta().GetName()+"-"+volume.Name)
+			}
 		}
 	}
 	return usedPvcs, err

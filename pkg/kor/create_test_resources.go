@@ -9,6 +9,7 @@ import (
 	policyv1 "k8s.io/api/policy/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -94,6 +95,25 @@ func CreateTestVolume(name, pvcName string) *corev1.Volume {
 		},
 	}
 
+}
+
+func CreateEphemeralVolumeDefinition(name, size string) *corev1.Volume {
+	return &corev1.Volume{
+		Name: name,
+		VolumeSource: corev1.VolumeSource{
+			Ephemeral: &corev1.EphemeralVolumeSource{
+				VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{
+					Spec: corev1.PersistentVolumeClaimSpec{
+						Resources: corev1.VolumeResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceStorage: resource.MustParse(size),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 func CreateTestServiceAccount(namespace, name string, labels map[string]string) *corev1.ServiceAccount {
