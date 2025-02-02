@@ -1,6 +1,6 @@
 # Adopters
 
-Thank you for using Kor! This document showa and celebrates the organizations and individuals who are using Kor to discover and manage unused Kubernetes resources. 
+Thank you for using Kor! This document shows and celebrates the organizations and individuals who are using Kor to discover and manage unused Kubernetes resources. 
 Your support helps drive the growth and improvement of this project.
 
 ## How to Add Yourself
