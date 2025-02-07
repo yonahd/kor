@@ -377,7 +377,7 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 	return unusedAllNonNamespaced, nil
 }
 
-func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
+func GetUnusedAllScopes(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
@@ -423,4 +423,16 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 
 		return string(jsonResponse), nil
 	}
+}
+
+func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts, scopeFlagUsed bool) (string, error) {
+	if scopeFlagUsed {
+		if opts.Namespaced {
+			return GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
+		} else {	
+			return GetUnusedAllNonNamespaced(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)	
+		}
+	}
+
+	return GetUnusedAllScopes(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)
 }

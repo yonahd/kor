@@ -17,8 +17,9 @@ var allCmd = &cobra.Command{
 		clientset := kor.GetKubeClient(kubeconfig)
 		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
+		scopeFlagUsed := cmd.Flags().Changed("namespaced")
 
-		if response, err := kor.GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts, scopeFlagUsed); err != nil {
 			fmt.Println(err)
 		} else {
 			utils.PrintLogo(outputFormat)
@@ -28,5 +29,6 @@ var allCmd = &cobra.Command{
 }
 
 func init() {
+	allCmd.PersistentFlags().BoolVar(&opts.Namespaced, "namespaced", true, "If false, non-namespaced resources will be returned, otherwise returning namespaced resources by default. If not used, both are returned")
 	rootCmd.AddCommand(allCmd)
 }

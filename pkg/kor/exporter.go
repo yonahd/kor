@@ -34,16 +34,16 @@ func init() {
 }
 
 // TODO: add option to change port / url !?
-func Exporter(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts, resourceList []string) {
+func Exporter(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts, resourceList []string, isScopeSet bool) {
 	http.Handle("/metrics", promhttp.Handler())
 	fmt.Println("Server listening on :8080")
-	go exportMetrics(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts, resourceList) // Start exporting metrics in the background
+	go exportMetrics(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts, resourceList, isScopeSet) // Start exporting metrics in the background
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Println(err)
 	}
 }
 
-func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts, resourceList []string) {
+func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts, resourceList []string, isScopeSet bool) {
 	exporterInterval := os.Getenv("EXPORTER_INTERVAL")
 	if exporterInterval == "" {
 		exporterInterval = "10"
@@ -56,7 +56,7 @@ func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interfac
 
 	for {
 		fmt.Println("collecting unused resources")
-		if korOutput, err := getUnusedResources(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts, resourceList); err != nil {
+		if korOutput, err := getUnusedResources(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts, resourceList, isScopeSet); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		} else {
@@ -80,9 +80,9 @@ func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interfac
 	}
 }
 
-func getUnusedResources(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts, resourceList []string) (string, error) {
+func getUnusedResources(filterOptions *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts, resourceList []string, isScopeSet bool) (string, error) {
 	if len(resourceList) == 0 || (len(resourceList) == 1 && resourceList[0] == "all") {
-		return GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts)
+		return GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts, isScopeSet)
 	}
 	return GetUnusedMulti(strings.Join(resourceList, ","), filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts)
 

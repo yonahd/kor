@@ -9,4 +9,5 @@ type Opts struct {
 	Token         string
 	GroupBy       string
 	ShowReason    bool
+	Namespaced    bool
 }
