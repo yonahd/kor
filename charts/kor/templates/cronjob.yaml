@@ -24,6 +24,9 @@ spec:
                 {{- toYaml .Values.cronJob.command | nindent 16 }}
               args:
                 {{- toYaml .Values.cronJob.args | nindent 16 }}
+              {{- if .Values.cronJob.namespaced }}
+                - --namespaced={{ .Values.cronJob.namespaced }}
+              {{- end}}
               {{- if .Values.cronJob.slackWebhookUrl }}
                 - '--slack-webhook-url'
                 - "${SLACK_WEBHOOK_URL}"

@@ -10,6 +10,7 @@ cronJob:
     - kor
   args:
     - all
+  namespaced: "" # Set to true/false to return explicitly namespaced/non-namespaced resources
   slackWebhookUrl: ""
   slackChannel: ""
   slackAuthToken: ""
@@ -26,6 +27,7 @@ prometheusExporter:
     - kor
   args:
     - exporter
+  namespaced: "" # Set to true/false to return explicitly namespaced/non-namespaced resources
   deployment:
     image:
       repository: yonahdissen/kor

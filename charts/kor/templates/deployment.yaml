@@ -33,6 +33,9 @@ spec:
             {{- toYaml .Values.prometheusExporter.command | nindent 12 }}
           args:
             {{- toYaml .Values.prometheusExporter.args | nindent 12 }}
+          {{- if .Values.prometheusExporter.namespaced }}
+            - --namespaced={{ .Values.prometheusExporter.namespaced }}
+          {{- end}}
           ports:
           - containerPort: 8080
             name: http
