@@ -1,0 +1,20 @@
+{
+  "exceptionNamespaces": [
+    {
+      "Namespace": "default",
+      "ResourceName": ""
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": ""
+    },
+    {
+      "Namespace": "kube-public",
+      "ResourceName": ""
+    },
+    {
+      "Namespace": "kube-node-lease",
+      "ResourceName": ""
+    }
+  ]
+}
