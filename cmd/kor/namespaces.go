@@ -20,14 +20,7 @@ var namespaceCmd = &cobra.Command{
 		clientset := kor.GetKubeClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
 
-		if response, err := kor.GetUnusedNamespaces(
-			ctx,
-			filterOptions,
-			clientset,
-			dynamicClient,
-			outputFormat,
-			opts,
-		); err != nil {
+		if response, err := kor.GetUnusedNamespaces(ctx, filterOptions, clientset, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			utils.PrintLogo(outputFormat)
