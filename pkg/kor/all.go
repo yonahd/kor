@@ -14,6 +14,8 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+var NamespacedFlagUsed bool
+
 type GetUnusedResourceJSONResponse struct {
 	ResourceType string              `json:"resourceType"`
 	Namespaces   map[string][]string `json:"namespaces"`
@@ -377,7 +379,15 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 	return unusedAllNonNamespaced, nil
 }
 
-func GetUnusedAllScopes(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
+func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
+	if NamespacedFlagUsed {
+		if opts.Namespaced {
+			return GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
+		} else {	
+			return GetUnusedAllNonNamespaced(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)	
+		}
+	} 
+
 	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
@@ -425,14 +435,6 @@ func GetUnusedAllScopes(filterOpts *filters.Options, clientset kubernetes.Interf
 	}
 }
 
-func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts, scopeFlagUsed bool) (string, error) {
-	if scopeFlagUsed {
-		if opts.Namespaced {
-			return GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
-		} else {	
-			return GetUnusedAllNonNamespaced(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)	
-		}
-	}
-
-	return GetUnusedAllScopes(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)
+func SetNamespacedFlagState(isFlagUsed bool) {
+	NamespacedFlagUsed = isFlagUsed
 }
