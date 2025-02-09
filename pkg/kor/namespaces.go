@@ -3,12 +3,12 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,9 +21,78 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+//go:embed exceptions/namespaces/namespaces.json
+var namespacesConfig []byte
+
 type GenericResource struct {
 	NamespacedName types.NamespacedName
 	GVR            schema.GroupVersionResource
+}
+
+func processNamespaces(
+	ctx context.Context,
+	clientset kubernetes.Interface,
+	dynamicClient dynamic.Interface,
+	filterOpts *filters.Options,
+) ([]ResourceInfo, error) {
+	var unusedNamespaces []ResourceInfo
+
+	filteredNamespaceNames := filterOpts.Namespaces(clientset)
+
+	config, err := unmarshalConfig(namespacesConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, namespaceName := range filteredNamespaceNames {
+		namespace, err := clientset.CoreV1().Namespaces().Get(context.TODO(), namespaceName, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+
+		if pass, _ := filter.SetObject(namespace).Run(filterOpts); pass {
+			continue
+		}
+
+		// ignore namespaces within exception list
+		exceptionFound, err := isResourceException(namespace.Name, "", config.ExceptionNamespaces)
+		if err != nil {
+			return nil, err
+		}
+		if exceptionFound {
+			continue
+		}
+
+		// skipping default resources here
+		resourceFound, err := isErrorOrNamespaceContainsResources(
+			ctx,
+			clientset,
+			dynamicClient,
+			namespaceName,
+			filterOpts,
+		)
+		if err != nil {
+			return unusedNamespaces, err
+		}
+
+		if namespace.Labels["kor/used"] == "false" {
+			unusedNamespaces = append(
+				unusedNamespaces,
+				ResourceInfo{Name: namespace.Name, Reason: "Marked with unused label"},
+			)
+			continue
+		}
+
+		// construct list of unused namespaces here following a set of rules
+		if !resourceFound {
+			unusedNamespaces = append(
+				unusedNamespaces,
+				ResourceInfo{Name: namespace.Name, Reason: "Empty namespace"},
+			)
+		}
+	}
+
+	return unusedNamespaces, nil
 }
 
 func getGVR(name string, splitGV []string) (*schema.GroupVersionResource, error) {
@@ -53,6 +122,7 @@ func ignoreResourceType(resource string, ignoreResourceTypes []string) bool {
 	return false
 }
 
+// TODO: refactor using exception list
 func ignorePredefinedResource(gr GenericResource) bool {
 	// Specific list of resources to ignore - resources created in all namespaced by default
 	if gr.GVR.Resource == "configmaps" && gr.GVR.Version == "v1" && gr.NamespacedName.Name == "kube-root-ca.crt" {
@@ -127,55 +197,6 @@ func isErrorOrNamespaceContainsResources(
 	return false, nil
 }
 
-func processNamespaces(
-	ctx context.Context,
-	clientset kubernetes.Interface,
-	dynamicClient dynamic.Interface,
-	filterOpts *filters.Options,
-) ([]ResourceInfo, error) {
-	var unusedNamespaces []ResourceInfo
-
-	namespaces, err := clientset.CoreV1().Namespaces().List(
-		context.TODO(),
-		metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels},
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to list namespaces")
-	}
-
-	for _, namespace := range namespaces.Items {
-		if pass := filters.ApplyFilters(
-			&namespace, filterOpts,
-			filters.SystemNamespaceFilter,
-			filters.ExcludeNamespacesFilter,
-			filters.IncludeNamespacesFilter,
-			filters.KorLabelFilter,
-			filters.LabelFilter,
-			filters.AgeFilter,
-		); pass {
-			continue
-		}
-
-		// skipping default resources here
-		resourceFound, err := isErrorOrNamespaceContainsResources(
-			ctx,
-			clientset,
-			dynamicClient,
-			namespace.Name,
-			filterOpts,
-		)
-		if err != nil {
-			return unusedNamespaces, err
-		}
-
-		// construct list of unused namespaces here following a set of rules
-		if !resourceFound {
-			unusedNamespaces = append(unusedNamespaces, ResourceInfo{namespace.Name, "unused namespace"})
-		}
-	}
-	return unusedNamespaces, nil
-}
-
 func GetUnusedNamespaces(
 	ctx context.Context,
 	filterOpts *filters.Options,
@@ -185,12 +206,6 @@ func GetUnusedNamespaces(
 	opts common.Opts,
 ) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
-
-	if len(filterOpts.IncludeNamespaces) > 0 && len(filterOpts.ExcludeNamespaces) > 0 {
-		fmt.Fprintf(os.Stderr, "Exclude namespaces can't be used together with include namespaces. Ignoring --exclude-namespace(-e) flag\n")
-		filterOpts.ExcludeNamespaces = nil
-	}
-
 	diff, err := processNamespaces(ctx, clientset, dynamicClient, filterOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to process namespaces: %v\n", err)
@@ -205,13 +220,7 @@ func GetUnusedNamespaces(
 	}
 
 	if opts.DeleteFlag {
-		if diff, err = DeleteResource(
-			diff,
-			clientset,
-			"",
-			"Namespace",
-			opts.NoInteractive,
-		); err != nil {
+		if diff, err = DeleteResource(diff, clientset, "", "Namespace", opts.NoInteractive); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to delete namespace %s : %v\n", diff, err)
 		}
 	}
