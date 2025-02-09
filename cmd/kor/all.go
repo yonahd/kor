@@ -29,6 +29,6 @@ var allCmd = &cobra.Command{
 }
 
 func init() {
-	allCmd.PersistentFlags().BoolVar(&opts.Namespaced, "namespaced", true, "If false, non-namespaced resources will be returned, otherwise returning namespaced resources by default. If not used, both are returned")
+	allCmd.Flags().BoolVar(&opts.Namespaced, "namespaced", true, "If false, non-namespaced resources will be returned, otherwise returning namespaced resources by default. If not used, both are returned")
 	rootCmd.AddCommand(allCmd)
 }
