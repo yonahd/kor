@@ -15,26 +15,6 @@ const (
 	KorLabelFilterName = "korlabel"
 )
 
-var (
-	SystemNamespaceNames = []string{"default", "kube-system", "kube-public", "kube-node-lease"}
-)
-
-type FilterFunction func(object runtime.Object, opts *Options) bool
-
-// ApplyFilters is a function to apply a list of FilterFunctions to a given object
-func ApplyFilters(
-	object runtime.Object,
-	opts *Options,
-	funcsToCall ...FilterFunction,
-) bool {
-	for _, fn := range funcsToCall {
-		if pass := fn(object, opts); pass {
-			return true
-		}
-	}
-	return false
-}
-
 // KorLabelFilter is a filter that filters out resources that are ["kor/used"] != "true"
 func KorLabelFilter(object runtime.Object, opts *Options) bool {
 	if meta, ok := object.(metav1.Object); ok {
@@ -126,50 +106,4 @@ func HasIncludedAge(creationTime metav1.Time, filterOpts *Options) (bool, error)
 	}
 
 	return true, nil
-}
-
-// SystemNamespaceFilter is a filter that filters out namespaces that are created with the cluster by default
-func SystemNamespaceFilter(object runtime.Object, filterOpts *Options) bool {
-	if meta, ok := object.(metav1.Object); ok {
-		namespaceName := meta.GetName()
-		for _, systemNamespace := range SystemNamespaceNames {
-			if namespaceName == systemNamespace {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// ExcludeNamespacesFilter is a filter that filters out namespaces specified by user
-func ExcludeNamespacesFilter(object runtime.Object, filterOpts *Options) bool {
-	if filterOpts.ExcludeNamespaces != nil {
-		excludeList := filterOpts.ExcludeNamespaces
-		if meta, ok := object.(metav1.Object); ok {
-			namespaceName := meta.GetName()
-			for _, unwantedNamespace := range excludeList {
-				if namespaceName == unwantedNamespace {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
-// IncludeNamespacesFilter is a filter that acts as a whitelist, only these namespaces will be processed if specified
-func IncludeNamespacesFilter(object runtime.Object, filterOpts *Options) bool {
-	if filterOpts.IncludeNamespaces != nil {
-		includeList := filterOpts.IncludeNamespaces
-		if meta, ok := object.(metav1.Object); ok {
-			namespaceName := meta.GetName()
-			for _, wantedNamespace := range includeList {
-				if namespaceName == wantedNamespace {
-					return false
-				}
-			}
-		}
-		return true
-	}
-	return false
 }
