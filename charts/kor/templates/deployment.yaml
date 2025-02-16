@@ -33,7 +33,7 @@ spec:
             {{- toYaml .Values.prometheusExporter.command | nindent 12 }}
           args:
             {{- toYaml .Values.prometheusExporter.args | nindent 12 }}
-          {{- if .Values.prometheusExporter.namespaced }}
+          {{- if ne .Values.prometheusExporter.namespaced nil}}
             - --namespaced={{ .Values.prometheusExporter.namespaced }}
           {{- end}}
           ports:
