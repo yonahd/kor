@@ -17,7 +17,6 @@ var exporterCmd = &cobra.Command{
 		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
 		kor.SetNamespacedFlagState(cmd.Flags().Changed("namespaced"))
-		
 		kor.Exporter(filterOptions, clientset, apiExtClient, dynamicClient, "json", opts, resourceList)
 
 	},

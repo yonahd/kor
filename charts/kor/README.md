@@ -22,7 +22,7 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | cronJob.image.repository | string | `"yonahdissen/kor"` |  |
 | cronJob.image.tag | string | `"latest"` |  |
 | cronJob.name | string | `"kor"` |  |
-| cronJob.namespaced | string | `nil` |  |
+| cronJob.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources |
 | cronJob.restartPolicy | string | `"OnFailure"` |  |
 | cronJob.schedule | string | `"0 1 * * 1"` |  |
 | cronJob.slackAuthToken | string | `""` |  |
@@ -46,7 +46,7 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | prometheusExporter.enabled | bool | `true` |  |
 | prometheusExporter.exporterInterval | string | `""` |  |
 | prometheusExporter.name | string | `"kor-exporter"` |  |
-| prometheusExporter.namespaced | string | `nil` |  |
+| prometheusExporter.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources |
 | prometheusExporter.service.port | int | `8080` |  |
 | prometheusExporter.service.type | string | `"ClusterIP"` |  |
 | prometheusExporter.serviceMonitor.enabled | bool | `true` |  |

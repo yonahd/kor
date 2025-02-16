@@ -383,10 +383,9 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 	if NamespacedFlagUsed {
 		if opts.Namespaced {
 			return GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
-		} else {	
-			return GetUnusedAllNonNamespaced(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)	
 		}
-	} 
+		return GetUnusedAllNonNamespaced(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)
+	}
 
 	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
 	if err != nil {
