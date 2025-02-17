@@ -15,7 +15,7 @@ var pdbCmd = &cobra.Command{
 	Short:   "Gets unused pdbs",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		clientset := kor.GetKubeClient(kubeconfig)
+		clientset := kor.GetKubeClient(kubeConfig, kubeContext)
 
 		if response, err := kor.GetUnusedPdbs(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)

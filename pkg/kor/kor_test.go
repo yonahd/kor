@@ -99,7 +99,7 @@ func TestGetKubeClientFromEnvVar(t *testing.T) {
 	defer os.Setenv("KUBECONFIG", originalKCEnv)
 	os.Setenv("KUBECONFIG", configFile.Name())
 
-	kcs := GetKubeClient("")
+	kcs := GetKubeClient("", "")
 	if kcs == nil {
 		t.Errorf("Expected valid clientSet")
 	}
@@ -125,7 +125,7 @@ func TestGetKubeClientFromInput(t *testing.T) {
 		os.Setenv("KUBERNETES_SERVICE_PORT", oldKubeServicePort)
 	}()
 
-	kcs := GetKubeClient(configFile.Name())
+	kcs := GetKubeClient(configFile.Name(), "")
 	if kcs == nil {
 		t.Errorf("Expected valid clientSet")
 	}
