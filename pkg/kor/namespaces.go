@@ -24,9 +24,9 @@ import (
 //go:embed exceptions/namespaces/namespaces.json
 var namespacesConfig []byte
 
-type GenericResource struct {
-	NamespacedName types.NamespacedName
-	GVR            schema.GroupVersionResource
+type NamespacedResource struct {
+	Identifier types.NamespacedName
+	GVR        schema.GroupVersionResource
 }
 
 func processNamespaces(ctx context.Context, clientset kubernetes.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) ([]ResourceInfo, error) {
@@ -118,15 +118,15 @@ func ignoreResourceType(resource string, ignoreResourceTypes []string) bool {
 }
 
 // TODO: refactor using exception list
-func ignorePredefinedResource(gr GenericResource) bool {
+func ignorePredefinedResource(resource NamespacedResource) bool {
 	// Specific list of resources to ignore - resources created in all namespaced by default
-	if gr.GVR.Resource == "configmaps" && gr.GVR.Version == "v1" && gr.NamespacedName.Name == "kube-root-ca.crt" {
+	if resource.GVR.Resource == "configmaps" && resource.GVR.Version == "v1" && resource.Identifier.Name == "kube-root-ca.crt" {
 		return true
 	}
-	if gr.GVR.Resource == "serviceaccounts" && gr.GVR.Version == "v1" && gr.NamespacedName.Name == "default" {
+	if resource.GVR.Resource == "serviceaccounts" && resource.GVR.Version == "v1" && resource.Identifier.Name == "default" {
 		return true
 	}
-	if gr.GVR.Resource == "events" {
+	if resource.GVR.Resource == "events" {
 		return true
 	}
 	return false
@@ -134,9 +134,9 @@ func ignorePredefinedResource(gr GenericResource) bool {
 
 func isNamespaceNotEmpty(gvr *schema.GroupVersionResource, unstructuredList *unstructured.UnstructuredList, filterOpts *filters.Options) bool {
 	for _, unstructuredObj := range unstructuredList.Items {
-		gr := GenericResource{
+		gr := NamespacedResource{
 			GVR: *gvr,
-			NamespacedName: types.NamespacedName{
+			Identifier: types.NamespacedName{
 				Namespace: unstructuredObj.GetNamespace(),
 				Name:      unstructuredObj.GetName(),
 			},
