@@ -137,16 +137,17 @@ func Test_namespaces_GetGVR(t *testing.T) {
 		})
 	}
 }
+
 func Test_namespaces_IgnorePredefinedResource(t *testing.T) {
 	tests := []struct {
 		name           string
-		gr             GenericResource
+		resource       NamespacedResource
 		expectedReturn bool
 	}{
 		{
 			name: "configmap kube-root-ca.crt in default",
-			gr: GenericResource{
-				NamespacedName: types.NamespacedName{
+			resource: NamespacedResource{
+				Identifier: types.NamespacedName{
 					Name:      "kube-root-ca.crt",
 					Namespace: "default",
 				},
@@ -159,8 +160,8 @@ func Test_namespaces_IgnorePredefinedResource(t *testing.T) {
 		},
 		{
 			name: "configmap kube-root-ca.crt in abc",
-			gr: GenericResource{
-				NamespacedName: types.NamespacedName{
+			resource: NamespacedResource{
+				Identifier: types.NamespacedName{
 					Name:      "kube-root-ca.crt",
 					Namespace: "abc",
 				},
@@ -173,8 +174,8 @@ func Test_namespaces_IgnorePredefinedResource(t *testing.T) {
 		},
 		{
 			name: "sa default in default",
-			gr: GenericResource{
-				NamespacedName: types.NamespacedName{
+			resource: NamespacedResource{
+				Identifier: types.NamespacedName{
 					Name:      "default",
 					Namespace: "default",
 				},
@@ -187,8 +188,8 @@ func Test_namespaces_IgnorePredefinedResource(t *testing.T) {
 		},
 		{
 			name: "sa default in cde",
-			gr: GenericResource{
-				NamespacedName: types.NamespacedName{
+			resource: NamespacedResource{
+				Identifier: types.NamespacedName{
 					Name:      "default",
 					Namespace: "cde",
 				},
@@ -201,8 +202,8 @@ func Test_namespaces_IgnorePredefinedResource(t *testing.T) {
 		},
 		{
 			name: "event in default",
-			gr: GenericResource{
-				NamespacedName: types.NamespacedName{
+			resource: NamespacedResource{
+				Identifier: types.NamespacedName{
 					Name:      "test-event",
 					Namespace: "default",
 				},
@@ -214,8 +215,8 @@ func Test_namespaces_IgnorePredefinedResource(t *testing.T) {
 		},
 		{
 			name: "event in qqq",
-			gr: GenericResource{
-				NamespacedName: types.NamespacedName{
+			resource: NamespacedResource{
+				Identifier: types.NamespacedName{
 					Name:      "test-event",
 					Namespace: "qqq",
 				},
@@ -227,8 +228,8 @@ func Test_namespaces_IgnorePredefinedResource(t *testing.T) {
 		},
 		{
 			name: "test-configmap in default",
-			gr: GenericResource{
-				NamespacedName: types.NamespacedName{
+			resource: NamespacedResource{
+				Identifier: types.NamespacedName{
 					Name:      "test-configmap",
 					Namespace: "default",
 				},
@@ -241,8 +242,8 @@ func Test_namespaces_IgnorePredefinedResource(t *testing.T) {
 		},
 		{
 			name: "test-serviceaccount in default",
-			gr: GenericResource{
-				NamespacedName: types.NamespacedName{
+			resource: NamespacedResource{
+				Identifier: types.NamespacedName{
 					Name:      "test-serviceaccount",
 					Namespace: "default",
 				},
@@ -257,7 +258,7 @@ func Test_namespaces_IgnorePredefinedResource(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ignorePredefinedResource(tt.gr)
+			got := ignorePredefinedResource(tt.resource)
 			if got != tt.expectedReturn {
 				t.Errorf("ignorePredefinedResource() = %t, want %t", got, tt.expectedReturn)
 			}
