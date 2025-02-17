@@ -131,7 +131,6 @@ func getNamespaceTestSchema(t *testing.T) *runtime.Scheme {
 		t.Errorf("Failed to add appsv1 to scheme: %v", err)
 	}
 	return scheme
-
 }
 
 func createHappyDeployFakeClientInterfaces(ctx context.Context, t *testing.T, ns, name string) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
@@ -256,7 +255,7 @@ func createDynamicDeployListForcedErrorFakeClientInterfaces(ctx context.Context,
 
 type GetFakeClientInterfacesFunc func(ctx context.Context, t *testing.T, ns, name string) (kubernetes.Interface, *dynamicfake.FakeDynamicClient)
 
-func Test_namespaces_IsErrorOrNamespaceContainsResources(t *testing.T) {
+func Test_namespaces_IsNamespaceUsed(t *testing.T) {
 	tests := []struct {
 		name string
 
@@ -358,7 +357,7 @@ func Test_namespaces_IsErrorOrNamespaceContainsResources(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			clientset, dynamicClient := tt.getClientsFunc(tt.ctx, t, tt.namespaceName, tt.objName)
-			got, err := isErrorOrNamespaceContainsResources(tt.ctx, clientset, dynamicClient, tt.namespaceName, tt.filterOpts)
+			got, err := isNamespaceUsed(tt.ctx, clientset, dynamicClient, tt.namespaceName, tt.filterOpts)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("isErrorOrNamespaceContainsResources() = expected error: %t, got: '%v'", tt.expectedError, err)
 			}
