@@ -165,12 +165,12 @@ func GetUnusedNamespaces(ctx context.Context, filterOpts *filters.Options, clien
 		fmt.Fprintf(os.Stderr, "Failed to process namespaces: %v\n", err)
 	}
 
-	if len(diff) > 0 {
-		// We consider cluster scope resources in "" (empty string) namespace, as it is common in k8s
-		if resources[""] == nil {
-			resources[""] = make(map[string][]ResourceInfo)
-		}
-		resources[""]["Namespaces"] = diff
+	switch opts.GroupBy {
+	case "namespace":
+		resources[""] = make(map[string][]ResourceInfo)
+		resources[""]["Namespace"] = diff
+	case "resource":
+		appendResources(resources, "Namespace", "", diff)
 	}
 
 	if opts.DeleteFlag {
