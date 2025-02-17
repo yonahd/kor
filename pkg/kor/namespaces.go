@@ -112,21 +112,6 @@ func ignoreResourceType(resource string, ignoreResourceTypes []string) bool {
 	return false
 }
 
-// TODO: refactor using exception list
-func ignorePredefinedResource(resource NamespacedResource) bool {
-	// Specific list of resources to ignore - resources created in all namespaced by default
-	if resource.GVR.Resource == "configmaps" && resource.GVR.Version == "v1" && resource.Identifier.Name == "kube-root-ca.crt" {
-		return true
-	}
-	if resource.GVR.Resource == "serviceaccounts" && resource.GVR.Version == "v1" && resource.Identifier.Name == "default" {
-		return true
-	}
-	if resource.GVR.Resource == "events" {
-		return true
-	}
-	return false
-}
-
 func isNamespaceNotEmpty(gvr *schema.GroupVersionResource, unstructuredList *unstructured.UnstructuredList, filterOpts *filters.Options) bool {
 	for _, unstructuredObj := range unstructuredList.Items {
 		resource := NamespacedResource{
@@ -136,12 +121,8 @@ func isNamespaceNotEmpty(gvr *schema.GroupVersionResource, unstructuredList *uns
 				Name:      unstructuredObj.GetName(),
 			},
 		}
-		// Ignore default cluster resources
-		if ignorePredefinedResource(resource) {
-			continue
-		}
 		// User specified resource type ignore list
-		if ignoreResourceType(resource.GVR.Resource, filterOpts.IgnoreResourceTypes) {
+		if ignoreResourceType(resource.GVR.Resource, append(filterOpts.IgnoreResourceTypes, "events")) {
 			continue
 		}
 		return true
