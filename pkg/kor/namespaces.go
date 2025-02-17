@@ -29,12 +29,7 @@ type GenericResource struct {
 	GVR            schema.GroupVersionResource
 }
 
-func processNamespaces(
-	ctx context.Context,
-	clientset kubernetes.Interface,
-	dynamicClient dynamic.Interface,
-	filterOpts *filters.Options,
-) ([]ResourceInfo, error) {
+func processNamespaces(ctx context.Context, clientset kubernetes.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) ([]ResourceInfo, error) {
 	var unusedNamespaces []ResourceInfo
 
 	filteredNamespaceNames := filterOpts.Namespaces(clientset)
@@ -137,11 +132,7 @@ func ignorePredefinedResource(gr GenericResource) bool {
 	return false
 }
 
-func isNamespaceNotEmpty(
-	gvr *schema.GroupVersionResource,
-	unstructuredList *unstructured.UnstructuredList,
-	filterOpts *filters.Options,
-) bool {
+func isNamespaceNotEmpty(gvr *schema.GroupVersionResource, unstructuredList *unstructured.UnstructuredList, filterOpts *filters.Options) bool {
 	for _, unstructuredObj := range unstructuredList.Items {
 		gr := GenericResource{
 			GVR: *gvr,
@@ -163,13 +154,7 @@ func isNamespaceNotEmpty(
 	return false
 }
 
-func isErrorOrNamespaceContainsResources(
-	ctx context.Context,
-	clientset kubernetes.Interface,
-	dynamicClient dynamic.Interface,
-	namespace string,
-	filterOpts *filters.Options,
-) (bool, error) {
+func isErrorOrNamespaceContainsResources(ctx context.Context, clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, filterOpts *filters.Options) (bool, error) {
 	apiResourceLists, err := clientset.Discovery().ServerPreferredNamespacedResources()
 	if err != nil {
 		return true, err
@@ -197,14 +182,7 @@ func isErrorOrNamespaceContainsResources(
 	return false, nil
 }
 
-func GetUnusedNamespaces(
-	ctx context.Context,
-	filterOpts *filters.Options,
-	clientset kubernetes.Interface,
-	dynamicClient dynamic.Interface,
-	outputFormat string,
-	opts common.Opts,
-) (string, error) {
+func GetUnusedNamespaces(ctx context.Context, filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	diff, err := processNamespaces(ctx, clientset, dynamicClient, filterOpts)
 	if err != nil {
