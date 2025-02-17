@@ -99,7 +99,7 @@ func getGVR(name string, splitGV []string) (*schema.GroupVersionResource, error)
 			Resource: name,
 		}, nil
 	default:
-		return nil, fmt.Errorf("gv is wrong length slice: %d", NumberOfGVPartsFound)
+		return nil, fmt.Errorf("GroupVersion can only be sliced to 1 or 2 parts, got: %d", NumberOfGVPartsFound)
 	}
 }
 
