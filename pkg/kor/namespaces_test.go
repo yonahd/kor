@@ -5,7 +5,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/yonahd/kor/pkg/filters"
 )
@@ -138,134 +137,6 @@ func Test_namespaces_GetGVR(t *testing.T) {
 	}
 }
 
-func Test_namespaces_IgnorePredefinedResource(t *testing.T) {
-	tests := []struct {
-		name           string
-		resource       NamespacedResource
-		expectedReturn bool
-	}{
-		{
-			name: "configmap kube-root-ca.crt in default",
-			resource: NamespacedResource{
-				Identifier: types.NamespacedName{
-					Name:      "kube-root-ca.crt",
-					Namespace: "default",
-				},
-				GVR: schema.GroupVersionResource{
-					Resource: "configmaps",
-					Version:  "v1",
-				},
-			},
-			expectedReturn: true,
-		},
-		{
-			name: "configmap kube-root-ca.crt in abc",
-			resource: NamespacedResource{
-				Identifier: types.NamespacedName{
-					Name:      "kube-root-ca.crt",
-					Namespace: "abc",
-				},
-				GVR: schema.GroupVersionResource{
-					Resource: "configmaps",
-					Version:  "v1",
-				},
-			},
-			expectedReturn: true,
-		},
-		{
-			name: "sa default in default",
-			resource: NamespacedResource{
-				Identifier: types.NamespacedName{
-					Name:      "default",
-					Namespace: "default",
-				},
-				GVR: schema.GroupVersionResource{
-					Resource: "serviceaccounts",
-					Version:  "v1",
-				},
-			},
-			expectedReturn: true,
-		},
-		{
-			name: "sa default in cde",
-			resource: NamespacedResource{
-				Identifier: types.NamespacedName{
-					Name:      "default",
-					Namespace: "cde",
-				},
-				GVR: schema.GroupVersionResource{
-					Resource: "serviceaccounts",
-					Version:  "v1",
-				},
-			},
-			expectedReturn: true,
-		},
-		{
-			name: "event in default",
-			resource: NamespacedResource{
-				Identifier: types.NamespacedName{
-					Name:      "test-event",
-					Namespace: "default",
-				},
-				GVR: schema.GroupVersionResource{
-					Resource: "events",
-				},
-			},
-			expectedReturn: true,
-		},
-		{
-			name: "event in qqq",
-			resource: NamespacedResource{
-				Identifier: types.NamespacedName{
-					Name:      "test-event",
-					Namespace: "qqq",
-				},
-				GVR: schema.GroupVersionResource{
-					Resource: "events",
-				},
-			},
-			expectedReturn: true,
-		},
-		{
-			name: "test-configmap in default",
-			resource: NamespacedResource{
-				Identifier: types.NamespacedName{
-					Name:      "test-configmap",
-					Namespace: "default",
-				},
-				GVR: schema.GroupVersionResource{
-					Resource: "configmaps",
-					Version:  "v1",
-				},
-			},
-			expectedReturn: false,
-		},
-		{
-			name: "test-serviceaccount in default",
-			resource: NamespacedResource{
-				Identifier: types.NamespacedName{
-					Name:      "test-serviceaccount",
-					Namespace: "default",
-				},
-				GVR: schema.GroupVersionResource{
-					Resource: "serviceaccounts",
-					Version:  "v1",
-				},
-			},
-			expectedReturn: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := ignorePredefinedResource(tt.resource)
-			if got != tt.expectedReturn {
-				t.Errorf("ignorePredefinedResource() = %t, want %t", got, tt.expectedReturn)
-			}
-		})
-	}
-}
-
 func Test_namespaces_IsNamespaceNotEmpty(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -350,30 +221,6 @@ func Test_namespaces_IsNamespaceNotEmpty(t *testing.T) {
 			filterOpts: &filters.Options{
 				IgnoreResourceTypes: []string{"deployments"},
 			},
-			expectedReturn: false,
-		},
-		{
-			name: "default sa exists but ignored",
-			gvr: &schema.GroupVersionResource{
-				Group:    "",
-				Version:  "v1",
-				Resource: "serviceaccounts",
-			},
-			objects: &unstructured.UnstructuredList{
-				Items: []unstructured.Unstructured{
-					{
-						Object: map[string]interface{}{
-							"apiVersion": "v1",
-							"kind":       "ServiceAccount",
-							"metadata": map[string]interface{}{
-								"name":      "default",
-								"namespace": "cde",
-							},
-						},
-					},
-				},
-			},
-			filterOpts:     &filters.Options{},
 			expectedReturn: false,
 		},
 	}
