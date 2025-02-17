@@ -68,7 +68,7 @@ func processNamespaces(ctx context.Context, clientset kubernetes.Interface, dyna
 		}
 
 		// skipping default resources here
-		resourceFound, err := isErrorOrNamespaceContainsResources(ctx, clientset, dynamicClient, namespaceName, filterOpts)
+		resourceFound, err := isNamespaceUsed(ctx, clientset, dynamicClient, namespaceName, filterOpts)
 		if err != nil {
 			return unusedNamespaces, err
 		}
@@ -149,7 +149,7 @@ func isNamespaceNotEmpty(gvr *schema.GroupVersionResource, unstructuredList *uns
 	return false
 }
 
-func isErrorOrNamespaceContainsResources(ctx context.Context, clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, filterOpts *filters.Options) (bool, error) {
+func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, filterOpts *filters.Options) (bool, error) {
 	apiResourceLists, err := clientset.Discovery().ServerPreferredNamespacedResources()
 	if err != nil {
 		return true, err
