@@ -58,24 +58,19 @@ func processNamespaces(ctx context.Context, clientset kubernetes.Interface, dyna
 			continue
 		}
 
-		// skipping default resources here
-		resourceFound, err := isErrorOrNamespaceContainsResources(
-			ctx,
-			clientset,
-			dynamicClient,
-			namespaceName,
-			filterOpts,
-		)
-		if err != nil {
-			return unusedNamespaces, err
-		}
-
+		// skipping user labeled resources
 		if namespace.Labels["kor/used"] == "false" {
 			unusedNamespaces = append(
 				unusedNamespaces,
 				ResourceInfo{Name: namespace.Name, Reason: "Marked with unused label"},
 			)
 			continue
+		}
+
+		// skipping default resources here
+		resourceFound, err := isErrorOrNamespaceContainsResources(ctx, clientset, dynamicClient, namespaceName, filterOpts)
+		if err != nil {
+			return unusedNamespaces, err
 		}
 
 		// construct list of unused namespaces here following a set of rules
@@ -134,7 +129,7 @@ func ignorePredefinedResource(resource NamespacedResource) bool {
 
 func isNamespaceNotEmpty(gvr *schema.GroupVersionResource, unstructuredList *unstructured.UnstructuredList, filterOpts *filters.Options) bool {
 	for _, unstructuredObj := range unstructuredList.Items {
-		gr := NamespacedResource{
+		resource := NamespacedResource{
 			GVR: *gvr,
 			Identifier: types.NamespacedName{
 				Namespace: unstructuredObj.GetNamespace(),
@@ -142,11 +137,11 @@ func isNamespaceNotEmpty(gvr *schema.GroupVersionResource, unstructuredList *uns
 			},
 		}
 		// Ignore default cluster resources
-		if ignorePredefinedResource(gr) {
+		if ignorePredefinedResource(resource) {
 			continue
 		}
 		// User specified resource type ignore list
-		if ignoreResourceType(gr.GVR.Resource, filterOpts.IgnoreResourceTypes) {
+		if ignoreResourceType(resource.GVR.Resource, filterOpts.IgnoreResourceTypes) {
 			continue
 		}
 		return true
