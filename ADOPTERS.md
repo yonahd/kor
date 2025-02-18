@@ -19,6 +19,9 @@ If you or your organization are using Kor, we'd love to feature you in this docu
 #### 1. Big Tech Corp
 Big Tech Corp has integrated Kor into a pipeline to regularly and automatically identify and remove unused resources.
 
+#### 2. Ataccama
+Ataccama has integrated Kor into k8s clusters to identify unused resources in realtime to better utilize cloud costs. They also modified and implemented alerting system based on Kor metrics to streamline the awareness of unused resources among operations teams.
+
 ### Individuals
 
 #### 1. Jane Smith
