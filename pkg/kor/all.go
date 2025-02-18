@@ -14,6 +14,8 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+var NamespacedFlagUsed bool
+
 type GetUnusedResourceJSONResponse struct {
 	ResourceType string              `json:"resourceType"`
 	Namespaces   map[string][]string `json:"namespaces"`
@@ -378,6 +380,13 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 }
 
 func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
+	if NamespacedFlagUsed {
+		if opts.Namespaced {
+			return GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
+		}
+		return GetUnusedAllNonNamespaced(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)
+	}
+
 	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
@@ -423,4 +432,8 @@ func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, a
 
 		return string(jsonResponse), nil
 	}
+}
+
+func SetNamespacedFlagState(isFlagUsed bool) {
+	NamespacedFlagUsed = isFlagUsed
 }

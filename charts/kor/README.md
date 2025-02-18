@@ -1,6 +1,6 @@
 # kor
 
-![Version: 0.1.18](https://img.shields.io/badge/Version-0.1.18-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.5.9](https://img.shields.io/badge/AppVersion-0.5.9-informational?style=flat-square)
+![Version: 0.1.19](https://img.shields.io/badge/Version-0.1.19-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.0](https://img.shields.io/badge/AppVersion-0.6.0-informational?style=flat-square)
 
 A Kubernetes Helm Chart to discover orphaned resources using kor
 
@@ -22,6 +22,7 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | cronJob.image.repository | string | `"yonahdissen/kor"` |  |
 | cronJob.image.tag | string | `"latest"` |  |
 | cronJob.name | string | `"kor"` |  |
+| cronJob.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources |
 | cronJob.restartPolicy | string | `"OnFailure"` |  |
 | cronJob.schedule | string | `"0 1 * * 1"` |  |
 | cronJob.slackAuthToken | string | `""` |  |
@@ -45,6 +46,7 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | prometheusExporter.enabled | bool | `true` |  |
 | prometheusExporter.exporterInterval | string | `""` |  |
 | prometheusExporter.name | string | `"kor-exporter"` |  |
+| prometheusExporter.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources |
 | prometheusExporter.service.port | int | `8080` |  |
 | prometheusExporter.service.type | string | `"ClusterIP"` |  |
 | prometheusExporter.serviceMonitor.enabled | bool | `true` |  |
