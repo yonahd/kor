@@ -16,7 +16,7 @@ var exporterCmd = &cobra.Command{
 		clientset := kor.GetKubeClient(kubeconfig)
 		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
-
+		kor.SetNamespacedFlagState(cmd.Flags().Changed("namespaced"))
 		kor.Exporter(filterOptions, clientset, apiExtClient, dynamicClient, "json", opts, resourceList)
 
 	},
@@ -24,5 +24,6 @@ var exporterCmd = &cobra.Command{
 
 func init() {
 	exporterCmd.Flags().StringSliceVarP(&resourceList, "resources", "r", nil, "Comma-separated list of resources to monitor (e.g., deployment,service)")
+	exporterCmd.Flags().BoolVar(&opts.Namespaced, "namespaced", true, "If false, non-namespaced resources will be returned, otherwise returning namespaced resources by default. If not used, both are returned")
 	rootCmd.AddCommand(exporterCmd)
 }
