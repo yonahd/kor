@@ -65,6 +65,7 @@ rules:
       - persistentvolumes
       - customresourcedefinitions
       - storageclasses
+      - volumeattachments
     verbs:
       - get
       - list

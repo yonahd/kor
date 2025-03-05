@@ -451,3 +451,26 @@ func CreateTestNetworkPolicy(name, namespace string, labels map[string]string, p
 		},
 	}
 }
+
+func CreateTestVolumeAttachment(name, attacher, nodeName, pvName string) *storagev1.VolumeAttachment {
+	return &storagev1.VolumeAttachment{
+		ObjectMeta: v1.ObjectMeta{Name: name},
+		Spec: storagev1.VolumeAttachmentSpec{
+			Attacher: attacher,
+			NodeName: nodeName,
+			Source:   storagev1.VolumeAttachmentSource{PersistentVolumeName: &pvName},
+		},
+	}
+}
+
+func CreateTestNode(name string) *corev1.Node {
+	return &corev1.Node{
+		ObjectMeta: v1.ObjectMeta{Name: name},
+	}
+}
+
+func CreateTestCSIDriver(name string) *storagev1.CSIDriver {
+	return &storagev1.CSIDriver{
+		ObjectMeta: v1.ObjectMeta{Name: name},
+	}
+}
