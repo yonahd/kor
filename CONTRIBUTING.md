@@ -41,8 +41,9 @@ As adding new orphaned resources capabilities requires the addition or modificat
 ├── cmd/kor
 │   └── <resource>s.go
 ├── pkg/kor
-│   ├── <resource>s
-│   │   └── <resource>s.json
+│   ├── exceptions
+│   │   └── <resource>s
+│   │       └── <resource>s.json
 │   ├── all.go
 │   ├── create_test_resources.go
 │   ├── delete.go

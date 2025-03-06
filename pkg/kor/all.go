@@ -253,6 +253,17 @@ func getUnusedStorageClasses(clientset kubernetes.Interface, filterOpts *filters
 	}
 	return allScDiff
 }
+func getUnusedVolumeAttachments(clientset kubernetes.Interface, filterOpts *filters.Options) ResourceDiff {
+	vattsDiff, err := processVolumeAttachments(clientset, filterOpts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "VolumeAttachments", err)
+	}
+	allVattsDiff := ResourceDiff{
+		"VolumeAttachment",
+		vattsDiff,
+	}
+	return allVattsDiff
+}
 
 func getUnusedNetworkPolicies(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ResourceDiff {
 	netpolDiff, err := processNamespaceNetworkPolicies(clientset, namespace, filterOpts)
@@ -352,11 +363,14 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 		resources[""]["Pv"] = getUnusedPvs(clientset, filterOpts).diff
 		resources[""]["ClusterRole"] = getUnusedClusterRoles(clientset, filterOpts).diff
 		resources[""]["StorageClass"] = getUnusedStorageClasses(clientset, filterOpts).diff
+		resources[""]["VolumeAttachments"] = getUnusedVolumeAttachments(clientset, filterOpts).diff
 	case "resource":
 		appendResources(resources, "Crd", "", getUnusedCrds(apiExtClient, dynamicClient, filterOpts).diff)
 		appendResources(resources, "Pv", "", getUnusedPvs(clientset, filterOpts).diff)
 		appendResources(resources, "ClusterRole", "", getUnusedClusterRoles(clientset, filterOpts).diff)
 		appendResources(resources, "StorageClass", "", getUnusedStorageClasses(clientset, filterOpts).diff)
+		appendResources(resources, "VolumeAttachments", "", getUnusedVolumeAttachments(clientset, filterOpts).diff)
+
 	}
 
 	var outputBuffer bytes.Buffer
