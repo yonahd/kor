@@ -61,8 +61,8 @@ func Test_namespaces_IgnoreResourceType(t *testing.T) {
 
 func Test_namespaces_GetGVR(t *testing.T) {
 	type args struct {
-		name    string
-		splitGV []string
+		groupVersion string
+		name         string
 	}
 	tests := []struct {
 		name      string
@@ -73,8 +73,8 @@ func Test_namespaces_GetGVR(t *testing.T) {
 		{
 			name: "number of parts 0 - expect error",
 			args: args{
-				name:    "deployments",
-				splitGV: []string{},
+				groupVersion: "",
+				name:         "deployments",
 			},
 			want:      nil,
 			expectErr: true,
@@ -82,10 +82,8 @@ func Test_namespaces_GetGVR(t *testing.T) {
 		{
 			name: "number of parts 1",
 			args: args{
-				name: "secrets",
-				splitGV: []string{
-					"v1",
-				},
+				groupVersion: "v1",
+				name:         "secrets",
 			},
 			want: &schema.GroupVersionResource{
 				Group:    "",
@@ -97,11 +95,8 @@ func Test_namespaces_GetGVR(t *testing.T) {
 		{
 			name: "number of parts 2",
 			args: args{
-				name: "deployments",
-				splitGV: []string{
-					"apps",
-					"v1",
-				},
+				groupVersion: "apps/v1",
+				name:         "deployments",
 			},
 			want: &schema.GroupVersionResource{
 				Group:    "apps",
@@ -113,12 +108,8 @@ func Test_namespaces_GetGVR(t *testing.T) {
 		{
 			name: "number of parts 4 - expect error",
 			args: args{
-				name: "deployments",
-				splitGV: []string{
-					"apps",
-					"v1",
-					"test-deploy01",
-				},
+				groupVersion: "apps/v1/test-deploy01",
+				name:         "deployments",
 			},
 			want:      nil,
 			expectErr: true,
@@ -126,7 +117,7 @@ func Test_namespaces_GetGVR(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := getGVR(tt.args.name, tt.args.splitGV)
+			got, err := getGVR(tt.args.groupVersion, tt.args.name)
 			if (err != nil) != tt.expectErr {
 				t.Errorf("getGVR() = expected error: %t, got: '%v'", tt.expectErr, err)
 			}

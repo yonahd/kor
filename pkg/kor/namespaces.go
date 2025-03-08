@@ -85,7 +85,11 @@ func processNamespaces(ctx context.Context, clientset kubernetes.Interface, dyna
 	return unusedNamespaces, nil
 }
 
-func getGVR(name string, splitGV []string) (*schema.GroupVersionResource, error) {
+func getGVR(groupVersion string, name string) (*schema.GroupVersionResource, error) {
+	splitGV := strings.Split(groupVersion, "/")
+	if groupVersion == "" {
+		splitGV = []string{}
+	}
 	switch NumberOfGVPartsFound := len(splitGV); NumberOfGVPartsFound {
 	case 1:
 		return &schema.GroupVersionResource{
@@ -139,8 +143,7 @@ func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynami
 	// Iterate over all API resources and list instances of each in the specified namespace
 	for _, apiResourceList := range apiResourceLists {
 		for _, apiResource := range apiResourceList.APIResources {
-			gv := strings.Split(apiResourceList.GroupVersion, "/")
-			gvr, err := getGVR(apiResource.Name, gv)
+			gvr, err := getGVR(apiResourceList.GroupVersion, apiResource.Name)
 			if err != nil {
 				return true, err
 			}
