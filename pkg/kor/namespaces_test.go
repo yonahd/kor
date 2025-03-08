@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func Test_namespaces_IgnoreResourceType(t *testing.T) {
+func TestIgnoreResourceType(t *testing.T) {
 	type args struct {
 		resource        string
 		ignoreResources []string
@@ -56,7 +56,7 @@ func Test_namespaces_IgnoreResourceType(t *testing.T) {
 	}
 }
 
-func Test_namespaces_GetGVR(t *testing.T) {
+func TestGetGVR(t *testing.T) {
 	type args struct {
 		groupVersion string
 		name         string
