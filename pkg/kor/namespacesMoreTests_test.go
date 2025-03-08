@@ -255,7 +255,7 @@ func createDynamicDeployListForcedErrorFakeClientInterfaces(ctx context.Context,
 
 type GetFakeClientInterfacesFunc func(ctx context.Context, t *testing.T, ns, name string) (kubernetes.Interface, *dynamicfake.FakeDynamicClient)
 
-func Test_namespaces_IsNamespaceUsed(t *testing.T) {
+func TestIsNamespaceUsed(t *testing.T) {
 	tests := []struct {
 		name string
 
