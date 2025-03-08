@@ -116,13 +116,13 @@ func ignoreResourceType(resource string, ignoreResourceTypes []string) bool {
 	return false
 }
 
-func isNamespaceNotEmpty(gvr *schema.GroupVersionResource, unstructuredList *unstructured.UnstructuredList, filterOpts *filters.Options) bool {
-	for _, unstructuredObj := range unstructuredList.Items {
+func isNamespaceNotEmpty(gvr *schema.GroupVersionResource, resourcesInNamespace *unstructured.UnstructuredList, filterOpts *filters.Options) bool {
+	for _, resourceInNamespace := range resourcesInNamespace.Items {
 		resource := NamespacedResource{
 			GVR: *gvr,
 			Identifier: types.NamespacedName{
-				Namespace: unstructuredObj.GetNamespace(),
-				Name:      unstructuredObj.GetName(),
+				Namespace: resourceInNamespace.GetNamespace(),
+				Name:      resourceInNamespace.GetName(),
 			},
 		}
 		// User specified resource type ignore list
@@ -148,12 +148,12 @@ func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynami
 				return true, err
 			}
 
-			unstructuredList, err := dynamicClient.Resource(*gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
+			resourcesInNamespace, err := dynamicClient.Resource(*gvr).Namespace(namespace).List(ctx, metav1.ListOptions{})
 			if err != nil {
 				continue
 			}
 
-			if isNamespaceNotEmpty(gvr, unstructuredList, filterOpts) {
+			if isNamespaceNotEmpty(gvr, resourcesInNamespace, filterOpts) {
 				return true, nil
 			}
 		}
