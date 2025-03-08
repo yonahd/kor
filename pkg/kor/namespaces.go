@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -116,24 +115,6 @@ func ignoreResourceType(resource string, ignoreResourceTypes []string) bool {
 	return false
 }
 
-func isNamespaceNotEmpty(gvr *schema.GroupVersionResource, resourcesInNamespace *unstructured.UnstructuredList, filterOpts *filters.Options) bool {
-	for _, resourceInNamespace := range resourcesInNamespace.Items {
-		resource := NamespacedResource{
-			GVR: *gvr,
-			Identifier: types.NamespacedName{
-				Namespace: resourceInNamespace.GetNamespace(),
-				Name:      resourceInNamespace.GetName(),
-			},
-		}
-		// User specified resource type ignore list
-		if ignoreResourceType(resource.GVR.Resource, append(filterOpts.IgnoreResourceTypes, "events")) {
-			continue
-		}
-		return true
-	}
-	return false
-}
-
 func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, filterOpts *filters.Options) (bool, error) {
 	apiResourceLists, err := clientset.Discovery().ServerPreferredNamespacedResources()
 	if err != nil {
@@ -153,7 +134,19 @@ func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynami
 				continue
 			}
 
-			if isNamespaceNotEmpty(gvr, resourcesInNamespace, filterOpts) {
+			// check if Namespace is Not Empty
+			for _, resourceInNamespace := range resourcesInNamespace.Items {
+				resource := NamespacedResource{
+					GVR: *gvr,
+					Identifier: types.NamespacedName{
+						Namespace: resourceInNamespace.GetNamespace(),
+						Name:      resourceInNamespace.GetName(),
+					},
+				}
+				// User specified resource type ignore list
+				if ignoreResourceType(resource.GVR.Resource, append(filterOpts.IgnoreResourceTypes, "events")) {
+					continue
+				}
 				return true, nil
 			}
 		}

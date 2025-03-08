@@ -359,10 +359,10 @@ func Test_namespaces_IsNamespaceUsed(t *testing.T) {
 			clientset, dynamicClient := tt.getClientsFunc(tt.ctx, t, tt.namespaceName, tt.objName)
 			got, err := isNamespaceUsed(tt.ctx, clientset, dynamicClient, tt.namespaceName, tt.filterOpts)
 			if (err != nil) != tt.expectedError {
-				t.Errorf("isErrorOrNamespaceContainsResources() = expected error: %t, got: '%v'", tt.expectedError, err)
+				t.Errorf("isNamespaceUsed() = expected error: %t, got: '%v'", tt.expectedError, err)
 			}
 			if got != tt.expectedReturn {
-				t.Errorf("isErrorOrNamespaceContainsResources() = got %t, want %t", got, tt.expectedReturn)
+				t.Errorf("isNamespaceUsed() = got %t, want %t", got, tt.expectedReturn)
 			}
 		})
 	}
