@@ -147,6 +147,16 @@ func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynami
 				if ignoreResourceType(resource.GVR.Resource, append(filterOpts.IgnoreResourceTypes, "events")) {
 					continue
 				}
+
+				// TODO: ignore resources within exception list (any resource type from what kor supports at any given time)
+				// exceptionFound, err := isResourceException(resource.Identifier.Name, resource.Identifier.Namespace, config.ExceptionNamespaces)
+				// if err != nil {
+				// 	return nil, err
+				// }
+				// if exceptionFound {
+				// 	continue
+				// }
+
 				return true, nil
 			}
 		}
