@@ -134,7 +134,106 @@ func createEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Interfa
 		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
 		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, namespace2)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, namespace2, newEventType)
+
+	return clientset, dynamicClient
+}
+
+func createNonEmptyNamespaceLabeledAsUnused(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
+	realClientset := fake.NewSimpleClientset()
+	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
+	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
+	scheme := getNamespaceTestSchema(t)
+
+	ns1 := "nonempty-namespace-labeled"
+	namespace1 := defineNamespaceObject(ns1)
+	namespace1.Labels = map[string]string{
+		"kor/used": "false",
+	}
+	_, err := clientset.CoreV1().Namespaces().Create(ctx, namespace1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test namespace: %v", err)
+	}
+
+	sa1 := "my-app"
+	serviceAccount1 := defineServiceAccountObject(ns1, sa1)
+	_, err = clientset.CoreV1().ServiceAccounts(ns1).Create(ctx, serviceAccount1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test namespace: %v", err)
+	}
+
+	ns2 := "test-namespace"
+	namespace2 := defineNamespaceObject(ns2)
+	_, err = clientset.CoreV1().Namespaces().Create(ctx, namespace2, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test namespace: %v", err)
+	}
+
+	sa2 := "another-app"
+	serviceAccount2 := defineServiceAccountObject(ns2, sa2)
+	_, err = clientset.CoreV1().ServiceAccounts(ns2).Create(ctx, serviceAccount2, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test namespace: %v", err)
+	}
+
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
+		{Group: "", Version: "v1", Resource: "namespaces"}:          "NamespaceList",
+		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
+		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
+	}
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, namespace2, serviceAccount1, serviceAccount2)
+
+	return clientset, dynamicClient
+}
+
+func createEmptyNamespaceLabeledAsUsed(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
+	realClientset := fake.NewSimpleClientset()
+	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
+	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
+	scheme := getNamespaceTestSchema(t)
+
+	ns1 := "empty-namespace-labeled"
+	namespace1 := defineNamespaceObject(ns1)
+	namespace1.Labels = map[string]string{
+		"kor/used": "true",
+	}
+	_, err := clientset.CoreV1().Namespaces().Create(ctx, namespace1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test namespace: %v", err)
+	}
+
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
+		{Group: "", Version: "v1", Resource: "namespaces"}:          "NamespaceList",
+		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
+		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
+	}
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1)
+
+	return clientset, dynamicClient
+}
+
+func createKubeSystemNamespace(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
+	realClientset := fake.NewSimpleClientset()
+	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
+	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
+	scheme := getNamespaceTestSchema(t)
+
+	ns1 := "kube-system"
+	namespace1 := defineNamespaceObject(ns1)
+	_, err := clientset.CoreV1().Namespaces().Create(ctx, namespace1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test namespace: %v", err)
+	}
+
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
+		{Group: "", Version: "v1", Resource: "namespaces"}:          "NamespaceList",
+		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
+		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
+	}
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1)
 
 	return clientset, dynamicClient
 }
@@ -180,6 +279,33 @@ func TestGetUnusedNamespaces(t *testing.T) {
 		{
 			name:           "Namespace contains non ignored by default resource",
 			getClientsFunc: createNonEmptyNamespace,
+			filterOpts:     &filters.Options{},
+			expectedOutput: `{}`,
+			expectedError:  false,
+		},
+		{
+			name:           "Nonempty Namespace contains kor/used=false label",
+			getClientsFunc: createNonEmptyNamespaceLabeledAsUnused,
+			filterOpts:     &filters.Options{},
+			expectedOutput: `{
+  "": {
+    "Namespace": [
+      "nonempty-namespace-labeled"
+    ]
+  }
+}`,
+			expectedError: false,
+		},
+		{
+			name:           "Empty Namespace contains kor/used=true label",
+			getClientsFunc: createEmptyNamespaceLabeledAsUsed,
+			filterOpts:     &filters.Options{},
+			expectedOutput: `{}`,
+			expectedError:  false,
+		},
+		{
+			name:           "kube-system special Namespace",
+			getClientsFunc: createKubeSystemNamespace,
 			filterOpts:     &filters.Options{},
 			expectedOutput: `{}`,
 			expectedError:  false,
