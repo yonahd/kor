@@ -363,13 +363,13 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 		resources[""]["Pv"] = getUnusedPvs(clientset, filterOpts).diff
 		resources[""]["ClusterRole"] = getUnusedClusterRoles(clientset, filterOpts).diff
 		resources[""]["StorageClass"] = getUnusedStorageClasses(clientset, filterOpts).diff
-		resources[""]["VolumeAttachments"] = getUnusedVolumeAttachments(clientset, filterOpts).diff
+		resources[""]["VolumeAttachment"] = getUnusedVolumeAttachments(clientset, filterOpts).diff
 	case "resource":
 		appendResources(resources, "Crd", "", getUnusedCrds(apiExtClient, dynamicClient, filterOpts).diff)
 		appendResources(resources, "Pv", "", getUnusedPvs(clientset, filterOpts).diff)
 		appendResources(resources, "ClusterRole", "", getUnusedClusterRoles(clientset, filterOpts).diff)
 		appendResources(resources, "StorageClass", "", getUnusedStorageClasses(clientset, filterOpts).diff)
-		appendResources(resources, "VolumeAttachments", "", getUnusedVolumeAttachments(clientset, filterOpts).diff)
+		appendResources(resources, "VolumeAttachment", "", getUnusedVolumeAttachments(clientset, filterOpts).diff)
 
 	}
 
