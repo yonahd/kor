@@ -7,6 +7,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	eventsv1 "k8s.io/api/events/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -130,6 +131,10 @@ func getNamespaceTestSchema(t *testing.T) *runtime.Scheme {
 	if err != nil {
 		t.Errorf("Failed to add appsv1 to scheme: %v", err)
 	}
+	err = eventsv1.AddToScheme(scheme)
+	if err != nil {
+		t.Errorf("Failed to add eventsv1 to scheme: %v", err)
+	}
 	return scheme
 }
 
@@ -146,7 +151,7 @@ func createHappyDeployFakeClientInterfaces(ctx context.Context, t *testing.T, ns
 	}
 
 	deployment := defineDeployObject(ns, name)
-	_, err = clientset.AppsV1().Deployments("test-namespace").Create(ctx, deployment, metav1.CreateOptions{})
+	_, err = clientset.AppsV1().Deployments(ns).Create(ctx, deployment, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Failed to create test deployment: %v", err)
 	}
@@ -253,7 +258,7 @@ func createDynamicDeployListForcedErrorFakeClientInterfaces(ctx context.Context,
 	return clientset, dynamicClient
 }
 
-type GetFakeClientInterfacesFunc func(ctx context.Context, t *testing.T, ns, name string) (kubernetes.Interface, *dynamicfake.FakeDynamicClient)
+type GetFakeClientInterfacesForIsNamespaceUsedTestFunc func(ctx context.Context, t *testing.T, ns, name string) (kubernetes.Interface, *dynamicfake.FakeDynamicClient)
 
 func TestIsNamespaceUsed(t *testing.T) {
 	tests := []struct {
@@ -261,8 +266,7 @@ func TestIsNamespaceUsed(t *testing.T) {
 
 		objName        string
 		namespaceName  string
-		ctx            context.Context
-		getClientsFunc GetFakeClientInterfacesFunc
+		getClientsFunc GetFakeClientInterfacesForIsNamespaceUsedTestFunc
 		filterOpts     *filters.Options
 
 		expectedReturn bool
@@ -273,7 +277,6 @@ func TestIsNamespaceUsed(t *testing.T) {
 
 			objName:        "test-object",
 			namespaceName:  "test-namespace",
-			ctx:            context.TODO(),
 			getClientsFunc: createHappyDeployFakeClientInterfaces,
 			filterOpts: &filters.Options{
 				IgnoreResourceTypes: []string{"configmaps", "secrets"},
@@ -287,7 +290,6 @@ func TestIsNamespaceUsed(t *testing.T) {
 
 			objName:        "test-object",
 			namespaceName:  "test-namespace",
-			ctx:            context.TODO(),
 			getClientsFunc: createHappyDeployFakeClientInterfaces,
 			filterOpts: &filters.Options{
 				IgnoreResourceTypes: []string{"deployments"},
@@ -301,7 +303,6 @@ func TestIsNamespaceUsed(t *testing.T) {
 
 			objName:        "test-object",
 			namespaceName:  "test-namespace",
-			ctx:            context.TODO(),
 			getClientsFunc: createHappyEmptyFakeClientInterfaces,
 			filterOpts: &filters.Options{
 				IgnoreResourceTypes: []string{"secrets"},
@@ -315,7 +316,6 @@ func TestIsNamespaceUsed(t *testing.T) {
 
 			objName:        "test-object",
 			namespaceName:  "test-namespace",
-			ctx:            context.TODO(),
 			getClientsFunc: createUnhappyDiscoveryFakeClientInterfaces,
 			filterOpts: &filters.Options{
 				IgnoreResourceTypes: []string{"secrets"},
@@ -329,7 +329,6 @@ func TestIsNamespaceUsed(t *testing.T) {
 
 			objName:        "test-object",
 			namespaceName:  "test-namespace",
-			ctx:            context.TODO(),
 			getClientsFunc: createBrokenAPIResourceListDiscoveryFakeClientInterfaces,
 			filterOpts: &filters.Options{
 				IgnoreResourceTypes: []string{"secrets"},
@@ -343,7 +342,6 @@ func TestIsNamespaceUsed(t *testing.T) {
 
 			objName:        "test-object",
 			namespaceName:  "test-namespace",
-			ctx:            context.TODO(),
 			getClientsFunc: createDynamicDeployListForcedErrorFakeClientInterfaces,
 			filterOpts: &filters.Options{
 				IgnoreResourceTypes: []string{"secrets"},
@@ -356,8 +354,9 @@ func TestIsNamespaceUsed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			clientset, dynamicClient := tt.getClientsFunc(tt.ctx, t, tt.namespaceName, tt.objName)
-			got, err := isNamespaceUsed(tt.ctx, clientset, dynamicClient, tt.namespaceName, tt.filterOpts)
+			ctx := context.TODO()
+			clientset, dynamicClient := tt.getClientsFunc(ctx, t, tt.namespaceName, tt.objName)
+			got, err := isNamespaceUsed(ctx, clientset, dynamicClient, tt.namespaceName, tt.filterOpts)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("isNamespaceUsed() = expected error: %t, got: '%v'", tt.expectedError, err)
 			}
