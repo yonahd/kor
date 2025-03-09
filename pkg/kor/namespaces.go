@@ -49,7 +49,7 @@ func processNamespaces(ctx context.Context, clientset kubernetes.Interface, dyna
 		}
 
 		// ignore namespaces within exception list
-		exceptionFound, err := isResourceException(namespace.Name, "", config.ExceptionNamespaces)
+		exceptionFound, err := isResourceException("", namespace.Name, config.ExceptionNamespaces)
 		if err != nil {
 			return nil, err
 		}
