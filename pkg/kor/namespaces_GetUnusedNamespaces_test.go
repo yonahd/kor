@@ -114,13 +114,6 @@ func createEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Interfa
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
 
-	ns2 := "test-namespace"
-	namespace2 := defineNamespaceObject(ns2)
-	_, err = clientset.CoreV1().Namespaces().Create(ctx, namespace2, metav1.CreateOptions{})
-	if err != nil {
-		t.Fatalf("Failed to create test namespace: %v", err)
-	}
-
 	evtName := "some-random-event"
 	newEventType := defineNewTypeEventObject(ns1, evtName)
 	_, err = clientset.EventsV1().Events(ns1).Create(ctx, newEventType, metav1.CreateOptions{})
@@ -134,7 +127,7 @@ func createEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Interfa
 		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
 		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, namespace2, newEventType)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, newEventType)
 
 	return clientset, dynamicClient
 }
@@ -256,8 +249,7 @@ func TestGetUnusedNamespaces(t *testing.T) {
 			expectedOutput: `{
   "": {
     "Namespace": [
-      "empty-namespace",
-      "test-namespace"
+      "empty-namespace"
     ]
   }
 }`,
