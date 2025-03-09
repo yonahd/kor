@@ -148,14 +148,11 @@ func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynami
 					continue
 				}
 
-				// TODO: ignore resources within exception list (any resource type from what kor supports at any given time)
-				// exceptionFound, err := isResourceException(resource.Identifier.Name, resource.Identifier.Namespace, config.ExceptionNamespaces)
-				// if err != nil {
-				// 	return nil, err
-				// }
-				// if exceptionFound {
-				// 	continue
-				// }
+				// TODO: decide if this is sufficient
+				// ignore default ServiceAccount
+				if resource.GVR.Resource == "serviceaccounts" && resource.Identifier.Name == "default" {
+					continue
+				}
 
 				return true, nil
 			}
