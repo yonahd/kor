@@ -10,3 +10,4 @@ kor
 *.swp
 hack/exceptions
 .envrc
+.tool-versions
