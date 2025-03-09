@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -27,6 +28,77 @@ func defineNewTypeEventObject(ns, name string) *eventsv1.Event {
 		ReportingController: "some-controller",
 		Type:                "Warning",
 	}
+}
+
+func defineServiceAccountObject(ns, name string) *corev1.ServiceAccount {
+	return &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+		},
+	}
+}
+
+func createEmptyNamespaceWithIgnoredByDefaultResource(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
+	realClientset := fake.NewSimpleClientset()
+	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
+	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
+	scheme := getNamespaceTestSchema(t)
+
+	ns1 := "test-namespace"
+	namespace1 := defineNamespaceObject(ns1)
+	_, err := clientset.CoreV1().Namespaces().Create(ctx, namespace1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test namespace: %v", err)
+	}
+
+	sa1 := "default"
+	serviceAccount1 := defineServiceAccountObject(ns1, sa1)
+	_, err = clientset.CoreV1().ServiceAccounts(ns1).Create(ctx, serviceAccount1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test namespace: %v", err)
+	}
+
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
+		{Group: "", Version: "v1", Resource: "namespaces"}:          "NamespaceList",
+		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
+		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
+	}
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, serviceAccount1)
+
+	return clientset, dynamicClient
+}
+
+func createNonEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
+	realClientset := fake.NewSimpleClientset()
+	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
+	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
+	scheme := getNamespaceTestSchema(t)
+
+	ns1 := "test-namespace"
+	namespace1 := defineNamespaceObject(ns1)
+	_, err := clientset.CoreV1().Namespaces().Create(ctx, namespace1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test namespace: %v", err)
+	}
+
+	sa1 := "my-app"
+	serviceAccount1 := defineServiceAccountObject(ns1, sa1)
+	_, err = clientset.CoreV1().ServiceAccounts(ns1).Create(ctx, serviceAccount1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test namespace: %v", err)
+	}
+
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
+		{Group: "", Version: "v1", Resource: "namespaces"}:          "NamespaceList",
+		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
+		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
+	}
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, serviceAccount1)
+
+	return clientset, dynamicClient
 }
 
 func createEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
@@ -79,7 +151,7 @@ func TestGetUnusedNamespaces(t *testing.T) {
 		expectedError  bool
 	}{
 		{
-			name:           "empty namespace, only event exists",
+			name:           "Namespace contains only ignored by default resource types",
 			getClientsFunc: createEmptyNamespace,
 			filterOpts:     &filters.Options{},
 			expectedOutput: `{
@@ -91,6 +163,26 @@ func TestGetUnusedNamespaces(t *testing.T) {
   }
 }`,
 			expectedError: false,
+		},
+		{
+			name:           "Namespace contains only ignored by default resource",
+			getClientsFunc: createEmptyNamespaceWithIgnoredByDefaultResource,
+			filterOpts:     &filters.Options{},
+			expectedOutput: `{
+  "": {
+    "Namespace": [
+      "test-namespace"
+    ]
+  }
+}`,
+			expectedError: false,
+		},
+		{
+			name:           "Namespace contains non ignored by default resource",
+			getClientsFunc: createNonEmptyNamespace,
+			filterOpts:     &filters.Options{},
+			expectedOutput: `{}`,
+			expectedError:  false,
 		},
 	}
 	for _, tt := range tests {

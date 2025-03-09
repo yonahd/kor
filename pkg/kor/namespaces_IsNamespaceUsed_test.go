@@ -37,6 +37,56 @@ func (c *fakeHappyDiscovery) ServerPreferredNamespacedResources() ([]*metav1.API
 				},
 			},
 		},
+		{
+			GroupVersion: "v1",
+			APIResources: []metav1.APIResource{
+				{
+					Name:       "configmaps",
+					Namespaced: true,
+					Kind:       "ConfigMap",
+				},
+			},
+		},
+		{
+			GroupVersion: "v1",
+			APIResources: []metav1.APIResource{
+				{
+					Name:       "secrets",
+					Namespaced: true,
+					Kind:       "Secret",
+				},
+			},
+		},
+		{
+			GroupVersion: "v1",
+			APIResources: []metav1.APIResource{
+				{
+					Name:       "serviceaccounts",
+					Namespaced: true,
+					Kind:       "ServiceAccount",
+				},
+			},
+		},
+		{
+			GroupVersion: "v1",
+			APIResources: []metav1.APIResource{
+				{
+					Name:       "events",
+					Namespaced: true,
+					Kind:       "Event",
+				},
+			},
+		},
+		{
+			GroupVersion: "events.k8s.io/v1",
+			APIResources: []metav1.APIResource{
+				{
+					Name:       "events",
+					Namespaced: true,
+					Kind:       "Event",
+				},
+			},
+		},
 	}, nil
 }
 
