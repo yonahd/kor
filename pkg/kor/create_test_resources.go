@@ -14,10 +14,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-var testNamespace = "test-namespace"
-var AppLabels = map[string]string{}
-var UsedLabels = map[string]string{"kor/used": "true"}
-var UnusedLabels = map[string]string{"kor/used": "false"}
+var (
+	testNamespace = "test-namespace"
+	AppLabels     = map[string]string{}
+	UsedLabels    = map[string]string{"kor/used": "true"}
+	UnusedLabels  = map[string]string{"kor/used": "false"}
+)
 
 func CreateTestDeployment(namespace, name string, replicas int32, labels map[string]string) *appsv1.Deployment {
 	return &appsv1.Deployment{
@@ -94,7 +96,6 @@ func CreateTestVolume(name, pvcName string) *corev1.Volume {
 			PersistentVolumeClaim: pvc,
 		},
 	}
-
 }
 
 func CreateEphemeralVolumeDefinition(name, size string) *corev1.Volume {
@@ -196,6 +197,7 @@ func CreateTestEndpoint(namespace, name string, endpointSubsetCount int, labels 
 		Subsets: make([]corev1.EndpointSubset, endpointSubsetCount),
 	}
 }
+
 func CreateTestHpa(namespace, name, deploymentName string, minReplicas, maxReplicas int32, labels map[string]string) *autoscalingv2.HorizontalPodAutoscaler {
 	return &autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: v1.ObjectMeta{
