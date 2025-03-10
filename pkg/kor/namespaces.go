@@ -153,6 +153,10 @@ func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynami
 				if resource.GVR.Resource == "serviceaccounts" && resource.Identifier.Name == "default" {
 					continue
 				}
+				// ignore openshift-service-ca.crt ConfigMap
+				if resource.GVR.Resource == "configmaps" && resource.Identifier.Name == "openshift-service-ca.crt" {
+					continue
+				}
 
 				return true, nil
 			}
