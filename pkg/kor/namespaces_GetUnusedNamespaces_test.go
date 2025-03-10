@@ -56,7 +56,7 @@ func createEmptyNamespaceWithIgnoredByDefaultResource(ctx context.Context, t *te
 	serviceAccount1 := defineServiceAccountObject(ns1, sa1)
 	_, err = clientset.CoreV1().ServiceAccounts(ns1).Create(ctx, serviceAccount1, metav1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("Failed to create test namespace: %v", err)
+		t.Fatalf("Failed to create test service account: %v", err)
 	}
 
 	listKinds := map[schema.GroupVersionResource]string{
@@ -87,7 +87,7 @@ func createNonEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Inte
 	serviceAccount1 := defineServiceAccountObject(ns1, sa1)
 	_, err = clientset.CoreV1().ServiceAccounts(ns1).Create(ctx, serviceAccount1, metav1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("Failed to create test namespace: %v", err)
+		t.Fatalf("Failed to create test service account: %v", err)
 	}
 
 	listKinds := map[schema.GroupVersionResource]string{
@@ -152,7 +152,7 @@ func createNonEmptyNamespaceLabeledAsUnused(ctx context.Context, t *testing.T) (
 	serviceAccount1 := defineServiceAccountObject(ns1, sa1)
 	_, err = clientset.CoreV1().ServiceAccounts(ns1).Create(ctx, serviceAccount1, metav1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("Failed to create test namespace: %v", err)
+		t.Fatalf("Failed to create test service account: %v", err)
 	}
 
 	ns2 := "test-namespace"
@@ -166,7 +166,7 @@ func createNonEmptyNamespaceLabeledAsUnused(ctx context.Context, t *testing.T) (
 	serviceAccount2 := defineServiceAccountObject(ns2, sa2)
 	_, err = clientset.CoreV1().ServiceAccounts(ns2).Create(ctx, serviceAccount2, metav1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("Failed to create test namespace: %v", err)
+		t.Fatalf("Failed to create test service account: %v", err)
 	}
 
 	listKinds := map[schema.GroupVersionResource]string{
@@ -203,6 +203,37 @@ func createEmptyNamespaceLabeledAsUsed(ctx context.Context, t *testing.T) (kuber
 		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
 	}
 	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1)
+
+	return clientset, dynamicClient
+}
+
+func namespaceWithIgnoredConfgimap(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
+	realClientset := fake.NewSimpleClientset()
+	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
+	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
+	scheme := getNamespaceTestSchema(t)
+
+	ns1 := "test-namespace"
+	namespace1 := defineNamespaceObject(ns1)
+	_, err := clientset.CoreV1().Namespaces().Create(ctx, namespace1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test namespace: %v", err)
+	}
+
+	cm1 := "test-configmap"
+	configmap1 := defineConfigMapObject(ns1, cm1)
+	_, err = clientset.CoreV1().ConfigMaps(ns1).Create(ctx, configmap1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test configmap: %v", err)
+	}
+
+	listKinds := map[schema.GroupVersionResource]string{
+		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
+		{Group: "", Version: "v1", Resource: "namespaces"}:          "NamespaceList",
+		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
+		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
+	}
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, configmap1)
 
 	return clientset, dynamicClient
 }
@@ -336,6 +367,30 @@ func TestGetUnusedNamespaces(t *testing.T) {
 			expectedOutput: `{}`,
 			expectedError:  false,
 		},
+		{
+			name:           "Namespace with configmap and with filter IgnoreResourceTypes configmaps applied",
+			getClientsFunc: namespaceWithIgnoredConfgimap,
+			filterOpts: &filters.Options{
+				IgnoreResourceTypes: []string{
+					"configmaps",
+				},
+			},
+			expectedOutput: `{
+  "": {
+    "Namespace": [
+      "test-namespace"
+    ]
+  }
+}`,
+			expectedError: false,
+		},
+		// TODO: implement tests for the following namespace filters
+		// * Exclude namespaces
+		// * Include namespaces
+		// * Newer than
+		// * Older than
+		// * Exclude Labels
+		// * Include Labels
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
