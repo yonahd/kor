@@ -70,7 +70,7 @@ func retrievePendingDeletionResources(resourceTypes []*metav1.APIResourceList, d
 
 func getResourcesWithFinalizersPendingDeletion(clientset kubernetes.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) (map[string]map[schema.GroupVersionResource][]ResourceInfo, error) {
 	// Use the discovery client to fetch API resources
-	resourceTypes, err := clientset.Discovery().ServerPreferredNamespacedResources()
+	resourceTypes, err := clientset.Discovery().ServerPreferredResources()
 	if err != nil {
 		fmt.Printf("Error fetching server resources: %v\n", err)
 		os.Exit(1)
@@ -92,7 +92,7 @@ func GetUnusedfinalizers(filterOpts *filters.Options, clientset kubernetes.Inter
 	allDiffs := make(map[string][]ResourceInfo)
 
 	for namespace, resourceType := range pendingDeletionDiffs {
-		if slices.Contains(namespaces, namespace) {
+		if slices.Contains(namespaces, namespace) || namespace == metav1.NamespaceAll {
 			for gvr, resourceDiff := range resourceType {
 				if opts.DeleteFlag {
 					if resourceDiff, err = DeleteResourceWithFinalizer(resourceDiff, dynamicClient, namespace, gvr, opts.NoInteractive); err != nil {
@@ -109,9 +109,15 @@ func GetUnusedfinalizers(filterOpts *filters.Options, clientset kubernetes.Inter
 		}
 	}
 
-	jsonResponse, err := json.MarshalIndent(response, "", "  ")
-	if err != nil {
-		return "", err
+	var jsonResponse []byte
+	switch outputFormat {
+	case "table":
+		outputBuffer = FormatOutput(response, opts)
+	case "json", "yaml":
+		var err error
+		if jsonResponse, err = json.MarshalIndent(response, "", "  "); err != nil {
+			return "", err
+		}
 	}
 
 	unusedFinalizers, err := unusedResourceFormatter(outputFormat, outputBuffer, opts, jsonResponse)
