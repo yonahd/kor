@@ -56,7 +56,14 @@ func createEmptyNamespaceWithIgnoredByDefaultResource(ctx context.Context, t *te
 	serviceAccount1 := defineServiceAccountObject(ns1, sa1)
 	_, err = clientset.CoreV1().ServiceAccounts(ns1).Create(ctx, serviceAccount1, metav1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("Failed to create test service account: %v", err)
+		t.Fatalf("Failed to create test ServiceAccount: %v", err)
+	}
+
+	cm1 := "openshift-service-ca.crt"
+	configmap1 := defineConfigMapObject(ns1, cm1)
+	_, err = clientset.CoreV1().ConfigMaps(ns1).Create(ctx, configmap1, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test ConfigMap: %v", err)
 	}
 
 	listKinds := map[schema.GroupVersionResource]string{
@@ -65,7 +72,7 @@ func createEmptyNamespaceWithIgnoredByDefaultResource(ctx context.Context, t *te
 		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
 		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, serviceAccount1)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, serviceAccount1, configmap1)
 
 	return clientset, dynamicClient
 }
