@@ -58,7 +58,7 @@ func processNamespaces(ctx context.Context, clientset kubernetes.Interface, dyna
 		}
 
 		// skipping user labeled resources
-		if namespace.Labels["kor/used"] == "false" {
+		if namespace.Labels["kor/used"] == "false" && !exceptionFound {
 			unusedNamespaces = append(
 				unusedNamespaces,
 				ResourceInfo{Name: namespace.Name, Reason: "Marked with unused label"},
