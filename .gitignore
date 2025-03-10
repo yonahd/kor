@@ -1,11 +1,13 @@
-.vscode
 *.iml
 .idea/
+.vscode/
 dist/**
 main.exe
-coverage.txt
+coverage.*
 build/
 kor
 !kor/
 *.swp
 hack/exceptions
+.envrc
+.tool-versions
