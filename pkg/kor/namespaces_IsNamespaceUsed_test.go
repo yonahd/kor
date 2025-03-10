@@ -126,6 +126,15 @@ func (c *fakeClientset) Discovery() discovery.DiscoveryInterface {
 	return c.discovery
 }
 
+func defineConfigMapObject(ns, name string) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+		},
+	}
+}
+
 // Create a test deployment in the namespace
 func defineDeployObject(ns, name string) *appsv1.Deployment {
 	var replicas int32 = 42
