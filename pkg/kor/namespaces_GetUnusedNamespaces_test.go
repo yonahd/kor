@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	discoveryfake "k8s.io/client-go/discovery/fake"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
@@ -44,6 +45,7 @@ func createEmptyNamespaceWithIgnoredByDefaultResource(ctx context.Context, t *te
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
+	objects := []runtime.Object{}
 
 	ns1 := "test-namespace"
 	namespace1 := defineNamespaceObject(ns1)
@@ -51,6 +53,7 @@ func createEmptyNamespaceWithIgnoredByDefaultResource(ctx context.Context, t *te
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace1)
 
 	sa1 := "default"
 	serviceAccount1 := defineServiceAccountObject(ns1, sa1)
@@ -58,6 +61,7 @@ func createEmptyNamespaceWithIgnoredByDefaultResource(ctx context.Context, t *te
 	if err != nil {
 		t.Fatalf("Failed to create test ServiceAccount: %v", err)
 	}
+	objects = append(objects, serviceAccount1)
 
 	cm1 := "openshift-service-ca.crt"
 	configmap1 := defineConfigMapObject(ns1, cm1)
@@ -65,6 +69,7 @@ func createEmptyNamespaceWithIgnoredByDefaultResource(ctx context.Context, t *te
 	if err != nil {
 		t.Fatalf("Failed to create test ConfigMap: %v", err)
 	}
+	objects = append(objects, configmap1)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
@@ -72,7 +77,7 @@ func createEmptyNamespaceWithIgnoredByDefaultResource(ctx context.Context, t *te
 		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
 		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, serviceAccount1, configmap1)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	return clientset, dynamicClient
 }
@@ -82,6 +87,7 @@ func createNonEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Inte
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
+	objects := []runtime.Object{}
 
 	ns1 := "test-namespace"
 	namespace1 := defineNamespaceObject(ns1)
@@ -89,6 +95,7 @@ func createNonEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Inte
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace1)
 
 	sa1 := "my-app"
 	serviceAccount1 := defineServiceAccountObject(ns1, sa1)
@@ -96,6 +103,7 @@ func createNonEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Inte
 	if err != nil {
 		t.Fatalf("Failed to create test service account: %v", err)
 	}
+	objects = append(objects, serviceAccount1)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
@@ -103,7 +111,7 @@ func createNonEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Inte
 		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
 		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, serviceAccount1)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	return clientset, dynamicClient
 }
@@ -113,6 +121,7 @@ func createEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Interfa
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
+	objects := []runtime.Object{}
 
 	ns1 := "empty-namespace"
 	namespace1 := defineNamespaceObject(ns1)
@@ -120,6 +129,7 @@ func createEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Interfa
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace1)
 
 	evtName := "some-random-event"
 	newEventType := defineNewTypeEventObject(ns1, evtName)
@@ -127,6 +137,7 @@ func createEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Interfa
 	if err != nil {
 		t.Fatalf("Failed to create test event of group events.k8s.io: %v", err)
 	}
+	objects = append(objects, newEventType)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
@@ -134,7 +145,7 @@ func createEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Interfa
 		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
 		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, newEventType)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	return clientset, dynamicClient
 }
@@ -144,6 +155,7 @@ func createNonEmptyNamespaceLabeledAsUnused(ctx context.Context, t *testing.T) (
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
+	objects := []runtime.Object{}
 
 	ns1 := "nonempty-namespace-labeled"
 	namespace1 := defineNamespaceObject(ns1)
@@ -154,6 +166,7 @@ func createNonEmptyNamespaceLabeledAsUnused(ctx context.Context, t *testing.T) (
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace1)
 
 	sa1 := "my-app"
 	serviceAccount1 := defineServiceAccountObject(ns1, sa1)
@@ -161,6 +174,7 @@ func createNonEmptyNamespaceLabeledAsUnused(ctx context.Context, t *testing.T) (
 	if err != nil {
 		t.Fatalf("Failed to create test service account: %v", err)
 	}
+	objects = append(objects, serviceAccount1)
 
 	ns2 := "test-namespace"
 	namespace2 := defineNamespaceObject(ns2)
@@ -168,6 +182,7 @@ func createNonEmptyNamespaceLabeledAsUnused(ctx context.Context, t *testing.T) (
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace2)
 
 	sa2 := "another-app"
 	serviceAccount2 := defineServiceAccountObject(ns2, sa2)
@@ -175,6 +190,7 @@ func createNonEmptyNamespaceLabeledAsUnused(ctx context.Context, t *testing.T) (
 	if err != nil {
 		t.Fatalf("Failed to create test service account: %v", err)
 	}
+	objects = append(objects, serviceAccount2)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
@@ -182,7 +198,7 @@ func createNonEmptyNamespaceLabeledAsUnused(ctx context.Context, t *testing.T) (
 		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
 		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, namespace2, serviceAccount1, serviceAccount2)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	return clientset, dynamicClient
 }
@@ -192,6 +208,7 @@ func createEmptyNamespaceLabeledAsUsed(ctx context.Context, t *testing.T) (kuber
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
+	objects := []runtime.Object{}
 
 	ns1 := "empty-namespace-labeled"
 	namespace1 := defineNamespaceObject(ns1)
@@ -202,6 +219,7 @@ func createEmptyNamespaceLabeledAsUsed(ctx context.Context, t *testing.T) (kuber
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace1)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
@@ -209,7 +227,7 @@ func createEmptyNamespaceLabeledAsUsed(ctx context.Context, t *testing.T) (kuber
 		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
 		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	return clientset, dynamicClient
 }
@@ -219,6 +237,7 @@ func namespaceWithIgnoredConfgimap(ctx context.Context, t *testing.T) (kubernete
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
+	objects := []runtime.Object{}
 
 	ns1 := "test-namespace"
 	namespace1 := defineNamespaceObject(ns1)
@@ -226,6 +245,7 @@ func namespaceWithIgnoredConfgimap(ctx context.Context, t *testing.T) (kubernete
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace1)
 
 	cm1 := "test-configmap"
 	configmap1 := defineConfigMapObject(ns1, cm1)
@@ -233,6 +253,7 @@ func namespaceWithIgnoredConfgimap(ctx context.Context, t *testing.T) (kubernete
 	if err != nil {
 		t.Fatalf("Failed to create test configmap: %v", err)
 	}
+	objects = append(objects, configmap1)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
@@ -240,7 +261,7 @@ func namespaceWithIgnoredConfgimap(ctx context.Context, t *testing.T) (kubernete
 		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
 		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1, configmap1)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	return clientset, dynamicClient
 }
@@ -250,6 +271,7 @@ func createKubeSystemNamespaceWithKorUnusedLabel(ctx context.Context, t *testing
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
+	objects := []runtime.Object{}
 
 	ns1 := "kube-system"
 	namespace1 := defineNamespaceObject(ns1)
@@ -260,6 +282,7 @@ func createKubeSystemNamespaceWithKorUnusedLabel(ctx context.Context, t *testing
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace1)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
@@ -267,7 +290,7 @@ func createKubeSystemNamespaceWithKorUnusedLabel(ctx context.Context, t *testing
 		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
 		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	return clientset, dynamicClient
 }
@@ -277,6 +300,7 @@ func createKubeSystemNamespace(ctx context.Context, t *testing.T) (kubernetes.In
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
+	objects := []runtime.Object{}
 
 	ns1 := "kube-system"
 	namespace1 := defineNamespaceObject(ns1)
@@ -284,6 +308,7 @@ func createKubeSystemNamespace(ctx context.Context, t *testing.T) (kubernetes.In
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace1)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}:     "DeploymentList",
@@ -291,7 +316,7 @@ func createKubeSystemNamespace(ctx context.Context, t *testing.T) (kubernetes.In
 		{Group: "events.k8s.io", Version: "v1", Resource: "events"}: "EventList",
 		{Group: "", Version: "v1", Resource: "events"}:              "EventList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace1)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	return clientset, dynamicClient
 }
@@ -391,13 +416,6 @@ func TestGetUnusedNamespaces(t *testing.T) {
 }`,
 			expectedError: false,
 		},
-		// TODO: implement tests for the following namespace filters
-		// * Exclude namespaces
-		// * Include namespaces
-		// * Newer than
-		// * Older than
-		// * Exclude Labels
-		// * Include Labels
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -201,6 +201,7 @@ func createHappyDeployFakeClientInterfaces(ctx context.Context, t *testing.T, ns
 	realClientset := fake.NewSimpleClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
+	objects := []runtime.Object{}
 
 	scheme := getNamespaceTestSchema(t)
 	namespace := defineNamespaceObject(ns)
@@ -208,18 +209,20 @@ func createHappyDeployFakeClientInterfaces(ctx context.Context, t *testing.T, ns
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace)
 
 	deployment := defineDeployObject(ns, name)
 	_, err = clientset.AppsV1().Deployments(ns).Create(ctx, deployment, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Failed to create test deployment: %v", err)
 	}
+	objects = append(objects, deployment)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
 		{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, deployment, namespace)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	return clientset, dynamicClient
 }
@@ -228,6 +231,7 @@ func createHappyEmptyFakeClientInterfaces(ctx context.Context, t *testing.T, ns,
 	realClientset := fake.NewSimpleClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
+	objects := []runtime.Object{}
 
 	scheme := getNamespaceTestSchema(t)
 	namespace := defineNamespaceObject(ns)
@@ -235,12 +239,13 @@ func createHappyEmptyFakeClientInterfaces(ctx context.Context, t *testing.T, ns,
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
 		{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	return clientset, dynamicClient
 }
@@ -249,6 +254,7 @@ func createUnhappyDiscoveryFakeClientInterfaces(ctx context.Context, t *testing.
 	realClientset := fake.NewSimpleClientset()
 	fakeDisc := &fakeUnhappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
+	objects := []runtime.Object{}
 
 	scheme := getNamespaceTestSchema(t)
 	namespace := defineNamespaceObject(ns)
@@ -256,12 +262,13 @@ func createUnhappyDiscoveryFakeClientInterfaces(ctx context.Context, t *testing.
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
 		{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	return clientset, dynamicClient
 }
@@ -270,6 +277,7 @@ func createBrokenAPIResourceListDiscoveryFakeClientInterfaces(ctx context.Contex
 	realClientset := fake.NewSimpleClientset()
 	fakeDisc := &fakeBrokenAPIResourceListDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
+	objects := []runtime.Object{}
 
 	scheme := getNamespaceTestSchema(t)
 	namespace := defineNamespaceObject(ns)
@@ -277,12 +285,13 @@ func createBrokenAPIResourceListDiscoveryFakeClientInterfaces(ctx context.Contex
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
 		{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, namespace)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	return clientset, dynamicClient
 }
@@ -291,6 +300,7 @@ func createDynamicDeployListForcedErrorFakeClientInterfaces(ctx context.Context,
 	realClientset := fake.NewSimpleClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
+	objects := []runtime.Object{}
 
 	scheme := getNamespaceTestSchema(t)
 	namespace := defineNamespaceObject(ns)
@@ -298,18 +308,20 @@ func createDynamicDeployListForcedErrorFakeClientInterfaces(ctx context.Context,
 	if err != nil {
 		t.Fatalf("Failed to create test namespace: %v", err)
 	}
+	objects = append(objects, namespace)
 
 	deployment := defineDeployObject(ns, name)
 	_, err = clientset.AppsV1().Deployments("test-namespace").Create(ctx, deployment, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Failed to create test deployment: %v", err)
 	}
+	objects = append(objects, deployment)
 
 	listKinds := map[schema.GroupVersionResource]string{
 		{Group: "apps", Version: "v1", Resource: "deployments"}: "DeploymentList",
 		{Group: "", Version: "v1", Resource: "namespaces"}:      "NamespaceList",
 	}
-	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds)
+	dynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 	dynamicClient.PrependReactor("list", "deployments", func(action ktesting.Action) (handled bool, ret runtime.Object, err error) {
 		return true, nil, fmt.Errorf("forced error")
 	})
