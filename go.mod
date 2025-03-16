@@ -1,6 +1,7 @@
 module github.com/yonahd/kor
 
 go 1.23.2
+toolchain go1.24.1
 
 require (
 	github.com/fatih/color v1.18.0
@@ -9,7 +10,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	k8s.io/api v0.32.2
 	k8s.io/apiextensions-apiserver v0.32.2
-	k8s.io/apimachinery v0.32.2
+	k8s.io/apimachinery v0.32.3
 	k8s.io/client-go v0.32.2
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
 	sigs.k8s.io/yaml v1.4.0
