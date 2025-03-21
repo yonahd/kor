@@ -332,73 +332,73 @@ func TestGetUnusedNamespaces(t *testing.T) {
 		expectedOutput string
 		expectedError  bool
 	}{
-		// {
-		// 	name:           "Namespace contains only ignored by default resource types",
-		// 	getClientsFunc: createEmptyNamespace,
-		// 	filterOpts:     &filters.Options{},
-		// 	expectedOutput: `{
-		// "": {
-		// "Namespace": [
-		// "empty-namespace"
-		// ]
-		// }
-		// }`,
-		// 	expectedError: false,
-		// },
-		// {
-		// 	name:           "Namespace contains only ignored by default resource",
-		// 	getClientsFunc: createEmptyNamespaceWithIgnoredByDefaultResource,
-		// 	filterOpts:     &filters.Options{},
-		// 	expectedOutput: `{
-		// "": {
-		// "Namespace": [
-		// "test-namespace"
-		// ]
-		// }
-		// }`,
-		// 	expectedError: false,
-		// },
-		// {
-		// 	name:           "Namespace contains non ignored by default resource",
-		// 	getClientsFunc: createNonEmptyNamespace,
-		// 	filterOpts:     &filters.Options{},
-		// 	expectedOutput: `{}`,
-		// 	expectedError:  false,
-		// },
-		// {
-		// 	name:           "Nonempty Namespace contains kor/used=false label",
-		// 	getClientsFunc: createNonEmptyNamespaceLabeledAsUnused,
-		// 	filterOpts:     &filters.Options{},
-		// 	expectedOutput: `{
-		// "": {
-		// "Namespace": [
-		// "nonempty-namespace-labeled"
-		// ]
-		// }
-		// }`,
-		// 	expectedError: false,
-		// },
-		// {
-		// 	name:           "Empty Namespace contains kor/used=true label",
-		// 	getClientsFunc: createEmptyNamespaceLabeledAsUsed,
-		// 	filterOpts:     &filters.Options{},
-		// 	expectedOutput: `{}`,
-		// 	expectedError:  false,
-		// },
-		// {
-		// 	name:           "kube-system special Namespace",
-		// 	getClientsFunc: createKubeSystemNamespace,
-		// 	filterOpts:     &filters.Options{},
-		// 	expectedOutput: `{}`,
-		// 	expectedError:  false,
-		// },
-		// {
-		// 	name:           "kube-system special Namespace contains kor/used=false label",
-		// 	getClientsFunc: createKubeSystemNamespaceWithKorUnusedLabel,
-		// 	filterOpts:     &filters.Options{},
-		// 	expectedOutput: `{}`,
-		// 	expectedError:  false,
-		// },
+		{
+			name:           "Namespace contains only ignored by default resource types",
+			getClientsFunc: createEmptyNamespace,
+			filterOpts:     &filters.Options{},
+			expectedOutput: `{
+  "": {
+    "Namespace": [
+      "empty-namespace"
+    ]
+  }
+}`,
+			expectedError: false,
+		},
+		{
+			name:           "Namespace contains only ignored by default resource",
+			getClientsFunc: createEmptyNamespaceWithIgnoredByDefaultResource,
+			filterOpts:     &filters.Options{},
+			expectedOutput: `{
+  "": {
+    "Namespace": [
+      "test-namespace"
+    ]
+  }
+}`,
+			expectedError: false,
+		},
+		{
+			name:           "Namespace contains non ignored by default resource",
+			getClientsFunc: createNonEmptyNamespace,
+			filterOpts:     &filters.Options{},
+			expectedOutput: `{}`,
+			expectedError:  false,
+		},
+		{
+			name:           "Nonempty Namespace contains kor/used=false label",
+			getClientsFunc: createNonEmptyNamespaceLabeledAsUnused,
+			filterOpts:     &filters.Options{},
+			expectedOutput: `{
+  "": {
+    "Namespace": [
+      "nonempty-namespace-labeled"
+    ]
+  }
+}`,
+			expectedError: false,
+		},
+		{
+			name:           "Empty Namespace contains kor/used=true label",
+			getClientsFunc: createEmptyNamespaceLabeledAsUsed,
+			filterOpts:     &filters.Options{},
+			expectedOutput: `{}`,
+			expectedError:  false,
+		},
+		{
+			name:           "kube-system special Namespace",
+			getClientsFunc: createKubeSystemNamespace,
+			filterOpts:     &filters.Options{},
+			expectedOutput: `{}`,
+			expectedError:  false,
+		},
+		{
+			name:           "kube-system special Namespace contains kor/used=false label",
+			getClientsFunc: createKubeSystemNamespaceWithKorUnusedLabel,
+			filterOpts:     &filters.Options{},
+			expectedOutput: `{}`,
+			expectedError:  false,
+		},
 		{
 			name:           "Namespace with configmap and with filter IgnoreResourceTypes configmaps applied",
 			getClientsFunc: namespaceWithIgnoredConfgimap,
