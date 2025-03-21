@@ -23,6 +23,9 @@ import (
 //go:embed exceptions/namespaces/namespaces.json
 var namespacesConfig []byte
 
+//go:embed exceptions/namespaced-resources/namespaced-resources.json
+var namespacedResourcesConfig []byte
+
 type NamespacedResource struct {
 	Identifier types.NamespacedName
 	GVR        schema.GroupVersionResource
@@ -116,6 +119,11 @@ func ignoreResourceType(resource string, ignoreResourceTypes []string) bool {
 }
 
 func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, filterOpts *filters.Options) (bool, error) {
+	config, err := unmarshalConfig(namespacedResourcesConfig)
+	if err != nil {
+		return true, err
+	}
+
 	apiResourceLists, err := clientset.Discovery().ServerPreferredNamespacedResources()
 	if err != nil {
 		return true, err
@@ -143,18 +151,18 @@ func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynami
 						Name:      resourceInNamespace.GetName(),
 					},
 				}
+
 				// User specified resource type ignore list
-				if ignoreResourceType(resource.GVR.Resource, append(filterOpts.IgnoreResourceTypes, "events")) {
+				if ignoreResourceType(resource.GVR.Resource, filterOpts.IgnoreResourceTypes) {
 					continue
 				}
 
-				// TODO: decide if this is sufficient
-				// ignore default ServiceAccount
-				if resource.GVR.Resource == "serviceaccounts" && resource.Identifier.Name == "default" {
-					continue
+				// ignore namespaced resources within exception list
+				exceptionFound, err := isNamespacedResourceException(resource.Identifier.Name, resource.Identifier.Namespace, resource.GVR.Resource, config.ExceptionNamespacedResources)
+				if err != nil {
+					return true, err
 				}
-				// ignore openshift-service-ca.crt ConfigMap
-				if resource.GVR.Resource == "configmaps" && resource.Identifier.Name == "openshift-service-ca.crt" {
+				if exceptionFound {
 					continue
 				}
 
