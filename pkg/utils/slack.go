@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -17,6 +18,10 @@ type SendMessageToSlack interface {
 	SendToSlack(opts common.Opts, outputBuffer string) error
 }
 
+type SlackPayload struct {
+	Text string `json:"text"`
+}
+
 type SlackMessage struct {
 }
 
@@ -26,8 +31,15 @@ func SendToSlack(sm SendMessageToSlack, opts common.Opts, outputBuffer string) e
 
 func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error {
 	if opts.WebhookURL != "" {
-		payload := []byte(`{"text": "` + outputBuffer + `"}`)
-		_, err := http.Post(opts.WebhookURL, "application/json", bytes.NewBuffer(payload))
+
+		// Prepare payload safely
+		slackPayload := SlackPayload{Text: outputBuffer}
+		payload, err := json.Marshal(slackPayload)
+		if err != nil {
+			return fmt.Errorf("failed to marshal Slack payload: %w", err)
+		}
+
+		_, err = http.Post(opts.WebhookURL, "application/json", bytes.NewBuffer(payload))
 
 		if err != nil {
 			return err

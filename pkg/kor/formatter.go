@@ -28,7 +28,7 @@ func getTableRow(index int, columns ...string) []string {
 func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opts common.Opts, jsonResponse []byte) (string, error) {
 	switch outputFormat {
 	case "table":
-		if opts.WebhookURL == "" || opts.Channel == "" || opts.Token != "" {
+		if opts.WebhookURL == "" && (opts.Channel == "" || opts.Token == "") {
 			return outputBuffer.String(), nil
 		}
 		if err := utils.SendToSlack(utils.SlackMessage{}, opts, outputBuffer.String()); err != nil {
