@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
@@ -25,8 +26,8 @@ func execName() string {
 
 var rootCmd = &cobra.Command{
 	Use:   execName(),
-	Short: "kor - a CLI to to discover unused Kubernetes resources",
-	Long: `kor is a CLI to to discover unused Kubernetes resources
+	Short: "kor - a CLI to discover unused Kubernetes resources",
+	Long: `kor is a CLI to discover unused Kubernetes resources
 	kor can currently discover unused configmaps and secrets`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -52,6 +53,12 @@ var (
 )
 
 func init() {
+	initFlags()
+	initViper()
+	addFilterOptionsFlag(rootCmd, filterOptions)
+}
+
+func initFlags() {
 	rootCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "Output format (table, json or yaml)")
 	rootCmd.PersistentFlags().StringVar(&opts.WebhookURL, "slack-webhook-url", "", "Slack webhook URL to send notifications to")
@@ -62,7 +69,31 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&opts.Verbose, "verbose", "v", false, "Verbose output (print empty namespaces)")
 	rootCmd.PersistentFlags().StringVar(&opts.GroupBy, "group-by", "namespace", "Group output by (namespace, resource)")
 	rootCmd.PersistentFlags().BoolVar(&opts.ShowReason, "show-reason", false, "Print reason resource is considered unused")
-	addFilterOptionsFlag(rootCmd, filterOptions)
+}
+
+func initViper() {
+	if err := viper.BindEnv("slack-webhook-url", "SLACK_WEBHOOK_URL"); err != nil {
+		fmt.Printf("Error binding SLACK_WEBHOOK_URL: %v\n", err)
+	}
+	if err := viper.BindEnv("slack-auth-token", "SLACK_AUTH_TOKEN"); err != nil {
+		fmt.Printf("Error binding SLACK_AUTH_TOKEN: %v\n", err)
+	}
+
+	viper.AutomaticEnv()
+
+	if err := viper.BindPFlag("slack-webhook-url", rootCmd.PersistentFlags().Lookup("slack-webhook-url")); err != nil {
+		fmt.Printf("Error binding flag --slack-webhook-url: %v\n", err)
+	}
+
+	if err := viper.BindPFlag("slack-auth-token", rootCmd.PersistentFlags().Lookup("slack-auth-token")); err != nil {
+		fmt.Printf("Error binding flag --slack-auth-token: %v\n", err)
+	}
+
+	opts.WebhookURL = viper.GetString("slack-webhook-url")
+	opts.Token = viper.GetString("slack-auth-token")
+
+	opts.WebhookURL = os.ExpandEnv(opts.WebhookURL)
+	opts.Token = os.ExpandEnv(opts.Token)
 }
 
 func Execute() {
