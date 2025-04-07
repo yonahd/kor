@@ -28,8 +28,6 @@ spec:
                 - --namespaced={{ .Values.cronJob.namespaced }}
               {{- end}}
               {{- if .Values.cronJob.slackWebhookUrl }}
-                - '--slack-webhook-url'
-                - "${SLACK_WEBHOOK_URL}"
               env:
                 - name: SLACK_WEBHOOK_URL
                   valueFrom:
@@ -39,8 +37,6 @@ spec:
               {{- else if and .Values.cronJob.slackChannel .Values.cronJob.slackAuthToken }}
                 - '--slack-channel'
                 - {{ .Values.cronJob.slackChannel | quote }}
-                - '--slack-auth-token'
-                - "${SLACK_AUTH_TOKEN}"
               env:
                 - name: SLACK_AUTH_TOKEN
                   valueFrom:
