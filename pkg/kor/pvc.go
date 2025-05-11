@@ -38,7 +38,7 @@ func retrieveUsedPvcs(clientset kubernetes.Interface, namespace string) ([]strin
 	return usedPvcs, err
 }
 
-func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	pvcs, err := clientset.CoreV1().PersistentVolumeClaims(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
@@ -75,21 +75,21 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filt
 		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
 	}
 
+	if opts.DeleteFlag {
+		if diff, err = DeleteResource(diff, clientset, namespace, "PVC", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete PVC %s in namespace %s: %v\n", diff, namespace, err)
+		}
+	}
 	return diff, nil
 }
 
 func GetUnusedPvcs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespacePvcs(clientset, namespace, filterOpts)
+		diff, err := processNamespacePvcs(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "PVC", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete PVC %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 		switch opts.GroupBy {
 		case "namespace":

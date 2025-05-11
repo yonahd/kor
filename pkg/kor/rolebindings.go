@@ -52,7 +52,7 @@ func validateRoleReference(rb v1.RoleBinding, roleNames, clusterRoleNames map[st
 	return nil
 }
 
-func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	roleBindingsList, err := clientset.RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
@@ -115,25 +115,22 @@ func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace stri
 			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "RoleBinding references a non-existing ServiceAccount"})
 		}
 	}
-
+	if opts.DeleteFlag {
+		if unusedRoleBindingNames, err = DeleteResource(unusedRoleBindingNames, clientset, namespace, "RoleBinding", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete RoleBinding %s in namespace %s: %v\n", unusedRoleBindingNames, namespace, err)
+		}
+	}
 	return unusedRoleBindingNames, nil
 }
 
 func GetUnusedRoleBindings(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceRoleBindings(clientset, namespace, filterOpts)
+		diff, err := processNamespaceRoleBindings(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "RoleBinding", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete RoleBinding %s in namespace %s: %v\n", diff, namespace, err)
-			}
-		}
-
 		switch opts.GroupBy {
 		case "namespace":
 			resources[namespace] = make(map[string][]ResourceInfo)

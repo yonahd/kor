@@ -58,7 +58,7 @@ func createTestDeployments(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceDeployments(t *testing.T) {
 	clientset := createTestDeployments(t)
 
-	deploymentsWithoutReplicas, err := processNamespaceDeployments(clientset, testNamespace, &filters.Options{})
+	deploymentsWithoutReplicas, err := processNamespaceDeployments(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

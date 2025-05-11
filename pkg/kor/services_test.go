@@ -58,7 +58,7 @@ func createTestServices(t *testing.T) *fake.Clientset {
 func TestGetEndpointsWithoutSubsets(t *testing.T) {
 	clientset := createTestServices(t)
 
-	servicesWithoutEndpoints, err := processNamespaceServices(clientset, testNamespace, &filters.Options{})
+	servicesWithoutEndpoints, err := processNamespaceServices(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

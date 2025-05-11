@@ -75,7 +75,7 @@ func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterO
 	return names, unusedRoleNames, nil
 }
 
-func processNamespaceRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceRoles(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	usedRoles, err := retrieveUsedRoles(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -99,22 +99,21 @@ func processNamespaceRoles(clientset kubernetes.Interface, namespace string, fil
 		reason := "Marked with unused label"
 		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
 	}
-
+	if opts.DeleteFlag {
+		if diff, err = DeleteResource(diff, clientset, namespace, "Role", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete Role %s in namespace %s: %v\n", diff, namespace, err)
+		}
+	}
 	return diff, nil
 }
 
 func GetUnusedRoles(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceRoles(clientset, namespace, filterOpts)
+		diff, err := processNamespaceRoles(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Role", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Role %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 		switch opts.GroupBy {
 		case "namespace":

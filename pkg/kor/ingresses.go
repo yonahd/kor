@@ -91,7 +91,7 @@ func retrieveIngressNames(clientset kubernetes.Interface, namespace string, filt
 	return names, unusedIngressNames, nil
 }
 
-func processNamespaceIngresses(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceIngresses(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	usedIngresses, err := retrieveUsedIngress(clientset, namespace, filterOpts)
 	if err != nil {
 		return nil, err
@@ -112,7 +112,11 @@ func processNamespaceIngresses(clientset kubernetes.Interface, namespace string,
 		reason := "Marked with unused label"
 		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
 	}
-
+	if opts.DeleteFlag {
+		if diff, err = DeleteResource(diff, clientset, namespace, "Ingress", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete Ingress %s in namespace %s: %v\n", diff, namespace, err)
+		}
+	}
 	return diff, nil
 
 }
@@ -120,15 +124,10 @@ func processNamespaceIngresses(clientset kubernetes.Interface, namespace string,
 func GetUnusedIngresses(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceIngresses(clientset, namespace, filterOpts)
+		diff, err := processNamespaceIngresses(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Ingress", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Ingress %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 		switch opts.GroupBy {
 		case "namespace":

@@ -18,7 +18,7 @@ import (
 //go:embed exceptions/services/services.json
 var servicesConfig []byte
 
-func processNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	endpointsList, err := clientset.CoreV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
@@ -57,6 +57,12 @@ func processNamespaceServices(clientset kubernetes.Interface, namespace string, 
 		}
 	}
 
+	if opts.DeleteFlag {
+		if endpointsWithoutSubsets, err = DeleteResource(endpointsWithoutSubsets, clientset, namespace, "Service", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete Service %s in namespace %s: %v\n", endpointsWithoutSubsets, namespace, err)
+		}
+	}
+
 	return endpointsWithoutSubsets, nil
 }
 
@@ -64,16 +70,12 @@ func GetUnusedServices(filterOpts *filters.Options, clientset kubernetes.Interfa
 	resources := make(map[string]map[string][]ResourceInfo)
 
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceServices(clientset, namespace, filterOpts)
+		diff, err := processNamespaceServices(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
 		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Service", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Service %s in namespace %s: %v\n", diff, namespace, err)
-			}
-		}
+
 		switch opts.GroupBy {
 		case "namespace":
 			if diff != nil {

@@ -20,7 +20,7 @@ import (
 //go:embed exceptions/pdbs/pdbs.json
 var pdbsConfig []byte
 
-func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	var unusedPdbs []ResourceInfo
 	pdbs, err := clientset.PolicyV1().PodDisruptionBudgets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
@@ -83,6 +83,11 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 		if !hasMatchingTemplates && !hasMatchingWorkloads {
 			reason := "Pdb is not referencing any deployments, statefulsets or pods"
 			unusedPdbs = append(unusedPdbs, ResourceInfo{Name: pdb.Name, Reason: reason})
+		}
+	}
+	if opts.DeleteFlag {
+		if unusedPdbs, err = DeleteResource(unusedPdbs, clientset, namespace, "PDB", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete PDB %s in namespace %s: %v\n", unusedPdbs, namespace, err)
 		}
 	}
 
@@ -158,15 +163,10 @@ func validateMatchingWorkloads(clientset kubernetes.Interface, namespace string,
 func GetUnusedPdbs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespacePdbs(clientset, namespace, filterOpts)
+		diff, err := processNamespacePdbs(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "PDB", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete PDB %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 		switch opts.GroupBy {
 		case "namespace":

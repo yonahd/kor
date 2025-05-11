@@ -67,7 +67,7 @@ func createTestHpas(t *testing.T) *fake.Clientset {
 func TestExtractUnusedHpas(t *testing.T) {
 	clientset := createTestHpas(t)
 
-	unusedHpas, err := processNamespaceHpas(clientset, testNamespace, &filters.Options{})
+	unusedHpas, err := processNamespaceHpas(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
