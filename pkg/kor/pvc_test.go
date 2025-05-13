@@ -94,7 +94,7 @@ func TestRetrieveUsedPvcs(t *testing.T) {
 
 func TestProcessNamespacePvcs(t *testing.T) {
 	clientset := createTestPvcs(t)
-	usedPvcs, err := processNamespacePvcs(clientset, testNamespace, &filters.Options{})
+	usedPvcs, err := processNamespacePvcs(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

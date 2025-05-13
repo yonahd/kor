@@ -279,7 +279,7 @@ func TestRetrieveSecretNames(t *testing.T) {
 func TestProcessNamespaceSecret(t *testing.T) {
 	clientset := createTestSecrets(t)
 
-	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, &filters.Options{})
+	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Fatalf("Error retrieving unused secrets: %v", err)
 	}

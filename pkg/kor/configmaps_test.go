@@ -166,7 +166,7 @@ func TestRetrieveConfigMapNames(t *testing.T) {
 func TestProcessNamespaceCM(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 
-	diff, err := processNamespaceCM(clientset, testNamespace, &filters.Options{})
+	diff, err := processNamespaceCM(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Fatalf("Error processing namespace CM: %v", err)
 	}
