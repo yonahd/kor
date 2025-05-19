@@ -206,7 +206,7 @@ func TestIsAnyEgressRuleUsed(t *testing.T) {
 func TestProcessNamespaceNetworkPolicies(t *testing.T) {
 	clientset := createTestNetworkPolicies(t)
 
-	unusedNetpols, err := processNamespaceNetworkPolicies(clientset, testNamespace, &filters.Options{})
+	unusedNetpols, err := processNamespaceNetworkPolicies(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

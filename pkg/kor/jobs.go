@@ -20,7 +20,7 @@ import (
 //go:embed exceptions/jobs/jobs.json
 var jobsConfig []byte
 
-func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	jobsList, err := clientset.BatchV1().Jobs(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
@@ -75,21 +75,22 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 		}
 	}
 
+	if opts.DeleteFlag {
+		if unusedJobNames, err = DeleteResource(unusedJobNames, clientset, namespace, "Job", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete Job %s in namespace %s: %v\n", unusedJobNames, namespace, err)
+		}
+	}
+
 	return unusedJobNames, nil
 }
 
 func GetUnusedJobs(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceJobs(clientset, namespace, filterOpts)
+		diff, err := processNamespaceJobs(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Job", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Job %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 		switch opts.GroupBy {
 		case "namespace":

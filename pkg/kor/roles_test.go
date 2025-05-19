@@ -93,7 +93,7 @@ func TestRetrieveRoleNames(t *testing.T) {
 func TestProcessNamespaceRoles(t *testing.T) {
 	clientset := createTestRoles(t)
 
-	unusedRoles, err := processNamespaceRoles(clientset, testNamespace, &filters.Options{})
+	unusedRoles, err := processNamespaceRoles(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

@@ -150,7 +150,7 @@ func createTestJobs(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceJobs(t *testing.T) {
 	clientset := createTestJobs(t)
 
-	unusedJobs, err := processNamespaceJobs(clientset, testNamespace, &filters.Options{})
+	unusedJobs, err := processNamespaceJobs(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

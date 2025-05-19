@@ -18,7 +18,7 @@ import (
 //go:embed exceptions/daemonsets/daemonsets.json
 var daemonsetsConfig []byte
 
-func processNamespaceDaemonSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceDaemonSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	daemonSetsList, err := clientset.AppsV1().DaemonSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
@@ -56,22 +56,21 @@ func processNamespaceDaemonSets(clientset kubernetes.Interface, namespace string
 			daemonSetsWithoutReplicas = append(daemonSetsWithoutReplicas, ResourceInfo{Name: daemonSet.Name, Reason: reason})
 		}
 	}
-
+	if opts.DeleteFlag {
+		if daemonSetsWithoutReplicas, err = DeleteResource(daemonSetsWithoutReplicas, clientset, namespace, "DaemonSet", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete DaemonSet %s in namespace %s: %v\n", daemonSetsWithoutReplicas, namespace, err)
+		}
+	}
 	return daemonSetsWithoutReplicas, nil
 }
 
 func GetUnusedDaemonSets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceDaemonSets(clientset, namespace, filterOpts)
+		diff, err := processNamespaceDaemonSets(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "DaemonSet", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete DaemonSet %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 		switch opts.GroupBy {
 		case "namespace":

@@ -121,7 +121,7 @@ func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace strin
 	return names, unusedServiceAccountNames, nil
 }
 
-func processNamespaceSA(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceSA(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	usedServiceAccounts, roleServiceAccounts, clusterRoleServiceAccounts, err := retrieveUsedSA(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -161,21 +161,21 @@ func processNamespaceSA(clientset kubernetes.Interface, namespace string, filter
 		reason := "Marked with unused label"
 		unusedServiceAccounts = append(unusedServiceAccounts, ResourceInfo{Name: name, Reason: reason})
 	}
+	if opts.DeleteFlag {
+		if unusedServiceAccounts, err = DeleteResource(unusedServiceAccounts, clientset, namespace, "ServiceAccount", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete Serviceaccount %s in namespace %s: %v\n", unusedServiceAccounts, namespace, err)
+		}
+	}
 	return unusedServiceAccounts, nil
 }
 
 func GetUnusedServiceAccounts(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceSA(clientset, namespace, filterOpts)
+		diff, err := processNamespaceSA(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "ServiceAccount", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Serviceaccount %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 		switch opts.GroupBy {
 		case "namespace":

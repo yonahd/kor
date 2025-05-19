@@ -8,4 +8,5 @@ build/
 kor
 !kor/
 *.swp
+main
 hack/exceptions

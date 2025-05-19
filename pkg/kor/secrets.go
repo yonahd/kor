@@ -153,7 +153,7 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 	return names, unusedSecretNames, nil
 }
 
-func processNamespaceSecret(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceSecret(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(clientset, namespace)
 	if err != nil {
 		return nil, err
@@ -197,6 +197,11 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
 	}
 
+	if opts.DeleteFlag {
+		if diff, err = DeleteResource(diff, clientset, namespace, "Secret", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete Secret %s in namespace %s: %v\n", diff, namespace, err)
+		}
+	}
 	return diff, nil
 
 }
@@ -204,15 +209,10 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 func GetUnusedSecrets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceSecret(clientset, namespace, filterOpts)
+		diff, err := processNamespaceSecret(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Secret", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Secret %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 		switch opts.GroupBy {
 		case "namespace":

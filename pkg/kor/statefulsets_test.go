@@ -58,7 +58,7 @@ func createTestStatefulSets(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceStatefulSets(t *testing.T) {
 	clientset := createTestStatefulSets(t)
 
-	statefulSetsWithoutReplicas, err := processNamespaceStatefulSets(clientset, testNamespace, &filters.Options{})
+	statefulSetsWithoutReplicas, err := processNamespaceStatefulSets(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

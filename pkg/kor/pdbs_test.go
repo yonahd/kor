@@ -115,7 +115,7 @@ func TestProcessNamespacePdbs(t *testing.T) {
 	totalUnusedPdbs := []ResourceInfo{}
 
 	for _, ns := range namespaces {
-		unusedPdbs, err := processNamespacePdbs(clientset, ns, &filters.Options{})
+		unusedPdbs, err := processNamespacePdbs(clientset, ns, &filters.Options{}, common.Opts{})
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}
