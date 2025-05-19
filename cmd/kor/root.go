@@ -46,11 +46,10 @@ var rootCmd = &cobra.Command{
 }
 
 var (
-	outputFormat     string
-	kubeconfig       string
-	opts             common.Opts
-	filterOptions    = &filters.Options{}
-	resourceKindList map[string]kor.ResourceKind
+	outputFormat  string
+	kubeconfig    string
+	opts          common.Opts
+	filterOptions = &filters.Options{}
 )
 
 func init() {
@@ -62,7 +61,7 @@ func init() {
 
 func initKindsList() {
 	clientset := kor.GetKubeClient(kubeconfig)
-	resourceKindList, _ = kor.GetResourceKinds(clientset)
+	kor.ResourceKindList, _ = kor.GetResourceKinds(clientset)
 }
 
 func initFlags() {

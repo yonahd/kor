@@ -16,6 +16,8 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
+var ResourceKindList map[string]ResourceKind
+
 type ExceptionResource struct {
 	Namespace    string
 	ResourceName string
