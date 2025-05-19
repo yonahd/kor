@@ -25,6 +25,10 @@ type IncludeExcludeLists struct {
 	IncludeListStr string
 	ExcludeListStr string
 }
+type ResourceKind struct {
+	Plural     string
+	ShortNames []string
+}
 
 type Config struct {
 	ExceptionClusterRoles    []ExceptionResource `json:"exceptionClusterRoles"`
@@ -204,4 +208,35 @@ func convertNamesToPresenseMap(names []string, _ []string, err error) (map[strin
 	}
 
 	return namesMap, nil
+}
+
+func GetResourceKinds(clientset kubernetes.Interface) (map[string]ResourceKind, error) {
+	resourceTypes, err := clientset.Discovery().ServerPreferredResources()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching server resources: %v", err)
+	}
+
+	kinds := make(map[string]ResourceKind)
+
+	for _, list := range resourceTypes {
+		if list == nil {
+			continue // Skip nil lists (can happen if some APIs are unavailable)
+		}
+
+		for _, resource := range list.APIResources {
+			singularName := resource.SingularName
+			if singularName == "" {
+				singularName = resource.Name
+			}
+
+			resourceKind := ResourceKind{
+				Plural:     resource.Name,
+				ShortNames: resource.ShortNames,
+			}
+
+			kinds[singularName] = resourceKind
+		}
+	}
+
+	return kinds, nil
 }
