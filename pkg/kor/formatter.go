@@ -131,7 +131,7 @@ func formatOutputForNamespace(namespace string, resources map[string][]ResourceI
 func formatOutputForResource(resource string, resources map[string][]ResourceInfo, opts common.Opts) string {
 	if len(resources) == 0 {
 		if opts.Verbose {
-			return fmt.Sprintf("No unused %ss found\n", resource)
+			return fmt.Sprintf("No unused %s found\n", ResourceKindList[strings.ToLower(resource)].Plural)
 		}
 		return ""
 	}
@@ -151,7 +151,7 @@ func formatOutputForResource(resource string, resources map[string][]ResourceInf
 		}
 	}
 	table.Render()
-	return fmt.Sprintf("Unused %ss:\n%s\n", resource, buf.String())
+	return fmt.Sprintf("Unused %s:\n%s\n", ResourceKindList[strings.ToLower(resource)].Plural, buf.String())
 }
 
 func appendResources(resources map[string]map[string][]ResourceInfo, resourceType, namespace string, diff []ResourceInfo) {
