@@ -20,10 +20,9 @@ jobs:
       - name: Set up Kind
         uses: helm/kind-action@v1.8.0
 
-      - name: Deploy resources (Deployment + Service)
+      - name: Deploy test resources from YAML
         run: |
-          kubectl create deployment nginx --image=nginx
-          kubectl expose deployment nginx --port=80 --target-port=80
+          kubectl apply -f k8s/unused-demo.yaml
           echo "=== Resources created ==="
           kubectl get all
 
