@@ -1,0 +1,55 @@
+name: Kor CI Test
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  kor-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23.2'
+
+      - name: Install kind
+        run: |
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
+
+      - name: Create Kind cluster
+        run: |
+          kind create cluster
+          kubectl cluster-info
+
+      - name: Deploy resources (Deployment + Service)
+        run: |
+          kubectl create deployment nginx --image=nginx
+          kubectl expose deployment nginx --port=80 --target-port=80
+          echo "=== Resources created ==="
+          kubectl get all
+
+      - name: Build kor
+        run: |
+          go build -o kor ./cmd
+
+      - name: Run kor all before deletion
+        run: |
+          echo "=== kor output BEFORE delete ==="
+          ./kor all
+
+      - name: Run kor all --delete
+        run: |
+          echo "=== Running kor all --delete ==="
+          ./kor all --delete
+
+      - name: Run kor all after deletion
+        run: |
+          echo "=== kor output AFTER delete ==="
+          ./kor all
