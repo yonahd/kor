@@ -29,19 +29,19 @@ jobs:
 
       - name: Build kor
         run: |
-          go build -o kor ./cmd
+          go build -o kor main.go
 
       - name: Run kor all before deletion
         run: |
           echo "=== kor output BEFORE delete ==="
-          ./kor all
+          go run main.go all
 
       - name: Run kor all --delete
         run: |
           echo "=== Running kor all --delete ==="
-          ./kor all --delete
+          go run main.go all --delete
 
       - name: Run kor all after deletion
         run: |
           echo "=== kor output AFTER delete ==="
-          ./kor all
+          go run main.go all
