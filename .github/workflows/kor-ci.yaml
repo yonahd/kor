@@ -17,16 +17,8 @@ jobs:
         with:
           go-version: '1.23.2'
 
-      - name: Install kind
-        run: |
-          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
-          chmod +x ./kind
-          sudo mv ./kind /usr/local/bin/kind
-
-      - name: Create Kind cluster
-        run: |
-          kind create cluster
-          kubectl cluster-info
+      - name: Set up Kind
+        uses: helm/kind-action@v1.8.0
 
       - name: Deploy resources (Deployment + Service)
         run: |
