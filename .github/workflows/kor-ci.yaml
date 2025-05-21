@@ -9,15 +9,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout code from PR branch
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.23.2'
 
-      - name: Set up Kind
+      - name: Set up Kind cluster
         uses: helm/kind-action@v1.8.0
 
       - name: Deploy test resources from YAML
@@ -25,10 +27,6 @@ jobs:
           kubectl apply -f k8s/unused-demo.yaml
           echo "=== Resources created ==="
           kubectl get all
-
-      - name: Build kor
-        run: |
-          go build -o kor main.go
 
       - name: Run kor all before deletion
         run: |
@@ -44,3 +42,14 @@ jobs:
         run: |
           echo "=== kor output AFTER delete ==="
           go run main.go all
+
+      - name: Verify no unused resources remain
+        run: |
+          REMAINING=$(go run main.go all | wc -l)
+          echo "Lines of output from kor all: $REMAINING"
+          if [ "$REMAINING" -gt 1 ]; then
+            echo "There are still unused resources after deletion"
+            exit 1
+          else
+            echo "All unused resources successfully deleted"
+          fi
