@@ -22,7 +22,7 @@ jobs:
 
       - name: Deploy test resources via kubectl commands
         run: |
-          kubectl create deployment nginx --image=nginx
+          kubectl create deployment nginx --image=nginx --replicas=0
           kubectl expose deployment nginx --port=80 --target-port=80
           echo "=== Resources created ==="
           kubectl get all
