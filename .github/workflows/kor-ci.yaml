@@ -35,7 +35,7 @@ jobs:
       - name: Run kor all --delete
         run: |
           echo "=== Running kor all --delete ==="
-          go run main.go all --delete
+          go run main.go all --delete --no-interactive
 
       - name: Run kor all after deletion
         run: |
