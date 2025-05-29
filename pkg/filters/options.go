@@ -130,7 +130,7 @@ func (o *Options) Namespaces(clientset kubernetes.Interface) []string {
 				if err == nil {
 					namespacesMap[ns] = true
 				} else {
-					fmt.Fprintf(os.Stderr, "namespace [%s] not found\n", ns)
+					fmt.Fprintf(os.Stderr, "namespace [%s] not found: %v\n", ns, err)
 				}
 			}
 		} else {
