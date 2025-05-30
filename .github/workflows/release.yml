@@ -22,7 +22,7 @@ jobs:
           version: latest
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -53,4 +53,3 @@ jobs:
 
       - name: Update new version in krew-index
         uses: rajatjindal/krew-release-bot@v0.0.46
-
