@@ -1,13 +1,13 @@
 cronJob:
   enabled: false
   name: kor
-  resources:
-    requests:
-      memory: "32Mi"
-      cpu: "10m"
-    limits:
-      memory: "32Mi"
-      cpu: "10m"
+  # resources:
+  #   requests:
+  #     memory: "32Mi"
+  #     cpu: "10m"
+  #   limits:
+  #     memory: "32Mi"
+  #     cpu: "10m"
   schedule: "0 1 * * 1"
   image:
     repository: yonahdissen/kor
