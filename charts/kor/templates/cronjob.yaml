@@ -21,7 +21,7 @@ spec:
             - name: {{ .Release.Name }}-container
               image: {{ .Values.cronJob.image.repository }}:{{ .Values.cronJob.image.tag }}
               resources:
-                {{- toYaml .Values.cronJob.resources | nindent 12 }}
+                {{- toYaml .Values.cronJob.resources | nindent 16 }}
               command:
                 {{- toYaml .Values.cronJob.command | nindent 16 }}
               args:
