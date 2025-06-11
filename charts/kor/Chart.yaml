@@ -2,7 +2,7 @@ apiVersion: v2
 name: kor
 description: A Kubernetes Helm Chart to discover orphaned resources using kor
 type: application
-version: 0.2.0
+version: 0.2.1
 appVersion: "0.6.1"
 maintainers:
   - name: "yonahd"
