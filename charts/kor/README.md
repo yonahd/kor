@@ -23,7 +23,6 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | cronJob.image.tag | string | `"latest"` |  |
 | cronJob.name | string | `"kor"` |  |
 | cronJob.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources |
-| cronJob.resources | object | `{}` |  |
 | cronJob.restartPolicy | string | `"OnFailure"` |  |
 | cronJob.schedule | string | `"0 1 * * 1"` |  |
 | cronJob.slackAuthToken | string | `""` |  |
