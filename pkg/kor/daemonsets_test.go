@@ -66,7 +66,7 @@ func createTestDaemonSets(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceDaemonSets(t *testing.T) {
 	clientset := createTestDaemonSets(t)
 
-	daemonSetsWithoutReplicas, err := processNamespaceDaemonSets(clientset, testNamespace, &filters.Options{})
+	daemonSetsWithoutReplicas, err := processNamespaceDaemonSets(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

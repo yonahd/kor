@@ -162,7 +162,7 @@ func TestProcessNamespaceSA(t *testing.T) {
 		t.Fatalf("Error creating fake %s: %v", "Pod", err)
 	}
 
-	unusedServiceAccounts, err := processNamespaceSA(clientset, testNamespace, &filters.Options{})
+	unusedServiceAccounts, err := processNamespaceSA(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}

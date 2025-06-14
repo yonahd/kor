@@ -14,7 +14,7 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func processNamespaceDeployments(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceDeployments(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	deploymentsList, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
@@ -38,6 +38,11 @@ func processNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, ResourceInfo{Name: deployment.Name, Reason: reason})
 		}
 	}
+	if opts.DeleteFlag {
+		if deploymentsWithoutReplicas, err = DeleteResource(deploymentsWithoutReplicas, clientset, namespace, "Deployment", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete Deployment %s in namespace %s: %v\n", deploymentsWithoutReplicas, namespace, err)
+		}
+	}
 
 	return deploymentsWithoutReplicas, nil
 }
@@ -45,15 +50,10 @@ func processNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 func GetUnusedDeployments(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceDeployments(clientset, namespace, filterOpts)
+		diff, err := processNamespaceDeployments(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "Deployment", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Deployment %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 		switch opts.GroupBy {
 		case "namespace":

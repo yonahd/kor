@@ -116,7 +116,7 @@ func isAnyEgressRuleUsed(clientset kubernetes.Interface, netpol networkingv1.Net
 	return false, nil
 }
 
-func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	netpolList, err := clientset.NetworkingV1().NetworkPolicies(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
@@ -158,7 +158,11 @@ func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace s
 
 		unusedNetpols = append(unusedNetpols, ResourceInfo{Name: netpol.Name, Reason: noPodAppliedByRulesReason})
 	}
-
+	if opts.DeleteFlag {
+		if unusedNetpols, err := DeleteResource(unusedNetpols, clientset, namespace, "NetworkPolicy", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete NetworkPolicy %s in namespace %s: %v\n", unusedNetpols, namespace, err)
+		}
+	}
 	return unusedNetpols, nil
 }
 
@@ -166,15 +170,10 @@ func GetUnusedNetworkPolicies(filterOpts *filters.Options, clientset kubernetes.
 	resources := make(map[string]map[string][]ResourceInfo)
 
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceNetworkPolicies(clientset, namespace, filterOpts)
+		diff, err := processNamespaceNetworkPolicies(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
-		}
-		if opts.DeleteFlag {
-			if diff, err := DeleteResource(diff, clientset, namespace, "NetworkPolicy", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete NetworkPolicy %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 		switch opts.GroupBy {
 		case "namespace":

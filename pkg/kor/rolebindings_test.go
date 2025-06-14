@@ -101,7 +101,7 @@ func createTestRoleBindings(t *testing.T) *fake.Clientset {
 func TestProcessNamespaceRoleBindings(t *testing.T) {
 	clientset := createTestRoleBindings(t)
 
-	unusedRoleBindings, err := processNamespaceRoleBindings(clientset, testNamespace, &filters.Options{})
+	unusedRoleBindings, err := processNamespaceRoleBindings(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

@@ -14,7 +14,7 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	replicaSetList, err := clientset.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
@@ -39,22 +39,21 @@ func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace strin
 			unusedReplicaSetNames = append(unusedReplicaSetNames, ResourceInfo{Name: replicaSet.Name, Reason: reason})
 		}
 	}
-
+	if opts.DeleteFlag {
+		if unusedReplicaSetNames, err = DeleteResource(unusedReplicaSetNames, clientset, namespace, "ReplicaSet", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete ReplicaSet %s in namespace %s: %v\n", unusedReplicaSetNames, namespace, err)
+		}
+	}
 	return unusedReplicaSetNames, nil
 }
 
 func GetUnusedReplicaSets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceReplicaSets(clientset, namespace, filterOpts)
+		diff, err := processNamespaceReplicaSets(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "ReplicaSet", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete ReplicaSet %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 		switch opts.GroupBy {
 		case "namespace":

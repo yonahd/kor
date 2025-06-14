@@ -14,7 +14,7 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func processNamespaceStatefulSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]ResourceInfo, error) {
+func processNamespaceStatefulSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	statefulSetsList, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
@@ -40,6 +40,11 @@ func processNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 			statefulSetsWithoutReplicas = append(statefulSetsWithoutReplicas, status)
 		}
 	}
+	if opts.DeleteFlag {
+		if statefulSetsWithoutReplicas, err = DeleteResource(statefulSetsWithoutReplicas, clientset, namespace, "StatefulSet", opts.NoInteractive); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to delete Statefulset %s in namespace %s: %v\n", statefulSetsWithoutReplicas, namespace, err)
+		}
+	}
 
 	return statefulSetsWithoutReplicas, nil
 }
@@ -47,15 +52,10 @@ func processNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 func GetUnusedStatefulSets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceStatefulSets(clientset, namespace, filterOpts)
+		diff, err := processNamespaceStatefulSets(clientset, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
-		}
-		if opts.DeleteFlag {
-			if diff, err = DeleteResource(diff, clientset, namespace, "StatefulSet", opts.NoInteractive); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to delete Statefulset %s in namespace %s: %v\n", diff, namespace, err)
-			}
 		}
 		switch opts.GroupBy {
 		case "namespace":

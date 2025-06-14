@@ -56,45 +56,45 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 	return noNamespaceDiff, clearedResourceList
 }
 
-func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *filters.Options) []ResourceDiff {
+func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *filters.Options, opts common.Opts) []ResourceDiff {
 	var allDiffs []ResourceDiff
 	for _, resource := range resourceList {
 		var diffResult ResourceDiff
 		switch resource {
 		case "cm", "configmap", "configmaps":
-			diffResult = getUnusedCMs(clientset, namespace, filterOpts)
+			diffResult = getUnusedCMs(clientset, namespace, filterOpts, opts)
 		case "svc", "service", "services":
-			diffResult = getUnusedSVCs(clientset, namespace, filterOpts)
+			diffResult = getUnusedSVCs(clientset, namespace, filterOpts, opts)
 		case "secret", "secrets":
-			diffResult = getUnusedSecrets(clientset, namespace, filterOpts)
+			diffResult = getUnusedSecrets(clientset, namespace, filterOpts, opts)
 		case "sa", "serviceaccount", "serviceaccounts":
-			diffResult = getUnusedServiceAccounts(clientset, namespace, filterOpts)
+			diffResult = getUnusedServiceAccounts(clientset, namespace, filterOpts, opts)
 		case "deploy", "deployment", "deployments":
-			diffResult = getUnusedDeployments(clientset, namespace, filterOpts)
+			diffResult = getUnusedDeployments(clientset, namespace, filterOpts, opts)
 		case "sts", "statefulset", "statefulsets":
-			diffResult = getUnusedStatefulSets(clientset, namespace, filterOpts)
+			diffResult = getUnusedStatefulSets(clientset, namespace, filterOpts, opts)
 		case "role", "roles":
-			diffResult = getUnusedRoles(clientset, namespace, filterOpts)
+			diffResult = getUnusedRoles(clientset, namespace, filterOpts, opts)
 		case "hpa", "horizontalpodautoscaler", "horizontalpodautoscalers":
-			diffResult = getUnusedHpas(clientset, namespace, filterOpts)
+			diffResult = getUnusedHpas(clientset, namespace, filterOpts, opts)
 		case "pvc", "persistentvolumeclaim", "persistentvolumeclaims":
-			diffResult = getUnusedPvcs(clientset, namespace, filterOpts)
+			diffResult = getUnusedPvcs(clientset, namespace, filterOpts, opts)
 		case "ing", "ingress", "ingresses":
-			diffResult = getUnusedIngresses(clientset, namespace, filterOpts)
+			diffResult = getUnusedIngresses(clientset, namespace, filterOpts, opts)
 		case "pdb", "poddisruptionbudget", "poddisruptionbudgets":
-			diffResult = getUnusedPdbs(clientset, namespace, filterOpts)
+			diffResult = getUnusedPdbs(clientset, namespace, filterOpts, opts)
 		case "po", "pod", "pods":
-			diffResult = getUnusedPods(clientset, namespace, filterOpts)
+			diffResult = getUnusedPods(clientset, namespace, filterOpts, opts)
 		case "job", "jobs":
-			diffResult = getUnusedJobs(clientset, namespace, filterOpts)
+			diffResult = getUnusedJobs(clientset, namespace, filterOpts, opts)
 		case "rs", "replicaset", "replicasets":
-			diffResult = getUnusedReplicaSets(clientset, namespace, filterOpts)
+			diffResult = getUnusedReplicaSets(clientset, namespace, filterOpts, opts)
 		case "ds", "daemonset", "daemonsets":
-			diffResult = getUnusedDaemonSets(clientset, namespace, filterOpts)
+			diffResult = getUnusedDaemonSets(clientset, namespace, filterOpts, opts)
 		case "netpol", "networkpolicy", "networkpolicies":
-			diffResult = getUnusedNetworkPolicies(clientset, namespace, filterOpts)
+			diffResult = getUnusedNetworkPolicies(clientset, namespace, filterOpts, opts)
 		case "rolebinding", "rolebindings":
-			diffResult = getUnusedNetworkPolicies(clientset, namespace, filterOpts)
+			diffResult = getUnusedNetworkPolicies(clientset, namespace, filterOpts, opts)
 		default:
 			fmt.Printf("resource type %q is not supported\n", resource)
 		}
@@ -133,7 +133,7 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 	}
 
 	for _, namespace := range namespaces {
-		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList, filterOpts)
+		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList, filterOpts, opts)
 		if opts.GroupBy == "namespace" {
 			resources[namespace] = make(map[string][]ResourceInfo)
 		}

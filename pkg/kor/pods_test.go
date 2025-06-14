@@ -92,7 +92,7 @@ func createTestPods(t *testing.T) *fake.Clientset {
 
 func TestProcessNamespacePods(t *testing.T) {
 	clientset := createTestPods(t)
-	evictedPods, err := processNamespacePods(clientset, testNamespace, &filters.Options{})
+	evictedPods, err := processNamespacePods(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
