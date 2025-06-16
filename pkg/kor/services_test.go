@@ -29,25 +29,26 @@ func createTestServices(t *testing.T) *fake.Clientset {
 	}
 
 	endpoint1 := CreateTestEndpoint(testNamespace, "test-endpoint1", 0, AppLabels)
-	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint1, v1.CreateOptions{})
+	_, err = clientset.DiscoveryV1().EndpointSlices(testNamespace).Create(context.TODO(), endpoint1, v1.CreateOptions{})
+
 	if err != nil {
 		t.Fatalf("Error creating fake endpoint: %v", err)
 	}
 
 	endpoint2 := CreateTestEndpoint(testNamespace, "test-endpoint2", 1, AppLabels)
-	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint2, v1.CreateOptions{})
+	_, err = clientset.DiscoveryV1().EndpointSlices(testNamespace).Create(context.TODO(), endpoint2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake endpoint: %v", err)
 	}
 
 	endpoint3 := CreateTestEndpoint(testNamespace, "test-endpoint3", 1, UsedLabels)
-	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint3, v1.CreateOptions{})
+	_, err = clientset.DiscoveryV1().EndpointSlices(testNamespace).Create(context.TODO(), endpoint3, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake endpoint: %v", err)
 	}
 
 	endpoint4 := CreateTestEndpoint(testNamespace, "test-endpoint4", 1, UnusedLabels)
-	_, err = clientset.CoreV1().Endpoints(testNamespace).Create(context.TODO(), endpoint4, v1.CreateOptions{})
+	_, err = clientset.DiscoveryV1().EndpointSlices(testNamespace).Create(context.TODO(), endpoint4, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake endpoint: %v", err)
 	}
