@@ -199,6 +199,7 @@ func CreateTestEndpoint(namespace, name string, endpointCount int, labels map[st
 			},
 		}
 	}
+	labels["kubernetes.io/service-name"] = name
 
 	return &discoveryv1.EndpointSlice{
 		ObjectMeta: v1.ObjectMeta{
