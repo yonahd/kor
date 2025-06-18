@@ -1,10 +1,13 @@
 package kor
 
 import (
+	"fmt"
+
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -186,16 +189,44 @@ func CreateTestRole(namespace, name string, labels map[string]string) *rbacv1.Ro
 	}
 }
 
-func CreateTestEndpoint(namespace, name string, endpointSubsetCount int, labels map[string]string) *corev1.Endpoints {
-	return &corev1.Endpoints{
+func CreateTestEndpoint(namespace, name string, endpointCount int, labels map[string]string) *discoveryv1.EndpointSlice {
+	endpoints := make([]discoveryv1.Endpoint, endpointCount)
+	for i := 0; i < endpointCount; i++ {
+		endpoints[i] = discoveryv1.Endpoint{
+			Addresses: []string{fmt.Sprintf("10.0.0.%d", i+1)},
+			Conditions: discoveryv1.EndpointConditions{
+				Ready: ptrToBool(true),
+			},
+		}
+	}
+	labels["kubernetes.io/service-name"] = name
+
+	return &discoveryv1.EndpointSlice{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: namespace,
 			Name:      name,
 			Labels:    labels,
 		},
-		Subsets: make([]corev1.EndpointSubset, endpointSubsetCount),
+		AddressType: discoveryv1.AddressTypeIPv4,
+		Endpoints:   endpoints,
+		Ports: []discoveryv1.EndpointPort{
+			{
+				Name:     ptrToString("http"),
+				Port:     ptrToInt32(80),
+				Protocol: ptrToProtocol(corev1.ProtocolTCP),
+			},
+		},
 	}
 }
+
+// helper functions
+func ptrToString(s string) *string { return &s }
+func ptrToInt32(i int32) *int32    { return &i }
+func ptrToBool(b bool) *bool       { return &b }
+func ptrToProtocol(p corev1.Protocol) *corev1.Protocol {
+	return &p
+}
+
 func CreateTestHpa(namespace, name, deploymentName string, minReplicas, maxReplicas int32, labels map[string]string) *autoscalingv2.HorizontalPodAutoscaler {
 	return &autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: v1.ObjectMeta{

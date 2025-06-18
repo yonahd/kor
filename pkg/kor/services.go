@@ -19,7 +19,7 @@ import (
 var servicesConfig []byte
 
 func processNamespaceServices(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
-	endpointsList, err := clientset.CoreV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
+	endpointSlices, err := clientset.DiscoveryV1().EndpointSlices(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func processNamespaceServices(clientset kubernetes.Interface, namespace string, 
 
 	var endpointsWithoutSubsets []ResourceInfo
 
-	for _, endpoints := range endpointsList.Items {
+	for _, endpoints := range endpointSlices.Items {
 		if pass, _ := filter.SetObject(&endpoints).Run(filterOpts); pass {
 			continue
 		}
@@ -45,14 +45,14 @@ func processNamespaceServices(clientset kubernetes.Interface, namespace string, 
 			continue
 		}
 
-		status := ResourceInfo{Name: endpoints.Name}
+		status := ResourceInfo{Name: endpoints.ObjectMeta.Labels["kubernetes.io/service-name"]}
 
 		if endpoints.Labels["kor/used"] == "false" {
 			status.Reason = "Marked with unused label"
 			endpointsWithoutSubsets = append(endpointsWithoutSubsets, status)
 			continue
-		} else if len(endpoints.Subsets) == 0 {
-			status.Reason = "Service has no endpoints"
+		} else if len(endpoints.Endpoints) == 0 {
+			status.Reason = "Service has no endpointslices"
 			endpointsWithoutSubsets = append(endpointsWithoutSubsets, status)
 		}
 	}
