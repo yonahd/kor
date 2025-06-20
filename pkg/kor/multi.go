@@ -15,30 +15,52 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+func getCanonicalResourceType(resourceName string) string {
+	resourceName = strings.ToLower(resourceName)
+
+	if _, exists := ResourceKindList[resourceName]; exists {
+		return resourceName
+	}
+
+	for singular, resourceKind := range ResourceKindList {
+		if resourceKind.Plural == resourceName {
+			return singular
+		}
+		for _, shortName := range resourceKind.ShortNames {
+			if shortName == resourceName {
+				return singular
+			}
+		}
+	}
+
+	return resourceName
+}
+
 func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, resourceList []string, filterOpts *filters.Options) ([]ResourceDiff, []string) {
 	var noNamespaceDiff []ResourceDiff
 	markedForRemoval := make([]bool, len(resourceList))
 	updatedResourceList := resourceList
 
 	for counter, resource := range resourceList {
-		switch resource {
-		case "crd", "crds", "customresourcedefinition", "customresourcedefinitions":
+		canonicalType := getCanonicalResourceType(resource)
+		switch canonicalType {
+		case "customresourcedefinition":
 			crdDiff := getUnusedCrds(apiExtClient, dynamicClient, filterOpts)
 			noNamespaceDiff = append(noNamespaceDiff, crdDiff)
 			markedForRemoval[counter] = true
-		case "pv", "persistentvolume", "persistentvolumes":
+		case "persistentvolume":
 			pvDiff := getUnusedPvs(clientset, filterOpts)
 			noNamespaceDiff = append(noNamespaceDiff, pvDiff)
 			markedForRemoval[counter] = true
-		case "clusterrole", "clusterroles":
+		case "clusterrole":
 			clusterRoleDiff := getUnusedClusterRoles(clientset, filterOpts)
 			noNamespaceDiff = append(noNamespaceDiff, clusterRoleDiff)
 			markedForRemoval[counter] = true
-		case "sc", "storageclass", "storageclasses":
+		case "storageclass":
 			storageClassDiff := getUnusedStorageClasses(clientset, filterOpts)
 			noNamespaceDiff = append(noNamespaceDiff, storageClassDiff)
 			markedForRemoval[counter] = true
-		case "volumeattachment", "volumeattachments":
+		case "volumeattachment":
 			vattsDiff := getUnusedVolumeAttachments(clientset, filterOpts)
 			noNamespaceDiff = append(noNamespaceDiff, vattsDiff)
 			markedForRemoval[counter] = true
@@ -60,41 +82,42 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 	var allDiffs []ResourceDiff
 	for _, resource := range resourceList {
 		var diffResult ResourceDiff
-		switch resource {
-		case "cm", "configmap", "configmaps":
+		canonicalType := getCanonicalResourceType(resource)
+		switch canonicalType {
+		case "configmap":
 			diffResult = getUnusedCMs(clientset, namespace, filterOpts, opts)
-		case "svc", "service", "services":
+		case "service":
 			diffResult = getUnusedSVCs(clientset, namespace, filterOpts, opts)
-		case "secret", "secrets":
+		case "secret":
 			diffResult = getUnusedSecrets(clientset, namespace, filterOpts, opts)
-		case "sa", "serviceaccount", "serviceaccounts":
+		case "serviceaccount":
 			diffResult = getUnusedServiceAccounts(clientset, namespace, filterOpts, opts)
-		case "deploy", "deployment", "deployments":
+		case "deployment":
 			diffResult = getUnusedDeployments(clientset, namespace, filterOpts, opts)
-		case "sts", "statefulset", "statefulsets":
+		case "statefulset":
 			diffResult = getUnusedStatefulSets(clientset, namespace, filterOpts, opts)
-		case "role", "roles":
+		case "role":
 			diffResult = getUnusedRoles(clientset, namespace, filterOpts, opts)
-		case "hpa", "horizontalpodautoscaler", "horizontalpodautoscalers":
+		case "horizontalpodautoscaler":
 			diffResult = getUnusedHpas(clientset, namespace, filterOpts, opts)
-		case "pvc", "persistentvolumeclaim", "persistentvolumeclaims":
+		case "persistentvolumeclaim":
 			diffResult = getUnusedPvcs(clientset, namespace, filterOpts, opts)
-		case "ing", "ingress", "ingresses":
+		case "ingress":
 			diffResult = getUnusedIngresses(clientset, namespace, filterOpts, opts)
-		case "pdb", "poddisruptionbudget", "poddisruptionbudgets":
+		case "poddisruptionbudget":
 			diffResult = getUnusedPdbs(clientset, namespace, filterOpts, opts)
-		case "po", "pod", "pods":
+		case "pod":
 			diffResult = getUnusedPods(clientset, namespace, filterOpts, opts)
-		case "job", "jobs":
+		case "job":
 			diffResult = getUnusedJobs(clientset, namespace, filterOpts, opts)
-		case "rs", "replicaset", "replicasets":
+		case "replicaset":
 			diffResult = getUnusedReplicaSets(clientset, namespace, filterOpts, opts)
-		case "ds", "daemonset", "daemonsets":
+		case "daemonset":
 			diffResult = getUnusedDaemonSets(clientset, namespace, filterOpts, opts)
-		case "netpol", "networkpolicy", "networkpolicies":
+		case "networkpolicy":
 			diffResult = getUnusedNetworkPolicies(clientset, namespace, filterOpts, opts)
-		case "rolebinding", "rolebindings":
-			diffResult = getUnusedNetworkPolicies(clientset, namespace, filterOpts, opts)
+		case "rolebinding":
+			diffResult = getUnusedRoleBindings(clientset, namespace, filterOpts, opts)
 		default:
 			fmt.Printf("resource type %q is not supported\n", resource)
 		}

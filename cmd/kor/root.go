@@ -55,7 +55,13 @@ var (
 func init() {
 	initFlags()
 	initViper()
+	initKindsList()
 	addFilterOptionsFlag(rootCmd, filterOptions)
+}
+
+func initKindsList() {
+	clientset := kor.GetKubeClient(kubeconfig)
+	kor.ResourceKindList, _ = kor.GetResourceKinds(clientset)
 }
 
 func initFlags() {

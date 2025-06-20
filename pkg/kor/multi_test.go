@@ -17,6 +17,21 @@ import (
 func createTestMultiResources(t *testing.T) *fake.Clientset {
 	clientset := fake.NewClientset()
 
+	ResourceKindList = map[string]ResourceKind{
+		"configmap": {
+			Plural:     "configmaps",
+			ShortNames: []string{"cm"},
+		},
+		"poddisruptionbudget": {
+			Plural:     "poddisruptionbudgets",
+			ShortNames: []string{"pdb"},
+		},
+		"deployment": {
+			Plural:     "deployments",
+			ShortNames: []string{"deploy"},
+		},
+	}
+
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
 	}, v1.CreateOptions{})
