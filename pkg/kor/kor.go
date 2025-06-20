@@ -71,15 +71,16 @@ func GetConfig(kubeconfig string) (*rest.Config, error) {
 		return rest.InClusterConfig()
 	}
 
-	if kubeconfig == "" {
-		if configEnv := os.Getenv("KUBECONFIG"); configEnv != "" {
-			kubeconfig = configEnv
-		} else {
-			kubeconfig = GetKubeConfigPath()
-		}
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+
+	if kubeconfig != "" {
+		loadingRules.ExplicitPath = kubeconfig
 	}
 
-	return clientcmd.BuildConfigFromFlags("", kubeconfig)
+	configOverrides := &clientcmd.ConfigOverrides{}
+	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+
+	return kubeConfig.ClientConfig()
 }
 
 func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
