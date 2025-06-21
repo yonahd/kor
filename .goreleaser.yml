@@ -1,44 +1,38 @@
+version: 2
+
 project_name: kor
 
 builds:
-  - id: linux
-    binary: kor
+  - id: unix
     main: ./main.go
+    binary: kor
     env:
       - CGO_ENABLED=0
     ldflags:
       - -X github.com/yonahd/kor/pkg/utils.Version={{.Version}}
     goos:
       - linux
-    goarch:
-      - amd64
-      - arm64
-
-  - id: darwin
-    binary: kor
-    main: ./main.go
-    env:
-      - CGO_ENABLED=0
-    ldflags:
-      - -X github.com/yonahd/kor/pkg/utils.Version={{.Version}}
-    goos:
       - darwin
     goarch:
       - amd64
       - arm64
 
   - id: windows
-    binary: kor
     main: ./main.go
+    binary: kor
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -buildmode=exe
+      - -X github.com/yonahd/kor/pkg/utils.Version={{.Version}}
     goos:
       - windows
     goarch:
       - amd64
-    ldflags:
-      - -buildmode=exe
-      - -X github.com/yonahd/kor/pkg/utils.Version={{.Version}}
+      - arm64
+
 archives:
-  - format: tar.gz
+  - formats: [ 'tar.gz' ]
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
@@ -47,10 +41,11 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [ 'zip' ]
     files:
       - README.md
       - LICENSE
+
 changelog:
   use: github-native
   sort: asc
@@ -61,5 +56,6 @@ changelog:
       - 'README'
       - Merge pull request
       - Merge branch
+
 snapshot:
-  name_template: "{{ .Version }}"
+  version_template: "{{ .Version }}"
