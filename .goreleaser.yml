@@ -9,7 +9,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -X github.com/yonahd/kor/pkg/utils.Version={{.Version}}
+      - -s -w -X github.com/yonahd/kor/pkg/utils.Version={{.Version}}
     goos:
       - linux
       - darwin
@@ -24,7 +24,7 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - -buildmode=exe
-      - -X github.com/yonahd/kor/pkg/utils.Version={{.Version}}
+      - -s -w -X github.com/yonahd/kor/pkg/utils.Version={{.Version}}
     goos:
       - windows
     goarch:
