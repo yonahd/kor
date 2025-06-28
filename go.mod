@@ -2,6 +2,8 @@ module github.com/yonahd/kor
 
 go 1.25.0
 
+toolchain go1.24.1
+
 require (
 	github.com/fatih/color v1.18.0
 	github.com/olekukonko/tablewriter v0.0.5

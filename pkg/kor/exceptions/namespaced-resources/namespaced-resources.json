@@ -1,0 +1,28 @@
+{
+  "exceptionNamespacedResources": [
+    {
+      "Namespace": ".*",
+      "ResourceName": ".*",
+      "ResourceType": "events",
+      "MatchRegex": true
+    },
+    {
+      "Namespace": ".*",
+      "ResourceName": "default",
+      "ResourceType": "serviceaccounts",
+      "MatchRegex": true
+    },
+    {
+      "Namespace": ".*",
+      "ResourceName": "openshift-service-ca\\.crt",
+      "ResourceType": "configmaps",
+      "MatchRegex": true
+    },
+    {
+      "Namespace": ".*",
+      "ResourceName": "kube-root-ca\\.crt",
+      "ResourceType": "configmaps",
+      "MatchRegex": true
+    }
+  ]
+}
