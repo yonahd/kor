@@ -23,6 +23,14 @@ type ExceptionResource struct {
 	ResourceName string
 	MatchRegex   bool
 }
+
+// All resources in this struct must be defined as regex
+type ExceptionNamespacedResource struct {
+	Namespace    string
+	ResourceName string
+	ResourceType string
+}
+
 type IncludeExcludeLists struct {
 	IncludeListStr string
 	ExcludeListStr string
@@ -33,20 +41,22 @@ type ResourceKind struct {
 }
 
 type Config struct {
-	ExceptionClusterRoles        []ExceptionResource `json:"exceptionClusterRoles"`
-	ExceptionClusterRoleBindings []ExceptionResource `json:"exceptionClusterRoleBindings"`
-	ExceptionConfigMaps          []ExceptionResource `json:"exceptionConfigMaps"`
-	ExceptionCrds                []ExceptionResource `json:"exceptionCrds"`
-	ExceptionDaemonSets          []ExceptionResource `json:"exceptionDaemonSets"`
-	ExceptionRoles               []ExceptionResource `json:"exceptionRoles"`
-	ExceptionSecrets             []ExceptionResource `json:"exceptionSecrets"`
-	ExceptionServiceAccounts     []ExceptionResource `json:"exceptionServiceAccounts"`
-	ExceptionServices            []ExceptionResource `json:"exceptionServices"`
-	ExceptionStorageClasses      []ExceptionResource `json:"exceptionStorageClasses"`
-	ExceptionJobs                []ExceptionResource `json:"exceptionJobs"`
-	ExceptionPdbs                []ExceptionResource `json:"exceptionPdbs"`
-	ExceptionRoleBindings        []ExceptionResource `json:"exceptionRoleBindings"`
-	ExceptionPriorityClasses     []ExceptionResource `json:"exceptionPriorityClasses"`
+	ExceptionClusterRoles        []ExceptionResource           `json:"exceptionClusterRoles"`
+	ExceptionClusterRoleBindings []ExceptionResource           `json:"exceptionClusterRoleBindings"`
+	ExceptionConfigMaps          []ExceptionResource           `json:"exceptionConfigMaps"`
+	ExceptionCrds                []ExceptionResource           `json:"exceptionCrds"`
+	ExceptionDaemonSets          []ExceptionResource           `json:"exceptionDaemonSets"`
+	ExceptionRoles               []ExceptionResource           `json:"exceptionRoles"`
+	ExceptionSecrets             []ExceptionResource           `json:"exceptionSecrets"`
+	ExceptionServiceAccounts     []ExceptionResource           `json:"exceptionServiceAccounts"`
+	ExceptionServices            []ExceptionResource           `json:"exceptionServices"`
+	ExceptionStorageClasses      []ExceptionResource           `json:"exceptionStorageClasses"`
+	ExceptionJobs                []ExceptionResource           `json:"exceptionJobs"`
+	ExceptionPdbs                []ExceptionResource           `json:"exceptionPdbs"`
+	ExceptionRoleBindings        []ExceptionResource           `json:"exceptionRoleBindings"`
+	ExceptionPriorityClasses     []ExceptionResource           `json:"exceptionPriorityClasses"`
+	ExceptionNamespaces          []ExceptionResource           `json:"exceptionNamespaces"`
+	ExceptionNamespacedResources []ExceptionNamespacedResource `json:"exceptionNamespacedResources"`
 	// Add other configurations if needed
 }
 
@@ -170,6 +180,25 @@ func isResourceException(resourceName, namespace string, exceptions []ExceptionR
 				match = true
 				break
 			}
+		}
+	}
+	return match, nil
+}
+
+func isNamespacedResourceException(resourceName, namespace, resourceType string, exceptions []ExceptionNamespacedResource) (bool, error) {
+	var match bool
+	for _, e := range exceptions {
+		namespaceRegexp, err := regexp.Compile(e.Namespace)
+		if err != nil {
+			return false, err
+		}
+		nameRegexp, err := regexp.Compile(e.ResourceName)
+		if err != nil {
+			return false, err
+		}
+		if nameRegexp.MatchString(resourceName) && namespaceRegexp.MatchString(namespace) && e.ResourceType == resourceType {
+			match = true
+			break
 		}
 	}
 	return match, nil
