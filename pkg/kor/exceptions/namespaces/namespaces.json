@@ -1,0 +1,41 @@
+{
+  "exceptionNamespaces": [
+    {
+      "Namespace": "default",
+      "ResourceName": ""
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": ""
+    },
+    {
+      "Namespace": "kube-public",
+      "ResourceName": ""
+    },
+    {
+      "Namespace": "kube-node-lease",
+      "ResourceName": ""
+    },
+    {
+      "Namespace": "kuberenetes-dashboard",
+      "ResourceName": ""
+    },
+    {
+      "Namespace": "gmp-system",
+      "ResourceName": ""
+    },
+    {
+      "Namespace": "local-path-storage",
+      "ResourceName": ""
+    },
+    {
+      "Namespace": "assisted-installer",
+      "ResourceName": ""
+    },
+    {
+      "Namespace": "openshift-.*",
+      "ResourceName": "",
+      "MatchRegex": true
+    }
+  ]
+}
