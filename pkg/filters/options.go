@@ -39,6 +39,10 @@ type Options struct {
 	ExcludeNamespaces []string
 	// IncludeNamespaces is a namespace selector to include resources in matching namespaces
 	IncludeNamespaces []string
+	// SkipDeploymentReplicaSets skips replicasets that are owned by deployments or statefulsets
+	SkipDeploymentReplicaSets bool
+	// SkipCronJobJobs skips jobs that are created by cronjobs
+	SkipCronJobJobs bool
 
 	namespace []string
 	once      sync.Once

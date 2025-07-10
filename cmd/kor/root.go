@@ -122,4 +122,6 @@ func addFilterOptionsFlag(cmd *cobra.Command, opts *filters.Options) {
 	cmd.PersistentFlags().StringVar(&opts.IncludeLabels, "include-labels", opts.IncludeLabels, "Selector to filter in, Example: --include-labels key1=value1 (currently supports one label)")
 	cmd.PersistentFlags().StringSliceVarP(&opts.ExcludeNamespaces, "exclude-namespaces", "e", opts.ExcludeNamespaces, "Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored")
 	cmd.PersistentFlags().StringSliceVarP(&opts.IncludeNamespaces, "include-namespaces", "n", opts.IncludeNamespaces, "Namespaces to run on, split by commas. Example: --include-namespaces ns1,ns2,ns3. If set, non-namespaced resources will be ignored")
+	cmd.PersistentFlags().BoolVar(&opts.SkipDeploymentReplicaSets, "skip-deployment-replicasets", false, "Skip replicasets that are owned by deployments or statefulsets")
+	cmd.PersistentFlags().BoolVar(&opts.SkipCronJobJobs, "skip-cronjob-jobs", false, "Skip jobs that are created by cronjobs")
 }

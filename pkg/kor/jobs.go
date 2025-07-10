@@ -53,6 +53,20 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 			continue
 		}
 
+		// Skip jobs owned by cronjobs if flag is set
+		if filterOpts.SkipCronJobJobs {
+			isOwnedByCronJob := false
+			for _, owner := range job.OwnerReferences {
+				if owner.Kind == "CronJob" {
+					isOwnedByCronJob = true
+					break
+				}
+			}
+			if isOwnedByCronJob {
+				continue
+			}
+		}
+
 		// if the job has completionTime and succeeded count greater than zero, think the job is completed
 		if job.Status.CompletionTime != nil && job.Status.Succeeded > 0 {
 			reason := "Job has completed"

@@ -208,6 +208,76 @@ func TestGetUnusedJobsStructured(t *testing.T) {
 	}
 }
 
+func TestFilterCronJobOwnedJobs(t *testing.T) {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// Create two jobs - one owned by cronjob, one standalone
+	// Job owned by cronjob (completed)
+	ownedJob := CreateTestJob(testNamespace, "cronjob-owned-job", &batchv1.JobStatus{
+		Succeeded:      1,
+		Failed:         0,
+		CompletionTime: &v1.Time{Time: time.Now()},
+	}, AppLabels)
+	// Add owner reference to cronjob
+	ownedJob.OwnerReferences = []v1.OwnerReference{
+		{
+			Kind: "CronJob",
+			Name: "test-cronjob",
+		},
+	}
+	
+	// Standalone Job (completed)
+	standaloneJob := CreateTestJob(testNamespace, "standalone-job", &batchv1.JobStatus{
+		Succeeded:      1,
+		Failed:         0,
+		CompletionTime: &v1.Time{Time: time.Now()},
+	}, AppLabels)
+
+	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), ownedJob, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake job: %v", err)
+	}
+
+	_, err = clientset.BatchV1().Jobs(testNamespace).Create(context.TODO(), standaloneJob, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake job: %v", err)
+	}
+
+	// Test without filter - should return both (both are completed)
+	filterOptsNoSkip := &filters.Options{SkipCronJobJobs: false}
+	unusedWithoutFilter, err := processNamespaceJobs(clientset, testNamespace, filterOptsNoSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused jobs: %v", err)
+	}
+
+	if len(unusedWithoutFilter) != 2 {
+		t.Errorf("Expected 2 unused Job objects without filter, got %d", len(unusedWithoutFilter))
+	}
+
+	// Test with filter - should return only standalone
+	filterOptsWithSkip := &filters.Options{SkipCronJobJobs: true}
+	unusedWithFilter, err := processNamespaceJobs(clientset, testNamespace, filterOptsWithSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused jobs: %v", err)
+	}
+
+	if len(unusedWithFilter) != 1 {
+		t.Errorf("Expected 1 unused Job object with filter, got %d", len(unusedWithFilter))
+	}
+
+	if unusedWithFilter[0].Name != "standalone-job" {
+		t.Errorf("Expected standalone-job to be unused, got %s", unusedWithFilter[0].Name)
+	}
+}
+
 func init() {
 	scheme.Scheme = runtime.NewScheme()
 	_ = appsv1.AddToScheme(scheme.Scheme)
