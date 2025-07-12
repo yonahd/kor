@@ -24,6 +24,11 @@ func processPvs(clientset kubernetes.Interface, filterOpts *filters.Options) ([]
 	var unusedPvs []ResourceInfo
 
 	for _, pv := range pvs.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(pv.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&pv).Run(filterOpts); pass {
 			continue
 		}

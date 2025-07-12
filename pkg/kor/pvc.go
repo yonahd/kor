@@ -47,6 +47,11 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filt
 	var unusedPvcNames []string
 	pvcNames := make([]string, 0, len(pvcs.Items))
 	for _, pvc := range pvcs.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(pvc.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&pvc).Run(filterOpts); pass {
 			continue
 		}

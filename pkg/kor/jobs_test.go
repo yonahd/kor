@@ -252,7 +252,7 @@ func TestFilterCronJobOwnedJobs(t *testing.T) {
 	}
 
 	// Test without filter - should return both (both are completed)
-	filterOptsNoSkip := &filters.Options{SkipCronJobJobs: false}
+	filterOptsNoSkip := &filters.Options{IgnoreOwnerReferences: false}
 	unusedWithoutFilter, err := processNamespaceJobs(clientset, testNamespace, filterOptsNoSkip, common.Opts{})
 	if err != nil {
 		t.Fatalf("Error retrieving unused jobs: %v", err)
@@ -263,7 +263,7 @@ func TestFilterCronJobOwnedJobs(t *testing.T) {
 	}
 
 	// Test with filter - should return only standalone
-	filterOptsWithSkip := &filters.Options{SkipCronJobJobs: true}
+	filterOptsWithSkip := &filters.Options{IgnoreOwnerReferences: true}
 	unusedWithFilter, err := processNamespaceJobs(clientset, testNamespace, filterOptsWithSkip, common.Opts{})
 	if err != nil {
 		t.Fatalf("Error retrieving unused jobs: %v", err)

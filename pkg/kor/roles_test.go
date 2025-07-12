@@ -143,6 +143,68 @@ func TestGetUnusedRolesStructured(t *testing.T) {
 	}
 }
 
+func TestFilterOwnerReferencedRoles(t *testing.T) {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// Create two roles - one owned by another resource, one standalone
+	// Role owned by another resource
+	ownedRole := CreateTestRole(testNamespace, "owned-role", AppLabels)
+	// Add owner reference to another resource
+	ownedRole.OwnerReferences = []v1.OwnerReference{
+		{
+			Kind: "Application",
+			Name: "test-application",
+		},
+	}
+
+	// Standalone Role
+	standaloneRole := CreateTestRole(testNamespace, "standalone-role", AppLabels)
+
+	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), ownedRole, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake Role: %v", err)
+	}
+
+	_, err = clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), standaloneRole, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake Role: %v", err)
+	}
+
+	// Test without filter - should return both
+	filterOptsNoSkip := &filters.Options{IgnoreOwnerReferences: false}
+	unusedWithoutFilter, err := processNamespaceRoles(clientset, testNamespace, filterOptsNoSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused Roles: %v", err)
+	}
+
+	if len(unusedWithoutFilter) != 2 {
+		t.Errorf("Expected 2 unused Role objects without filter, got %d", len(unusedWithoutFilter))
+	}
+
+	// Test with filter - should return only standalone
+	filterOptsWithSkip := &filters.Options{IgnoreOwnerReferences: true}
+	unusedWithFilter, err := processNamespaceRoles(clientset, testNamespace, filterOptsWithSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused Roles: %v", err)
+	}
+
+	if len(unusedWithFilter) != 1 {
+		t.Errorf("Expected 1 unused Role object with filter, got %d", len(unusedWithFilter))
+	}
+
+	if unusedWithFilter[0].Name != "standalone-role" {
+		t.Errorf("Expected standalone-role to be unused, got %s", unusedWithFilter[0].Name)
+	}
+}
+
 func init() {
 	scheme.Scheme = runtime.NewScheme()
 	_ = appsv1.AddToScheme(scheme.Scheme)

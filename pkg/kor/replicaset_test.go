@@ -143,7 +143,7 @@ func TestFilterDeploymentOwnedReplicaSets(t *testing.T) {
 	}
 
 	// Test without filter - should return both
-	filterOptsNoSkip := &filters.Options{SkipDeploymentReplicaSets: false}
+	filterOptsNoSkip := &filters.Options{IgnoreOwnerReferences: false}
 	unusedWithoutFilter, err := processNamespaceReplicaSets(clientset, testNamespace, filterOptsNoSkip, common.Opts{})
 	if err != nil {
 		t.Fatalf("Error retrieving unused replica sets: %v", err)
@@ -154,7 +154,7 @@ func TestFilterDeploymentOwnedReplicaSets(t *testing.T) {
 	}
 
 	// Test with filter - should return only standalone
-	filterOptsWithSkip := &filters.Options{SkipDeploymentReplicaSets: true}
+	filterOptsWithSkip := &filters.Options{IgnoreOwnerReferences: true}
 	unusedWithFilter, err := processNamespaceReplicaSets(clientset, testNamespace, filterOptsWithSkip, common.Opts{})
 	if err != nil {
 		t.Fatalf("Error retrieving unused replica sets: %v", err)

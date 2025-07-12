@@ -33,18 +33,9 @@ func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace strin
 			continue
 		}
 
-		// Skip replicasets owned by deployments or statefulsets if flag is set
-		if filterOpts.SkipDeploymentReplicaSets {
-			isOwnedByDeploymentOrStatefulSet := false
-			for _, owner := range replicaSet.OwnerReferences {
-				if owner.Kind == "Deployment" || owner.Kind == "StatefulSet" {
-					isOwnedByDeploymentOrStatefulSet = true
-					break
-				}
-			}
-			if isOwnedByDeploymentOrStatefulSet {
-				continue
-			}
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(replicaSet.OwnerReferences) > 0 {
+			continue
 		}
 
 		// if the replicaSet is specified 0 replica and current available & ready & fullyLabeled replica count is all 0, think the replicaSet is completed

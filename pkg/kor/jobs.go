@@ -44,6 +44,11 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 			continue
 		}
 
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(job.OwnerReferences) > 0 {
+			continue
+		}
+
 		exceptionFound, err := isResourceException(job.Name, job.Namespace, config.ExceptionJobs)
 		if err != nil {
 			return nil, err
@@ -51,20 +56,6 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 
 		if exceptionFound {
 			continue
-		}
-
-		// Skip jobs owned by cronjobs if flag is set
-		if filterOpts.SkipCronJobJobs {
-			isOwnedByCronJob := false
-			for _, owner := range job.OwnerReferences {
-				if owner.Kind == "CronJob" {
-					isOwnedByCronJob = true
-					break
-				}
-			}
-			if isOwnedByCronJob {
-				continue
-			}
 		}
 
 		// if the job has completionTime and succeeded count greater than zero, think the job is completed

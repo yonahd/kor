@@ -23,6 +23,11 @@ func processNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 	var statefulSetsWithoutReplicas []ResourceInfo
 
 	for _, statefulSet := range statefulSetsList.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(statefulSet.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&statefulSet).Run(filterOpts); pass {
 			continue
 		}
