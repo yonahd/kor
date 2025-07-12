@@ -99,3 +99,57 @@ func TestGetUnusedStorageClassesStructured(t *testing.T) {
 		t.Errorf("Expected output does not match actual output")
 	}
 }
+
+func TestFilterOwnerReferencedStorageClasses(t *testing.T) {
+	clientset := fake.NewSimpleClientset()
+
+	// Create two storage classes - one owned by another resource, one standalone
+	// StorageClass owned by another resource
+	ownedSC := CreateTestStorageClass("owned-sc", "kor.com")
+	// Add owner reference to another resource
+	ownedSC.OwnerReferences = []v1.OwnerReference{
+		{
+			Kind: "Application",
+			Name: "test-application",
+		},
+	}
+	
+	// Standalone StorageClass
+	standaloneSC := CreateTestStorageClass("standalone-sc", "kor.com")
+
+	_, err := clientset.StorageV1().StorageClasses().Create(context.TODO(), ownedSC, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake StorageClass: %v", err)
+	}
+
+	_, err = clientset.StorageV1().StorageClasses().Create(context.TODO(), standaloneSC, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake StorageClass: %v", err)
+	}
+
+	// Test without filter - should return both
+	filterOptsNoSkip := &filters.Options{IgnoreOwnerReferences: false}
+	unusedWithoutFilter, err := processStorageClasses(clientset, filterOptsNoSkip)
+	if err != nil {
+		t.Fatalf("Error retrieving unused StorageClasses: %v", err)
+	}
+
+	if len(unusedWithoutFilter) != 2 {
+		t.Errorf("Expected 2 unused StorageClass objects without filter, got %d", len(unusedWithoutFilter))
+	}
+
+	// Test with filter - should return only standalone
+	filterOptsWithSkip := &filters.Options{IgnoreOwnerReferences: true}
+	unusedWithFilter, err := processStorageClasses(clientset, filterOptsWithSkip)
+	if err != nil {
+		t.Fatalf("Error retrieving unused StorageClasses: %v", err)
+	}
+
+	if len(unusedWithFilter) != 1 {
+		t.Errorf("Expected 1 unused StorageClass object with filter, got %d", len(unusedWithFilter))
+	}
+
+	if unusedWithFilter[0].Name != "standalone-sc" {
+		t.Errorf("Expected standalone-sc to be unused, got %s", unusedWithFilter[0].Name)
+	}
+}

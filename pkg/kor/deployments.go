@@ -23,6 +23,11 @@ func processNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 	var deploymentsWithoutReplicas []ResourceInfo
 
 	for _, deployment := range deploymentsList.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(deployment.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&deployment).Run(filterOpts); pass {
 			continue
 		}

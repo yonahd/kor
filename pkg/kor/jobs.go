@@ -44,6 +44,11 @@ func processNamespaceJobs(clientset kubernetes.Interface, namespace string, filt
 			continue
 		}
 
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(job.OwnerReferences) > 0 {
+			continue
+		}
+
 		exceptionFound, err := isResourceException(job.Name, job.Namespace, config.ExceptionJobs)
 		if err != nil {
 			return nil, err

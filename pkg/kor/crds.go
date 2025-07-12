@@ -36,6 +36,11 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 	}
 
 	for _, crd := range crds.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(crd.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&crd).Run(filterOpts); pass {
 			continue
 		}

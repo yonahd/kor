@@ -53,6 +53,9 @@ func retrieveRoleNames(clientset kubernetes.Interface, namespace string, filterO
 	var unusedRoleNames []string
 	names := make([]string, 0, len(roles.Items))
 	for _, role := range roles.Items {
+		if filterOpts.IgnoreOwnerReferences && len(role.OwnerReferences) > 0 {
+			continue
+		}
 		if pass, _ := filter.SetObject(&role).Run(filterOpts); pass {
 			continue
 		}

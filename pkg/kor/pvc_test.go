@@ -144,6 +144,68 @@ func TestGetUnusedPvcsStructured(t *testing.T) {
 	}
 }
 
+func TestFilterOwnerReferencedPvcs(t *testing.T) {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// Create two PVCs - one owned by another resource, one standalone
+	// PVC owned by another resource
+	ownedPvc := CreateTestPvc(testNamespace, "owned-pvc", AppLabels, "test-sc1")
+	// Add owner reference to another resource
+	ownedPvc.OwnerReferences = []v1.OwnerReference{
+		{
+			Kind: "Application",
+			Name: "test-application",
+		},
+	}
+
+	// Standalone PVC
+	standalonePvc := CreateTestPvc(testNamespace, "standalone-pvc", AppLabels, "test-sc1")
+
+	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), ownedPvc, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake PVC: %v", err)
+	}
+
+	_, err = clientset.CoreV1().PersistentVolumeClaims(testNamespace).Create(context.TODO(), standalonePvc, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake PVC: %v", err)
+	}
+
+	// Test without filter - should return both
+	filterOptsNoSkip := &filters.Options{IgnoreOwnerReferences: false}
+	unusedWithoutFilter, err := processNamespacePvcs(clientset, testNamespace, filterOptsNoSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused PVCs: %v", err)
+	}
+
+	if len(unusedWithoutFilter) != 2 {
+		t.Errorf("Expected 2 unused PVC objects without filter, got %d", len(unusedWithoutFilter))
+	}
+
+	// Test with filter - should return only standalone
+	filterOptsWithSkip := &filters.Options{IgnoreOwnerReferences: true}
+	unusedWithFilter, err := processNamespacePvcs(clientset, testNamespace, filterOptsWithSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused PVCs: %v", err)
+	}
+
+	if len(unusedWithFilter) != 1 {
+		t.Errorf("Expected 1 unused PVC object with filter, got %d", len(unusedWithFilter))
+	}
+
+	if unusedWithFilter[0].Name != "standalone-pvc" {
+		t.Errorf("Expected standalone-pvc to be unused, got %s", unusedWithFilter[0].Name)
+	}
+}
+
 func init() {
 	scheme.Scheme = runtime.NewScheme()
 	_ = appsv1.AddToScheme(scheme.Scheme)

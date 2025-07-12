@@ -24,6 +24,11 @@ func processNamespacePods(clientset kubernetes.Interface, namespace string, filt
 	var evictedPods []ResourceInfo
 
 	for _, pod := range podsList.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(pod.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&pod).Run(filterOpts); pass {
 			continue
 		}

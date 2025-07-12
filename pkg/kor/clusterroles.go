@@ -128,6 +128,9 @@ func retrieveClusterRoleNames(clientset kubernetes.Interface, filterOpts *filter
 	names := make([]string, 0, len(clusterRoles.Items))
 
 	for _, clusterRole := range clusterRoles.Items {
+		if filterOpts.IgnoreOwnerReferences && len(clusterRole.OwnerReferences) > 0 {
+			continue
+		}
 		if pass, _ := filter.SetObject(&clusterRole).Run(filterOpts); pass {
 			continue
 		}

@@ -93,6 +93,11 @@ func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, fi
 	names := make([]string, 0, len(configmaps.Items))
 
 	for _, configmap := range configmaps.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(configmap.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&configmap).Run(filterOpts); pass {
 			continue
 		}

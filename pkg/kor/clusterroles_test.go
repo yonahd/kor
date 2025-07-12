@@ -85,6 +85,43 @@ func createTestClusterRoles(t *testing.T) *fake.Clientset {
 
 	return clientset
 }
+
+func createTestClusterRolesWithOwnerReferences(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// ClusterRole with ownerReferences (should be ignored when --ignore-owner-references is true)
+	clusterRoleWithOwner := CreateTestClusterRole("test-clusterRole-with-owner", AppLabels)
+	clusterRoleWithOwner.OwnerReferences = []v1.OwnerReference{
+		{
+			APIVersion: "rbac.authorization.k8s.io/v1",
+			Kind:       "ClusterRoleBinding",
+			Name:       "test-cluster-role-binding",
+			UID:        "test-uid",
+		},
+	}
+	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), clusterRoleWithOwner, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake ClusterRole with ownerReferences: %v", err)
+	}
+
+	// ClusterRole without ownerReferences (should be included)
+	clusterRoleWithoutOwner := CreateTestClusterRole("test-clusterRole-without-owner", AppLabels)
+	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), clusterRoleWithoutOwner, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake ClusterRole without ownerReferences: %v", err)
+	}
+
+	return clientset
+}
+
 func TestRetrieveUsedClusterRoles(t *testing.T) {
 	clientset := createTestClusterRoles(t)
 
@@ -136,6 +173,36 @@ func TestProcessClusterRoles(t *testing.T) {
 	}
 }
 
+func TestProcessClusterRolesWithOwnerReferences(t *testing.T) {
+	clientset := createTestClusterRolesWithOwnerReferences(t)
+
+	// Test with --ignore-owner-references=false (default behavior)
+	unusedClusterRoles, err := processClusterRoles(clientset, &filters.Options{})
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	// Should include both ClusterRoles (with and without ownerReferences)
+	if len(unusedClusterRoles) != 2 {
+		t.Errorf("Expected 2 unused ClusterRoles, got %d", len(unusedClusterRoles))
+	}
+
+	// Test with --ignore-owner-references=true
+	unusedClusterRoles, err = processClusterRoles(clientset, &filters.Options{IgnoreOwnerReferences: true})
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	// Should only include ClusterRole without ownerReferences
+	if len(unusedClusterRoles) != 1 {
+		t.Errorf("Expected 1 unused ClusterRole when ignoring ownerReferences, got %d", len(unusedClusterRoles))
+	}
+
+	if unusedClusterRoles[0].Name != "test-clusterRole-without-owner" {
+		t.Errorf("Expected 'test-clusterRole-without-owner', got %s", unusedClusterRoles[0].Name)
+	}
+}
+
 func TestGetUnusedClusterRolesStructured(t *testing.T) {
 	clientset := createTestClusterRoles(t)
 
@@ -169,6 +236,42 @@ func TestGetUnusedClusterRolesStructured(t *testing.T) {
 
 	if !reflect.DeepEqual(expectedOutput, actualOutput) {
 		t.Errorf("Expected output does not match \n actualOutput:\n %s \n expectedOutput:\n %s", actualOutput, expectedOutput)
+	}
+}
+
+func TestGetUnusedClusterRolesStructuredWithOwnerReferences(t *testing.T) {
+	clientset := createTestClusterRolesWithOwnerReferences(t)
+
+	opts := common.Opts{
+		WebhookURL:    "",
+		Channel:       "",
+		Token:         "",
+		DeleteFlag:    false,
+		NoInteractive: true,
+		GroupBy:       "namespace",
+	}
+
+	// Test with --ignore-owner-references=true
+	output, err := GetUnusedClusterRoles(&filters.Options{IgnoreOwnerReferences: true}, clientset, "json", opts)
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedClusterRolesStructured: %v", err)
+	}
+
+	expectedOutput := map[string]map[string][]string{
+		"": {
+			"ClusterRole": {
+				"test-clusterRole-without-owner",
+			},
+		},
+	}
+
+	var actualOutput map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &actualOutput); err != nil {
+		t.Fatalf("Error unmarshaling actual output: %v", err)
+	}
+
+	if !reflect.DeepEqual(expectedOutput, actualOutput) {
+		t.Errorf("Expected output does not match actual output")
 	}
 }
 

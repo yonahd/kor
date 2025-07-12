@@ -253,6 +253,68 @@ func TestGetUnusedConfigmapsStructured(t *testing.T) {
 	}
 }
 
+func TestFilterOwnerReferencedConfigMaps(t *testing.T) {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
+	}, metav1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// Create two configmaps - one owned by deployment, one standalone
+	// ConfigMap owned by deployment
+	ownedConfigMap := CreateTestConfigmap(testNamespace, "owned-configmap", AppLabels)
+	// Add owner reference to deployment
+	ownedConfigMap.OwnerReferences = []metav1.OwnerReference{
+		{
+			Kind: "Deployment",
+			Name: "test-deployment",
+		},
+	}
+
+	// Standalone ConfigMap
+	standaloneConfigMap := CreateTestConfigmap(testNamespace, "standalone-configmap", AppLabels)
+
+	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), ownedConfigMap, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake configmap: %v", err)
+	}
+
+	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), standaloneConfigMap, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake configmap: %v", err)
+	}
+
+	// Test without filter - should return both
+	filterOptsNoSkip := &filters.Options{IgnoreOwnerReferences: false}
+	unusedWithoutFilter, err := processNamespaceCM(clientset, testNamespace, filterOptsNoSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused configmaps: %v", err)
+	}
+
+	if len(unusedWithoutFilter) != 2 {
+		t.Errorf("Expected 2 unused ConfigMap objects without filter, got %d", len(unusedWithoutFilter))
+	}
+
+	// Test with filter - should return only standalone
+	filterOptsWithSkip := &filters.Options{IgnoreOwnerReferences: true}
+	unusedWithFilter, err := processNamespaceCM(clientset, testNamespace, filterOptsWithSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused configmaps: %v", err)
+	}
+
+	if len(unusedWithFilter) != 1 {
+		t.Errorf("Expected 1 unused ConfigMap object with filter, got %d", len(unusedWithFilter))
+	}
+
+	if unusedWithFilter[0].Name != "standalone-configmap" {
+		t.Errorf("Expected standalone-configmap to be unused, got %s", unusedWithFilter[0].Name)
+	}
+}
+
 func init() {
 	scheme.Scheme = runtime.NewScheme()
 	_ = appsv1.AddToScheme(scheme.Scheme)

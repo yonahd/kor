@@ -66,6 +66,11 @@ func processStorageClasses(clientset kubernetes.Interface, filterOpts *filters.O
 	storageClassNames := make([]string, 0, len(scs.Items))
 
 	for _, sc := range scs.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(sc.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&sc).Run(filterOpts); pass {
 			continue
 		}

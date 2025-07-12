@@ -32,6 +32,11 @@ func processNamespaceDaemonSets(clientset kubernetes.Interface, namespace string
 	var daemonSetsWithoutReplicas []ResourceInfo
 
 	for _, daemonSet := range daemonSetsList.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(daemonSet.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&daemonSet).Run(filterOpts); pass {
 			continue
 		}

@@ -32,6 +32,11 @@ func processNamespaceServices(clientset kubernetes.Interface, namespace string, 
 	var endpointsWithoutSubsets []ResourceInfo
 
 	for _, endpoints := range endpointSlices.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(endpoints.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&endpoints).Run(filterOpts); pass {
 			continue
 		}

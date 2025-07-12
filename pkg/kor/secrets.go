@@ -128,6 +128,11 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 	var unusedSecretNames []string
 	names := make([]string, 0, len(secrets.Items))
 	for _, secret := range secrets.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(secret.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&secret).Run(filterOpts); pass {
 			continue
 		}

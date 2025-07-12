@@ -33,6 +33,11 @@ func processNamespacePdbs(clientset kubernetes.Interface, namespace string, filt
 	}
 
 	for _, pdb := range pdbs.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(pdb.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&pdb).Run(filterOpts); pass {
 			continue
 		}
