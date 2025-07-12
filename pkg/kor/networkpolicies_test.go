@@ -122,6 +122,41 @@ func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 	return clientset
 }
 
+func createTestNetworkPoliciesWithOwnerReferences(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// ownerReferences dolu kullanılmayan NetworkPolicy
+	netpolWithOwner := CreateTestNetworkPolicy("netpol-with-owner", testNamespace, map[string]string{"kor/used": "false"}, v1.LabelSelector{}, nil, nil)
+	netpolWithOwner.OwnerReferences = []v1.OwnerReference{
+		{
+			APIVersion: "networking.k8s.io/v1",
+			Kind:       "NetworkPolicy",
+			Name:       "parent-netpol",
+			UID:        "test-uid",
+		},
+	}
+	_, err = clientset.NetworkingV1().NetworkPolicies(testNamespace).Create(context.TODO(), netpolWithOwner, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake NetworkPolicy with ownerReferences: %v", err)
+	}
+
+	// ownerReferences olmayan kullanılmayan NetworkPolicy
+	netpolWithoutOwner := CreateTestNetworkPolicy("netpol-without-owner", testNamespace, map[string]string{"kor/used": "false"}, v1.LabelSelector{}, nil, nil)
+	_, err = clientset.NetworkingV1().NetworkPolicies(testNamespace).Create(context.TODO(), netpolWithoutOwner, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake NetworkPolicy without ownerReferences: %v", err)
+	}
+
+	return clientset
+}
+
 func TestRetrievePodsForSelector(t *testing.T) {
 	clientset := createTestNetworkPolicies(t)
 
@@ -226,6 +261,31 @@ func TestProcessNamespaceNetworkPolicies(t *testing.T) {
 		if netpol.Name != expectedUnusedNetpols[i] {
 			t.Errorf("Expected unused networkpolicy %s, got %s", expectedUnusedNetpols[i], netpol)
 		}
+	}
+}
+
+func TestProcessNamespaceNetworkPoliciesWithOwnerReferences(t *testing.T) {
+	clientset := createTestNetworkPoliciesWithOwnerReferences(t)
+
+	// --ignore-owner-references=false (varsayılan)
+	unusedNetpols, err := processNamespaceNetworkPolicies(clientset, testNamespace, &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if len(unusedNetpols) != 2 {
+		t.Errorf("Expected 2 unused NetworkPolicies, got %d", len(unusedNetpols))
+	}
+
+	// --ignore-owner-references=true
+	unusedNetpols, err = processNamespaceNetworkPolicies(clientset, testNamespace, &filters.Options{IgnoreOwnerReferences: true}, common.Opts{})
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if len(unusedNetpols) != 1 {
+		t.Errorf("Expected 1 unused NetworkPolicy when ignoring ownerReferences, got %d", len(unusedNetpols))
+	}
+	if unusedNetpols[0].Name != "netpol-without-owner" {
+		t.Errorf("Expected 'netpol-without-owner', got %s", unusedNetpols[0].Name)
 	}
 }
 

@@ -111,6 +111,11 @@ func retrieveServiceAccountNames(clientset kubernetes.Interface, namespace strin
 			continue
 		}
 
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(serviceaccount.OwnerReferences) > 0 {
+			continue
+		}
+
 		if serviceaccount.Labels["kor/used"] == "false" {
 			unusedServiceAccountNames = append(unusedServiceAccountNames, serviceaccount.Name)
 			continue

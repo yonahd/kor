@@ -218,6 +218,72 @@ func TestGetUnusedServiceAccountsStructured(t *testing.T) {
 	}
 }
 
+func createTestServiceAccountsWithOwnerReferences(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// ServiceAccount with ownerReferences (should be ignored when --ignore-owner-references is true)
+	saWithOwner := CreateTestServiceAccount(testNamespace, "test-sa-with-owner", AppLabels)
+	saWithOwner.OwnerReferences = []v1.OwnerReference{
+		{
+			APIVersion: "v1",
+			Kind:       "Namespace",
+			Name:       "test-namespace",
+			UID:        "test-uid",
+		},
+	}
+	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), saWithOwner, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake ServiceAccount with ownerReferences: %v", err)
+	}
+
+	// ServiceAccount without ownerReferences (should be included)
+	saWithoutOwner := CreateTestServiceAccount(testNamespace, "test-sa-without-owner", AppLabels)
+	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), saWithoutOwner, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake ServiceAccount without ownerReferences: %v", err)
+	}
+
+	return clientset
+}
+
+func TestProcessNamespaceSAWithOwnerReferences(t *testing.T) {
+	clientset := createTestServiceAccountsWithOwnerReferences(t)
+
+	// Test with --ignore-owner-references=false (default behavior)
+	unusedServiceAccounts, err := processNamespaceSA(clientset, testNamespace, &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	// Should include both ServiceAccounts (with and without ownerReferences)
+	if len(unusedServiceAccounts) != 2 {
+		t.Errorf("Expected 2 unused ServiceAccounts, got %d", len(unusedServiceAccounts))
+	}
+
+	// Test with --ignore-owner-references=true
+	unusedServiceAccounts, err = processNamespaceSA(clientset, testNamespace, &filters.Options{IgnoreOwnerReferences: true}, common.Opts{})
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	// Should only include ServiceAccount without ownerReferences
+	if len(unusedServiceAccounts) != 1 {
+		t.Errorf("Expected 1 unused ServiceAccount when ignoring ownerReferences, got %d", len(unusedServiceAccounts))
+	}
+
+	if unusedServiceAccounts[0].Name != "test-sa-without-owner" {
+		t.Errorf("Expected 'test-sa-without-owner', got %s", unusedServiceAccounts[0].Name)
+	}
+}
+
 func init() {
 	scheme.Scheme = runtime.NewScheme()
 	_ = appsv1.AddToScheme(scheme.Scheme)

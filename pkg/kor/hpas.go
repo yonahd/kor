@@ -62,6 +62,11 @@ func processNamespaceHpas(clientset kubernetes.Interface, namespace string, filt
 			continue
 		}
 
+		// Skip if resource has owner references and ignore flag is set
+		if filterOpts.IgnoreOwnerReferences && len(hpa.OwnerReferences) > 0 {
+			continue
+		}
+
 		if hpa.Labels["kor/used"] == "false" {
 			unusedHpas = append(unusedHpas, ResourceInfo{Name: hpa.Name, Reason: "Marked with unused label"})
 			continue

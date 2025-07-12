@@ -129,6 +129,11 @@ func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace s
 			continue
 		}
 
+		// ownerReferences kontrolü
+		if filterOpts.IgnoreOwnerReferences && len(netpol.OwnerReferences) > 0 {
+			continue
+		}
+
 		if netpol.Labels["kor/used"] == "false" {
 			unusedNetpols = append(unusedNetpols, ResourceInfo{Name: netpol.Name, Reason: unusedLabelReason})
 			continue
