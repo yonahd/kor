@@ -108,7 +108,7 @@ func TestFilterDeploymentOwnedReplicaSets(t *testing.T) {
 
 	// Create two replicasets - one owned by deployment, one standalone
 	var count int32 = 0
-	
+
 	// ReplicaSet owned by deployment
 	ownedRS := CreateTestReplicaSet(testNamespace, "owned-rs", &count, &appsv1.ReplicaSetStatus{
 		Replicas:             count,
@@ -123,7 +123,7 @@ func TestFilterDeploymentOwnedReplicaSets(t *testing.T) {
 			Name: "test-deployment",
 		},
 	}
-	
+
 	// Standalone ReplicaSet
 	standaloneRS := CreateTestReplicaSet(testNamespace, "standalone-rs", &count, &appsv1.ReplicaSetStatus{
 		Replicas:             count,

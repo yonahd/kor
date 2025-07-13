@@ -113,7 +113,7 @@ func TestFilterOwnerReferencedStorageClasses(t *testing.T) {
 			Name: "test-application",
 		},
 	}
-	
+
 	// Standalone StorageClass
 	standaloneSC := CreateTestStorageClass("standalone-sc", "kor.com")
 

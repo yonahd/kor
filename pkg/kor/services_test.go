@@ -130,7 +130,7 @@ func TestFilterOwnerReferencedServices(t *testing.T) {
 			Name: "test-deployment",
 		},
 	}
-	
+
 	// Standalone Service
 	standaloneService := CreateTestService(testNamespace, "standalone-service")
 

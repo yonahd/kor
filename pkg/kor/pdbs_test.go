@@ -196,7 +196,7 @@ func TestFilterOwnerReferencedPdbs(t *testing.T) {
 			Name: "test-application",
 		},
 	}
-	
+
 	// Standalone PDB
 	standalonePdb := CreateTestPdb(testNamespace, "standalone-pdb", AppLabels, AppLabels)
 

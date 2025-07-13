@@ -233,7 +233,7 @@ func TestFilterCronJobOwnedJobs(t *testing.T) {
 			Name: "test-cronjob",
 		},
 	}
-	
+
 	// Standalone Job (completed)
 	standaloneJob := CreateTestJob(testNamespace, "standalone-job", &batchv1.JobStatus{
 		Succeeded:      1,

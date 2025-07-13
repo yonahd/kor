@@ -129,7 +129,7 @@ func TestFilterOwnerReferencedDeployments(t *testing.T) {
 			Name: "test-application",
 		},
 	}
-	
+
 	// Standalone Deployment
 	standaloneDeployment := CreateTestDeployment(testNamespace, "standalone-deployment", 0, AppLabels)
 
