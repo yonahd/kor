@@ -129,7 +129,7 @@ func processNamespaceNetworkPolicies(clientset kubernetes.Interface, namespace s
 			continue
 		}
 
-		// ownerReferences kontrolü
+		// Skip resources with ownerReferences if the general flag is set
 		if filterOpts.IgnoreOwnerReferences && len(netpol.OwnerReferences) > 0 {
 			continue
 		}
