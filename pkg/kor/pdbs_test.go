@@ -174,3 +174,65 @@ func TestGetUnusedPdbsStructured(t *testing.T) {
 		t.Errorf("Expected output does not match actual output")
 	}
 }
+
+func TestFilterOwnerReferencedPdbs(t *testing.T) {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// Create two PDBs - one owned by another resource, one standalone
+	// PDB owned by another resource
+	ownedPdb := CreateTestPdb(testNamespace, "owned-pdb", AppLabels, AppLabels)
+	// Add owner reference to another resource
+	ownedPdb.OwnerReferences = []v1.OwnerReference{
+		{
+			Kind: "Application",
+			Name: "test-application",
+		},
+	}
+
+	// Standalone PDB
+	standalonePdb := CreateTestPdb(testNamespace, "standalone-pdb", AppLabels, AppLabels)
+
+	_, err = clientset.PolicyV1().PodDisruptionBudgets(testNamespace).Create(context.TODO(), ownedPdb, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake PDB: %v", err)
+	}
+
+	_, err = clientset.PolicyV1().PodDisruptionBudgets(testNamespace).Create(context.TODO(), standalonePdb, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake PDB: %v", err)
+	}
+
+	// Test without filter - should return both
+	filterOptsNoSkip := &filters.Options{IgnoreOwnerReferences: false}
+	unusedWithoutFilter, err := processNamespacePdbs(clientset, testNamespace, filterOptsNoSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused PDBs: %v", err)
+	}
+
+	if len(unusedWithoutFilter) != 2 {
+		t.Errorf("Expected 2 unused PDB objects without filter, got %d", len(unusedWithoutFilter))
+	}
+
+	// Test with filter - should return only standalone
+	filterOptsWithSkip := &filters.Options{IgnoreOwnerReferences: true}
+	unusedWithFilter, err := processNamespacePdbs(clientset, testNamespace, filterOptsWithSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused PDBs: %v", err)
+	}
+
+	if len(unusedWithFilter) != 1 {
+		t.Errorf("Expected 1 unused PDB object with filter, got %d", len(unusedWithFilter))
+	}
+
+	if unusedWithFilter[0].Name != "standalone-pdb" {
+		t.Errorf("Expected standalone-pdb to be unused, got %s", unusedWithFilter[0].Name)
+	}
+}

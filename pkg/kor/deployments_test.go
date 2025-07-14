@@ -108,6 +108,68 @@ func TestGetUnusedDeploymentsStructured(t *testing.T) {
 	}
 }
 
+func TestFilterOwnerReferencedDeployments(t *testing.T) {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// Create two deployments - one owned by another resource, one standalone
+	// Deployment owned by another resource
+	ownedDeployment := CreateTestDeployment(testNamespace, "owned-deployment", 0, AppLabels)
+	// Add owner reference to another resource
+	ownedDeployment.OwnerReferences = []v1.OwnerReference{
+		{
+			Kind: "Application",
+			Name: "test-application",
+		},
+	}
+
+	// Standalone Deployment
+	standaloneDeployment := CreateTestDeployment(testNamespace, "standalone-deployment", 0, AppLabels)
+
+	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), ownedDeployment, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake deployment: %v", err)
+	}
+
+	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), standaloneDeployment, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake deployment: %v", err)
+	}
+
+	// Test without filter - should return both
+	filterOptsNoSkip := &filters.Options{IgnoreOwnerReferences: false}
+	unusedWithoutFilter, err := processNamespaceDeployments(clientset, testNamespace, filterOptsNoSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused deployments: %v", err)
+	}
+
+	if len(unusedWithoutFilter) != 2 {
+		t.Errorf("Expected 2 unused Deployment objects without filter, got %d", len(unusedWithoutFilter))
+	}
+
+	// Test with filter - should return only standalone
+	filterOptsWithSkip := &filters.Options{IgnoreOwnerReferences: true}
+	unusedWithFilter, err := processNamespaceDeployments(clientset, testNamespace, filterOptsWithSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused deployments: %v", err)
+	}
+
+	if len(unusedWithFilter) != 1 {
+		t.Errorf("Expected 1 unused Deployment object with filter, got %d", len(unusedWithFilter))
+	}
+
+	if unusedWithFilter[0].Name != "standalone-deployment" {
+		t.Errorf("Expected standalone-deployment to be unused, got %s", unusedWithFilter[0].Name)
+	}
+}
+
 func init() {
 	scheme.Scheme = runtime.NewScheme()
 	_ = appsv1.AddToScheme(scheme.Scheme)

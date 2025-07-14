@@ -33,6 +33,11 @@ func processNamespaceReplicaSets(clientset kubernetes.Interface, namespace strin
 			continue
 		}
 
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(replicaSet.OwnerReferences) > 0 {
+			continue
+		}
+
 		// if the replicaSet is specified 0 replica and current available & ready & fullyLabeled replica count is all 0, think the replicaSet is completed
 		if *replicaSet.Spec.Replicas == 0 && replicaSet.Status.AvailableReplicas == 0 && replicaSet.Status.ReadyReplicas == 0 && replicaSet.Status.FullyLabeledReplicas == 0 {
 			reason := "ReplicaSet is not in use"

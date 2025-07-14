@@ -121,3 +121,84 @@ func TestGetUnusedMulti(t *testing.T) {
 	}
 
 }
+
+func TestGetUnusedMultiWithMultipleResources(t *testing.T) {
+	clientset := fake.NewClientset()
+
+	ResourceKindList = map[string]ResourceKind{
+		"configmap": {
+			Plural:     "configmaps",
+			ShortNames: []string{"cm"},
+		},
+		"secret": {
+			Plural:     "secrets",
+			ShortNames: []string{},
+		},
+		"deployment": {
+			Plural:     "deployments",
+			ShortNames: []string{"deploy"},
+		},
+	}
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// Create multiple test resources
+	deployment1 := CreateTestDeployment(testNamespace, "test-deployment1", 0, AppLabels)
+	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake deployment: %v", err)
+	}
+
+	configmap1 := CreateTestConfigmap(testNamespace, "configmap-1", AppLabels)
+	_, err = clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap1, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake configmap: %v", err)
+	}
+
+	secret1 := CreateTestSecret(testNamespace, "secret-1", AppLabels)
+	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret1, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake secret: %v", err)
+	}
+
+	resourceList := "configmap,secret,deployment"
+
+	opts := common.Opts{
+		WebhookURL:    "",
+		Channel:       "",
+		Token:         "",
+		DeleteFlag:    false,
+		NoInteractive: true,
+		GroupBy:       "namespace",
+	}
+
+	output, err := GetUnusedMulti(resourceList, &filters.Options{}, clientset, nil, nil, "json", opts)
+
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedMulti: %v", err)
+	}
+
+	var actualOutput map[string]map[string][]interface{}
+	if err := json.Unmarshal([]byte(output), &actualOutput); err != nil {
+		t.Fatalf("Error unmarshaling actual output: %v", err)
+	}
+
+	// Verify all three resource types are present in output
+	if _, exists := actualOutput[testNamespace]["ConfigMap"]; !exists {
+		t.Errorf("ConfigMap should be present in output")
+	}
+	if _, exists := actualOutput[testNamespace]["Secret"]; !exists {
+		t.Errorf("Secret should be present in output")
+	}
+	if _, exists := actualOutput[testNamespace]["Deployment"]; !exists {
+		t.Errorf("Deployment should be present in output")
+	}
+
+	t.Logf("Multi-resource output: %s", output)
+}

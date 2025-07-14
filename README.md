@@ -154,6 +154,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
       --older-than string            The minimum age of the resources to be considered unused. This flag cannot be used together with newer-than flag. Example: --older-than=1h2m
   -o, --output string                Output format (table, json or yaml) (default "table")
       --show-reason                  Print reason resource is considered unused
+      --ignore-owner-references      Skip resources that have ownerReferences set (for all resource types)
       --slack-auth-token string      Slack auth token to send notifications to, requires --slack-channel to be set
       --slack-channel string         Slack channel to send notifications to, requires --slack-auth-token to be set
       --slack-webhook-url string     Slack webhook URL to send notifications to

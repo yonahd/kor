@@ -330,6 +330,68 @@ func TestGetUnusedSecretsStructured(t *testing.T) {
 	}
 }
 
+func TestFilterOwnerReferencedSecrets(t *testing.T) {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// Create two secrets - one owned by deployment, one standalone
+	// Secret owned by deployment
+	ownedSecret := CreateTestSecret(testNamespace, "owned-secret", AppLabels)
+	// Add owner reference to deployment
+	ownedSecret.OwnerReferences = []v1.OwnerReference{
+		{
+			Kind: "Deployment",
+			Name: "test-deployment",
+		},
+	}
+
+	// Standalone Secret
+	standaloneSecret := CreateTestSecret(testNamespace, "standalone-secret", AppLabels)
+
+	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), ownedSecret, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake secret: %v", err)
+	}
+
+	_, err = clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), standaloneSecret, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake secret: %v", err)
+	}
+
+	// Test without filter - should return both
+	filterOptsNoSkip := &filters.Options{IgnoreOwnerReferences: false}
+	unusedWithoutFilter, err := processNamespaceSecret(clientset, testNamespace, filterOptsNoSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused secrets: %v", err)
+	}
+
+	if len(unusedWithoutFilter) != 2 {
+		t.Errorf("Expected 2 unused Secret objects without filter, got %d", len(unusedWithoutFilter))
+	}
+
+	// Test with filter - should return only standalone
+	filterOptsWithSkip := &filters.Options{IgnoreOwnerReferences: true}
+	unusedWithFilter, err := processNamespaceSecret(clientset, testNamespace, filterOptsWithSkip, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused secrets: %v", err)
+	}
+
+	if len(unusedWithFilter) != 1 {
+		t.Errorf("Expected 1 unused Secret object with filter, got %d", len(unusedWithFilter))
+	}
+
+	if unusedWithFilter[0].Name != "standalone-secret" {
+		t.Errorf("Expected standalone-secret to be unused, got %s", unusedWithFilter[0].Name)
+	}
+}
+
 func equalSlices(a, b []string) bool {
 	if len(a) != len(b) {
 		return false

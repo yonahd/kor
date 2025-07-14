@@ -26,6 +26,11 @@ func processVolumeAttachments(clientset kubernetes.Interface, filterOpts *filter
 	var unusedVAtts []ResourceInfo
 
 	for _, va := range vaList.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(va.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&va).Run(filterOpts); pass {
 			continue
 		}

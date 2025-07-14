@@ -81,6 +81,11 @@ func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace stri
 	var unusedRoleBindingNames []ResourceInfo
 
 	for _, rb := range roleBindingsList.Items {
+		// Skip resources with ownerReferences if the general flag is set
+		if filterOpts.IgnoreOwnerReferences && len(rb.OwnerReferences) > 0 {
+			continue
+		}
+
 		if pass, _ := filter.SetObject(&rb).Run(filterOpts); pass {
 			continue
 		}

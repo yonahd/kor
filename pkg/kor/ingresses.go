@@ -82,6 +82,11 @@ func retrieveIngressNames(clientset kubernetes.Interface, namespace string, filt
 			continue
 		}
 
+		// Skip if resource has owner references and ignore flag is set
+		if filterOpts.IgnoreOwnerReferences && len(ingress.OwnerReferences) > 0 {
+			continue
+		}
+
 		if ingress.Labels["kor/used"] == "false" {
 			unusedIngressNames = append(unusedIngressNames, ingress.Name)
 			continue
