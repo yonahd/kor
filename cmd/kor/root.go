@@ -24,7 +24,7 @@ func execName() string {
 	return n
 }
 
-var rootCmd = &cobra.Command{
+var RootCmd = &cobra.Command{
 	Use:   execName(),
 	Short: "kor - a CLI to discover unused Kubernetes resources",
 	Long: `kor is a CLI to discover unused Kubernetes resources
@@ -32,49 +32,50 @@ var rootCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		resourceNames := args[0]
-		clientset := kor.GetKubeClient(kubeconfig)
-		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
-		dynamicClient := kor.GetDynamicClient(kubeconfig)
+		clientset := kor.GetKubeClient(Kubeconfig)
+		apiExtClient := kor.GetAPIExtensionsClient(Kubeconfig)
+		dynamicClient := kor.GetDynamicClient(Kubeconfig)
 
-		if response, err := kor.GetUnusedMulti(resourceNames, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedMulti(resourceNames, FilterOptions, clientset, apiExtClient, dynamicClient, OutputFormat, Opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(OutputFormat)
 			fmt.Println(response)
 		}
 	},
 }
 
 var (
-	outputFormat  string
-	kubeconfig    string
-	opts          common.Opts
-	filterOptions = &filters.Options{}
+	OutputFormat  string
+	Kubeconfig    string
+	Opts          common.Opts
+	FilterOptions = &filters.Options{}
 )
 
 func init() {
 	initFlags()
 	initViper()
 	initKindsList()
-	addFilterOptionsFlag(rootCmd, filterOptions)
+	addFilterOptionsFlag(RootCmd, FilterOptions)
 }
 
 func initKindsList() {
-	clientset := kor.GetKubeClient(kubeconfig)
+	clientset := kor.GetKubeClient(Kubeconfig)
 	kor.ResourceKindList, _ = kor.GetResourceKinds(clientset)
 }
 
 func initFlags() {
-	rootCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
-	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "Output format (table, json or yaml)")
-	rootCmd.PersistentFlags().StringVar(&opts.WebhookURL, "slack-webhook-url", "", "Slack webhook URL to send notifications to")
-	rootCmd.PersistentFlags().StringVar(&opts.Channel, "slack-channel", "", "Slack channel to send notifications to, requires --slack-auth-token to be set")
-	rootCmd.PersistentFlags().StringVar(&opts.Token, "slack-auth-token", "", "Slack auth token to send notifications to, requires --slack-channel to be set")
-	rootCmd.PersistentFlags().BoolVar(&opts.DeleteFlag, "delete", false, "Delete unused resources")
-	rootCmd.PersistentFlags().BoolVar(&opts.NoInteractive, "no-interactive", false, "Do not prompt for confirmation when deleting resources. Be careful when using this flag!")
-	rootCmd.PersistentFlags().BoolVarP(&opts.Verbose, "verbose", "v", false, "Verbose output (print empty namespaces)")
-	rootCmd.PersistentFlags().StringVar(&opts.GroupBy, "group-by", "namespace", "Group output by (namespace, resource)")
-	rootCmd.PersistentFlags().BoolVar(&opts.ShowReason, "show-reason", false, "Print reason resource is considered unused")
+	RootCmd.PersistentFlags().StringVarP(&Kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
+	RootCmd.PersistentFlags().StringVarP(&OutputFormat, "output", "o", "table", "Output format (table, json or yaml)")
+	RootCmd.PersistentFlags().StringVar(&Opts.WebhookURL, "slack-webhook-url", "", "Slack webhook URL to send notifications to")
+	RootCmd.PersistentFlags().StringVar(&Opts.Channel, "slack-channel", "", "Slack channel to send notifications to, requires --slack-auth-token to be set")
+	RootCmd.PersistentFlags().StringVar(&Opts.Token, "slack-auth-token", "", "Slack auth token to send notifications to, requires --slack-channel to be set")
+	RootCmd.PersistentFlags().BoolVar(&Opts.DeleteFlag, "delete", false, "Delete unused resources")
+	RootCmd.PersistentFlags().BoolVar(&Opts.NoInteractive, "no-interactive", false, "Do not prompt for confirmation when deleting resources. Be careful when using this flag!")
+	RootCmd.PersistentFlags().BoolVarP(&Opts.Verbose, "verbose", "v", false, "Verbose output (print empty namespaces)")
+	RootCmd.PersistentFlags().StringVar(&Opts.GroupBy, "group-by", "namespace", "Group output by (namespace, resource)")
+	RootCmd.PersistentFlags().BoolVar(&Opts.ShowReason, "show-reason", false, "Print reason resource is considered unused")
+	RootCmd.PersistentFlags().BoolVar(&Opts.ShowReason, "include-crds", false, "Find unused CRDs (Custom Resource Definitions) as well.")
 }
 
 func initViper() {
@@ -87,29 +88,29 @@ func initViper() {
 
 	viper.AutomaticEnv()
 
-	if err := viper.BindPFlag("slack-webhook-url", rootCmd.PersistentFlags().Lookup("slack-webhook-url")); err != nil {
+	if err := viper.BindPFlag("slack-webhook-url", RootCmd.PersistentFlags().Lookup("slack-webhook-url")); err != nil {
 		fmt.Printf("Error binding flag --slack-webhook-url: %v\n", err)
 	}
 
-	if err := viper.BindPFlag("slack-auth-token", rootCmd.PersistentFlags().Lookup("slack-auth-token")); err != nil {
+	if err := viper.BindPFlag("slack-auth-token", RootCmd.PersistentFlags().Lookup("slack-auth-token")); err != nil {
 		fmt.Printf("Error binding flag --slack-auth-token: %v\n", err)
 	}
 
-	opts.WebhookURL = viper.GetString("slack-webhook-url")
-	opts.Token = viper.GetString("slack-auth-token")
+	Opts.WebhookURL = viper.GetString("slack-webhook-url")
+	Opts.Token = viper.GetString("slack-auth-token")
 
-	opts.WebhookURL = os.ExpandEnv(opts.WebhookURL)
-	opts.Token = os.ExpandEnv(opts.Token)
+	Opts.WebhookURL = os.ExpandEnv(Opts.WebhookURL)
+	Opts.Token = os.ExpandEnv(Opts.Token)
 }
 
 func Execute() {
-	_ = rootCmd.ParseFlags(os.Args)
-	if err := filterOptions.Validate(); err != nil {
+	_ = RootCmd.ParseFlags(os.Args)
+	if err := FilterOptions.Validate(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while validating filter options '%s'", err)
 		os.Exit(1)
 	}
-	filterOptions.Modify()
-	if err := rootCmd.Execute(); err != nil {
+	FilterOptions.Modify()
+	if err := RootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while executing your CLI '%s'", err)
 		os.Exit(1)
 	}

@@ -1,4 +1,4 @@
-package kor
+package resources
 
 import (
 	"fmt"
@@ -15,17 +15,17 @@ var serviceAccountCmd = &cobra.Command{
 	Short:   "Gets unused service accounts",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		clientset := kor.GetKubeClient(kubeconfig)
+		clientset := kor.GetKubeClient(korcmd.Kubeconfig)
 
-		if response, err := kor.GetUnusedServiceAccounts(filterOptions, clientset, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedServiceAccounts(korcmd.FilterOptions, clientset, korcmd.OutputFormat, korcmd.Opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(korcmd.OutputFormat)
 			fmt.Println(response)
 		}
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(serviceAccountCmd)
+	korcmd.RootCmd.AddCommand(serviceAccountCmd)
 }

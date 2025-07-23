@@ -1,4 +1,4 @@
-package kor
+package resources
 
 import (
 	"fmt"
@@ -15,12 +15,12 @@ var pvCmd = &cobra.Command{
 	Short:   "Gets unused pvs",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		clientset := kor.GetKubeClient(kubeconfig)
+		clientset := kor.GetKubeClient(korcmd.Kubeconfig)
 
-		if response, err := kor.GetUnusedPvs(filterOptions, clientset, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedPvs(korcmd.FilterOptions, clientset, korcmd.OutputFormat, korcmd.Opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(korcmd.OutputFormat)
 			fmt.Println(response)
 		}
 
@@ -28,5 +28,5 @@ var pvCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(pvCmd)
+	korcmd.RootCmd.AddCommand(pvCmd)
 }

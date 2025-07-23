@@ -1,4 +1,4 @@
-package kor
+package resources
 
 import (
 	"fmt"
@@ -15,16 +15,16 @@ var netpolCmd = &cobra.Command{
 	Short:   "Gets unused networkpolicies",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		clientset := kor.GetKubeClient(kubeconfig)
-		if response, err := kor.GetUnusedNetworkPolicies(filterOptions, clientset, outputFormat, opts); err != nil {
+		clientset := kor.GetKubeClient(korcmd.Kubeconfig)
+		if response, err := kor.GetUnusedNetworkPolicies(korcmd.FilterOptions, clientset, korcmd.OutputFormat, korcmd.Opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(korcmd.OutputFormat)
 			fmt.Println(response)
 		}
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(netpolCmd)
+	korcmd.RootCmd.AddCommand(netpolCmd)
 }

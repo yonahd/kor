@@ -1,4 +1,4 @@
-package kor
+package resources
 
 import (
 	"fmt"
@@ -15,12 +15,12 @@ var crdCmd = &cobra.Command{
 	Short:   "Gets unused crds",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
-		dynamicClient := kor.GetDynamicClient(kubeconfig)
-		if response, err := kor.GetUnusedCrds(filterOptions, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
+		apiExtClient := kor.GetAPIExtensionsClient(Kubeconfig)
+		dynamicClient := kor.GetDynamicClient(Kubeconfig)
+		if response, err := kor.GetUnusedCrds(FilterOptions, apiExtClient, dynamicClient, OutputFormat, Opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(korcmd.OutputFormat)
 			fmt.Println(response)
 		}
 
@@ -28,5 +28,5 @@ var crdCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(crdCmd)
+	korcmd.RootCmd.AddCommand(crdCmd)
 }

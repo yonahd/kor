@@ -1,4 +1,4 @@
-package kor
+package resources
 
 import (
 	"fmt"
@@ -14,10 +14,10 @@ var finalizerCmd = &cobra.Command{
 	Short:   "Gets resources waiting for finalizers to delete",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		clientset := kor.GetKubeClient(kubeconfig)
-		dynamicClient := kor.GetDynamicClient(kubeconfig)
+		clientset := kor.GetKubeClient(korcmd.Kubeconfig)
+		dynamicClient := kor.GetDynamicClient(Kubeconfig)
 
-		if response, err := kor.GetUnusedfinalizers(filterOptions, clientset, dynamicClient, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedfinalizers(FilterOptions, clientset, dynamicClient, OutputFormat, Opts); err != nil {
 			fmt.Println(err)
 		} else {
 			fmt.Println(response)
@@ -26,5 +26,5 @@ var finalizerCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(finalizerCmd)
+	korcmd.RootCmd.AddCommand(finalizerCmd)
 }
