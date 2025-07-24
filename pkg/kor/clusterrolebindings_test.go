@@ -173,6 +173,65 @@ func TestProcessClusterRoleBindings(t *testing.T) {
 	}
 }
 
+func TestProcessClusterRoleBindingsWithMixedSubjects(t *testing.T) {
+	clientset := fake.NewSimpleClientset()
+
+	// Create a namespace
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// Create a valid ClusterRole
+	testClusterRole := CreateTestClusterRole("valid-cluster-role", AppLabels)
+	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), testClusterRole, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating ClusterRole: %v", err)
+	}
+
+	// Create a valid ServiceAccount
+	sa := CreateTestServiceAccount(testNamespace, "valid-sa", AppLabels)
+	_, err = clientset.CoreV1().ServiceAccounts(testNamespace).Create(context.TODO(), sa, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating ServiceAccount: %v", err)
+	}
+
+	// Create ClusterRoleBinding with mixed subjects (User + ServiceAccount)
+	crb := CreateTestClusterRoleBindingRoleRef(
+		testNamespace,
+		"mixed-subjects-crb",
+		"valid-sa",
+		&rbacv1.RoleRef{
+			Kind: "ClusterRole",
+			Name: "valid-cluster-role",
+		})
+	
+	// Add a User subject
+	userSubject := rbacv1.Subject{
+		Kind:     "User",
+		Name:     "alice",
+		APIGroup: "rbac.authorization.k8s.io",
+	}
+	crb.Subjects = append(crb.Subjects, userSubject)
+	
+	_, err = clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(), crb, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating ClusterRoleBinding: %v", err)
+	}
+
+	unusedClusterRoleBindings, err := processClusterRoleBindings(clientset, &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	// Should be 0 unused since we have mixed subjects (User + ServiceAccount) and we assume Users exist
+	if len(unusedClusterRoleBindings) != 0 {
+		t.Errorf("Expected 0 unused cluster role bindings with mixed subjects, got %d", len(unusedClusterRoleBindings))
+	}
+}
+
 func TestGetUnusedClusterRoleBindingStructured(t *testing.T) {
 	clientset := createTestClusterRoleBindings(t)
 
