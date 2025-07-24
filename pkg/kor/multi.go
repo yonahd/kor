@@ -36,7 +36,7 @@ func getCanonicalResourceType(resourceName string) string {
 	return resourceName
 }
 
-func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, resourceList []string, filterOpts *filters.Options) ([]ResourceDiff, []string) {
+func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, resourceList []string, filterOpts *filters.Options, opts common.Opts) ([]ResourceDiff, []string) {
 	var noNamespaceDiff []ResourceDiff
 	markedForRemoval := make([]bool, len(resourceList))
 	updatedResourceList := resourceList
@@ -55,6 +55,10 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 		case "clusterrole":
 			clusterRoleDiff := getUnusedClusterRoles(clientset, filterOpts)
 			noNamespaceDiff = append(noNamespaceDiff, clusterRoleDiff)
+			markedForRemoval[counter] = true
+		case "clusterrolebinding":
+			clusterRoleBindingDiff := getUnusedClusterRoleBindings(clientset, filterOpts, opts)
+			noNamespaceDiff = append(noNamespaceDiff, clusterRoleBindingDiff)
 			markedForRemoval[counter] = true
 		case "storageclass":
 			storageClassDiff := getUnusedStorageClasses(clientset, filterOpts)
@@ -136,7 +140,7 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 		resources[""] = make(map[string][]ResourceInfo)
 	}
 
-	noNamespaceDiff, resourceList := retrieveNoNamespaceDiff(clientset, apiExtClient, dynamicClient, resourceList, filterOpts)
+	noNamespaceDiff, resourceList := retrieveNoNamespaceDiff(clientset, apiExtClient, dynamicClient, resourceList, filterOpts, opts)
 	if len(noNamespaceDiff) != 0 {
 		for _, diff := range noNamespaceDiff {
 			if len(diff.diff) != 0 {
