@@ -33,18 +33,19 @@ type ResourceKind struct {
 }
 
 type Config struct {
-	ExceptionClusterRoles    []ExceptionResource `json:"exceptionClusterRoles"`
-	ExceptionConfigMaps      []ExceptionResource `json:"exceptionConfigMaps"`
-	ExceptionCrds            []ExceptionResource `json:"exceptionCrds"`
-	ExceptionDaemonSets      []ExceptionResource `json:"exceptionDaemonSets"`
-	ExceptionRoles           []ExceptionResource `json:"exceptionRoles"`
-	ExceptionSecrets         []ExceptionResource `json:"exceptionSecrets"`
-	ExceptionServiceAccounts []ExceptionResource `json:"exceptionServiceAccounts"`
-	ExceptionServices        []ExceptionResource `json:"exceptionServices"`
-	ExceptionStorageClasses  []ExceptionResource `json:"exceptionStorageClasses"`
-	ExceptionJobs            []ExceptionResource `json:"exceptionJobs"`
-	ExceptionPdbs            []ExceptionResource `json:"exceptionPdbs"`
-	ExceptionRoleBindings    []ExceptionResource `json:"exceptionRoleBindings"`
+	ExceptionClusterRoles        []ExceptionResource `json:"exceptionClusterRoles"`
+	ExceptionClusterRoleBindings []ExceptionResource `json:"exceptionClusterRoleBindings"`
+	ExceptionConfigMaps          []ExceptionResource `json:"exceptionConfigMaps"`
+	ExceptionCrds                []ExceptionResource `json:"exceptionCrds"`
+	ExceptionDaemonSets          []ExceptionResource `json:"exceptionDaemonSets"`
+	ExceptionRoles               []ExceptionResource `json:"exceptionRoles"`
+	ExceptionSecrets             []ExceptionResource `json:"exceptionSecrets"`
+	ExceptionServiceAccounts     []ExceptionResource `json:"exceptionServiceAccounts"`
+	ExceptionServices            []ExceptionResource `json:"exceptionServices"`
+	ExceptionStorageClasses      []ExceptionResource `json:"exceptionStorageClasses"`
+	ExceptionJobs                []ExceptionResource `json:"exceptionJobs"`
+	ExceptionPdbs                []ExceptionResource `json:"exceptionPdbs"`
+	ExceptionRoleBindings        []ExceptionResource `json:"exceptionRoleBindings"`
 	// Add other configurations if needed
 }
 
