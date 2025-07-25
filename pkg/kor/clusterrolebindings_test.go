@@ -271,15 +271,44 @@ func TestGetUnusedClusterRoleBindingStructured(t *testing.T) {
 }
 
 func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
-	// Test data
-	allServiceAccountNames := map[string]map[string]bool{
-		"namespace1": {
-			"sa1": true,
-			"sa2": true,
-		},
-		"namespace2": {
-			"sa3": true,
-		},
+	// Create clientset with test ServiceAccounts
+	clientset := fake.NewSimpleClientset()
+
+	// Create namespaces
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: "namespace1"},
+	}, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating namespace1: %v", err)
+	}
+
+	_, err = clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: "namespace2"},
+	}, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating namespace2: %v", err)
+	}
+
+	// Create ServiceAccounts
+	_, err = clientset.CoreV1().ServiceAccounts("namespace1").Create(context.TODO(), &corev1.ServiceAccount{
+		ObjectMeta: v1.ObjectMeta{Name: "sa1"},
+	}, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating sa1: %v", err)
+	}
+
+	_, err = clientset.CoreV1().ServiceAccounts("namespace1").Create(context.TODO(), &corev1.ServiceAccount{
+		ObjectMeta: v1.ObjectMeta{Name: "sa2"},
+	}, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating sa2: %v", err)
+	}
+
+	_, err = clientset.CoreV1().ServiceAccounts("namespace2").Create(context.TODO(), &corev1.ServiceAccount{
+		ObjectMeta: v1.ObjectMeta{Name: "sa3"},
+	}, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating sa3: %v", err)
 	}
 
 	// Test case 1: valid SA exists
@@ -291,7 +320,7 @@ func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
 		},
 	}
 
-	if !isUsingValidServiceAccountClusterScoped(subjects, allServiceAccountNames) {
+	if !isUsingValidServiceAccountClusterScoped(subjects, clientset) {
 		t.Errorf("Expected to find valid ServiceAccount sa1 in namespace1")
 	}
 
@@ -304,7 +333,7 @@ func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
 		},
 	}
 
-	if isUsingValidServiceAccountClusterScoped(subjects, allServiceAccountNames) {
+	if isUsingValidServiceAccountClusterScoped(subjects, clientset) {
 		t.Errorf("Expected NOT to find ServiceAccount non-existing-sa")
 	}
 
@@ -317,7 +346,7 @@ func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
 		},
 	}
 
-	if isUsingValidServiceAccountClusterScoped(subjects, allServiceAccountNames) {
+	if isUsingValidServiceAccountClusterScoped(subjects, clientset) {
 		t.Errorf("Expected NOT to find ServiceAccount sa1 in non-existing-namespace")
 	}
 
@@ -335,7 +364,7 @@ func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
 		},
 	}
 
-	if !isUsingValidServiceAccountClusterScoped(subjects, allServiceAccountNames) {
+	if !isUsingValidServiceAccountClusterScoped(subjects, clientset) {
 		t.Errorf("Expected to find at least one valid ServiceAccount")
 	}
 }

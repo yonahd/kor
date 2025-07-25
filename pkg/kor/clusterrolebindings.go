@@ -19,17 +19,16 @@ import (
 //go:embed exceptions/clusterrolebindings/clusterrolebindings.json
 var clusterRoleBindingsConfig []byte
 
-// Check if any valid service accounts exist in the ClusterRoleBinding
-func isUsingValidServiceAccountClusterScoped(serviceAccounts []v1.Subject, allServiceAccountNames map[string]map[string]bool) bool {
+// Check if any valid service accounts exist in the ClusterRoleBinding by querying directly
+func isUsingValidServiceAccountClusterScoped(serviceAccounts []v1.Subject, clientset kubernetes.Interface) bool {
 	for _, sa := range serviceAccounts {
-		// Check if the service account exists in the specified namespace
-		if namespaceMap, namespaceExists := allServiceAccountNames[sa.Namespace]; namespaceExists {
-			if namespaceMap[sa.Name] {
-				return true
-			}
+		// Query directly for the service account in its namespace
+		_, err := clientset.CoreV1().ServiceAccounts(sa.Namespace).Get(context.TODO(), sa.Name, metav1.GetOptions{})
+		if err == nil {
+			return true // At least one ServiceAccount exists
 		}
 	}
-	return false
+	return false // No ServiceAccounts exist
 }
 
 func validateClusterRoleReference(crb v1.ClusterRoleBinding, clusterRoleNames map[string]bool) *ResourceInfo {
@@ -49,16 +48,6 @@ func processClusterRoleBindings(clientset kubernetes.Interface, filterOpts *filt
 	clusterRoleNames, err := convertNamesToPresenseMap(retrieveClusterRoleNames(clientset, filterOpts))
 	if err != nil {
 		return nil, err
-	}
-
-	// Get all service accounts from all namespaces for cluster-scoped checking
-	allServiceAccountNames := make(map[string]map[string]bool)
-	for _, namespace := range filterOpts.Namespaces(clientset) {
-		serviceAccountNames, err := convertNamesToPresenseMap(retrieveServiceAccountNames(clientset, namespace, filterOpts))
-		if err != nil {
-			return nil, err
-		}
-		allServiceAccountNames[namespace] = serviceAccountNames
 	}
 
 	config, err := unmarshalConfig(clusterRoleBindingsConfig)
@@ -104,7 +93,7 @@ func processClusterRoleBindings(clientset kubernetes.Interface, filterOpts *filt
 		}
 
 		// Check if ClusterRoleBinding uses a valid service account
-		if !isUsingValidServiceAccountClusterScoped(serviceAccountSubjects, allServiceAccountNames) {
+		if !isUsingValidServiceAccountClusterScoped(serviceAccountSubjects, clientset) {
 			unusedClusterRoleBindingNames = append(unusedClusterRoleBindingNames, ResourceInfo{Name: crb.Name, Reason: "ClusterRoleBinding references a non-existing ServiceAccount"})
 		}
 	}
