@@ -130,6 +130,36 @@ func createTestClusterRoleBindings(t *testing.T) *fake.Clientset {
 		t.Fatalf("Error creating fake %s: %v", "ClusterRoleBinding: crb5", err)
 	}
 
+	// Create ClusterRoleBinding with kor/used=true (should be filtered out even if unused)
+	crb6 := CreateTestClusterRoleBindingRoleRef(
+		testNamespace,
+		"test-crb6",
+		"non-existing-service-account-used-true",
+		&rbacv1.RoleRef{
+			Kind: "ClusterRole",
+			Name: "existing-cluster-role",
+		})
+	crb6.Labels = map[string]string{"kor/used": "true"}
+	_, err = clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(), crb6, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "ClusterRoleBinding: crb6", err)
+	}
+
+	// Create ClusterRoleBinding with kor/used=false (should be included in unused results)
+	crb7 := CreateTestClusterRoleBindingRoleRef(
+		testNamespace,
+		"test-crb7",
+		"non-existing-service-account-used-false",
+		&rbacv1.RoleRef{
+			Kind: "ClusterRole",
+			Name: "existing-cluster-role",
+		})
+	crb7.Labels = map[string]string{"kor/used": "false"}
+	_, err = clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(), crb7, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake %s: %v", "ClusterRoleBinding: crb7", err)
+	}
+
 	return clientset
 }
 
@@ -141,11 +171,12 @@ func TestProcessClusterRoleBindings(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	// We expect crb1 (bad ClusterRole) and crb2 (bad SA) to be unused
+	// We expect crb1 (bad ClusterRole), crb2 (bad SA), and crb7 (kor/used=false) to be unused
 	// crb3 should be used (valid SA and CR)
 	// crb4 should be used (has at least one valid SA)
 	// crb5 should be used (valid cross-namespace SA and CR)
-	expectedClusterRoleBindingNames := []string{"test-crb1", "test-crb2"}
+	// crb6 should be filtered out (kor/used=true even though it has non-existing SA)
+	expectedClusterRoleBindingNames := []string{"test-crb1", "test-crb2", "test-crb7"}
 
 	if len(unusedClusterRoleBindings) != len(expectedClusterRoleBindingNames) {
 		t.Errorf("Expected %d unused cluster role bindings, got %d", len(expectedClusterRoleBindingNames), len(unusedClusterRoleBindings))
@@ -169,6 +200,9 @@ func TestProcessClusterRoleBindings(t *testing.T) {
 		}
 		if crb.Name == "test-crb2" && crb.Reason != "ClusterRoleBinding references a non-existing ServiceAccount" {
 			t.Errorf("Expected reason for crb2 to be about non-existing ServiceAccount, got: %s", crb.Reason)
+		}
+		if crb.Name == "test-crb7" && crb.Reason != "Marked with unused label" {
+			t.Errorf("Expected reason for crb7 to be about unused label, got: %s", crb.Reason)
 		}
 	}
 }
@@ -254,6 +288,7 @@ func TestGetUnusedClusterRoleBindingStructured(t *testing.T) {
 			"ClusterRoleBinding": {
 				"test-crb1",
 				"test-crb2",
+				"test-crb7",
 			},
 		},
 	}
