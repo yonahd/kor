@@ -82,7 +82,6 @@ func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opt
 	default:
 		return "", fmt.Errorf("unsupported output format: %s", outputFormat)
 	}
-	return "", fmt.Errorf("unsupported output format: %s", outputFormat)
 }
 
 func FormatOutput(resources map[string]map[string][]ResourceInfo, opts common.Opts) bytes.Buffer {
