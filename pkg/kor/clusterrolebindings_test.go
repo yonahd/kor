@@ -101,7 +101,7 @@ func createTestClusterRoleBindings(t *testing.T) *fake.Clientset {
 			Kind: "ClusterRole",
 			Name: "existing-cluster-role",
 		})
-	
+
 	// Add existing SA to the subjects
 	existingSubject := CreateTestRbacSubject(testNamespace, "existing-service-account")
 	crb4.Subjects = append(crb4.Subjects, *existingSubject)
@@ -207,7 +207,7 @@ func TestProcessClusterRoleBindingsWithMixedSubjects(t *testing.T) {
 			Kind: "ClusterRole",
 			Name: "valid-cluster-role",
 		})
-	
+
 	// Add a User subject
 	userSubject := rbacv1.Subject{
 		Kind:     "User",
@@ -215,7 +215,7 @@ func TestProcessClusterRoleBindingsWithMixedSubjects(t *testing.T) {
 		APIGroup: "rbac.authorization.k8s.io",
 	}
 	crb.Subjects = append(crb.Subjects, userSubject)
-	
+
 	_, err = clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(), crb, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating ClusterRoleBinding: %v", err)
@@ -290,7 +290,7 @@ func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
 			Namespace: "namespace1",
 		},
 	}
-	
+
 	if !isUsingValidServiceAccountClusterScoped(subjects, allServiceAccountNames) {
 		t.Errorf("Expected to find valid ServiceAccount sa1 in namespace1")
 	}
@@ -303,7 +303,7 @@ func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
 			Namespace: "namespace1",
 		},
 	}
-	
+
 	if isUsingValidServiceAccountClusterScoped(subjects, allServiceAccountNames) {
 		t.Errorf("Expected NOT to find ServiceAccount non-existing-sa")
 	}
@@ -316,7 +316,7 @@ func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
 			Namespace: "non-existing-namespace",
 		},
 	}
-	
+
 	if isUsingValidServiceAccountClusterScoped(subjects, allServiceAccountNames) {
 		t.Errorf("Expected NOT to find ServiceAccount sa1 in non-existing-namespace")
 	}
@@ -334,7 +334,7 @@ func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
 			Namespace: "namespace2",
 		},
 	}
-	
+
 	if !isUsingValidServiceAccountClusterScoped(subjects, allServiceAccountNames) {
 		t.Errorf("Expected to find at least one valid ServiceAccount")
 	}
