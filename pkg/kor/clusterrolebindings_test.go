@@ -402,6 +402,42 @@ func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
 	if !isUsingValidServiceAccountClusterScoped(subjects, clientset) {
 		t.Errorf("Expected to find at least one valid ServiceAccount")
 	}
+
+	// Test case 5: mixed subjects with Users (Users should be ignored)
+	subjects = []rbacv1.Subject{
+		{
+			Kind:     "User",
+			Name:     "alice",
+			APIGroup: "rbac.authorization.k8s.io",
+		},
+		{
+			Kind:      "ServiceAccount",
+			Name:      "sa1",
+			Namespace: "namespace1",
+		},
+	}
+
+	if !isUsingValidServiceAccountClusterScoped(subjects, clientset) {
+		t.Errorf("Expected to find valid ServiceAccount even when Users are present")
+	}
+
+	// Test case 6: only Users (should return false since no ServiceAccounts)
+	subjects = []rbacv1.Subject{
+		{
+			Kind:     "User",
+			Name:     "alice",
+			APIGroup: "rbac.authorization.k8s.io",
+		},
+		{
+			Kind:     "User",
+			Name:     "bob",
+			APIGroup: "rbac.authorization.k8s.io",
+		},
+	}
+
+	if isUsingValidServiceAccountClusterScoped(subjects, clientset) {
+		t.Errorf("Expected NOT to find any ServiceAccounts when only Users are present")
+	}
 }
 
 func init() {
