@@ -421,7 +421,7 @@ func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
 		t.Errorf("Expected to find valid ServiceAccount even when Users are present")
 	}
 
-	// Test case 6: only Users (should return false since no ServiceAccounts)
+	// Test case 6: only Users (should return true since we assume Users exist)
 	subjects = []rbacv1.Subject{
 		{
 			Kind:     "User",
@@ -435,8 +435,8 @@ func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
 		},
 	}
 
-	if isUsingValidServiceAccountClusterScoped(subjects, clientset) {
-		t.Errorf("Expected NOT to find any ServiceAccounts when only Users are present")
+	if !isUsingValidServiceAccountClusterScoped(subjects, clientset) {
+		t.Errorf("Expected to find valid subjects when only Users are present (we assume they exist)")
 	}
 }
 

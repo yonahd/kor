@@ -22,9 +22,9 @@ var clusterRoleBindingsConfig []byte
 // Check if any valid service accounts exist in the ClusterRoleBinding by querying directly
 func isUsingValidServiceAccountClusterScoped(subjects []v1.Subject, clientset kubernetes.Interface) bool {
 	for _, subject := range subjects {
-		// Only process ServiceAccount subjects
+		// If we encounter non-ServiceAccount subjects (Users/Groups), assume they exist
 		if subject.Kind != "ServiceAccount" {
-			continue
+			return true
 		}
 		// Query directly for the service account in its namespace
 		_, err := clientset.CoreV1().ServiceAccounts(subject.Namespace).Get(context.TODO(), subject.Name, metav1.GetOptions{})
@@ -89,14 +89,7 @@ func processClusterRoleBindings(clientset kubernetes.Interface, filterOpts *filt
 			continue
 		}
 
-		serviceAccountSubjects := filterSubjects(crb.Subjects, "ServiceAccount")
-
-		// If other kinds (Users/Groups) are used, we assume they exist for now
-		if len(serviceAccountSubjects) != len(crb.Subjects) {
-			continue
-		}
-
-		// Check if ClusterRoleBinding uses a valid service account
+		// Check if ClusterRoleBinding uses valid subjects (ServiceAccounts and/or Users/Groups)
 		if !isUsingValidServiceAccountClusterScoped(crb.Subjects, clientset) {
 			unusedClusterRoleBindingNames = append(unusedClusterRoleBindingNames, ResourceInfo{Name: crb.Name, Reason: "ClusterRoleBinding references a non-existing ServiceAccount"})
 		}
