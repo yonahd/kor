@@ -17,19 +17,9 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func createTestServices(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
-
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
-
+func createTestServices(clientset *fake.Clientset, t *testing.T) {
 	endpoint1 := CreateTestEndpoint(testNamespace, "test-endpoint1", 0, AppLabels)
-	_, err = clientset.DiscoveryV1().EndpointSlices(testNamespace).Create(context.TODO(), endpoint1, v1.CreateOptions{})
+	_, err := clientset.DiscoveryV1().EndpointSlices(testNamespace).Create(context.TODO(), endpoint1, v1.CreateOptions{})
 
 	if err != nil {
 		t.Fatalf("Error creating fake endpoint: %v", err)
@@ -52,12 +42,26 @@ func createTestServices(t *testing.T) *fake.Clientset {
 	if err != nil {
 		t.Fatalf("Error creating fake endpoint: %v", err)
 	}
+}
+
+func createTestServicesClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestServices(clientset, t)
 
 	return clientset
 }
 
 func TestGetEndpointsWithoutSubsets(t *testing.T) {
-	clientset := createTestServices(t)
+	clientset := createTestServicesClient(t)
 
 	servicesWithoutEndpoints, err := processNamespaceServices(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
@@ -74,7 +78,7 @@ func TestGetEndpointsWithoutSubsets(t *testing.T) {
 }
 
 func TestGetUnusedServicesStructured(t *testing.T) {
-	clientset := createTestServices(t)
+	clientset := createTestServicesClient(t)
 
 	opts := common.Opts{
 		WebhookURL:    "",

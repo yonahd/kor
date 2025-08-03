@@ -17,24 +17,16 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-func createTestDeployments(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+func createTestDeployments(clientset *fake.Clientset, t *testing.T) {
+	appLabels := map[string]string{}
 
-	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
-	}, v1.CreateOptions{})
-
-	if err != nil {
-		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
-	}
-
-	deployment1 := CreateTestDeployment(testNamespace, "test-deployment1", 0, AppLabels)
-	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
+	deployment1 := CreateTestDeployment(testNamespace, "test-deployment1", 0, appLabels)
+	deployment2 := CreateTestDeployment(testNamespace, "test-deployment2", 1, appLabels)
+	_, err := clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment1, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake deployment: %v", err)
 	}
 
-	deployment2 := CreateTestDeployment(testNamespace, "test-deployment2", 1, AppLabels)
 	_, err = clientset.AppsV1().Deployments(testNamespace).Create(context.TODO(), deployment2, v1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Error creating fake deployment: %v", err)
@@ -51,12 +43,26 @@ func createTestDeployments(t *testing.T) *fake.Clientset {
 	if err != nil {
 		t.Fatalf("Error creating fake deployment: %v", err)
 	}
+}
+
+func createTestDeploymentsClient(t *testing.T) *fake.Clientset {
+	clientset := fake.NewSimpleClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	createTestDeployments(clientset, t)
 
 	return clientset
 }
 
 func TestProcessNamespaceDeployments(t *testing.T) {
-	clientset := createTestDeployments(t)
+	clientset := createTestDeploymentsClient(t)
 
 	deploymentsWithoutReplicas, err := processNamespaceDeployments(clientset, testNamespace, &filters.Options{}, common.Opts{})
 	if err != nil {
@@ -73,7 +79,7 @@ func TestProcessNamespaceDeployments(t *testing.T) {
 }
 
 func TestGetUnusedDeploymentsStructured(t *testing.T) {
-	clientset := createTestDeployments(t)
+	clientset := createTestDeploymentsClient(t)
 
 	opts := common.Opts{
 		WebhookURL:    "",
