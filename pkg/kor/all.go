@@ -122,6 +122,18 @@ func getUnusedClusterRoles(clientset kubernetes.Interface, filterOpts *filters.O
 	return aDiff
 }
 
+func getUnusedClusterRoleBindings(clientset kubernetes.Interface, filterOpts *filters.Options, opts common.Opts) ResourceDiff {
+	clusterRoleBindingDiff, err := processClusterRoleBindings(clientset, filterOpts, opts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "clusterRoleBindings", err)
+	}
+	aDiff := ResourceDiff{
+		"ClusterRoleBinding",
+		clusterRoleBindingDiff,
+	}
+	return aDiff
+}
+
 func getUnusedHpas(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ResourceDiff {
 	hpaDiff, err := processNamespaceHpas(clientset, namespace, filterOpts, opts)
 	if err != nil {
@@ -362,12 +374,14 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 		resources[""]["Crd"] = getUnusedCrds(apiExtClient, dynamicClient, filterOpts).diff
 		resources[""]["Pv"] = getUnusedPvs(clientset, filterOpts).diff
 		resources[""]["ClusterRole"] = getUnusedClusterRoles(clientset, filterOpts).diff
+		resources[""]["ClusterRoleBinding"] = getUnusedClusterRoleBindings(clientset, filterOpts, opts).diff
 		resources[""]["StorageClass"] = getUnusedStorageClasses(clientset, filterOpts).diff
 		resources[""]["VolumeAttachment"] = getUnusedVolumeAttachments(clientset, filterOpts).diff
 	case "resource":
 		appendResources(resources, "Crd", "", getUnusedCrds(apiExtClient, dynamicClient, filterOpts).diff)
 		appendResources(resources, "Pv", "", getUnusedPvs(clientset, filterOpts).diff)
 		appendResources(resources, "ClusterRole", "", getUnusedClusterRoles(clientset, filterOpts).diff)
+		appendResources(resources, "ClusterRoleBinding", "", getUnusedClusterRoleBindings(clientset, filterOpts, opts).diff)
 		appendResources(resources, "StorageClass", "", getUnusedStorageClasses(clientset, filterOpts).diff)
 		appendResources(resources, "VolumeAttachment", "", getUnusedVolumeAttachments(clientset, filterOpts).diff)
 
