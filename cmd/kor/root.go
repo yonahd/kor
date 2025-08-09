@@ -30,6 +30,13 @@ var rootCmd = &cobra.Command{
 	Long: `kor is a CLI to discover unused Kubernetes resources
 	kor can currently discover unused configmaps and secrets`,
 	Args: cobra.MinimumNArgs(1),
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		if shouldSkipKubeInitialization(cmd) {
+			return nil
+		}
+		initKindsList()
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		resourceNames := args[0]
 		clientset := kor.GetKubeClient(kubeconfig)
@@ -55,13 +62,15 @@ var (
 func init() {
 	initFlags()
 	initViper()
-	initKindsList()
 	addFilterOptionsFlag(rootCmd, filterOptions)
 }
 
 func initKindsList() {
-	clientset := kor.GetKubeClient(kubeconfig)
-	kor.ResourceKindList, _ = kor.GetResourceKinds(clientset)
+	// Only initialize if not already done
+	if kor.ResourceKindList == nil {
+		clientset := kor.GetKubeClient(kubeconfig)
+		kor.ResourceKindList, _ = kor.GetResourceKinds(clientset)
+	}
 }
 
 func initFlags() {
@@ -123,4 +132,26 @@ func addFilterOptionsFlag(cmd *cobra.Command, opts *filters.Options) {
 	cmd.PersistentFlags().StringSliceVarP(&opts.ExcludeNamespaces, "exclude-namespaces", "e", opts.ExcludeNamespaces, "Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored")
 	cmd.PersistentFlags().StringSliceVarP(&opts.IncludeNamespaces, "include-namespaces", "n", opts.IncludeNamespaces, "Namespaces to run on, split by commas. Example: --include-namespaces ns1,ns2,ns3. If set, non-namespaced resources will be ignored")
 	cmd.PersistentFlags().BoolVar(&opts.IgnoreOwnerReferences, "ignore-owner-references", false, "Skip resources that have ownerReferences set (for all resource types)")
+}
+
+// shouldSkipKubeInitialization determines if a command should skip kubeconfig initialization.
+func shouldSkipKubeInitialization(cmd *cobra.Command) bool {
+	cmdName := cmd.Name()
+
+	if cmdName == "version" || cmdName == "help" || cmdName == "completion" {
+		return true
+	}
+
+	if cmd.Parent() != nil && cmd.Parent().Name() == "completion" {
+		return true
+	}
+
+	shellCompletionCommands := []string{"bash", "zsh", "fish", "powershell"}
+	for _, shellCmd := range shellCompletionCommands {
+		if cmdName == shellCmd {
+			return true
+		}
+	}
+
+	return false
 }
