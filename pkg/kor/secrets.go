@@ -15,6 +15,7 @@ import (
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
+	"github.com/yonahd/kor/pkg/kor/externaldeps"
 )
 
 var exceptionSecretTypes = []string{
@@ -114,6 +115,18 @@ func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]str
 	return envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, nil
 }
 
+func retrieveUsedSecretsFromExternalCRDs(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	registry := externaldeps.GetGlobalRegistry()
+	dynamicClient := GetDynamicClient("")
+
+	refs, err := registry.ScanNamespace(context.TODO(), namespace, clientset, dynamicClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return RemoveDuplicatesAndSort(refs.Secrets), nil
+}
+
 func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, []string, error) {
 	secrets, err := clientset.CoreV1().Secrets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
@@ -164,12 +177,19 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 		return nil, err
 	}
 
+	// Retrieve Secrets referenced by external CRDs (like Argo WorkflowTemplates)
+	externalSecrets, err := retrieveUsedSecretsFromExternalCRDs(clientset, namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	envSecrets = RemoveDuplicatesAndSort(envSecrets)
 	envSecrets2 = RemoveDuplicatesAndSort(envSecrets2)
 	volumeSecrets = RemoveDuplicatesAndSort(volumeSecrets)
 	initContainerEnvSecrets = RemoveDuplicatesAndSort(initContainerEnvSecrets)
 	pullSecrets = RemoveDuplicatesAndSort(pullSecrets)
 	tlsSecrets = RemoveDuplicatesAndSort(tlsSecrets)
+	externalSecrets = RemoveDuplicatesAndSort(externalSecrets)
 
 	secretNames, unusedSecretNames, err := retrieveSecretNames(clientset, namespace, filterOpts)
 	if err != nil {
@@ -184,6 +204,7 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 		pullSecrets,
 		tlsSecrets,
 		initContainerEnvSecrets,
+		externalSecrets,
 	}
 
 	for _, slice := range slicesToAppend {

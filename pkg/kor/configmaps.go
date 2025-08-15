@@ -14,6 +14,7 @@ import (
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
+	"github.com/yonahd/kor/pkg/kor/externaldeps"
 )
 
 //go:embed exceptions/configmaps/configmaps.json
@@ -83,6 +84,18 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 	return volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, nil
 }
 
+func retrieveUsedCMFromExternalCRDs(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	registry := externaldeps.GetGlobalRegistry()
+	dynamicClient := GetDynamicClient("")
+
+	refs, err := registry.ScanNamespace(context.TODO(), namespace, clientset, dynamicClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return RemoveDuplicatesAndSort(refs.ConfigMaps), nil
+}
+
 func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, []string, error) {
 	configmaps, err := clientset.CoreV1().ConfigMaps(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 	if err != nil {
@@ -117,6 +130,13 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 	if err != nil {
 		return nil, err
 	}
+
+	// Retrieve ConfigMaps referenced by external CRDs (like Argo WorkflowTemplates)
+	externalCM, err := retrieveUsedCMFromExternalCRDs(clientset, namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	config, err := unmarshalConfig(configMapsConfig)
 	if err != nil {
 		return nil, err
@@ -127,6 +147,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 	envFromCM = RemoveDuplicatesAndSort(envFromCM)
 	envFromContainerCM = RemoveDuplicatesAndSort(envFromContainerCM)
 	envFromInitContainerCM = RemoveDuplicatesAndSort(envFromInitContainerCM)
+	externalCM = RemoveDuplicatesAndSort(externalCM)
 
 	configMapNames, unusedConfigmapNames, err := retrieveConfigMapNames(clientset, namespace, filterOpts)
 	if err != nil {
@@ -140,6 +161,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 		envFromCM,
 		envFromContainerCM,
 		envFromInitContainerCM,
+		externalCM,
 	}
 
 	for _, slice := range slicesToAppend {
