@@ -13,6 +13,7 @@ import (
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
+	"github.com/yonahd/kor/pkg/kor/externaldeps"
 )
 
 func retrieveUsedPvcs(clientset kubernetes.Interface, namespace string) ([]string, error) {
@@ -36,6 +37,18 @@ func retrieveUsedPvcs(clientset kubernetes.Interface, namespace string) ([]strin
 		}
 	}
 	return usedPvcs, err
+}
+
+func retrieveUsedPvcsFromExternalCRDs(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	registry := externaldeps.GetGlobalRegistry()
+	dynamicClient := GetDynamicClient("")
+
+	refs, err := registry.ScanNamespace(context.TODO(), namespace, clientset, dynamicClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return RemoveDuplicatesAndSort(refs.PVCs), nil
 }
 
 func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
@@ -69,8 +82,18 @@ func processNamespacePvcs(clientset kubernetes.Interface, namespace string, filt
 		return nil, err
 	}
 
+	// Retrieve PVCs referenced by external CRDs (like Argo WorkflowTemplates)
+	externalPvcs, err := retrieveUsedPvcsFromExternalCRDs(clientset, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	// Combine all used PVCs
+	allUsedPvcs := append(usedPvcs, externalPvcs...)
+	allUsedPvcs = RemoveDuplicatesAndSort(allUsedPvcs)
+
 	var diff []ResourceInfo
-	for _, name := range CalculateResourceDifference(usedPvcs, pvcNames) {
+	for _, name := range CalculateResourceDifference(allUsedPvcs, pvcNames) {
 		reason := "PVC is not in use"
 		diff = append(diff, ResourceInfo{Name: name, Reason: reason})
 	}
