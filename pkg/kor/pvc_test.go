@@ -120,7 +120,7 @@ func TestGetUnusedPvcsStructured(t *testing.T) {
 		GroupBy:       "namespace",
 	}
 
-	output, err := GetUnusedPvcs(&filters.Options{}, clientset, "json", opts)
+	output, err := GetUnusedPvcs(&filters.Options{}, clientset, nil, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedPvcsStructured: %v", err)
 	}

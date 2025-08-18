@@ -306,7 +306,7 @@ func TestGetUnusedSecretsStructured(t *testing.T) {
 		GroupBy:       "namespace",
 	}
 
-	output, err := GetUnusedSecrets(&filters.Options{}, clientset, "json", opts)
+	output, err := GetUnusedSecrets(&filters.Options{}, clientset, nil, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedSecretsStructured: %v", err)
 	}

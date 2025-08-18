@@ -179,8 +179,8 @@ kor [subcommand] --help
 
 | Resource        | What it looks for                                                                                                                                                                                                                 | Known False Positives ⚠️                                                                                                                                              |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ConfigMaps      | ConfigMaps not used in the following places:<br/>- Pods<br/>- Containers<br/>- ConfigMaps used through Volumes<br/>- ConfigMaps used through environment variables                                                                | ConfigMaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically OPA policies fluentd configs CRD configs |
-| Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers<br/>- Secrets used through volumes<br/>- Secrets used through environment variables<br/>- Secrets used by Ingress TLS<br/>- Secrets used by ServiceAccounts | Secrets used by resources which don't explicitly state them in the config e.g. secrets used by CRDs                                                                   |
+| ConfigMaps      | ConfigMaps not used in the following places:<br/>- Pods<br/>- Containers<br/>- ConfigMaps used through Volumes<br/>- ConfigMaps used through environment variables<br/>- **Argo WorkflowTemplates** (when CRD is present)                                                                | ConfigMaps used by resources which don't explicitly state them in the config.<br/> e.g Grafana dashboards loaded dynamically OPA policies fluentd configs CRD configs (excluding Argo WorkflowTemplates) |
+| Secrets         | Secrets not used in the following places:<br/>- Pods<br/>- Containers<br/>- Secrets used through volumes<br/>- Secrets used through environment variables<br/>- Secrets used by Ingress TLS<br/>- Secrets used by ServiceAccounts<br/>- **Argo WorkflowTemplates** (when CRD is present) | Secrets used by resources which don't explicitly state them in the config e.g. secrets used by CRDs (excluding Argo WorkflowTemplates)                                                                   |
 | Services        | Services with no endpoints                                                                                                                                                                                                        |                                                                                                                                                                       |
 | Deployments     | Deployments with no replicas                                                                                                                                                                                                      |                                                                                                                                                                       |
 | ServiceAccounts | ServiceAccounts unused by Pods<br/>ServiceAccounts unused by RoleBinding or ClusterRoleBinding                                                                                                                                    |                                                                                                                                                                       |
@@ -189,7 +189,7 @@ kor [subcommand] --help
 | ClusterRoles    | ClusterRoles not used in RoleBinding or ClusterRoleBinding<br/>ClusterRoles not used in ClusterRole aggregation                                                                                                                   |                                                                                                                                                                       |
 | RoleBindings    | RoleBindings referencing invalid Role, ClusterRole, or ServiceAccounts                                                                                                                                                            |                                                                                                                                                                       |
 | ClusterRoleBindings | ClusterRoleBindings referencing invalid ClusterRole or ServiceAccounts                                                                                                                                                        |                                                                                                                                                                       |
-| PVCs            | PVCs not used in Pods                                                                                                                                                                                                             |                                                                                                                                                                       |
+| PVCs            | PVCs not used in the following places:<br/>- Pods<br/>- **Argo WorkflowTemplates** (when CRD is present)                                                                                                                                                                                                             |                                                                                                                                                                       |
 | Ingresses       | Ingresses not pointing at any Service                                                                                                                                                                                             |                                                                                                                                                                       |
 | HPAs            | HPAs not used in Deployments<br/> HPAs not used in StatefulSets                                                                                                                                                                   |                                                                                                                                                                       |
 | CRDs            | CRDs not used the cluster                                                                                                                                                                                                         |                                                                                                                                                                       |
@@ -201,6 +201,50 @@ kor [subcommand] --help
 | StorageClasses  | StorageClasses not used by any PVs / PVCs                                                                                                                                                                                         |
 | NetworkPolicies | NetworkPolicies with no Pods selected by podSelector or Ingress / Egress rules                                                                                                                                                    |
 | VolumeAttachments | VolumeAttachments referencing a non-existent Node, PV, or CSIDriver |
+
+## Argo Workflows Integration
+
+Kor automatically detects and scans **Argo Workflows WorkflowTemplate** CRDs to prevent false positives for ConfigMaps, Secrets, and PVCs referenced by WorkflowTemplates.
+
+### Key Features
+
+- **Automatic**: Detects Argo Workflows installation, works with all existing commands
+- **Zero Configuration**: No setup required, activates only when WorkflowTemplate CRD exists
+- **Comprehensive**: Scans environment variables, envFrom, volumes, projected volumes, and synchronization semaphores
+
+### Supported Reference Patterns
+
+Kor scans WorkflowTemplates for the following resource references:
+
+**ConfigMaps:**
+- Environment variables: `env[].valueFrom.configMapKeyRef`
+- Environment from: `envFrom[].configMapRef`
+- Volumes: `volumes[].configMap`
+- Projected volumes: `volumes[].projected.sources[].configMap`
+- Synchronization semaphores: `spec.synchronization.semaphore.configMapKeyRef`
+
+**Secrets:**
+- Environment variables: `env[].valueFrom.secretKeyRef`
+- Environment from: `envFrom[].secretRef`
+- Volumes: `volumes[].secret`
+- Projected volumes: `volumes[].projected.sources[].secret`
+
+**PVCs:**
+- Volumes: `volumes[].persistentVolumeClaim`
+
+### Before vs After
+
+**Before (False Positives):**
+```bash
+$ kor configmap --include-namespaces production
+Unused ConfigMaps: workflow-config, app-settings
+```
+
+**After (Accurate):**
+```bash
+$ kor configmap --include-namespaces production
+No unused ConfigMaps found
+```
 
 ### Deleting Unused resources
 

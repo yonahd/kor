@@ -9,13 +9,13 @@ import (
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/utils/strings/slices"
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
-	"github.com/yonahd/kor/pkg/kor/externaldeps"
 )
 
 var exceptionSecretTypes = []string{
@@ -46,7 +46,7 @@ func retrieveIngressTLS(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
+func retrieveUsedSecretFromPods(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
 	var envSecrets []string
 	var envSecrets2 []string
 	var volumeSecrets []string
@@ -115,16 +115,12 @@ func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]str
 	return envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, nil
 }
 
-func retrieveUsedSecretsFromExternalCRDs(clientset kubernetes.Interface, namespace string) ([]string, error) {
-	registry := externaldeps.GetGlobalRegistry()
-	dynamicClient := GetDynamicClient("")
-
-	refs, err := registry.ScanNamespace(context.TODO(), namespace, clientset, dynamicClient)
+func retrieveUsedSecretFromArgoWorkflowTemplates(clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string) ([]string, error) {
+	refs, err := ValidateResourceReferencesFromArgoWorkflowTemplates(clientset, dynamicClient, namespace)
 	if err != nil {
 		return nil, err
 	}
-
-	return RemoveDuplicatesAndSort(refs.Secrets), nil
+	return refs.Secrets, nil
 }
 
 func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, []string, error) {
@@ -171,14 +167,15 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 	return names, unusedSecretNames, nil
 }
 
-func processNamespaceSecret(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
-	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(clientset, namespace)
+func processNamespaceSecret(clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
+	// Retrieve Secrets referenced by Pods
+	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecretFromPods(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	// Retrieve Secrets referenced by external CRDs (like Argo WorkflowTemplates)
-	externalSecrets, err := retrieveUsedSecretsFromExternalCRDs(clientset, namespace)
+	// Retrieve Secrets referenced by Argo WorkflowTemplates
+	argoSecrets, err := retrieveUsedSecretFromArgoWorkflowTemplates(clientset, dynamicClient, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +186,7 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 	initContainerEnvSecrets = RemoveDuplicatesAndSort(initContainerEnvSecrets)
 	pullSecrets = RemoveDuplicatesAndSort(pullSecrets)
 	tlsSecrets = RemoveDuplicatesAndSort(tlsSecrets)
-	externalSecrets = RemoveDuplicatesAndSort(externalSecrets)
+	argoSecrets = RemoveDuplicatesAndSort(argoSecrets)
 
 	secretNames, unusedSecretNames, err := retrieveSecretNames(clientset, namespace, filterOpts)
 	if err != nil {
@@ -204,7 +201,7 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 		pullSecrets,
 		tlsSecrets,
 		initContainerEnvSecrets,
-		externalSecrets,
+		argoSecrets,
 	}
 
 	for _, slice := range slicesToAppend {
@@ -232,10 +229,10 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 
 }
 
-func GetUnusedSecrets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
+func GetUnusedSecrets(filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceSecret(clientset, namespace, filterOpts, opts)
+		diff, err := processNamespaceSecret(clientset, dynamicClient, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

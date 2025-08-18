@@ -82,18 +82,18 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 	return noNamespaceDiff, clearedResourceList
 }
 
-func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *filters.Options, opts common.Opts) []ResourceDiff {
+func retrieveNamespaceDiffs(clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, resourceList []string, filterOpts *filters.Options, opts common.Opts) []ResourceDiff {
 	var allDiffs []ResourceDiff
 	for _, resource := range resourceList {
 		var diffResult ResourceDiff
 		canonicalType := getCanonicalResourceType(resource)
 		switch canonicalType {
 		case "configmap":
-			diffResult = getUnusedCMs(clientset, namespace, filterOpts, opts)
+			diffResult = getUnusedCMs(clientset, dynamicClient, namespace, filterOpts, opts)
 		case "service":
 			diffResult = getUnusedSVCs(clientset, namespace, filterOpts, opts)
 		case "secret":
-			diffResult = getUnusedSecrets(clientset, namespace, filterOpts, opts)
+			diffResult = getUnusedSecrets(clientset, dynamicClient, namespace, filterOpts, opts)
 		case "serviceaccount":
 			diffResult = getUnusedServiceAccounts(clientset, namespace, filterOpts, opts)
 		case "deployment":
@@ -105,7 +105,7 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 		case "horizontalpodautoscaler":
 			diffResult = getUnusedHpas(clientset, namespace, filterOpts, opts)
 		case "persistentvolumeclaim":
-			diffResult = getUnusedPvcs(clientset, namespace, filterOpts, opts)
+			diffResult = getUnusedPvcs(clientset, dynamicClient, namespace, filterOpts, opts)
 		case "ingress":
 			diffResult = getUnusedIngresses(clientset, namespace, filterOpts, opts)
 		case "poddisruptionbudget":
@@ -160,7 +160,7 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 	}
 
 	for _, namespace := range namespaces {
-		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList, filterOpts, opts)
+		allDiffs := retrieveNamespaceDiffs(clientset, dynamicClient, namespace, resourceList, filterOpts, opts)
 		if opts.GroupBy == "namespace" {
 			resources[namespace] = make(map[string][]ResourceInfo)
 		}

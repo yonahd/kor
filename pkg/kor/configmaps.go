@@ -9,18 +9,18 @@ import (
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
-	"github.com/yonahd/kor/pkg/kor/externaldeps"
 )
 
 //go:embed exceptions/configmaps/configmaps.json
 var configMapsConfig []byte
 
-func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, error) {
+func retrieveUsedCMFromPods(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, error) {
 	var volumesCM []string
 	var envCM []string
 	var envFromCM []string
@@ -84,16 +84,12 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 	return volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, nil
 }
 
-func retrieveUsedCMFromExternalCRDs(clientset kubernetes.Interface, namespace string) ([]string, error) {
-	registry := externaldeps.GetGlobalRegistry()
-	dynamicClient := GetDynamicClient("")
-
-	refs, err := registry.ScanNamespace(context.TODO(), namespace, clientset, dynamicClient)
+func retrieveUsedCMFromArgoWorkflowTemplates(clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string) ([]string, error) {
+	refs, err := ValidateResourceReferencesFromArgoWorkflowTemplates(clientset, dynamicClient, namespace)
 	if err != nil {
 		return nil, err
 	}
-
-	return RemoveDuplicatesAndSort(refs.ConfigMaps), nil
+	return refs.ConfigMaps, nil
 }
 
 func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, []string, error) {
@@ -125,14 +121,15 @@ func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, fi
 	return names, unusedConfigmapNames, nil
 }
 
-func processNamespaceCM(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
-	volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, namespace)
+func processNamespaceCM(clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
+	// Retrieve ConfigMaps referenced by Pods
+	volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCMFromPods(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	// Retrieve ConfigMaps referenced by external CRDs (like Argo WorkflowTemplates)
-	externalCM, err := retrieveUsedCMFromExternalCRDs(clientset, namespace)
+	// Retrieve ConfigMaps referenced by Argo WorkflowTemplates
+	argoCM, err := retrieveUsedCMFromArgoWorkflowTemplates(clientset, dynamicClient, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +144,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 	envFromCM = RemoveDuplicatesAndSort(envFromCM)
 	envFromContainerCM = RemoveDuplicatesAndSort(envFromContainerCM)
 	envFromInitContainerCM = RemoveDuplicatesAndSort(envFromInitContainerCM)
-	externalCM = RemoveDuplicatesAndSort(externalCM)
+	argoCM = RemoveDuplicatesAndSort(argoCM)
 
 	configMapNames, unusedConfigmapNames, err := retrieveConfigMapNames(clientset, namespace, filterOpts)
 	if err != nil {
@@ -161,7 +158,7 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 		envFromCM,
 		envFromContainerCM,
 		envFromInitContainerCM,
-		externalCM,
+		argoCM,
 	}
 
 	for _, slice := range slicesToAppend {
@@ -197,10 +194,10 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 	return diff, nil
 }
 
-func GetUnusedConfigmaps(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
+func GetUnusedConfigmaps(filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceCM(clientset, namespace, filterOpts, opts)
+		diff, err := processNamespaceCM(clientset, dynamicClient, namespace, filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue

@@ -16,8 +16,9 @@ var pvcCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
+		dynamicClient := kor.GetDynamicClient(kubeconfig)
 
-		if response, err := kor.GetUnusedPvcs(filterOptions, clientset, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedPvcs(filterOptions, clientset, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			utils.PrintLogo(outputFormat)

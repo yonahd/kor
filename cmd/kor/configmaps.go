@@ -16,7 +16,8 @@ var configmapCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		clientset := kor.GetKubeClient(kubeconfig)
-		if response, err := kor.GetUnusedConfigmaps(filterOptions, clientset, outputFormat, opts); err != nil {
+		dynamicClient := kor.GetDynamicClient(kubeconfig)
+		if response, err := kor.GetUnusedConfigmaps(filterOptions, clientset, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			utils.PrintLogo(outputFormat)
