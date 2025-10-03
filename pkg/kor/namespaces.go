@@ -42,7 +42,7 @@ func processNamespaces(ctx context.Context, clientset kubernetes.Interface, dyna
 	}
 
 	for _, namespaceName := range filteredNamespaceNames {
-		namespace, err := clientset.CoreV1().Namespaces().Get(context.TODO(), namespaceName, metav1.GetOptions{})
+		namespace, err := clientset.CoreV1().Namespaces().Get(ctx, namespaceName, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
