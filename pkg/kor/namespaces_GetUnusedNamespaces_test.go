@@ -232,7 +232,7 @@ func createEmptyNamespaceLabeledAsUsed(ctx context.Context, t *testing.T) (kuber
 	return clientset, dynamicClient
 }
 
-func namespaceWithIgnoredConfgimap(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
+func namespaceWithIgnoredConfigmap(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
 	realClientset := fake.NewSimpleClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
@@ -401,7 +401,7 @@ func TestGetUnusedNamespaces(t *testing.T) {
 		},
 		{
 			name:           "Namespace with configmap and with filter IgnoreResourceTypes configmaps applied",
-			getClientsFunc: namespaceWithIgnoredConfgimap,
+			getClientsFunc: namespaceWithIgnoredConfigmap,
 			filterOpts: &filters.Options{
 				IgnoreResourceTypes: []string{
 					"configmaps",
