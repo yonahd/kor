@@ -207,10 +207,7 @@ func exceptionsFSWalkFn(path string, d fs.DirEntry, err error) error {
 	return nil
 }
 
-func loadNamespacedEmbeddedExceptions(
-	ctx context.Context,
-	fileSystem embed.FS,
-) (*Config, error) {
+func loadNamespacedEmbeddedExceptions(ctx context.Context, fileSystem embed.FS) (*Config, error) {
 	if err := fs.WalkDir(exceptionsFS, ".", exceptionsFSWalkFn); err != nil {
 		return nil, err
 	}
