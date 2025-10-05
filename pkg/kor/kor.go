@@ -9,6 +9,7 @@ import (
 	"sort"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -28,6 +29,7 @@ type ExceptionResource struct {
 type ExceptionNamespacedResource struct {
 	Namespace    string
 	ResourceName string
+	MatchRegex   bool
 	ResourceType string
 }
 
@@ -138,6 +140,21 @@ func GetDynamicClient(kubeconfig string) *dynamic.DynamicClient {
 		os.Exit(1)
 	}
 	return clientset
+}
+
+func GetDiscoveryClient(kubeconfig string) *discovery.DiscoveryClient {
+	config, err := GetConfig(kubeconfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
+		os.Exit(1)
+	}
+
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+		os.Exit(1)
+	}
+	return discoveryClient
 }
 
 // TODO create formatter by resource "#", "Resource Name", "Namespace"
