@@ -426,6 +426,24 @@ func TestIsNamespaceUsed(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.TODO()
+			NamespacedExceptionsConfig = &Config{
+				ExceptionNamespacedResources: []ExceptionNamespacedResource{
+					{Namespace: ".*", ResourceName: "kube-root-ca\\.crt", MatchRegex: true, ResourceType: "configmaps"},
+					{Namespace: ".*", ResourceName: "openshift-service-ca\\.crt", MatchRegex: true, ResourceType: "configmaps"},
+					{Namespace: "openshift-.*", ResourceName: ".*", MatchRegex: true, ResourceType: "configmaps"},
+					{Namespace: "openshift-.*", ResourceName: ".*", MatchRegex: true, ResourceType: "jobs"},
+					{Namespace: "kube-system", ResourceName: "system::*", MatchRegex: true, ResourceType: "rolebindings"},
+					{Namespace: "kube-system", ResourceName: "system:controller:*", MatchRegex: true, ResourceType: "rolebindings"},
+					{Namespace: "openshift-.*", ResourceName: ".*", MatchRegex: true, ResourceType: "roles"},
+					{Namespace: "kube-system", ResourceName: ".*\\.node-password\\.k3s", MatchRegex: true, ResourceType: "secrets"},
+					{Namespace: "kube-system", ResourceName: "bootstrap-token-.*", MatchRegex: true, ResourceType: "secrets"},
+					{Namespace: "openshift-.*", ResourceName: ".*", MatchRegex: true, ResourceType: "secrets"},
+					{Namespace: ".*", ResourceName: "default", MatchRegex: true, ResourceType: "serviceaccounts"},
+					{Namespace: "openshift-.*", ResourceName: ".*", MatchRegex: true, ResourceType: "serviceaccounts"},
+					{Namespace: "openshift-.*", ResourceName: ".*", MatchRegex: true, ResourceType: "services"},
+					{Namespace: ".*", ResourceName: ".*", MatchRegex: true, ResourceType: "events"},
+				},
+			}
 			clientset, dynamicClient := tt.getClientsFunc(ctx, t, tt.namespaceName, tt.objName)
 			got, err := isNamespaceUsed(ctx, clientset, dynamicClient, tt.namespaceName, tt.filterOpts)
 			if (err != nil) != tt.expectedError {
