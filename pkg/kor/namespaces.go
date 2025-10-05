@@ -14,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/strings/slices"
@@ -280,8 +279,9 @@ func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynami
 	return false, nil
 }
 
-func GetUnusedNamespaces(ctx context.Context, filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient dynamic.Interface, discoveryClient discovery.DiscoveryInterface, outputFormat string, opts common.Opts) (string, error) {
-	allNamespacedAPIs, err := discoveryClient.ServerPreferredNamespacedResources()
+func GetUnusedNamespaces(ctx context.Context, filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
+	// TODO: EZ: func GetUnusedNamespaces(ctx context.Context, filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient dynamic.Interface, discoveryClient discovery.DiscoveryInterface, outputFormat string, opts common.Opts) (string, error) {
+	allNamespacedAPIs, err := clientset.Discovery().ServerPreferredNamespacedResources()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: error fetching preferred resources (partial results may be available): %v", err)
 	}
