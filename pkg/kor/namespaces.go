@@ -280,7 +280,6 @@ func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynami
 }
 
 func GetUnusedNamespaces(ctx context.Context, filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
-	// TODO: EZ: func GetUnusedNamespaces(ctx context.Context, filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient dynamic.Interface, discoveryClient discovery.DiscoveryInterface, outputFormat string, opts common.Opts) (string, error) {
 	allNamespacedAPIs, err := clientset.Discovery().ServerPreferredNamespacedResources()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: error fetching preferred resources (partial results may be available): %v", err)
