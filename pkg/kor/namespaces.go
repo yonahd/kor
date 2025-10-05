@@ -3,32 +3,56 @@ package kor
 import (
 	"bytes"
 	"context"
-	_ "embed"
+	"embed"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-//go:embed exceptions/namespaces/namespaces.json
-var namespacesConfig []byte
-
-//go:embed exceptions/namespaced-resources/namespaced-resources.json
-var namespacedResourcesConfig []byte
-
 type NamespacedResource struct {
 	Identifier types.NamespacedName
 	GVR        schema.GroupVersionResource
+}
+
+var (
+	//go:embed all:exceptions
+	exceptionsFS embed.FS
+
+	//go:embed exceptions/namespaces/namespaces.json
+	namespacesConfig []byte
+
+	Exclusions                    []ExceptionNamespacedResource
+	AllNamespacedAPIResourceTypes []*metav1.APIResourceList
+	NamespacedExceptionsConfig    *Config
+)
+
+func isNamespacedResourceType(resourceType string) bool {
+	for _, apiList := range AllNamespacedAPIResourceTypes {
+		if apiList == nil {
+			continue
+		}
+		for _, r := range apiList.APIResources {
+			if r.Name == resourceType || r.SingularName == resourceType || slices.Contains(r.ShortNames, resourceType) || strings.EqualFold(r.Kind, resourceType) {
+				return r.Namespaced
+			}
+		}
+	}
+
+	return false
 }
 
 func processNamespaces(ctx context.Context, clientset kubernetes.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) ([]ResourceInfo, error) {
@@ -118,12 +142,95 @@ func ignoreResourceType(resource string, ignoreResourceTypes []string) bool {
 	return false
 }
 
-func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, filterOpts *filters.Options) (bool, error) {
-	config, err := unmarshalConfig(namespacedResourcesConfig)
+func exceptionsFSWalkFn(path string, d fs.DirEntry, err error) error {
 	if err != nil {
-		return true, err
+		return nil
 	}
 
+	if d.IsDir() {
+		return nil
+	}
+
+	// match .json suffix (case-insensitive)
+	if strings.EqualFold(filepath.Ext(path), ".json") {
+		b, err := exceptionsFS.ReadFile(path)
+		if err != nil {
+			return nil
+		}
+
+		// Decode top-level object
+		var top map[string]json.RawMessage
+		if err := json.Unmarshal(b, &top); err != nil {
+			return nil
+		}
+
+		// skip non-namespaced resource types
+		base := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+		if !isNamespacedResourceType(base) {
+			return nil
+		}
+
+		// Require exactly one key
+		if len(top) != 1 {
+			return nil
+		}
+
+		// The value under that key must be an array of ExceptionNamespacedResource
+		var key string
+		for k := range top {
+			key = k
+			break
+		}
+		var items []ExceptionNamespacedResource
+		if err := json.Unmarshal(top[key], &items); err != nil {
+			return nil
+		}
+		if len(items) == 0 {
+			return nil
+		}
+
+		// Keep only items where MatchRegex == true
+		var kept []ExceptionNamespacedResource
+		for _, it := range items {
+			if it.MatchRegex {
+				kept = append(kept, it)
+			}
+		}
+		if len(kept) == 0 {
+			return nil
+		}
+		// Set ResourceType for each kept item from the file base name
+		for i := range kept {
+			kept[i].ResourceType = base
+		}
+		Exclusions = append(Exclusions, kept...)
+	}
+	return nil
+}
+
+func loadNamespacedEmbeddedExceptions(
+	ctx context.Context,
+	fileSystem embed.FS,
+) (*Config, error) {
+	if err := fs.WalkDir(exceptionsFS, ".", exceptionsFSWalkFn); err != nil {
+		return nil, err
+	}
+	// always exclude events
+	Exclusions = append(Exclusions, ExceptionNamespacedResource{
+		Namespace:    ".*",
+		ResourceName: ".*",
+		ResourceType: "events",
+		MatchRegex:   true,
+	},
+	)
+	config := &Config{
+		ExceptionNamespacedResources: Exclusions,
+	}
+	return config, nil
+}
+
+func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, filterOpts *filters.Options) (bool, error) {
+	config := NamespacedExceptionsConfig
 	apiResourceLists, err := clientset.Discovery().ServerPreferredNamespacedResources()
 	if err != nil {
 		return true, err
@@ -173,7 +280,18 @@ func isNamespaceUsed(ctx context.Context, clientset kubernetes.Interface, dynami
 	return false, nil
 }
 
-func GetUnusedNamespaces(ctx context.Context, filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
+func GetUnusedNamespaces(ctx context.Context, filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient dynamic.Interface, discoveryClient discovery.DiscoveryInterface, outputFormat string, opts common.Opts) (string, error) {
+	allNamespacedAPIs, err := discoveryClient.ServerPreferredNamespacedResources()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: error fetching preferred resources (partial results may be available): %v", err)
+	}
+	AllNamespacedAPIResourceTypes = allNamespacedAPIs
+
+	NamespacedExceptionsConfig, err = loadNamespacedEmbeddedExceptions(ctx, exceptionsFS)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to process namespaced exceptions: %v\n", err)
+	}
+
 	resources := make(map[string]map[string][]ResourceInfo)
 	diff, err := processNamespaces(ctx, clientset, dynamicClient, filterOpts)
 	if err != nil {
