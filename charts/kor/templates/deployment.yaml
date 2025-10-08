@@ -29,6 +29,8 @@ spec:
             {{ toYaml . | nindent 12 }}
           {{- end }}
           image: "{{ .Values.prometheusExporter.deployment.image.repository }}:{{ .Values.prometheusExporter.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.prometheusExporter.deployment.imagePullPolicy }}
+          terminationMessagePath: "/dev/termination-log"
           command:
             {{- toYaml .Values.prometheusExporter.command | nindent 12 }}
           args:
@@ -61,8 +63,6 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-          terminationMessagePath: "/dev/termination-log"
-          imagePullPolicy: {{ .Values.prometheusExporter.deployment.imagePullPolicy }}
       restartPolicy: {{ .Values.prometheusExporter.deployment.restartPolicy }}
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
