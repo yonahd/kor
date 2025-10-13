@@ -60,14 +60,30 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 			continue
 		}
 
+		// Find a served version to query
+		var servedVersion string
+		for _, v := range crd.Spec.Versions {
+			if v.Served {
+				servedVersion = v.Name
+				break
+			}
+		}
+
+		// Skip this CRD if no served version is found
+		if servedVersion == "" {
+			continue
+		}
+
 		gvr := schema.GroupVersionResource{
 			Group:    crd.Spec.Group,
-			Version:  crd.Spec.Versions[0].Name, // We're checking the first version.
+			Version:  servedVersion,
 			Resource: crd.Spec.Names.Plural,
 		}
 		instances, err := dynamicClient.Resource(gvr).Namespace("").List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
 		if err != nil {
-			return nil, err
+			// If we get an error querying the resource, skip it rather than failing
+			// This could happen if the CRD exists but the API server doesn't recognize it
+			continue
 		}
 		if len(instances.Items) == 0 {
 			reason := "CRD has no instances"
