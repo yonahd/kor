@@ -18,7 +18,6 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
-
 //go:embed exceptions/crds/crds.json
 var crdsConfig []byte
 
