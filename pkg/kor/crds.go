@@ -59,43 +59,42 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 		if exceptionFound {
 			continue
 		}
+		
+		var servedVersions []string
+		for _, v := range crd.Spec.Versions {
+			if v.Served {
+				servedVersions = append(servedVersions, v.Name)
+			}
+		}
 
-        // Collect all served versions
-        var servedVersions []string
-        for _, v := range crd.Spec.Versions {
-        	if v.Served {
-        		servedVersions = append(servedVersions, v.Name)
-        	}
-        }
-        
-        // Skip CRD if no served versions are found
-        if len(servedVersions) == 0 {
-        	continue
-        }
-        
-        hasInstances := false
-        for _, version := range servedVersions {
-        	gvr := schema.GroupVersionResource{
-        		Group:    crd.Spec.Group,
-        		Version:  version,
-        		Resource: crd.Spec.Names.Plural,
-        	}
-        
-        	instances, err := dynamicClient.Resource(gvr).Namespace("").List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
-        	if err != nil {
-        		// Skip versions that fail to list
-        		continue
-        	}
-        	if len(instances.Items) > 0 {
-        		hasInstances = true
-        		break
-        	}
-        }
-        
-        if !hasInstances {
-        	reason := "CRD has no instances in any served version"
-        	unusedCRDs = append(unusedCRDs, ResourceInfo{Name: crd.Name, Reason: reason})
-        }
+		// Skip CRD if no served versions are found
+		if len(servedVersions) == 0 {
+			continue
+		}
+
+		hasInstances := false
+		for _, version := range servedVersions {
+			gvr := schema.GroupVersionResource{
+				Group:    crd.Spec.Group,
+				Version:  version,
+				Resource: crd.Spec.Names.Plural,
+			}
+
+			instances, err := dynamicClient.Resource(gvr).Namespace("").List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
+			if err != nil {
+				// Skip versions that fail to list
+				continue
+			}
+			if len(instances.Items) > 0 {
+				hasInstances = true
+				break
+			}
+		}
+
+		if !hasInstances {
+			reason := "CRD has no instances in any served version"
+			unusedCRDs = append(unusedCRDs, ResourceInfo{Name: crd.Name, Reason: reason})
+		}
 
 	}
 	return unusedCRDs, nil
