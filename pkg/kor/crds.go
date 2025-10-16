@@ -20,6 +20,7 @@ import (
 
 //go:embed exceptions/crds/crds.json
 var crdsConfig []byte
+var servedVersions []string
 
 func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, filterOpts *filters.Options) ([]ResourceInfo, error) {
 
@@ -60,7 +61,6 @@ func processCrds(apiExtClient apiextensionsclientset.Interface, dynamicClient dy
 			continue
 		}
 		
-		var servedVersions []string
 		for _, v := range crd.Spec.Versions {
 			if v.Served {
 				servedVersions = append(servedVersions, v.Name)
