@@ -302,6 +302,18 @@ func getUnusedRoleBindings(clientset kubernetes.Interface, namespace string, fil
 	return namespaceRoleBindingDiff
 }
 
+func getUnusedNamespaces(clientset kubernetes.Interface, filterOpts *filters.Options, opts common.Opts) ResourceDiff {
+	namespaceDiff, err := processNamespaces(clientset, filterOpts, opts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s: %v\n", "namespaces", err)
+	}
+	allNamespaceDiff := ResourceDiff{
+		"Namespace",
+		namespaceDiff,
+	}
+	return allNamespaceDiff
+}
+
 func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
@@ -377,6 +389,7 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 		resources[""]["ClusterRoleBinding"] = getUnusedClusterRoleBindings(clientset, filterOpts, opts).diff
 		resources[""]["StorageClass"] = getUnusedStorageClasses(clientset, filterOpts).diff
 		resources[""]["VolumeAttachment"] = getUnusedVolumeAttachments(clientset, filterOpts).diff
+		resources[""]["Namespace"] = getUnusedNamespaces(clientset, filterOpts, opts).diff
 	case "resource":
 		appendResources(resources, "Crd", "", getUnusedCrds(apiExtClient, dynamicClient, filterOpts).diff)
 		appendResources(resources, "Pv", "", getUnusedPvs(clientset, filterOpts).diff)
@@ -384,6 +397,7 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 		appendResources(resources, "ClusterRoleBinding", "", getUnusedClusterRoleBindings(clientset, filterOpts, opts).diff)
 		appendResources(resources, "StorageClass", "", getUnusedStorageClasses(clientset, filterOpts).diff)
 		appendResources(resources, "VolumeAttachment", "", getUnusedVolumeAttachments(clientset, filterOpts).diff)
+		appendResources(resources, "Namespace", "", getUnusedNamespaces(clientset, filterOpts, opts).diff)
 
 	}
 
