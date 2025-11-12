@@ -43,8 +43,9 @@ var rootCmd = &cobra.Command{
 		clientset := kor.GetKubeClient(kubeconfig)
 		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
+		gatewayClient := kor.GetGatewayClient(kubeconfig)
 
-		if response, err := kor.GetUnusedMulti(resourceNames, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedMulti(resourceNames, filterOptions, clientset, apiExtClient, dynamicClient, gatewayClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			utils.PrintLogo(outputFormat)

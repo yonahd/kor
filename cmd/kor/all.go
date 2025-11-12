@@ -17,9 +17,10 @@ var allCmd = &cobra.Command{
 		clientset := kor.GetKubeClient(kubeconfig)
 		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
+		gatewayClient := kor.GetGatewayClient(kubeconfig)
 		kor.SetNamespacedFlagState(cmd.Flags().Changed("namespaced"))
 
-		if response, err := kor.GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
+		if response, err := kor.GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, gatewayClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
 			utils.PrintLogo(outputFormat)

@@ -10,6 +10,7 @@ import (
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	gatewayclientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
@@ -82,7 +83,7 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 	return noNamespaceDiff, clearedResourceList
 }
 
-func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *filters.Options, opts common.Opts) []ResourceDiff {
+func retrieveNamespaceDiffs(clientset kubernetes.Interface, gatewayClient gatewayclientset.Interface, namespace string, resourceList []string, filterOpts *filters.Options, opts common.Opts) []ResourceDiff {
 	var allDiffs []ResourceDiff
 	for _, resource := range resourceList {
 		var diffResult ResourceDiff
@@ -122,6 +123,8 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 			diffResult = getUnusedNetworkPolicies(clientset, namespace, filterOpts, opts)
 		case "rolebinding":
 			diffResult = getUnusedRoleBindings(clientset, namespace, filterOpts, opts)
+		case "gateway":
+			diffResult = getUnusedGateways(clientset, gatewayClient, namespace, filterOpts, opts)
 		default:
 			fmt.Printf("resource type %q is not supported\n", resource)
 		}
@@ -130,7 +133,7 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 	return allDiffs
 }
 
-func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
+func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, gatewayClient gatewayclientset.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resourceList := strings.Split(resourceNames, ",")
 	namespaces := filterOpts.Namespaces(clientset)
 	resources := make(map[string]map[string][]ResourceInfo)
@@ -160,7 +163,7 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 	}
 
 	for _, namespace := range namespaces {
-		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList, filterOpts, opts)
+		allDiffs := retrieveNamespaceDiffs(clientset, gatewayClient, namespace, resourceList, filterOpts, opts)
 		if opts.GroupBy == "namespace" {
 			resources[namespace] = make(map[string][]ResourceInfo)
 		}

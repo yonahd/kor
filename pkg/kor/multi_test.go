@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
+	gatewayfake "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/fake"
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
@@ -58,10 +59,11 @@ func createTestMultiResources(t *testing.T) *fake.Clientset {
 
 func TestRetrieveNamespaceDiff(t *testing.T) {
 	clientset := createTestMultiResources(t)
+	gatewayClientset := gatewayfake.NewSimpleClientset()
 	resourceList := []string{"cm", "pdb", "deployment"}
 	filterOpts := &filters.Options{}
 
-	namespaceDiff := retrieveNamespaceDiffs(clientset, testNamespace, resourceList, filterOpts, common.Opts{})
+	namespaceDiff := retrieveNamespaceDiffs(clientset, gatewayClientset, testNamespace, resourceList, filterOpts, common.Opts{})
 
 	if len(namespaceDiff) != 3 {
 		t.Fatalf("Expected 3 diffs, got %d", len(namespaceDiff))
@@ -83,6 +85,7 @@ func TestRetrieveNamespaceDiff(t *testing.T) {
 
 func TestGetUnusedMulti(t *testing.T) {
 	clientset := createTestMultiResources(t)
+	gatewayClientset := gatewayfake.NewSimpleClientset()
 	resourceList := "cm,pdb,deployment"
 
 	opts := common.Opts{
@@ -94,7 +97,7 @@ func TestGetUnusedMulti(t *testing.T) {
 		GroupBy:       "namespace",
 	}
 
-	output, err := GetUnusedMulti(resourceList, &filters.Options{}, clientset, nil, nil, "json", opts)
+	output, err := GetUnusedMulti(resourceList, &filters.Options{}, clientset, nil, nil, gatewayClientset, "json", opts)
 
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedMulti: %v", err)
@@ -178,7 +181,7 @@ func TestGetUnusedMultiWithMultipleResources(t *testing.T) {
 		GroupBy:       "namespace",
 	}
 
-	output, err := GetUnusedMulti(resourceList, &filters.Options{}, clientset, nil, nil, "json", opts)
+	output, err := GetUnusedMulti(resourceList, &filters.Options{}, clientset, nil, nil, gatewayfake.NewSimpleClientset(), "json", opts)
 
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedMulti: %v", err)
