@@ -34,6 +34,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - NetworkPolicies
 - RoleBindings
 - VolumeAttachments
+- Gateways
 
 ![Kor Screenshot](/images/show_reason_screenshot.png)
 
@@ -135,6 +136,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `replicaset` - Gets unused replicaSets for the specified namespace or all namespaces.
 - `daemonset`- Gets unused DaemonSets for the specified namespace or all namespaces.
 - `volumeattachment` - Gets unused VolumeAttachments in the cluster (non-namespaced resource).
+- `gateway` - Gets unused Gateways for the specified namespace or all namespaces.
 - `finalizer` - Gets unused pending deletion resources for the specified namespace or all namespaces.
 - `networkpolicy` - Gets unused NetworkPolicies for the specified namespace or all namespaces.
 - `exporter` - Export Prometheus metrics.
@@ -267,6 +269,24 @@ Unused resources in namespace: "test"
 | 7 | ServiceAccount | my-service-account2                          | ServiceAccount is not in use                           |
 | 8 | Pdb            | my-pdb                                       | Pdb is not referencing any deployments or statefulsets |
 +---+----------------+----------------------------------------------+--------------------------------------------------------+
+```
+
+#### Gateway Discovery
+
+Kor can discover unused Gateways by checking if they reference non-existing GatewayClasses or have no attached Routes:
+
+```sh
+kor gateway --show-reason
+```
+
+```
+Unused Gateways:
++---+------------+-----------------+--------------------------------------------+
+| # | NAMESPACE  | RESOURCE NAME   | REASON                                     |
++---+------------+-----------------+--------------------------------------------+
+| 1 | default    | web-gateway     | Gateway references a non-existing class   |
+| 2 | prod       | api-gateway     | Gateway has no attached routes             |
++---+------------+-----------------+--------------------------------------------+
 ```
 
 #### Group by resource

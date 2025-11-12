@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	gatewayclientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 )
 
 var ResourceKindList map[string]ResourceKind
@@ -38,6 +39,7 @@ type Config struct {
 	ExceptionConfigMaps          []ExceptionResource `json:"exceptionConfigMaps"`
 	ExceptionCrds                []ExceptionResource `json:"exceptionCrds"`
 	ExceptionDaemonSets          []ExceptionResource `json:"exceptionDaemonSets"`
+	ExceptionGateways            []ExceptionResource `json:"exceptionGateways"`
 	ExceptionRoles               []ExceptionResource `json:"exceptionRoles"`
 	ExceptionSecrets             []ExceptionResource `json:"exceptionSecrets"`
 	ExceptionServiceAccounts     []ExceptionResource `json:"exceptionServiceAccounts"`
@@ -124,6 +126,21 @@ func GetDynamicClient(kubeconfig string) *dynamic.DynamicClient {
 	clientset, err := dynamic.NewForConfig(config)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+		os.Exit(1)
+	}
+	return clientset
+}
+
+func GetGatewayClient(kubeconfig string) *gatewayclientset.Clientset {
+	config, err := GetConfig(kubeconfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
+		os.Exit(1)
+	}
+
+	clientset, err := gatewayclientset.NewForConfig(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create Gateway API client: %v\n", err)
 		os.Exit(1)
 	}
 	return clientset

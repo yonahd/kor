@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 var testNamespace = "test-namespace"
@@ -503,5 +504,54 @@ func CreateTestNode(name string) *corev1.Node {
 func CreateTestCSIDriver(name string) *storagev1.CSIDriver {
 	return &storagev1.CSIDriver{
 		ObjectMeta: v1.ObjectMeta{Name: name},
+	}
+}
+
+func CreateTestGatewayClass(name, controllerName string) *gatewayv1.GatewayClass {
+	return &gatewayv1.GatewayClass{
+		ObjectMeta: v1.ObjectMeta{
+			Name: name,
+		},
+		Spec: gatewayv1.GatewayClassSpec{
+			ControllerName: gatewayv1.GatewayController(controllerName),
+		},
+	}
+}
+
+func CreateTestGateway(namespace, name string, gatewayClassName string, labels map[string]string) *gatewayv1.Gateway {
+	return &gatewayv1.Gateway{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+			Labels:    labels,
+		},
+		Spec: gatewayv1.GatewaySpec{
+			GatewayClassName: gatewayv1.ObjectName(gatewayClassName),
+			Listeners: []gatewayv1.Listener{
+				{
+					Name:     "http",
+					Protocol: gatewayv1.HTTPProtocolType,
+					Port:     80,
+				},
+			},
+		},
+	}
+}
+
+func CreateTestHTTPRoute(namespace, name, gatewayName string) *gatewayv1.HTTPRoute {
+	return &gatewayv1.HTTPRoute{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+		Spec: gatewayv1.HTTPRouteSpec{
+			CommonRouteSpec: gatewayv1.CommonRouteSpec{
+				ParentRefs: []gatewayv1.ParentReference{
+					{
+						Name: gatewayv1.ObjectName(gatewayName),
+					},
+				},
+			},
+		},
 	}
 }
