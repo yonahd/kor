@@ -90,6 +90,9 @@ func DeleteResourceCmd() map[string]func(clientset kubernetes.Interface, namespa
 		"VolumeAttachment": func(clientset kubernetes.Interface, namespace, name string) error {
 			return clientset.StorageV1().VolumeAttachments().Delete(context.TODO(), name, metav1.DeleteOptions{})
 		},
+		"PriorityClass": func(clientset kubernetes.Interface, namespace, name string) error {
+			return clientset.SchedulingV1().PriorityClasses().Delete(context.TODO(), name, metav1.DeleteOptions{})
+		},
 	}
 
 	return deleteResourceApiMap

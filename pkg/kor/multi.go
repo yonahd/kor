@@ -68,6 +68,10 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 			vattsDiff := getUnusedVolumeAttachments(clientset, filterOpts)
 			noNamespaceDiff = append(noNamespaceDiff, vattsDiff)
 			markedForRemoval[counter] = true
+		case "priorityclass":
+			pcDiff := getUnusedPriorityClasses(clientset, filterOpts)
+			noNamespaceDiff = append(noNamespaceDiff, pcDiff)
+			markedForRemoval[counter] = true
 		}
 	}
 

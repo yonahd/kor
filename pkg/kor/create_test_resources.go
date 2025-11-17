@@ -11,6 +11,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	schedulingv1 "k8s.io/api/scheduling/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -503,5 +504,12 @@ func CreateTestNode(name string) *corev1.Node {
 func CreateTestCSIDriver(name string) *storagev1.CSIDriver {
 	return &storagev1.CSIDriver{
 		ObjectMeta: v1.ObjectMeta{Name: name},
+	}
+}
+
+func CreateTestPriorityClass(name string, value int32) *schedulingv1.PriorityClass {
+	return &schedulingv1.PriorityClass{
+		ObjectMeta: v1.ObjectMeta{Name: name},
+		Value:      value,
 	}
 }
