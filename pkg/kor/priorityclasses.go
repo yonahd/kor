@@ -52,6 +52,11 @@ func processPriorityClasses(clientset kubernetes.Interface, filterOpts *filters.
 	priorityClassNames := make([]string, 0, len(pcs.Items))
 
 	for _, pc := range pcs.Items {
+		// Skip global default PriorityClasses as they are used by pods without explicit priority class
+		if pc.GlobalDefault {
+			continue
+		}
+
 		// Skip resources with ownerReferences if the general flag is set
 		if filterOpts.IgnoreOwnerReferences && len(pc.OwnerReferences) > 0 {
 			continue

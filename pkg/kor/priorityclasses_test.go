@@ -154,3 +154,46 @@ func TestFilterOwnerReferencedPriorityClasses(t *testing.T) {
 		t.Errorf("Expected standalone-pc to be unused, got %s", unusedWithFilter[0].Name)
 	}
 }
+
+func TestSkipGlobalDefaultPriorityClasses(t *testing.T) {
+	clientset := fake.NewSimpleClientset()
+
+	// Create a global default PriorityClass
+	globalDefaultPC := CreateTestPriorityClass("global-default-pc", 0)
+	globalDefaultPC.GlobalDefault = true
+
+	// Create a regular PriorityClass
+	regularPC := CreateTestPriorityClass("regular-pc", 100)
+
+	_, err := clientset.SchedulingV1().PriorityClasses().Create(context.TODO(), globalDefaultPC, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake PriorityClass: %v", err)
+	}
+
+	_, err = clientset.SchedulingV1().PriorityClasses().Create(context.TODO(), regularPC, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake PriorityClass: %v", err)
+	}
+
+	// Process PriorityClasses - global default should be skipped
+	unusedPriorityClasses, err := processPriorityClasses(clientset, &filters.Options{})
+	if err != nil {
+		t.Fatalf("Error processing PriorityClasses: %v", err)
+	}
+
+	// Should only return the regular PriorityClass as unused
+	if len(unusedPriorityClasses) != 1 {
+		t.Errorf("Expected 1 unused PriorityClass, got %d", len(unusedPriorityClasses))
+	}
+
+	if len(unusedPriorityClasses) > 0 && unusedPriorityClasses[0].Name != "regular-pc" {
+		t.Errorf("Expected regular-pc to be unused, got %s", unusedPriorityClasses[0].Name)
+	}
+
+	// Verify that global-default-pc is not in the unused list
+	for _, pc := range unusedPriorityClasses {
+		if pc.Name == "global-default-pc" {
+			t.Errorf("Global default PriorityClass should not be marked as unused")
+		}
+	}
+}
