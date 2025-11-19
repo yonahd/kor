@@ -23,6 +23,54 @@
     {
       "namespace": "",
       "name": "system:node"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "event-exporter-rb"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "kubelet-bootstrap"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "kubelet-bootstrap-node-bootstrapper"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "kubelet-cluster-admin"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "kubelet-nodepool-bootstrapper"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "kubelet-user-npd-binding"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "metrics-server-nanny:system:auth-delegator"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "metrics-server:system:auth-delegator"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "npd-binding"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:controller:horizontal-pod-autoscaler"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:controller:selinux-warning-controller"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:konnectivity-server"
     }
   ]
 }

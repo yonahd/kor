@@ -29,6 +29,14 @@
             "Namespace": "kube-system",
             "ResourceName": "system:controller:*",
             "MatchRegex": true
+        },
+        {
+            "Namespace": "gmp-public",
+            "ResourceName": "operator"
+        },
+        {
+            "Namespace": "kube-system",
+            "ResourceName": "gce:podsecuritypolicy:pdcsi-node-sa"
         }
     ]
 }

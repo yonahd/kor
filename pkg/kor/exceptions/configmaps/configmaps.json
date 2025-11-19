@@ -118,6 +118,34 @@
       "Namespace": "openshift-.*",
       "ResourceName": ".*",
       "MatchRegex": true
+    },
+    {
+      "Namespace": "gke-managed-system",
+      "ResourceName": "dcgm-exporter-metrics"
+    },
+    {
+      "Namespace": "gmp-system",
+      "ResourceName": "rule-evaluator"
+    },
+    {
+      "Namespace": "gmp-system",
+      "ResourceName": "rules-generated"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "efficiency-daemon-config"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "metrics-agent-linux-config-images"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "metrics-agent-windows-config-images"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "nvidia-metrics-collector-config-map"
     }
   ]
 }

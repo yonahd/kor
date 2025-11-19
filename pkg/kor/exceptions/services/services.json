@@ -20,6 +20,14 @@
       "Namespace": "openshift-.*",
       "ResourceName": ".*",
       "MatchRegex": true
+    },
+    {
+      "Namespace": "gmp-system",
+      "ResourceName": "alertmanager"
+    },
+    {
+      "Namespace": "gmp-system",
+      "ResourceName": "rule-evaluator"
     }
   ]
 }

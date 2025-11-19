@@ -1,0 +1,8 @@
+{
+  "exceptionStatefulSets": [
+    {
+      "Namespace": "gmp-system",
+      "ResourceName": "alertmanager"
+    }
+  ]
+}
