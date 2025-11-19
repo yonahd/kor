@@ -1,3 +1,28 @@
 {
-  "exceptionClusterRoleBindings": []
+  "exceptionClusterRoleBindings": [
+    {
+      "namespace": "",
+      "name": "kubeadm:kubelet-bootstrap"
+    },
+    {
+      "namespace": "",
+      "name": "kubeadm:node-autoapprove-bootstrap"
+    },
+    {
+      "namespace": "",
+      "name": "kubeadm:node-autoapprove-certificate-rotation"
+    },
+    {
+      "namespace": "",
+      "name": "system:controller:route-controller"
+    },
+    {
+      "namespace": "",
+      "name": "system:kube-dns"
+    },
+    {
+      "namespace": "",
+      "name": "system:node"
+    }
+  ]
 }
