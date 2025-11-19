@@ -3,6 +3,7 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,8 +15,16 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+//go:embed exceptions/deployments/deployments.json
+var deploymentsConfig []byte
+
 func processNamespaceDeployments(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	deploymentsList, err := clientset.AppsV1().Deployments(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := unmarshalConfig(deploymentsConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -35,6 +44,15 @@ func processNamespaceDeployments(clientset kubernetes.Interface, namespace strin
 		if deployment.Labels["kor/used"] == "false" {
 			reason := "Marked with unused label"
 			deploymentsWithoutReplicas = append(deploymentsWithoutReplicas, ResourceInfo{Name: deployment.Name, Reason: reason})
+			continue
+		}
+
+		exceptionFound, err := isResourceException(deployment.Name, namespace, config.ExceptionConfigMaps)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
 			continue
 		}
 

@@ -3,6 +3,7 @@ package kor
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -14,8 +15,15 @@ import (
 	"github.com/yonahd/kor/pkg/filters"
 )
 
+//go:embed exceptions/statefulsets/statefulsets.json
+var statefulsetConfig []byte
+
 func processNamespaceStatefulSets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	statefulSetsList, err := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: filterOpts.IncludeLabels})
+	if err != nil {
+		return nil, err
+	}
+	config, err := unmarshalConfig(statefulsetConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -29,6 +37,15 @@ func processNamespaceStatefulSets(clientset kubernetes.Interface, namespace stri
 		}
 
 		if pass, _ := filter.SetObject(&statefulSet).Run(filterOpts); pass {
+			continue
+		}
+
+		exceptionFound, err := isResourceException(statefulSet.Name, namespace, config.ExceptionConfigMaps)
+		if err != nil {
+			return nil, err
+		}
+
+		if exceptionFound {
 			continue
 		}
 

@@ -103,6 +103,26 @@
     {
       "Namespace": "kube-system",
       "ResourceName": "tpu-device-plugin"
+    },
+    {
+      "Namespace": "gke-managed-system",
+      "ResourceName": "dcgm-exporter"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "efficiency-daemon"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "fluentbit-gke-managed-node-big"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "fluentbit-gke-managed-node-small"
+    },
+    {
+      "Namespace": "kube-system",
+      "ResourceName": "maintenance-handler"
     }
   ]
 }

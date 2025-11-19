@@ -1,0 +1,8 @@
+{
+  "exceptionDeployments": [
+    {
+      "Namespace": "gmp-system",
+      "ResourceName": "rule-evaluator"
+    }
+  ]
+}

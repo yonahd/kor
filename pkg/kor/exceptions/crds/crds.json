@@ -379,6 +379,38 @@
     {
       "Namespace": "",
       "ResourceName": "volumesnapshots.snapshot.storage.k8s.io"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "allowlistsynchronizers.auto.gke.io"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "audits.warden.gke.io"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "computeclasses.cloud.google.com"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "gcpdatasources.datalayer.gke.io"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "gcpresourceallowlists.node.gke.io"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "servicefunctionchains.networking.gke.io"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "trafficselectors.networking.gke.io"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "workloadallowlists.auto.gke.io"
     }
   ]
 }
