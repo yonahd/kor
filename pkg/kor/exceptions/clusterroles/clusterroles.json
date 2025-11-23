@@ -263,6 +263,10 @@
     {
       "Namespace": "",
       "ResourceName": "view"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "eks:extension-metrics-apiserver"
     }
   ]
 }
