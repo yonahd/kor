@@ -135,6 +135,7 @@ func TestGetUnusedPodsStructured(t *testing.T) {
 		testNamespace: {
 			"Pod": {
 				"pod-2",
+				"pod-3",
 				"pod-6",
 			},
 		},
