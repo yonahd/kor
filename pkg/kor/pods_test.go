@@ -99,6 +99,7 @@ func TestProcessNamespacePods(t *testing.T) {
 
 	expectedEvictedPods := []string{
 		"pod-2",
+		"pod-3",
 		"pod-6",
 	}
 

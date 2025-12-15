@@ -44,6 +44,11 @@ func processNamespacePods(clientset kubernetes.Interface, namespace string, filt
 			evictedPods = append(evictedPods, ResourceInfo{Name: pod.Name, Reason: reason})
 		}
 
+		if pod.Status.Phase == corev1.PodFailed && pod.Status.Reason == "CrashLoopBackOff" {
+			reason := "Pod is in CrashLoopBackOff"
+			evictedPods = append(evictedPods, ResourceInfo{Name: pod.Name, Reason: reason})
+		}
+
 	}
 	if opts.DeleteFlag {
 		if evictedPods, err = DeleteResource(evictedPods, clientset, namespace, "Pod", opts.NoInteractive); err != nil {
