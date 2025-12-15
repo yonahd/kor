@@ -381,3 +381,4 @@ Follow [CONTRIBUTING.md](./CONTRIBUTING.md) for more.
 ## License
 
 This open-source project is available under the [MIT License](LICENSE). Feel free to use, modify, and distribute it as per the terms of the license.
+
