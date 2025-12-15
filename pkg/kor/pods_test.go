@@ -99,6 +99,7 @@ func TestProcessNamespacePods(t *testing.T) {
 
 	expectedEvictedPods := []string{
 		"pod-2",
+		"pod-3",
 		"pod-6",
 	}
 
@@ -134,6 +135,7 @@ func TestGetUnusedPodsStructured(t *testing.T) {
 		testNamespace: {
 			"Pod": {
 				"pod-2",
+				"pod-3",
 				"pod-6",
 			},
 		},
