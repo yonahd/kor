@@ -24,6 +24,8 @@ spec:
       serviceAccountName: {{ include "kor.serviceAccountName" . }}
       containers:
         - name: "{{ .Values.prometheusExporter.name }}-container"
+          terminationMessagePath: "/dev/termination-log"
+          imagePullPolicy: {{ .Values.prometheusExporter.deployment.imagePullPolicy }}
           {{- with .Values.prometheusExporter.deployment.securityContext }}
           securityContext:
             {{ toYaml . | nindent 12 }}
@@ -61,8 +63,6 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-          terminationMessagePath: "/dev/termination-log"
-          imagePullPolicy: {{ .Values.prometheusExporter.deployment.imagePullPolicy }}
       restartPolicy: {{ .Values.prometheusExporter.deployment.restartPolicy }}
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
