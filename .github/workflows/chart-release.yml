@@ -2,7 +2,8 @@ name: Release Charts
 on:
   push:
     tags:
-      - "*"
+      - "v*"
+      - "kor-*"
 jobs:
   chart-release:
     name: Chart Release
