@@ -374,6 +374,8 @@ Dashboard can be found [here](https://grafana.com/grafana/dashboards/19863-kor-d
 
 ## KorPro
 
+![KorPro Logo](/images/korpro-logo-transparent.png)
+
 Kor is available as an open-source CLI tool. For organizations requiring multi-cloud management, cost analysis, and advanced analytics, [KorPro](https://korpro.io) offers a cloud-based platform built on top of Kor.
 
 ### Comparison Table
