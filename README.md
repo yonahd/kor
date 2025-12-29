@@ -4,6 +4,8 @@
 ![Docker Pulls](https://img.shields.io/docker/pulls/yonahdissen/kor)
 [![codecov](https://codecov.io/gh/yonahd/kor/branch/main/graph/badge.svg?token=tNKcOjlxLo)](https://codecov.io/gh/yonahd/kor)
 [![Discord](https://discord.com/api/guilds/1159544275722321990/embed.png)](https://discord.gg/ajptYPwcJY)
+[![KorPro Available](https://img.shields.io/badge/KorPro-Available-blue)](https://korpro.io)
+
 
 # Kor - Kubernetes Orphaned Resources Finder
 
@@ -35,6 +37,8 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - RoleBindings
 - VolumeAttachments
 - PriorityClasses
+
+> **Looking for cost analysis and multi-cluster management?** Check out [KorPro](#korpro), our cloud-based platform built on top of Kor.
 
 ![Kor Screenshot](/images/show_reason_screenshot.png)
 
@@ -372,6 +376,12 @@ helm upgrade -i kor \
 Dashboard can be found [here](https://grafana.com/grafana/dashboards/19863-kor-dashboard/).
 ![Grafana Dashboard](/grafana/dashboard-screenshot-1.png)
 
+## KorPro
+
+![KorPro Logo](/images/korpro-logo-transparent.png)
+
+Kor is available as an open-source CLI tool. For organizations requiring multi-cloud management, cost analysis, and advanced analytics, [KorPro](https://korpro.io) offers a cloud-based platform built on top of Kor.
+
 ## Contributing
 
 Contributions are welcome! If you encounter any bugs or have suggestions for improvements, please open an issue in the [issue tracker](https://github.com/yonahd/kor/issues).
@@ -381,4 +391,3 @@ Follow [CONTRIBUTING.md](./CONTRIBUTING.md) for more.
 ## License
 
 This open-source project is available under the [MIT License](LICENSE). Feel free to use, modify, and distribute it as per the terms of the license.
-
