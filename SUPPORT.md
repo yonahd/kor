@@ -9,10 +9,25 @@ If you're using the open-source version of Kor, we provide community-based suppo
 ### GitHub Issues
 - **Purpose**: Bug reports, feature requests, and technical issues
 - **URL**: [github.com/yonahd/kor/issues](https://github.com/yonahd/kor/issues)
+- **Response Time**: Best effort by maintainers and community
+- **SLA**: None
+
+### GitHub Discussions
+- **Purpose**: Questions, ideas, and general discussions
+- **URL**: [github.com/yonahd/kor/discussions](https://github.com/yonahd/kor/discussions)
+- **Response Time**: Best effort by maintainers and community
+- **SLA**: None
 
 ### Discord Community
 - **Purpose**: Real-time chat, quick questions, and community interaction
 - **URL**: [discord.gg/ajptYPwcJY](https://discord.gg/ajptYPwcJY)
+- **Response Time**: Community-driven
+- **SLA**: None
+
+### Documentation
+- **README**: [github.com/yonahd/kor#readme](https://github.com/yonahd/kor#readme)
+- **Contributing Guide**: [CONTRIBUTING.md](./CONTRIBUTING.md)
+
 
 **Important Notes for Community Support:**
 - Responses are provided on a best-effort basis by maintainers and community members
@@ -121,8 +136,16 @@ If you encounter a limitation in the open-source version:
 3. If it requires KorPro capabilities (multi-cloud, cost analysis, etc.), we'll explain the options
 4. You can decide whether to use KorPro or work within open-source constraints
 
+
+We will never spam issues or PRs with "This is fixed in KorPro" messages. KorPro is mentioned only when directly relevant to a user's specific needs.
+
+## Contributing to Open Source
+
+The best way to improve Kor for everyone is to contribute! See our [CONTRIBUTING.md](./CONTRIBUTING.md) guide to get started. Contributions are always welcome, regardless of whether you're using the open-source CLI or KorPro.
+
 ---
 
 **Questions about Kor?** Open a [GitHub Discussion](https://github.com/yonahd/kor/discussions) or join our [Discord](https://discord.gg/ajptYPwcJY).
 
 **Questions about KorPro?** Visit [korpro.io](https://korpro.io) or contact support at [korpro.io/contact](https://korpro.io/contact).
+
