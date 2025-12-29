@@ -12,6 +12,8 @@
 
 Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identify and list unused:
 
+> **Looking for cost analysis and multi-cluster management?** Check out [KorPro](#korpro), our cloud-based platform built on top of Kor.
+
 - ConfigMaps
 - Secrets
 - Services
