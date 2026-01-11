@@ -50,7 +50,7 @@ func processNamespaceServices(clientset kubernetes.Interface, namespace string, 
 			continue
 		}
 
-		status := ResourceInfo{Name: endpoints.ObjectMeta.Labels["kubernetes.io/service-name"]}
+		status := ResourceInfo{Name: endpoints.Labels["kubernetes.io/service-name"]}
 
 		if endpoints.Labels["kor/used"] == "false" {
 			status.Reason = "Marked with unused label"

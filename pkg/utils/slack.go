@@ -60,7 +60,11 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 		if err != nil {
 			return err
 		}
-		defer file.Close()
+		defer func() {
+			if err := file.Close(); err != nil {
+				fmt.Printf("failed to close file: %v\n", err)
+			}
+		}()
 		_, err = io.Copy(fileWriter, file)
 		if err != nil {
 			return err
@@ -70,7 +74,9 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 			return err
 		}
 
-		writer.Close()
+		if err := writer.Close(); err != nil {
+			return err
+		}
 
 		req, err := http.NewRequest("POST", "https://slack.com/api/files.upload", &formData)
 		if err != nil {
@@ -84,7 +90,11 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 		if err != nil {
 			return err
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				fmt.Printf("failed to close response body: %v\n", err)
+			}
+		}()
 
 		if resp.StatusCode != http.StatusOK {
 			return fmt.Errorf("slack API returned non-OK status code: %d", resp.StatusCode)
@@ -109,7 +119,11 @@ func writeOutputToFile(outputBuffer string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create output file: %v", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Printf("failed to close file: %v\n", err)
+		}
+	}()
 
 	_, err = file.WriteString(outputBuffer)
 	if err != nil {

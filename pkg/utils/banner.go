@@ -27,6 +27,6 @@ func PrintLogo(outputFormat string) {
 	// to keep the banner. Instead just loop through os args and find if the format was set and handle it there
 	if outputFormat != "yaml" && outputFormat != "json" {
 		PrintVersion()
-		boldBlue.Println(asciiLogo)
+		_, _ = boldBlue.Println(asciiLogo)
 	}
 }

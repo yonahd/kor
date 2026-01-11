@@ -90,14 +90,25 @@ func TestGetKubeClientFromEnvVar(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer os.Remove(configFile.Name())
+	defer func() {
+		if err := os.Remove(configFile.Name()); err != nil {
+			t.Logf("failed to remove temp file: %v", err)
+		}
+	}()
 	if err := os.WriteFile(configFile.Name(), []byte(getFakeConfigContent()), 0666); err != nil {
 		t.Error(err)
 	}
 
 	originalKCEnv := os.Getenv("KUBECONFIG")
-	defer os.Setenv("KUBECONFIG", originalKCEnv)
-	os.Setenv("KUBECONFIG", configFile.Name())
+	defer func() {
+		if err := os.Setenv("KUBECONFIG", originalKCEnv); err != nil {
+			t.Logf("failed to restore KUBECONFIG: %v", err)
+		}
+	}()
+	if err := os.Setenv("KUBECONFIG", configFile.Name()); err != nil {
+		t.Error(err)
+		return
+	}
 
 	kcs := GetKubeClient("")
 	if kcs == nil {
@@ -110,19 +121,33 @@ func TestGetKubeClientFromInput(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	defer os.Remove(configFile.Name())
+	defer func() {
+		if err := os.Remove(configFile.Name()); err != nil {
+			t.Logf("failed to remove temp file: %v", err)
+		}
+	}()
 	if err := os.WriteFile(configFile.Name(), []byte(getFakeConfigContent()), 0666); err != nil {
 		t.Error(err)
 	}
 
 	oldKubeServiceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
 	oldKubeServicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
-	os.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.1")
-	os.Setenv("KUBERNETES_SERVICE_PORT", "443")
+	if err := os.Setenv("KUBERNETES_SERVICE_HOST", "127.0.0.1"); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := os.Setenv("KUBERNETES_SERVICE_PORT", "443"); err != nil {
+		t.Error(err)
+		return
+	}
 
 	defer func() {
-		os.Setenv("KUBERNETES_SERVICE_HOST", oldKubeServiceHost)
-		os.Setenv("KUBERNETES_SERVICE_PORT", oldKubeServicePort)
+		if err := os.Setenv("KUBERNETES_SERVICE_HOST", oldKubeServiceHost); err != nil {
+			t.Logf("failed to restore KUBERNETES_SERVICE_HOST: %v", err)
+		}
+		if err := os.Setenv("KUBERNETES_SERVICE_PORT", oldKubeServicePort); err != nil {
+			t.Logf("failed to restore KUBERNETES_SERVICE_PORT: %v", err)
+		}
 	}()
 
 	kcs := GetKubeClient(configFile.Name())

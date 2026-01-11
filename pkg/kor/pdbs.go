@@ -110,7 +110,7 @@ func validateRunningPods(clientset kubernetes.Interface, namespace string) (bool
 	// Field status.phase=Running can still reference Terminating pods
 	// Return true if at least one pod is running
 	for _, pod := range pods.Items {
-		if pod.ObjectMeta.DeletionTimestamp == nil {
+		if pod.DeletionTimestamp == nil {
 			return true, nil
 		}
 	}

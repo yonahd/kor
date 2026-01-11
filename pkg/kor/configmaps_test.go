@@ -67,7 +67,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 	pod1 := CreateTestPod(testNamespace, "pod-1", "", []corev1.Volume{
 		{
 			Name:         "vol-1",
-			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.ObjectMeta.Name}}},
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.Name}}},
 		},
 	}, AppLabels)
 
