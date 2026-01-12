@@ -19,7 +19,7 @@ import (
 )
 
 func createTestClusterRoles(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	var AggregatedLabels = map[string]string{"rbac.authorization.k8s.io/aggregate-to-test-clusterRole1": "true"}
 	var matchLabels = v1.LabelSelector{
@@ -87,7 +87,7 @@ func createTestClusterRoles(t *testing.T) *fake.Clientset {
 }
 
 func createTestClusterRolesWithOwnerReferences(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},

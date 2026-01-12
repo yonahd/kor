@@ -18,7 +18,7 @@ import (
 )
 
 func createTestConfigmaps(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},
@@ -254,7 +254,7 @@ func TestGetUnusedConfigmapsStructured(t *testing.T) {
 }
 
 func TestFilterOwnerReferencedConfigMaps(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{Name: testNamespace},

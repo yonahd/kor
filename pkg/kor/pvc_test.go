@@ -18,7 +18,7 @@ import (
 )
 
 func createTestPvcs(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 	var volumeList []corev1.Volume
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
@@ -145,7 +145,7 @@ func TestGetUnusedPvcsStructured(t *testing.T) {
 }
 
 func TestFilterOwnerReferencedPvcs(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},

@@ -14,7 +14,7 @@ import (
 )
 
 func createTestPvs(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	pv1 := CreateTestPv("test-pv1", "Bound", AppLabels, "test-sc1")
 	_, err := clientset.CoreV1().PersistentVolumes().Create(context.TODO(), pv1, v1.CreateOptions{})

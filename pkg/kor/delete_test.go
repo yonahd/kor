@@ -13,7 +13,7 @@ import (
 )
 
 func TestDeleteResource(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	configmap1 := CreateTestConfigmap(testNamespace, "configmap-1", AppLabels)
 	_, err := clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), configmap1, metav1.CreateOptions{})
