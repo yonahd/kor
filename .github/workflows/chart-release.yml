@@ -2,14 +2,15 @@ name: Release Charts
 on:
   push:
     tags:
-      - "*"
+      - "v*"
+      - "kor-*"
 jobs:
   chart-release:
     name: Chart Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 

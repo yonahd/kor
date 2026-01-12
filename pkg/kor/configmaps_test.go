@@ -67,7 +67,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 	pod1 := CreateTestPod(testNamespace, "pod-1", "", []corev1.Volume{
 		{
 			Name:         "vol-1",
-			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.ObjectMeta.Name}}},
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.Name}}},
 		},
 	}, AppLabels)
 
@@ -77,7 +77,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 			Env: []corev1.EnvVar{
 				{
 					Name:      "ENV_VAR_1",
-					ValueFrom: &corev1.EnvVarSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.ObjectMeta.Name}}},
+					ValueFrom: &corev1.EnvVarSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: configmap1.Name}}},
 				},
 			},
 		},
@@ -87,7 +87,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 	pod3.Spec.Containers = []corev1.Container{
 		{
 			EnvFrom: []corev1.EnvFromSource{
-				{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap2.ObjectMeta.Name}}},
+				{ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap2.Name}}},
 			},
 		},
 	}
@@ -98,7 +98,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 			Env: []corev1.EnvVar{
 				{
 					Name:      "INIT_ENV_VAR_1",
-					ValueFrom: &corev1.EnvVarSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: configmap2.ObjectMeta.Name}}},
+					ValueFrom: &corev1.EnvVarSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: configmap2.Name}}},
 				},
 			},
 		},
@@ -109,7 +109,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 		{
 			EnvFrom: []corev1.EnvFromSource{
 				{
-					ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap6.ObjectMeta.Name}},
+					ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap6.Name}},
 				},
 			},
 		},

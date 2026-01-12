@@ -72,5 +72,6 @@ Our project follows the [MIT License](https://github.com/yonahd/kor/blob/main/LI
 
 - [Issue Tracker](https://github.com/yonahd/kor/issues): Report bugs and suggest enhancements.
 - [Pull Requests](https://github.com/yonahd/kor/pulls): Submit pull requests with your contributions.
+- [Release Process](RELEASE.md): Learn about the release process for applications and Helm charts.
 
 Thank you for contributing to `kor`! We look forward to your involvement in our project. If you have any questions, feel free to reach out to us.
