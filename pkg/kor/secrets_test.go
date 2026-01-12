@@ -84,8 +84,8 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 
 	pod6 := CreateTestPod(testNamespace, "pod-6", "", nil, AppLabels)
 	pod6.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
-		{Name: secret1.ObjectMeta.Name},
-		{Name: secret2.ObjectMeta.Name},
+		{Name: secret1.Name},
+		{Name: secret2.Name},
 	}
 
 	pod7 := CreateTestPod(testNamespace, "pod-7", "", nil, AppLabels)
