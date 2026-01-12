@@ -17,7 +17,7 @@ import (
 var testNamespace2 = "test-namespace2"
 
 func createTestPdbs(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 	namespaces := []string{testNamespace, testNamespace2}
 	var err error
 
@@ -176,7 +176,7 @@ func TestGetUnusedPdbsStructured(t *testing.T) {
 }
 
 func TestFilterOwnerReferencedPdbs(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},

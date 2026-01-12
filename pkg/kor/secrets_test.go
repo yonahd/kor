@@ -18,7 +18,7 @@ import (
 )
 
 func createTestSecrets(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
@@ -166,7 +166,7 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 }
 
 func TestRetrieveIngressTLS(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	ingress1 := CreateTestIngress(testNamespace, "test-ingress-1", "my-service-1", "test-secret1", AppLabels)
 	appLabels := map[string]string{}
@@ -245,7 +245,7 @@ func TestRetrieveUsedSecret(t *testing.T) {
 }
 
 func TestRetrieveSecretNames(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	appLabels := map[string]string{}
 	secret1 := CreateTestSecret(testNamespace, "secret-1", appLabels)
@@ -331,7 +331,7 @@ func TestGetUnusedSecretsStructured(t *testing.T) {
 }
 
 func TestFilterOwnerReferencedSecrets(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},

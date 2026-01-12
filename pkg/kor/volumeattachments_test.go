@@ -15,7 +15,7 @@ import (
 )
 
 func createTestVolumeAttachments(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	// Create a valid node
 	_, err := clientset.CoreV1().Nodes().Create(context.TODO(), CreateTestNode("node-1"), v1.CreateOptions{})
@@ -102,7 +102,7 @@ func TestGetUnusedVolumeAttachments(t *testing.T) {
 }
 
 func TestFilterOwnerReferencedVolumeAttachments(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	// Create a valid node
 	_, err := clientset.CoreV1().Nodes().Create(context.TODO(), CreateTestNode("node-1"), v1.CreateOptions{})

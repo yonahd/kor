@@ -19,7 +19,7 @@ import (
 )
 
 func createTestClusterRoleBindings(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
@@ -208,7 +208,7 @@ func TestProcessClusterRoleBindings(t *testing.T) {
 }
 
 func TestProcessClusterRoleBindingsWithMixedSubjects(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	// Create a namespace
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
@@ -307,7 +307,7 @@ func TestGetUnusedClusterRoleBindingStructured(t *testing.T) {
 
 func TestIsUsingValidServiceAccountClusterScoped(t *testing.T) {
 	// Create clientset with test ServiceAccounts
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	// Create namespaces
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
