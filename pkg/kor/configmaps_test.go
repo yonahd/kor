@@ -109,7 +109,7 @@ func createTestConfigmaps(t *testing.T) *fake.Clientset {
 		{
 			EnvFrom: []corev1.EnvFromSource{
 				{
-					ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap6.ObjectMeta.Name}},
+					ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: configmap6.Name}},
 				},
 			},
 		},
