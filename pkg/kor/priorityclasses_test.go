@@ -14,7 +14,7 @@ import (
 )
 
 func createTestPriorityClass(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	pc1 := CreateTestPriorityClass("test-pc1", 1000)
 	_, err := clientset.SchedulingV1().PriorityClasses().Create(context.TODO(), pc1, v1.CreateOptions{})
@@ -26,7 +26,7 @@ func createTestPriorityClass(t *testing.T) *fake.Clientset {
 }
 
 func TestRetrieveUsedPriorityClasses(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	pc1 := CreateTestPriorityClass("test-pc1", 1000)
 	_, err := clientset.SchedulingV1().PriorityClasses().Create(context.TODO(), pc1, v1.CreateOptions{})
@@ -102,7 +102,7 @@ func TestGetUnusedPriorityClassesStructured(t *testing.T) {
 }
 
 func TestFilterOwnerReferencedPriorityClasses(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	// Create two priority classes - one owned by another resource, one standalone
 	// PriorityClass owned by another resource
@@ -156,7 +156,7 @@ func TestFilterOwnerReferencedPriorityClasses(t *testing.T) {
 }
 
 func TestSkipGlobalDefaultPriorityClasses(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	// Create a global default PriorityClass
 	globalDefaultPC := CreateTestPriorityClass("global-default-pc", 0)

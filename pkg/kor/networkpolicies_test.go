@@ -18,7 +18,7 @@ import (
 )
 
 func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	testNamespace2 := "another-namespace"
 	namespaces := []string{testNamespace, testNamespace2}
@@ -123,7 +123,7 @@ func createTestNetworkPolicies(t *testing.T) *fake.Clientset {
 }
 
 func createTestNetworkPoliciesWithOwnerReferences(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 		ObjectMeta: v1.ObjectMeta{Name: testNamespace},

@@ -14,7 +14,7 @@ import (
 )
 
 func createTestStorageClass(t *testing.T) *fake.Clientset {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	sc1 := CreateTestStorageClass("test-sc1", "kor.com")
 	_, err := clientset.StorageV1().StorageClasses().Create(context.TODO(), sc1, v1.CreateOptions{})
@@ -101,7 +101,7 @@ func TestGetUnusedStorageClassesStructured(t *testing.T) {
 }
 
 func TestFilterOwnerReferencedStorageClasses(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
+	clientset := fake.NewClientset()
 
 	// Create two storage classes - one owned by another resource, one standalone
 	// StorageClass owned by another resource
