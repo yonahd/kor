@@ -55,7 +55,7 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 			Env: []corev1.EnvVar{
 				{
 					Name:      "ENV_VAR_1",
-					ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: secret1.ObjectMeta.Name}}},
+					ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: secret1.Name}}},
 				},
 			},
 		},
@@ -65,7 +65,7 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 	pod4.Spec.Containers = []corev1.Container{
 		{
 			EnvFrom: []corev1.EnvFromSource{
-				{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: secret1.ObjectMeta.Name}}},
+				{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: secret1.Name}}},
 			},
 		},
 	}
@@ -76,7 +76,7 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 			Env: []corev1.EnvVar{
 				{
 					Name:      "INIT_ENV_VAR_1",
-					ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: secret1.ObjectMeta.Name}}},
+					ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: secret1.Name}}},
 				},
 			},
 		},
@@ -84,15 +84,15 @@ func createTestSecrets(t *testing.T) *fake.Clientset {
 
 	pod6 := CreateTestPod(testNamespace, "pod-6", "", nil, AppLabels)
 	pod6.Spec.ImagePullSecrets = []corev1.LocalObjectReference{
-		{Name: secret1.ObjectMeta.Name},
-		{Name: secret2.ObjectMeta.Name},
+		{Name: secret1.Name},
+		{Name: secret2.Name},
 	}
 
 	pod7 := CreateTestPod(testNamespace, "pod-7", "", nil, AppLabels)
 	pod7.Spec.InitContainers = []corev1.Container{
 		{
 			EnvFrom: []corev1.EnvFromSource{
-				{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: secret6.ObjectMeta.Name}}},
+				{SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: secret6.Name}}},
 			},
 		},
 	}
