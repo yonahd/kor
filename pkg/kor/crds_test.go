@@ -16,7 +16,7 @@ import (
 
 func createTestCRDs(t *testing.T) (*apiextensionsfake.Clientset, *dynamicfake.FakeDynamicClient) {
 	// Create fake API extensions client
-	apiExtClient := apiextensionsfake.NewSimpleClientset()
+	apiExtClient := apiextensionsfake.NewClientset()
 
 	// Create a CRD with a served version (this should work)
 	crdWithServedVersion := &apiextensionsv1.CustomResourceDefinition{
