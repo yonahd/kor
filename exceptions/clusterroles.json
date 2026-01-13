@@ -1,0 +1,8 @@
+{
+  "exceptionClusterRoles": [
+    {
+      "Namespace": "",
+      "ResourceName": "system:metrics-server-aggregated-reader"
+    }
+  ]
+}

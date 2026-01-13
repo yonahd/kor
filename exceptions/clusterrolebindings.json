@@ -1,0 +1,16 @@
+{
+  "exceptionClusterRoleBindings": [
+    {
+      "Namespace": "",
+      "ResourceName": "system:controller:route-controller"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:kube-dns"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:node"
+    }
+  ]
+}
