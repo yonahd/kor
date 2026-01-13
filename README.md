@@ -7,14 +7,11 @@
 [![KorPro Available](https://img.shields.io/badge/KorPro-Available-blue)](https://korpro.io)
 
 
-
 # Kor - Kubernetes Orphaned Resources Finder
 
 ![Kor Logo](/images/kor_logo.png)
 
 Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identify and list unused:
-
-> **Looking for cost analysis and multi-cluster management?** Check out [KorPro](#korpro), our cloud-based platform built on top of Kor.
 
 - ConfigMaps
 - Secrets
@@ -384,29 +381,6 @@ Dashboard can be found [here](https://grafana.com/grafana/dashboards/19863-kor-d
 ![KorPro Logo](/images/korpro-logo-transparent.png)
 
 Kor is available as an open-source CLI tool. For organizations requiring multi-cloud management, cost analysis, and advanced analytics, [KorPro](https://korpro.io) offers a cloud-based platform built on top of Kor.
-
-### Comparison Table
-
-| Feature | Kor (Open Source) | KorPro |
-|---------|-------------------|--------|
-| **Core Resource Detection** | ✅ All 20+ resource types | ✅ All 20+ resource types |
-| **CLI & kubectl Plugin** | ✅ Full access | ✅ CLI available |
-| **Installation** | ✅ Local installation required | ✅ Zero-installation (cloud-based) |
-| **Helm Chart Deployment** | ✅ CronJob & Deployment modes | ❌ Not applicable (SaaS) |
-| **Output Formats** | ✅ Table, JSON, YAML | ✅ Web UI, REST API, CSV, PDF |
-| **Slack Notifications** | ✅ Webhook & Channel support | ✅ Webhook support |
-| **Prometheus Metrics** | ✅ Basic metrics export | ✅ Advanced analytics & dashboards |
-| **Delete Operations** | ✅ Interactive & batch delete | ✅ Via API |
-| **Clusters Supported** | ✅ Single cluster per run | ✅ Unlimited clusters |
-| **Multi-Cloud Support** | ❌ Manual per-cluster | ✅ GCP, AWS, Azure auto-discovery |
-| **Cost Analysis** | ❌ | ✅ Monthly/yearly cost estimates |
-| **Health Scores & Metrics** | ❌ | ✅ Cluster health & efficiency scoring |
-| **Security Risk Assessment** | ❌ | ✅ Security risk analysis |
-| **Web UI** | ❌ CLI only | ✅ Modern web interface |
-| **REST API** | ❌ | ✅ Full REST API access |
-| **Support** | ✅ Community support | ✅ Priority support |
-
-Learn more at [korpro.io](https://korpro.io) or see [SUPPORT.md](SUPPORT.md) for support options.
 
 ## Contributing
 
