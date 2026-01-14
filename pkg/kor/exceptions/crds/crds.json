@@ -411,6 +411,30 @@
     {
       "Namespace": "",
       "ResourceName": "workloadallowlists.auto.gke.io"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "applicationnetworkpolicies.networking.k8s.aws"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "clusternetworkpolicies.networking.k8s.aws"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "clusterpolicyendpoints.networking.k8s.aws"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "ingressclassparams.eks.amazonaws.com"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "nodediagnostics.eks.amazonaws.com"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "targetgroupbindings.eks.amazonaws.com"
     }
   ]
 }

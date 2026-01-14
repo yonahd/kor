@@ -1,28 +1,28 @@
 {
   "exceptionClusterRoleBindings": [
     {
-      "namespace": "",
-      "name": "kubeadm:kubelet-bootstrap"
+      "Namespace": "",
+      "ResourceName": "kubeadm:kubelet-bootstrap"
     },
     {
-      "namespace": "",
-      "name": "kubeadm:node-autoapprove-bootstrap"
+      "Namespace": "",
+      "ResourceName": "kubeadm:node-autoapprove-bootstrap"
     },
     {
-      "namespace": "",
-      "name": "kubeadm:node-autoapprove-certificate-rotation"
+      "Namespace": "",
+      "ResourceName": "kubeadm:node-autoapprove-certificate-rotation"
     },
     {
-      "namespace": "",
-      "name": "system:controller:route-controller"
+      "Namespace": "",
+      "ResourceName": "system:controller:route-controller"
     },
     {
-      "namespace": "",
-      "name": "system:kube-dns"
+      "Namespace": "",
+      "ResourceName": "system:kube-dns"
     },
     {
-      "namespace": "",
-      "name": "system:node"
+      "Namespace": "",
+      "ResourceName": "system:node"
     },
     {
       "Namespace": "",
