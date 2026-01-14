@@ -267,6 +267,10 @@
     {
       "Namespace": "",
       "ResourceName": "eks:extension-metrics-apiserver"
+    },
+    {
+      "Namespace": "",
+      "ResourceName": "system:metrics-server-aggregated-reader"
     }
   ]
 }
