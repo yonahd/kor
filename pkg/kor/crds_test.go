@@ -1,30 +1,29 @@
 package kor
 
 import (
-	"context"
 	"testing"
 
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/yonahd/kor/pkg/filters"
 )
 
 func createTestCRDs(t *testing.T) (*apiextensionsfake.Clientset, *dynamicfake.FakeDynamicClient) {
-	// Create fake API extensions client
-	apiExtClient := apiextensionsfake.NewSimpleClientset()
-
-	// Create a CRD with a served version (this should work)
+	// Create a CRD with a served version
 	crdWithServedVersion := &apiextensionsv1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "testresources.example.com",
 		},
 		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
 			Group: "example.com",
+			Scope: apiextensionsv1.ClusterScoped,
 			Names: apiextensionsv1.CustomResourceDefinitionNames{
 				Plural:   "testresources",
 				Singular: "testresource",
@@ -52,6 +51,7 @@ func createTestCRDs(t *testing.T) (*apiextensionsfake.Clientset, *dynamicfake.Fa
 		},
 		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
 			Group: "example.com",
+			Scope: apiextensionsv1.ClusterScoped,
 			Names: apiextensionsv1.CustomResourceDefinitionNames{
 				Plural:   "noservedresources",
 				Singular: "noservedresource",
@@ -74,6 +74,7 @@ func createTestCRDs(t *testing.T) (*apiextensionsfake.Clientset, *dynamicfake.Fa
 		},
 		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
 			Group: "example.com",
+			Scope: apiextensionsv1.ClusterScoped,
 			Names: apiextensionsv1.CustomResourceDefinitionNames{
 				Plural:   "multiresources",
 				Singular: "multiresource",
@@ -99,20 +100,11 @@ func createTestCRDs(t *testing.T) (*apiextensionsfake.Clientset, *dynamicfake.Fa
 		},
 	}
 
-	_, err := apiExtClient.ApiextensionsV1().CustomResourceDefinitions().Create(context.TODO(), crdWithServedVersion, metav1.CreateOptions{})
-	if err != nil {
-		t.Fatalf("Error creating fake CRD: %v", err)
-	}
-
-	_, err = apiExtClient.ApiextensionsV1().CustomResourceDefinitions().Create(context.TODO(), crdWithNoServedVersion, metav1.CreateOptions{})
-	if err != nil {
-		t.Fatalf("Error creating fake CRD: %v", err)
-	}
-
-	_, err = apiExtClient.ApiextensionsV1().CustomResourceDefinitions().Create(context.TODO(), crdWithFirstVersionNotServed, metav1.CreateOptions{})
-	if err != nil {
-		t.Fatalf("Error creating fake CRD: %v", err)
-	}
+	apiExtClient := apiextensionsfake.NewClientset(
+		crdWithServedVersion,
+		crdWithNoServedVersion,
+		crdWithFirstVersionNotServed,
+	)
 
 	// Create a fake dynamic client with custom list kinds
 	scheme := runtime.NewScheme()
@@ -159,5 +151,17 @@ func TestProcessCrds(t *testing.T) {
 		if crd.Reason != "CRD has no instances" {
 			t.Errorf("Expected reason 'CRD has no instances' for %s, got: %s", crd.Name, crd.Reason)
 		}
+	}
+}
+
+func init() {
+	// Internal types (REQUIRED for fake client)
+	if err := apiextensions.AddToScheme(clientgoscheme.Scheme); err != nil {
+		panic(err)
+	}
+
+	// External v1 types
+	if err := apiextensionsv1.AddToScheme(clientgoscheme.Scheme); err != nil {
+		panic(err)
 	}
 }
