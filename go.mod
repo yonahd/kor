@@ -2,8 +2,6 @@ module github.com/yonahd/kor
 
 go 1.26.0
 
-toolchain go1.24.1
-
 require (
 	github.com/fatih/color v1.19.0
 	github.com/jarcoal/httpmock v1.4.1
