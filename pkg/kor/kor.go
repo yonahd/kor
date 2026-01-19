@@ -69,14 +69,14 @@ func GetKubeConfigPath() string {
 }
 
 func GetConfig(kubeconfig string) (*rest.Config, error) {
-	if _, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount/token"); err == nil {
-		return rest.InClusterConfig()
-	}
-
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 
 	if kubeconfig != "" {
 		loadingRules.ExplicitPath = kubeconfig
+	} else {
+		if _, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount/token"); err == nil {
+			return rest.InClusterConfig()
+		}
 	}
 
 	configOverrides := &clientcmd.ConfigOverrides{}
