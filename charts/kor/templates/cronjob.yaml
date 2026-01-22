@@ -48,7 +48,7 @@ spec:
               {{- end }}
               {{- if .Values.cronJob.env }}
               env:
-                {{- toYaml .Values.cronJob.env | nindent 12 }}
+                {{- toYaml .Values.cronJob.env | nindent 16 }}
               {{- end }}
           restartPolicy: {{ .Values.cronJob.restartPolicy }}
   {{- if .Values.cronJob.successfulJobsHistoryLimit }}
