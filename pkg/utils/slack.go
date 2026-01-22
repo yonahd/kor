@@ -46,7 +46,7 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 		}
 		return nil
 	} else if opts.Channel != "" && opts.Token != "" {
-		fmt.Printf("Sending message to Slack channel %s...", opts.Channel)
+		fmt.Printf("Sending message to Slack channel %s...\n", opts.Channel)
 		outputFilePath, _ := writeOutputToFile(outputBuffer)
 
 		var formData bytes.Buffer
