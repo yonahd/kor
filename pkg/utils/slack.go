@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -66,46 +65,22 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 		return nil
 	} else if opts.Channel != "" && opts.Token != "" {
 		fmt.Printf("Sending message to Slack channel %s...\n", opts.Channel)
-		outputFilePath, err := writeOutputToFile(outputBuffer)
+		messagePayload := map[string]interface{}{
+			"channel": opts.Channel,
+			"text":    outputBuffer,
+		}
+
+		payload, err := json.Marshal(messagePayload)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to marshal Slack message payload: %w", err)
 		}
 
-		var formData bytes.Buffer
-		writer := multipart.NewWriter(&formData)
-
-		fileWriter, err := writer.CreateFormFile("file", outputFilePath)
-		if err != nil {
-			return err
-		}
-		file, err := os.Open(outputFilePath)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if err := file.Close(); err != nil {
-				fmt.Printf("failed to close file: %v\n", err)
-			}
-		}()
-		_, err = io.Copy(fileWriter, file)
-		if err != nil {
-			return err
-		}
-
-		if err := writer.WriteField("channels", opts.Channel); err != nil {
-			return err
-		}
-
-		if err := writer.Close(); err != nil {
-			return err
-		}
-
-		req, err := http.NewRequest("POST", "https://slack.com/api/files.upload", &formData)
+		req, err := http.NewRequest("POST", "https://slack.com/api/chat.postMessage", bytes.NewBuffer(payload))
 		if err != nil {
 			return err
 		}
 		req.Header.Set("Authorization", "Bearer "+opts.Token)
-		req.Header.Set("Content-Type", writer.FormDataContentType())
+		req.Header.Set("Content-Type", "application/json")
 
 		client := &http.Client{}
 		resp, err := client.Do(req)
