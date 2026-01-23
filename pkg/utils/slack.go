@@ -49,6 +49,11 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 			}
 		}()
 
+		_, err = io.Copy(io.Discard, resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response body: %w", err)
+		}
+
 		if resp.StatusCode != http.StatusOK {
 			return fmt.Errorf("slack webhook returned non-OK status code: %d", resp.StatusCode)
 		}
@@ -104,6 +109,11 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 				fmt.Printf("failed to close response body: %v\n", err)
 			}
 		}()
+
+		_, err = io.Copy(io.Discard, resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response body: %w", err)
+		}
 
 		if resp.StatusCode != http.StatusOK {
 			return fmt.Errorf("slack API returned non-OK status code: %d", resp.StatusCode)
