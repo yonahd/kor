@@ -39,11 +39,20 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 			return fmt.Errorf("failed to marshal Slack payload: %w", err)
 		}
 
-		_, err = http.Post(opts.WebhookURL, "application/json", bytes.NewBuffer(payload))
-
+		resp, err := http.Post(opts.WebhookURL, "application/json", bytes.NewBuffer(payload))
 		if err != nil {
 			return err
 		}
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				fmt.Printf("failed to close response body: %v\n", err)
+			}
+		}()
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("slack webhook returned non-OK status code: %d", resp.StatusCode)
+		}
+
 		return nil
 	} else if opts.Channel != "" && opts.Token != "" {
 		fmt.Printf("Sending message to Slack channel %s...", opts.Channel)
