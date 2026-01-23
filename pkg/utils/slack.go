@@ -22,6 +22,11 @@ type SlackPayload struct {
 	Text string `json:"text"`
 }
 
+type SlackAPIResponse struct {
+	Ok    bool   `json:"ok"`
+	Error string `json:"error,omitempty"`
+}
+
 type SlackMessage struct {
 }
 
@@ -61,7 +66,10 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 		return nil
 	} else if opts.Channel != "" && opts.Token != "" {
 		fmt.Printf("Sending message to Slack channel %s...\n", opts.Channel)
-		outputFilePath, _ := writeOutputToFile(outputBuffer)
+		outputFilePath, err := writeOutputToFile(outputBuffer)
+		if err != nil {
+			return err
+		}
 
 		var formData bytes.Buffer
 		writer := multipart.NewWriter(&formData)
@@ -110,13 +118,22 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 			}
 		}()
 
-		_, err = io.Copy(io.Discard, resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("slack API returned non-OK status code: %d", resp.StatusCode)
+			return fmt.Errorf("slack API returned non-OK status code: %d, body: %s", resp.StatusCode, string(body))
+		}
+
+		var slackResp SlackAPIResponse
+		if err := json.Unmarshal(body, &slackResp); err != nil {
+			return fmt.Errorf("failed to parse Slack API response: %w", err)
+		}
+
+		if !slackResp.Ok {
+			return fmt.Errorf("slack API error: %s", slackResp.Error)
 		}
 
 		return nil
