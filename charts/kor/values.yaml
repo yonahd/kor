@@ -23,6 +23,8 @@ cronJob:
   slackChannel: ""
   slackAuthToken: ""
   restartPolicy: OnFailure
+  imagePullPolicy: Always
+  imagePullSecrets: []
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 2
 
