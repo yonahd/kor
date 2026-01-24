@@ -16,10 +16,15 @@ spec:
             {{- include "kor.labels" . | nindent 12 }}
           name: {{ .Release.Name }}
         spec:
+          {{- with .Values.cronJob.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           serviceAccountName: {{ include "kor.serviceAccountName" . }}
           containers:
             - name: {{ .Release.Name }}-container
               image: {{ .Values.cronJob.image.repository }}:{{ .Values.cronJob.image.tag }}
+              imagePullPolicy: {{ .Values.cronJob.imagePullPolicy }}
               resources:
                 {{- toYaml .Values.cronJob.resources | nindent 16 }}
               command:
