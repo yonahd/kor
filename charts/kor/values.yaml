@@ -8,6 +8,7 @@ cronJob:
   #   limits:
   #     memory: "32Mi"
   #     cpu: "10m"
+  securityContext: {}
   schedule: "0 1 * * 1"
   image:
     repository: yonahdissen/kor
@@ -25,6 +26,7 @@ cronJob:
   restartPolicy: OnFailure
   imagePullPolicy: Always
   imagePullSecrets: []
+  podSecurityContext: {}
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 2
 
