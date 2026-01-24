@@ -34,6 +34,10 @@ func SendToSlack(sm SendMessageToSlack, opts common.Opts, outputBuffer string) e
 }
 
 func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error {
+	if outputBuffer == "" {
+		return nil
+	}
+
 	if opts.WebhookURL != "" {
 
 		// Prepare payload safely
