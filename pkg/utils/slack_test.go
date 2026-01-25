@@ -52,7 +52,7 @@ func TestSendToSlack_BadOpts(t *testing.T) {
 	for _, tc := range testCases {
 		err := SendToSlack(SlackMessage{}, tc.Opts, outputBuffer)
 		if err == nil {
-			t.Errorf("Expected error for empty Opts, got nil")
+			t.Errorf("Test %s: expected error, got nil", tc.Name)
 		}
 	}
 }
@@ -73,7 +73,7 @@ func TestSendToSlack_Webhook_Success(t *testing.T) {
 			t.Errorf("Failed to unmarshal payload: %v", err)
 		}
 		if payload.Channel != "" {
-			t.Errorf("Expected payload channel to be nil, got '%s'", payload.Channel)
+			t.Errorf("Expected payload channel to be empty, got '%s'", payload.Channel)
 		}
 		if payload.Text != outputBuffer {
 			t.Errorf("Expected payload text to be '%s', got '%s'", outputBuffer, payload.Text)
