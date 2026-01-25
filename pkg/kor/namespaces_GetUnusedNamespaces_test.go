@@ -151,7 +151,7 @@ func createEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Interfa
 }
 
 func createNonEmptyNamespaceLabeledAsUnused(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
-	realClientset := fake.NewSimpleClientset()
+	realClientset := fake.NewClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
@@ -204,7 +204,7 @@ func createNonEmptyNamespaceLabeledAsUnused(ctx context.Context, t *testing.T) (
 }
 
 func createEmptyNamespaceLabeledAsUsed(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
-	realClientset := fake.NewSimpleClientset()
+	realClientset := fake.NewClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
@@ -233,7 +233,7 @@ func createEmptyNamespaceLabeledAsUsed(ctx context.Context, t *testing.T) (kuber
 }
 
 func namespaceWithIgnoredConfigmap(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
-	realClientset := fake.NewSimpleClientset()
+	realClientset := fake.NewClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
@@ -267,7 +267,7 @@ func namespaceWithIgnoredConfigmap(ctx context.Context, t *testing.T) (kubernete
 }
 
 func createKubeSystemNamespaceWithKorUnusedLabel(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
-	realClientset := fake.NewSimpleClientset()
+	realClientset := fake.NewClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
@@ -296,7 +296,7 @@ func createKubeSystemNamespaceWithKorUnusedLabel(ctx context.Context, t *testing
 }
 
 func createKubeSystemNamespace(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
-	realClientset := fake.NewSimpleClientset()
+	realClientset := fake.NewClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	scheme := getNamespaceTestSchema(t)
