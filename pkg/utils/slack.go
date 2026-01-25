@@ -47,7 +47,7 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 		slackPayload := SlackPayload{Text: outputBuffer}
 		payload, err := json.Marshal(slackPayload)
 		if err != nil {
-			return fmt.Errorf("failed to marshal Slack payload: %w", err)
+			return fmt.Errorf("failed to marshal payload: %w", err)
 		}
 
 		resp, err := http.Post(opts.WebhookURL, "application/json", bytes.NewBuffer(payload))
@@ -66,20 +66,20 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("slack webhook returned non-OK status code: %d", resp.StatusCode)
+			return fmt.Errorf("non-OK status code: %d", resp.StatusCode)
 		}
 
 		return nil
 	} else if opts.Channel != "" && opts.Token != "" {
 		fmt.Printf("Sending message to Slack channel %s...\n", opts.Channel)
-		messagePayload := SlackPayload{
+		slackPayload := SlackPayload{
 			Text:    outputBuffer,
 			Channel: opts.Channel,
 		}
 
-		payload, err := json.Marshal(messagePayload)
+		payload, err := json.Marshal(slackPayload)
 		if err != nil {
-			return fmt.Errorf("failed to marshal Slack message payload: %w", err)
+			return fmt.Errorf("failed to marshal payload: %w", err)
 		}
 
 		req, err := http.NewRequest("POST", SlackAPIURL+"/chat.postMessage", bytes.NewBuffer(payload))
@@ -106,16 +106,16 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("slack API returned non-OK status code: %d, body: %s", resp.StatusCode, string(body))
+			return fmt.Errorf("non-OK status code: %d, body: %s", resp.StatusCode, string(body))
 		}
 
 		var slackResp SlackAPIResponse
 		if err := json.Unmarshal(body, &slackResp); err != nil {
-			return fmt.Errorf("failed to parse Slack API response: %w", err)
+			return fmt.Errorf("failed to parse response: %w", err)
 		}
 
 		if !slackResp.Ok {
-			return fmt.Errorf("slack API error: %s", slackResp.Error)
+			return fmt.Errorf("API error: %s", slackResp.Error)
 		}
 
 		return nil
