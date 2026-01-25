@@ -198,7 +198,7 @@ func getNamespaceTestSchema(t *testing.T) *runtime.Scheme {
 }
 
 func createHappyDeployFakeClientInterfaces(ctx context.Context, t *testing.T, ns, name string) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
-	realClientset := fake.NewSimpleClientset()
+	realClientset := fake.NewClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	objects := []runtime.Object{}
@@ -228,7 +228,7 @@ func createHappyDeployFakeClientInterfaces(ctx context.Context, t *testing.T, ns
 }
 
 func createHappyEmptyFakeClientInterfaces(ctx context.Context, t *testing.T, ns, name string) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
-	realClientset := fake.NewSimpleClientset()
+	realClientset := fake.NewClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	objects := []runtime.Object{}
@@ -251,7 +251,7 @@ func createHappyEmptyFakeClientInterfaces(ctx context.Context, t *testing.T, ns,
 }
 
 func createUnhappyDiscoveryFakeClientInterfaces(ctx context.Context, t *testing.T, ns, name string) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
-	realClientset := fake.NewSimpleClientset()
+	realClientset := fake.NewClientset()
 	fakeDisc := &fakeUnhappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	objects := []runtime.Object{}
@@ -274,7 +274,7 @@ func createUnhappyDiscoveryFakeClientInterfaces(ctx context.Context, t *testing.
 }
 
 func createBrokenAPIResourceListDiscoveryFakeClientInterfaces(ctx context.Context, t *testing.T, ns, name string) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
-	realClientset := fake.NewSimpleClientset()
+	realClientset := fake.NewClientset()
 	fakeDisc := &fakeBrokenAPIResourceListDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	objects := []runtime.Object{}
@@ -297,7 +297,7 @@ func createBrokenAPIResourceListDiscoveryFakeClientInterfaces(ctx context.Contex
 }
 
 func createDynamicDeployListForcedErrorFakeClientInterfaces(ctx context.Context, t *testing.T, ns, name string) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
-	realClientset := fake.NewSimpleClientset()
+	realClientset := fake.NewClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
 	objects := []runtime.Object{}
