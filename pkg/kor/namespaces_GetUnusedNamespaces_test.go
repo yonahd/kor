@@ -41,6 +41,7 @@ func defineServiceAccountObject(ns, name string) *corev1.ServiceAccount {
 }
 
 func createEmptyNamespaceWithIgnoredByDefaultResource(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
+	//lint:ignore SA1019 fake client is sufficient for unit test
 	realClientset := fake.NewSimpleClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
@@ -83,6 +84,7 @@ func createEmptyNamespaceWithIgnoredByDefaultResource(ctx context.Context, t *te
 }
 
 func createNonEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
+	//lint:ignore SA1019 fake client is sufficient for unit test
 	realClientset := fake.NewSimpleClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
@@ -117,6 +119,7 @@ func createNonEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Inte
 }
 
 func createEmptyNamespace(ctx context.Context, t *testing.T) (kubernetes.Interface, *dynamicfake.FakeDynamicClient) {
+	//lint:ignore SA1019 fake client is sufficient for unit test
 	realClientset := fake.NewSimpleClientset()
 	fakeDisc := &fakeHappyDiscovery{discoveryfake.FakeDiscovery{Fake: &realClientset.Fake}}
 	clientset := &fakeClientset{Interface: realClientset, discovery: fakeDisc}
