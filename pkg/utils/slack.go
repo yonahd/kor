@@ -18,7 +18,8 @@ type SendMessageToSlack interface {
 }
 
 type SlackPayload struct {
-	Text string `json:"text"`
+	Text    string `json:"text"`
+	Channel string `json:"channel,omitempty"`
 }
 
 type SlackAPIResponse struct {
@@ -69,9 +70,9 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 		return nil
 	} else if opts.Channel != "" && opts.Token != "" {
 		fmt.Printf("Sending message to Slack channel %s...\n", opts.Channel)
-		messagePayload := map[string]interface{}{
-			"channel": opts.Channel,
-			"text":    outputBuffer,
+		messagePayload := SlackPayload{
+			Text:    outputBuffer,
+			Channel: opts.Channel,
 		}
 
 		payload, err := json.Marshal(messagePayload)
