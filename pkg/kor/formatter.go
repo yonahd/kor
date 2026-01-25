@@ -34,6 +34,7 @@ func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opt
 		if err := utils.SendToSlack(utils.SlackMessage{}, opts, outputBuffer.String()); err != nil {
 			return "", fmt.Errorf("failed to send message to slack: %w", err)
 		}
+		return outputBuffer.String(), nil
 	case "json", "yaml":
 		var resources map[string]map[string][]ResourceInfo
 		if err := json.Unmarshal(jsonResponse, &resources); err != nil {
@@ -81,7 +82,6 @@ func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opt
 	default:
 		return "", fmt.Errorf("unsupported output format: %s", outputFormat)
 	}
-	return "", fmt.Errorf("unsupported output format: %s", outputFormat)
 }
 
 func FormatOutput(resources map[string]map[string][]ResourceInfo, opts common.Opts) bytes.Buffer {
