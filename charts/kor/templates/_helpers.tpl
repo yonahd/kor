@@ -76,31 +76,28 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Generate namespaced resource rules
+Check if Role should be created
 */}}
-{{- define "kor.namespacedResourceRules" -}}
-{{- $resources := .Values.rbac.namespacedResources }}
-{{- if not $resources }}
-{{- $resources = list "pods" "configmaps" "secrets" "services" "serviceaccounts" "deployments" "statefulsets" "roles" "rolebindings" "horizontalpodautoscalers" "persistentvolumeclaims" "ingresses" "poddisruptionbudgets" "endpoints" "endpointslices" "jobs" "replicasets" "daemonsets" "networkpolicies" }}
-{{- end }}
-- apiGroups: ["*"]
-  resources:
-{{- range $resources }}
-    - {{ . }}
-{{- end }}
-  verbs:
-    - get
-    - list
-    - watch
+{{- define "kor.createRole" -}}
+{{- $create := .Values.rbac.create -}}
+{{- if or (eq (toString $create) "true") (eq $create "role") }}true{{- end }}
 {{- end }}
 
 {{/*
-Generate cluster-scoped resource rules
+Check if ClusterRole should be created
 */}}
-{{- define "kor.clusterResourceRules" -}}
-{{- $resources := .Values.rbac.clusterResources }}
+{{- define "kor.createClusterRole" -}}
+{{- $create := .Values.rbac.create -}}
+{{- if or (eq (toString $create) "true") (eq $create "clusterrole") }}true{{- end }}
+{{- end }}
+
+{{/*
+Generate resource rules
+*/}}
+{{- define "kor.resourceRules" -}}
+{{- $resources := .Values.rbac.resources }}
 {{- if not $resources }}
-{{- $resources = list "namespaces" "clusterroles" "clusterrolebindings" "persistentvolumes" "customresourcedefinitions" "storageclasses" "volumeattachments" "priorityclasses" }}
+{{- $resources = list "pods" "configmaps" "secrets" "services" "serviceaccounts" "deployments" "statefulsets" "roles" "rolebindings" "horizontalpodautoscalers" "persistentvolumeclaims" "ingresses" "poddisruptionbudgets" "endpoints" "endpointslices" "jobs" "replicasets" "daemonsets" "networkpolicies" "namespaces" "clusterroles" "clusterrolebindings" "persistentvolumes" "customresourcedefinitions" "storageclasses" "volumeattachments" "priorityclasses" }}
 {{- end }}
 - apiGroups: ["*"]
   resources:

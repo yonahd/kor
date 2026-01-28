@@ -1,4 +1,4 @@
-{{- if .Values.rbac.create -}}
+{{- if include "kor.createRole" . }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -7,7 +7,9 @@ metadata:
   labels:
     {{- include "kor.labels" . | nindent 4 }}
 rules:
-{{ include "kor.namespacedResourceRules" . | nindent 2 }}
+{{ include "kor.resourceRules" . | nindent 2 }}
+{{- end }}
+{{- if include "kor.createClusterRole" . }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -16,10 +18,5 @@ metadata:
   labels:
     {{- include "kor.labels" . | nindent 4 }}
 rules:
-{{ include "kor.namespacedResourceRules" . | nindent 2 }}
-{{- $clusterRes := .Values.rbac.clusterResources }}
-# If clusterResources is not defined or is a non-empty list, include cluster resource rules.
-{{- if or (not (kindIs "slice" $clusterRes)) (gt (len $clusterRes) 0) }}
-{{ include "kor.clusterResourceRules" . | nindent 2 }}
-{{- end }}
+{{ include "kor.resourceRules" . | nindent 2 }}
 {{- end }}
