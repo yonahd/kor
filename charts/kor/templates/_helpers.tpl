@@ -74,3 +74,37 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Check if Role should be created
+*/}}
+{{- define "kor.createRole" -}}
+{{- $create := .Values.rbac.create -}}
+{{- if or (eq (toString $create) "true") (eq $create "role") }}true{{- end }}
+{{- end }}
+
+{{/*
+Check if ClusterRole should be created
+*/}}
+{{- define "kor.createClusterRole" -}}
+{{- $create := .Values.rbac.create -}}
+{{- if or (eq (toString $create) "true") (eq $create "clusterrole") }}true{{- end }}
+{{- end }}
+
+{{/*
+Generate resource rules
+*/}}
+{{- define "kor.resourceRules" -}}
+- apiGroups:
+{{- range .Values.rbac.apiGroups }}
+    - {{ . | quote }}
+{{- end }}
+  resources:
+{{- range .Values.rbac.resources }}
+    - {{ . }}
+{{- end }}
+  verbs:
+{{- range .Values.rbac.verbs }}
+    - {{ . }}
+{{- end }}
+{{- end }}
