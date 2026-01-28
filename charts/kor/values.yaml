@@ -133,3 +133,8 @@ rbac:
   # -- API groups to grant access to
   apiGroups:
     - "*"
+  # -- Verbs to grant
+  verbs:
+    - get
+    - list
+    - watch

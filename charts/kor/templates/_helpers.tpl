@@ -104,7 +104,7 @@ Generate resource rules
     - {{ . }}
 {{- end }}
   verbs:
-    - get
-    - list
-    - watch
+{{- range .Values.rbac.verbs }}
+    - {{ . }}
+{{- end }}
 {{- end }}
