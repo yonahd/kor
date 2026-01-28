@@ -74,3 +74,41 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Generate namespaced resource rules
+*/}}
+{{- define "kor.namespacedResourceRules" -}}
+{{- $resources := .Values.rbac.namespacedResources }}
+{{- if not $resources }}
+{{- $resources = list "pods" "configmaps" "secrets" "services" "serviceaccounts" "deployments" "statefulsets" "roles" "rolebindings" "horizontalpodautoscalers" "persistentvolumeclaims" "ingresses" "poddisruptionbudgets" "endpoints" "endpointslices" "jobs" "replicasets" "daemonsets" "networkpolicies" }}
+{{- end }}
+- apiGroups: ["*"]
+  resources:
+{{- range $resources }}
+    - {{ . }}
+{{- end }}
+  verbs:
+    - get
+    - list
+    - watch
+{{- end }}
+
+{{/*
+Generate cluster-scoped resource rules
+*/}}
+{{- define "kor.clusterResourceRules" -}}
+{{- $resources := .Values.rbac.clusterResources }}
+{{- if not $resources }}
+{{- $resources = list "namespaces" "clusterroles" "clusterrolebindings" "persistentvolumes" "customresourcedefinitions" "storageclasses" "volumeattachments" "priorityclasses" }}
+{{- end }}
+- apiGroups: ["*"]
+  resources:
+{{- range $resources }}
+    - {{ . }}
+{{- end }}
+  verbs:
+    - get
+    - list
+    - watch
+{{- end }}

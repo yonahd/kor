@@ -1,3 +1,4 @@
+{{- if .Values.rbac.create -}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -6,31 +7,7 @@ metadata:
   labels:
     {{- include "kor.labels" . | nindent 4 }}
 rules:
-  - apiGroups: ["*"]
-    resources:
-      - pods
-      - configmaps
-      - secrets
-      - services
-      - serviceaccounts
-      - deployments
-      - statefulsets
-      - roles
-      - rolebindings
-      - horizontalpodautoscalers
-      - persistentvolumeclaims
-      - ingresses
-      - poddisruptionbudgets
-      - endpoints
-      - endpointslices
-      - jobs
-      - replicasets
-      - daemonsets
-      - networkpolicies
-    verbs:
-      - get
-      - list
-      - watch
+{{ include "kor.namespacedResourceRules" . | nindent 2 }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -39,37 +16,10 @@ metadata:
   labels:
     {{- include "kor.labels" . | nindent 4 }}
 rules:
-  - apiGroups: ["*"]
-    resources:
-      - pods
-      - configmaps
-      - secrets
-      - services
-      - serviceaccounts
-      - deployments
-      - statefulsets
-      - roles
-      - rolebindings
-      - horizontalpodautoscalers
-      - persistentvolumeclaims
-      - ingresses
-      - poddisruptionbudgets
-      - endpoints
-      - endpointslices
-      - jobs
-      - replicasets
-      - daemonsets
-      - networkpolicies
-      {{/* cluster-scoped resources */}}
-      - namespaces
-      - clusterroles
-      - clusterrolebindings
-      - persistentvolumes
-      - customresourcedefinitions
-      - storageclasses
-      - volumeattachments
-      - priorityclasses
-    verbs:
-      - get
-      - list
-      - watch
+{{ include "kor.namespacedResourceRules" . | nindent 2 }}
+{{- $clusterRes := .Values.rbac.clusterResources }}
+# If clusterResources is not defined or is a non-empty list, include cluster resource rules.
+{{- if or (not (kindIs "slice" $clusterRes)) (gt (len $clusterRes) 0) }}
+{{ include "kor.clusterResourceRules" . | nindent 2 }}
+{{- end }}
+{{- end }}

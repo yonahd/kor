@@ -97,3 +97,13 @@ serviceAccount:
   # -- The name of the service account to use.
   # -- If not set and create is true, a name is generated using the fullname template
   name: ""
+
+rbac:
+  # -- Create Role and ClusterRole
+  create: true
+  # -- Namespaced resources (used in both Role and ClusterRole)
+  # -- Set to array to customize, null for defaults
+  namespacedResources: null
+  # -- Cluster-scoped resources (ClusterRole only)
+  # -- Set to array to customize, null for defaults, empty array to disable
+  clusterResources: null
