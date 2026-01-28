@@ -101,8 +101,35 @@ serviceAccount:
 rbac:
   # -- Create Role and/or ClusterRole (true, false, "clusterrole" or "role")
   create: true
-  # -- Resources to grant access to (null for defaults, array to customize)
-  resources: null
+  # -- Resources to grant access to
+  resources:
+    - pods
+    - configmaps
+    - secrets
+    - services
+    - serviceaccounts
+    - deployments
+    - statefulsets
+    - roles
+    - rolebindings
+    - horizontalpodautoscalers
+    - persistentvolumeclaims
+    - ingresses
+    - poddisruptionbudgets
+    - endpoints
+    - endpointslices
+    - jobs
+    - replicasets
+    - daemonsets
+    - networkpolicies
+    - namespaces
+    - clusterroles
+    - clusterrolebindings
+    - persistentvolumes
+    - customresourcedefinitions
+    - storageclasses
+    - volumeattachments
+    - priorityclasses
   # -- API groups to grant access to
   apiGroups:
     - "*"

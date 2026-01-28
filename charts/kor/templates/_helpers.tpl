@@ -95,16 +95,12 @@ Check if ClusterRole should be created
 Generate resource rules
 */}}
 {{- define "kor.resourceRules" -}}
-{{- $resources := .Values.rbac.resources }}
-{{- if not $resources }}
-{{- $resources = list "pods" "configmaps" "secrets" "services" "serviceaccounts" "deployments" "statefulsets" "roles" "rolebindings" "horizontalpodautoscalers" "persistentvolumeclaims" "ingresses" "poddisruptionbudgets" "endpoints" "endpointslices" "jobs" "replicasets" "daemonsets" "networkpolicies" "namespaces" "clusterroles" "clusterrolebindings" "persistentvolumes" "customresourcedefinitions" "storageclasses" "volumeattachments" "priorityclasses" }}
-{{- end }}
 - apiGroups:
 {{- range .Values.rbac.apiGroups }}
     - {{ . | quote }}
 {{- end }}
   resources:
-{{- range $resources }}
+{{- range .Values.rbac.resources }}
     - {{ . }}
 {{- end }}
   verbs:
