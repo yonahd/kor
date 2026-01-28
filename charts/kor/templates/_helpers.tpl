@@ -99,7 +99,10 @@ Generate resource rules
 {{- if not $resources }}
 {{- $resources = list "pods" "configmaps" "secrets" "services" "serviceaccounts" "deployments" "statefulsets" "roles" "rolebindings" "horizontalpodautoscalers" "persistentvolumeclaims" "ingresses" "poddisruptionbudgets" "endpoints" "endpointslices" "jobs" "replicasets" "daemonsets" "networkpolicies" "namespaces" "clusterroles" "clusterrolebindings" "persistentvolumes" "customresourcedefinitions" "storageclasses" "volumeattachments" "priorityclasses" }}
 {{- end }}
-- apiGroups: ["*"]
+- apiGroups:
+{{- range .Values.rbac.apiGroups }}
+    - {{ . | quote }}
+{{- end }}
   resources:
 {{- range $resources }}
     - {{ . }}

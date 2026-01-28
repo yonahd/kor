@@ -103,3 +103,6 @@ rbac:
   create: true
   # -- Resources to grant access to (null for defaults, array to customize)
   resources: null
+  # -- API groups to grant access to
+  apiGroups:
+    - "*"
