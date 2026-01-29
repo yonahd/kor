@@ -133,6 +133,7 @@ func addFilterOptionsFlag(cmd *cobra.Command, opts *filters.Options) {
 	cmd.PersistentFlags().StringSliceVarP(&opts.ExcludeNamespaces, "exclude-namespaces", "e", opts.ExcludeNamespaces, "Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored")
 	cmd.PersistentFlags().StringSliceVarP(&opts.IncludeNamespaces, "include-namespaces", "n", opts.IncludeNamespaces, "Namespaces to run on, split by commas. Example: --include-namespaces ns1,ns2,ns3. If set, non-namespaced resources will be ignored")
 	cmd.PersistentFlags().BoolVar(&opts.IgnoreOwnerReferences, "ignore-owner-references", false, "Skip resources that have ownerReferences set (for all resource types)")
+	cmd.PersistentFlags().BoolVar(&opts.SkipNamespaceValidation, "skip-namespace-validation", false, "Skip namespace existence validation (requires --include-namespaces). Use in permission-limited clusters with only Role/RoleBinding")
 }
 
 // shouldSkipKubeInitialization determines if a command should skip kubeconfig initialization.
