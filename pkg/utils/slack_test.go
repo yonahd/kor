@@ -11,15 +11,16 @@ import (
 	"github.com/yonahd/kor/pkg/common"
 )
 
-var (
+const (
 	channel      = "test"
 	outputBuffer = "Test!"
 	token        = "xoxb-..."
+	webhookURL   = "https://hooks.slack.com/services/test"
 )
 
 func TestSendToSlack_EmptyBuffer(t *testing.T) {
 	opts := common.Opts{
-		WebhookURL: "https://hooks.slack.com/services/test",
+		WebhookURL: webhookURL,
 	}
 
 	err := SendToSlack(SlackMessage{}, opts, "")
@@ -39,11 +40,15 @@ func TestSendToSlack_BadOpts(t *testing.T) {
 		},
 		{
 			Name: "No channel",
-			Opts: common.Opts{Token: "xoxb-..."},
+			Opts: common.Opts{
+				Token: token,
+			},
 		},
 		{
 			Name: "No token",
-			Opts: common.Opts{Channel: channel},
+			Opts: common.Opts{
+				Channel: channel,
+			},
 		},
 	}
 
