@@ -11,7 +11,7 @@ import (
 	"github.com/yonahd/kor/pkg/common"
 )
 
-var SlackAPIURL = "https://slack.com/api"
+const slackEndpointURL = "https://slack.com/api/chat.postMessage"
 
 type SendMessageToSlack interface {
 	SendToSlack(opts common.Opts, outputBuffer string) error
@@ -80,7 +80,7 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 			return fmt.Errorf("failed to marshal payload: %w", err)
 		}
 
-		req, err := http.NewRequest("POST", SlackAPIURL+"/chat.postMessage", bytes.NewBuffer(payload))
+		req, err := http.NewRequest("POST", slackEndpointURL, bytes.NewBuffer(payload))
 		if err != nil {
 			return err
 		}

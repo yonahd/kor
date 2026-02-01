@@ -2,11 +2,11 @@ package utils
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/jarcoal/httpmock"
 
 	"github.com/yonahd/kor/pkg/common"
 )
@@ -16,6 +16,7 @@ const (
 	outputBuffer = "Test!"
 	token        = "xoxb-..."
 	webhookURL   = "https://hooks.slack.com/services/test"
+	endpointURL  = slackEndpointURL
 )
 
 func TestSendToSlack_EmptyBuffer(t *testing.T) {
@@ -61,96 +62,108 @@ func TestSendToSlack_BadOpts(t *testing.T) {
 }
 
 func TestSendToSlack_Webhook_Success(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			t.Errorf("Got unexpected method: %s", r.Method)
-		}
-		contentType := r.Header.Get("Content-Type")
-		if contentType != "application/json" {
-			t.Errorf("Got unexpected content type: %s", contentType)
-		}
+	httpmock.Activate()
+	t.Cleanup(httpmock.DeactivateAndReset)
 
-		body, _ := io.ReadAll(r.Body)
-		var payload SlackPayload
-		if err := json.Unmarshal(body, &payload); err != nil {
-			t.Errorf("Failed to unmarshal payload: %v", err)
-		}
-		if payload.Channel != "" {
-			t.Errorf("Expected payload channel to be empty, got '%s'", payload.Channel)
-		}
-		if payload.Text != outputBuffer {
-			t.Errorf("Expected payload text to be '%s', got '%s'", outputBuffer, payload.Text)
-		}
+	httpmock.RegisterResponder(http.MethodPost, webhookURL,
+		func(r *http.Request) (*http.Response, error) {
+			contentType := r.Header.Get("Content-Type")
+			if contentType != "application/json" {
+				t.Errorf("Got unexpected content type: %s", contentType)
+			}
 
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer server.Close()
+			var payload SlackPayload
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				t.Errorf("Failed to unmarshal payload: %v", err)
+			}
+			if payload.Channel != "" {
+				t.Errorf("Expected payload channel to be empty, got '%s'", payload.Channel)
+			}
+			if payload.Text != outputBuffer {
+				t.Errorf("Expected payload text to be '%s', got '%s'", outputBuffer, payload.Text)
+			}
+
+			return httpmock.NewStringResponse(http.StatusOK, "ok"), nil
+		},
+	)
 
 	opts := common.Opts{
-		WebhookURL: server.URL,
+		WebhookURL: webhookURL,
 	}
 
 	err := SendToSlack(SlackMessage{}, opts, outputBuffer)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
+	}
+	calls := httpmock.GetTotalCallCount()
+	if calls != 1 {
+		t.Errorf("Expected 1 HTTP call, got %d", calls)
 	}
 }
 
 func TestSendToSlack_Webhook_Error(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusInternalServerError)
-	}))
-	defer server.Close()
+	httpmock.Activate()
+	t.Cleanup(httpmock.DeactivateAndReset)
+
+	httpmock.RegisterResponder(
+		http.MethodPost,
+		webhookURL,
+		httpmock.NewBytesResponder(
+			http.StatusInternalServerError,
+			[]byte{},
+		),
+	)
 
 	opts := common.Opts{
-		WebhookURL: server.URL,
+		WebhookURL: webhookURL,
 	}
 
 	err := SendToSlack(SlackMessage{}, opts, outputBuffer)
 	if err == nil {
 		t.Errorf("Expected error, got nil")
 	}
+	calls := httpmock.GetTotalCallCount()
+	if calls != 1 {
+		t.Errorf("Expected 1 HTTP call, got %d", calls)
+	}
 }
 
 func TestSendToSlack_API_Success(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			t.Errorf("Got unexpected method: %s", r.Method)
-		}
-		contentType := r.Header.Get("Content-Type")
-		if contentType != "application/json" {
-			t.Errorf("Got unexpected content type: %s", contentType)
-		}
-		authorization := r.Header.Get("Authorization")
-		if !strings.HasSuffix(authorization, token) {
-			t.Errorf("Bad authorization header format: %s", authorization)
-		}
+	httpmock.Activate()
+	t.Cleanup(httpmock.DeactivateAndReset)
 
-		body, _ := io.ReadAll(r.Body)
-		var payload SlackPayload
-		if err := json.Unmarshal(body, &payload); err != nil {
-			t.Errorf("Failed to unmarshal payload: %v", err)
-		}
+	httpmock.RegisterResponder(http.MethodPost, endpointURL,
+		func(r *http.Request) (*http.Response, error) {
+			contentType := r.Header.Get("Content-Type")
+			if contentType != "application/json" {
+				t.Errorf("Got unexpected content type: %s", contentType)
+			}
+			authorization := r.Header.Get("Authorization")
+			if !strings.HasSuffix(authorization, token) {
+				t.Errorf("Bad authorization header format: %s", authorization)
+			}
 
-		if payload.Channel != channel {
-			t.Errorf("Expected payload channel to be '%s', got '%s'", channel, payload.Channel)
-		}
-		if payload.Text != outputBuffer {
-			t.Errorf("Expected payload text to be '%s', got '%s'", outputBuffer, payload.Text)
-		}
+			var payload SlackPayload
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				t.Errorf("Failed to unmarshal payload: %v", err)
+			}
 
-		w.WriteHeader(http.StatusOK)
-		response := SlackAPIResponse{Ok: true}
-		err := json.NewEncoder(w).Encode(response)
-		if err != nil {
-			t.Errorf("Failed to encode response: %v", err)
-		}
-	}))
-	defer server.Close()
+			if payload.Channel != channel {
+				t.Errorf("Expected payload channel to be '%s', got '%s'", channel, payload.Channel)
+			}
+			if payload.Text != outputBuffer {
+				t.Errorf("Expected payload text to be '%s', got '%s'", outputBuffer, payload.Text)
+			}
 
-	originalURL := SlackAPIURL
-	SlackAPIURL = server.URL
-	defer func() { SlackAPIURL = originalURL }()
+			response, _ := httpmock.NewJsonResponse(
+				http.StatusOK,
+				SlackAPIResponse{
+					Ok: true,
+				},
+			)
+			return response, nil
+		},
+	)
 
 	opts := common.Opts{
 		Token:   token,
@@ -161,25 +174,29 @@ func TestSendToSlack_API_Success(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
+	calls := httpmock.GetTotalCallCount()
+	if calls != 1 {
+		t.Errorf("Expected 1 HTTP call, got %d", calls)
+	}
 }
 
 func TestSendToSlack_API_Error(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		response := SlackAPIResponse{
-			Ok:    false,
-			Error: "invalid_auth",
-		}
-		err := json.NewEncoder(w).Encode(response)
-		if err != nil {
-			t.Errorf("Failed to encode response: %v", err)
-		}
-	}))
-	defer server.Close()
+	httpmock.Activate()
+	t.Cleanup(httpmock.DeactivateAndReset)
 
-	originalURL := SlackAPIURL
-	SlackAPIURL = server.URL
-	defer func() { SlackAPIURL = originalURL }()
+	InvalidAuth := "invalid_auth"
+	httpmock.RegisterResponder(http.MethodPost, endpointURL,
+		func(req *http.Request) (*http.Response, error) {
+			response, _ := httpmock.NewJsonResponse(
+				http.StatusOK,
+				SlackAPIResponse{
+					Ok:    false,
+					Error: InvalidAuth,
+				},
+			)
+			return response, nil
+		},
+	)
 
 	opts := common.Opts{
 		Token:   token,
@@ -189,5 +206,40 @@ func TestSendToSlack_API_Error(t *testing.T) {
 	err := SendToSlack(SlackMessage{}, opts, outputBuffer)
 	if err == nil {
 		t.Errorf("Expected error, got nil")
+	}
+	if err != nil && !strings.HasSuffix(err.Error(), InvalidAuth) {
+		t.Errorf("Expected error to be '%s', got '%s'", InvalidAuth, err.Error())
+	}
+	calls := httpmock.GetTotalCallCount()
+	if calls != 1 {
+		t.Errorf("Expected 1 HTTP call, got %d", calls)
+	}
+}
+
+func TestSendToSlack_API_NonOKStatus(t *testing.T) {
+	httpmock.Activate()
+	t.Cleanup(httpmock.DeactivateAndReset)
+
+	httpmock.RegisterResponder(
+		http.MethodPost,
+		endpointURL,
+		httpmock.NewBytesResponder(
+			http.StatusInternalServerError,
+			[]byte{},
+		),
+	)
+
+	opts := common.Opts{
+		Token:   token,
+		Channel: channel,
+	}
+
+	err := SendToSlack(SlackMessage{}, opts, outputBuffer)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+	calls := httpmock.GetTotalCallCount()
+	if calls != 1 {
+		t.Errorf("Expected 1 HTTP call, got %d", calls)
 	}
 }
