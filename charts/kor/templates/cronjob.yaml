@@ -16,10 +16,19 @@ spec:
             {{- include "kor.labels" . | nindent 12 }}
           name: {{ .Release.Name }}
         spec:
+          {{- with .Values.cronJob.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           serviceAccountName: {{ include "kor.serviceAccountName" . }}
           containers:
             - name: {{ .Release.Name }}-container
               image: {{ .Values.cronJob.image.repository }}:{{ .Values.cronJob.image.tag }}
+              imagePullPolicy: {{ .Values.cronJob.imagePullPolicy }}
+              {{- with .Values.cronJob.securityContext }}
+              securityContext:
+                {{ toYaml . | nindent 16 }}
+              {{- end }}
               resources:
                 {{- toYaml .Values.cronJob.resources | nindent 16 }}
               command:
@@ -51,6 +60,10 @@ spec:
                 {{- toYaml .Values.cronJob.env | nindent 16 }}
               {{- end }}
           restartPolicy: {{ .Values.cronJob.restartPolicy }}
+          {{- with .Values.cronJob.podSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
   {{- if .Values.cronJob.successfulJobsHistoryLimit }}
   successfulJobsHistoryLimit: {{ .Values.cronJob.successfulJobsHistoryLimit }}
   {{- end }}
