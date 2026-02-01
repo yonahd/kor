@@ -47,6 +47,7 @@ func retrieveIngressSecrets(clientset kubernetes.Interface, namespace string) ([
 			secretNames = append(secretNames, tls.SecretName)
 		}
 
+		// FIXME: Does not account for secret references to other namespaces!
 		annotations := ingress.GetObjectMeta().GetAnnotations()
 		for _, annotation := range exceptionIngressAnnotationNames {
 			if values, ok := annotations[annotation]; ok && values != "" {
