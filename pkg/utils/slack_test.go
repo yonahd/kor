@@ -184,14 +184,14 @@ func TestSendToSlack_API_Error(t *testing.T) {
 	httpmock.Activate()
 	t.Cleanup(httpmock.DeactivateAndReset)
 
-	InvalidAuth := "invalid_auth"
+	invalidAuth := "invalid_auth"
 	httpmock.RegisterResponder(http.MethodPost, endpointURL,
 		func(req *http.Request) (*http.Response, error) {
 			response, _ := httpmock.NewJsonResponse(
 				http.StatusOK,
 				SlackAPIResponse{
 					Ok:    false,
-					Error: InvalidAuth,
+					Error: invalidAuth,
 				},
 			)
 			return response, nil
@@ -207,8 +207,8 @@ func TestSendToSlack_API_Error(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error, got nil")
 	}
-	if err != nil && !strings.HasSuffix(err.Error(), InvalidAuth) {
-		t.Errorf("Expected error to be '%s', got '%s'", InvalidAuth, err.Error())
+	if err != nil && !strings.HasSuffix(err.Error(), invalidAuth) {
+		t.Errorf("Expected error to be '%s', got '%s'", invalidAuth, err.Error())
 	}
 	calls := httpmock.GetTotalCallCount()
 	if calls != 1 {
