@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -16,6 +17,12 @@ import (
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 )
+
+var exceptionIngressAnnotationNames = []string{
+	`nginx.ingress.kubernetes.io/auth-secret`,
+	`nginx.ingress.kubernetes.io/auth-tls-secret`,
+	`nginx.ingress.kubernetes.io/proxy-ssl-secret`,
+}
 
 var exceptionSecretTypes = []string{
 	`helm.sh/release.v1`,
@@ -27,7 +34,7 @@ var exceptionSecretTypes = []string{
 //go:embed exceptions/secrets/secrets.json
 var secretsConfig []byte
 
-func retrieveIngressTLS(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func retrieveIngressSecrets(clientset kubernetes.Interface, namespace string) ([]string, error) {
 	secretNames := make([]string, 0)
 	ingressList, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -38,6 +45,21 @@ func retrieveIngressTLS(clientset kubernetes.Interface, namespace string) ([]str
 	for _, ingress := range ingressList.Items {
 		for _, tls := range ingress.Spec.TLS {
 			secretNames = append(secretNames, tls.SecretName)
+		}
+
+		annotations := ingress.GetObjectMeta().GetAnnotations()
+		for _, annotation := range exceptionIngressAnnotationNames {
+			if values, ok := annotations[annotation]; ok && values != "" {
+				if idx := strings.LastIndex(values, "/"); idx != -1 {
+					if values[:idx] == namespace {
+						values = values[idx+1:]
+					} else {
+						continue
+					}
+				}
+
+				secretNames = append(secretNames, values)
+			}
 		}
 	}
 
@@ -106,12 +128,12 @@ func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]str
 		}
 	}
 
-	tlsSecrets, err := retrieveIngressTLS(clientset, namespace)
+	ingressSecrets, err := retrieveIngressSecrets(clientset, namespace)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, err
 	}
 
-	return envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, nil
+	return envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, ingressSecrets, nil
 }
 
 func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, []string, error) {
@@ -159,7 +181,7 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 }
 
 func processNamespaceSecret(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
-	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(clientset, namespace)
+	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, ingressSecrets, err := retrieveUsedSecret(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +191,7 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 	volumeSecrets = RemoveDuplicatesAndSort(volumeSecrets)
 	initContainerEnvSecrets = RemoveDuplicatesAndSort(initContainerEnvSecrets)
 	pullSecrets = RemoveDuplicatesAndSort(pullSecrets)
-	tlsSecrets = RemoveDuplicatesAndSort(tlsSecrets)
+	ingressSecrets = RemoveDuplicatesAndSort(ingressSecrets)
 
 	secretNames, unusedSecretNames, err := retrieveSecretNames(clientset, namespace, filterOpts)
 	if err != nil {
@@ -182,7 +204,7 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 		envSecrets2,
 		volumeSecrets,
 		pullSecrets,
-		tlsSecrets,
+		ingressSecrets,
 		initContainerEnvSecrets,
 	}
 
