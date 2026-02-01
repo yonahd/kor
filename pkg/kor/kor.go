@@ -9,6 +9,7 @@ import (
 	"sort"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -23,6 +24,15 @@ type ExceptionResource struct {
 	ResourceName string
 	MatchRegex   bool
 }
+
+// All resources in this struct must be defined as regex
+type ExceptionNamespacedResource struct {
+	Namespace    string
+	ResourceName string
+	MatchRegex   bool
+	ResourceType string
+}
+
 type IncludeExcludeLists struct {
 	IncludeListStr string
 	ExcludeListStr string
@@ -33,20 +43,22 @@ type ResourceKind struct {
 }
 
 type Config struct {
-	ExceptionClusterRoles        []ExceptionResource `json:"exceptionClusterRoles"`
-	ExceptionClusterRoleBindings []ExceptionResource `json:"exceptionClusterRoleBindings"`
-	ExceptionConfigMaps          []ExceptionResource `json:"exceptionConfigMaps"`
-	ExceptionCrds                []ExceptionResource `json:"exceptionCrds"`
-	ExceptionDaemonSets          []ExceptionResource `json:"exceptionDaemonSets"`
-	ExceptionRoles               []ExceptionResource `json:"exceptionRoles"`
-	ExceptionSecrets             []ExceptionResource `json:"exceptionSecrets"`
-	ExceptionServiceAccounts     []ExceptionResource `json:"exceptionServiceAccounts"`
-	ExceptionServices            []ExceptionResource `json:"exceptionServices"`
-	ExceptionStorageClasses      []ExceptionResource `json:"exceptionStorageClasses"`
-	ExceptionJobs                []ExceptionResource `json:"exceptionJobs"`
-	ExceptionPdbs                []ExceptionResource `json:"exceptionPdbs"`
-	ExceptionRoleBindings        []ExceptionResource `json:"exceptionRoleBindings"`
-	ExceptionPriorityClasses     []ExceptionResource `json:"exceptionPriorityClasses"`
+	ExceptionClusterRoles        []ExceptionResource           `json:"exceptionClusterRoles"`
+	ExceptionClusterRoleBindings []ExceptionResource           `json:"exceptionClusterRoleBindings"`
+	ExceptionConfigMaps          []ExceptionResource           `json:"exceptionConfigMaps"`
+	ExceptionCrds                []ExceptionResource           `json:"exceptionCrds"`
+	ExceptionDaemonSets          []ExceptionResource           `json:"exceptionDaemonSets"`
+	ExceptionRoles               []ExceptionResource           `json:"exceptionRoles"`
+	ExceptionSecrets             []ExceptionResource           `json:"exceptionSecrets"`
+	ExceptionServiceAccounts     []ExceptionResource           `json:"exceptionServiceAccounts"`
+	ExceptionServices            []ExceptionResource           `json:"exceptionServices"`
+	ExceptionStorageClasses      []ExceptionResource           `json:"exceptionStorageClasses"`
+	ExceptionJobs                []ExceptionResource           `json:"exceptionJobs"`
+	ExceptionPdbs                []ExceptionResource           `json:"exceptionPdbs"`
+	ExceptionRoleBindings        []ExceptionResource           `json:"exceptionRoleBindings"`
+	ExceptionPriorityClasses     []ExceptionResource           `json:"exceptionPriorityClasses"`
+	ExceptionNamespaces          []ExceptionResource           `json:"exceptionNamespaces"`
+	ExceptionNamespacedResources []ExceptionNamespacedResource `json:"exceptionNamespacedResources"`
 	// Add other configurations if needed
 }
 
@@ -130,6 +142,21 @@ func GetDynamicClient(kubeconfig string) *dynamic.DynamicClient {
 	return clientset
 }
 
+func GetDiscoveryClient(kubeconfig string) *discovery.DiscoveryClient {
+	config, err := GetConfig(kubeconfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load kubeconfig: %v\n", err)
+		os.Exit(1)
+	}
+
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create Kubernetes client: %v\n", err)
+		os.Exit(1)
+	}
+	return discoveryClient
+}
+
 // TODO create formatter by resource "#", "Resource Name", "Namespace"
 // TODO Functions that use this object are accompanied by repeated data acquisition operations and can be optimized.
 func CalculateResourceDifference(usedResourceNames []string, allResourceNames []string) []string {
@@ -170,6 +197,25 @@ func isResourceException(resourceName, namespace string, exceptions []ExceptionR
 				match = true
 				break
 			}
+		}
+	}
+	return match, nil
+}
+
+func isNamespacedResourceException(resourceName, namespace, resourceType string, exceptions []ExceptionNamespacedResource) (bool, error) {
+	var match bool
+	for _, e := range exceptions {
+		namespaceRegexp, err := regexp.Compile(e.Namespace)
+		if err != nil {
+			return false, err
+		}
+		nameRegexp, err := regexp.Compile(e.ResourceName)
+		if err != nil {
+			return false, err
+		}
+		if nameRegexp.MatchString(resourceName) && namespaceRegexp.MatchString(namespace) && e.ResourceType == resourceType {
+			match = true
+			break
 		}
 	}
 	return match, nil

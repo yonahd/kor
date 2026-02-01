@@ -41,6 +41,8 @@ type Options struct {
 	IncludeNamespaces []string
 	// IgnoreOwnerReferences skips any resource that has ownerReferences set (for all resource types)
 	IgnoreOwnerReferences bool
+	// IgnoreResourceTypes is a namespace selector to exclude specified resource type evaluation, only applicable to namespaces
+	IgnoreResourceTypes []string
 
 	namespace []string
 	once      sync.Once
