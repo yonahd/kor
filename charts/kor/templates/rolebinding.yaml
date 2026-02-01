@@ -1,3 +1,4 @@
+{{- if include "kor.createRole" . }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -12,6 +13,8 @@ roleRef:
   kind: Role
   name: {{ include "kor.serviceAccountName" . }}-read-resources-role
   apiGroup: rbac.authorization.k8s.io
+{{- end }}
+{{- if include "kor.createClusterRole" . }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -27,3 +30,4 @@ roleRef:
   kind: ClusterRole
   name: {{ include "kor.serviceAccountName" . }}-read-resources-clusterrole
   apiGroup: rbac.authorization.k8s.io
+{{- end }}

@@ -101,3 +101,44 @@ serviceAccount:
   # -- The name of the service account to use.
   # -- If not set and create is true, a name is generated using the fullname template
   name: ""
+
+rbac:
+  # -- Create Role and/or ClusterRole (true, false, "clusterrole" or "role")
+  create: true
+  # -- Resources to grant access to
+  resources:
+    - pods
+    - configmaps
+    - secrets
+    - services
+    - serviceaccounts
+    - deployments
+    - statefulsets
+    - roles
+    - rolebindings
+    - horizontalpodautoscalers
+    - persistentvolumeclaims
+    - ingresses
+    - poddisruptionbudgets
+    - endpoints
+    - endpointslices
+    - jobs
+    - replicasets
+    - daemonsets
+    - networkpolicies
+    - namespaces
+    - clusterroles
+    - clusterrolebindings
+    - persistentvolumes
+    - customresourcedefinitions
+    - storageclasses
+    - volumeattachments
+    - priorityclasses
+  # -- API groups to grant access to
+  apiGroups:
+    - "*"
+  # -- Verbs to grant
+  verbs:
+    - get
+    - list
+    - watch
