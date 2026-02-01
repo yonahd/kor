@@ -1,12 +1,10 @@
 package utils
 
 import (
-	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
@@ -186,29 +184,5 @@ func TestSendToSlack_API_Error(t *testing.T) {
 	err := SendToSlack(SlackMessage{}, opts, outputBuffer)
 	if err == nil {
 		t.Errorf("Expected error, got nil")
-	}
-}
-
-func TestWriteOutputToFile(t *testing.T) {
-	outputBuffer := bytes.Buffer{}
-	outputBuffer.WriteString("This is a test output.\n")
-	expectedOutput := outputBuffer.String()
-
-	outputFilePath, err := writeOutputToFile(expectedOutput)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
-	}
-
-	if _, err := os.Stat(outputFilePath); os.IsNotExist(err) {
-		t.Errorf("Expected output file to exist, got error: %v", err)
-	}
-
-	fileContent, err := os.ReadFile(outputFilePath)
-	if err != nil {
-		t.Errorf("Failed to read output file: %v", err)
-	}
-
-	if string(fileContent) != expectedOutput {
-		t.Errorf("Expected file content:\n%s\nGot:\n%s", expectedOutput, string(fileContent))
 	}
 }

@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"github.com/yonahd/kor/pkg/common"
 )
@@ -122,31 +120,4 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 	} else {
 		return errors.New("SlackOpts must contain either WebhookURL or Channel and Token")
 	}
-}
-
-func writeOutputToFile(outputBuffer string) (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("failed to get user's home directory: %v", err)
-	}
-
-	outputFileName := "kor-scan-results.txt"
-	outputFilePath := filepath.Join(homeDir, outputFileName)
-
-	file, err := os.Create(outputFilePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to create output file: %v", err)
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			fmt.Printf("failed to close file: %v\n", err)
-		}
-	}()
-
-	_, err = file.WriteString(outputBuffer)
-	if err != nil {
-		return "", fmt.Errorf("failed to write output to file: %v", err)
-	}
-
-	return outputFilePath, nil
 }
