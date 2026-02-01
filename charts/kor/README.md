@@ -1,6 +1,6 @@
 # kor
 
-![Version: 0.2.12](https://img.shields.io/badge/Version-0.2.12-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.7](https://img.shields.io/badge/AppVersion-0.6.7-informational?style=flat-square)
+![Version: 0.2.13](https://img.shields.io/badge/Version-0.2.13-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.7](https://img.shields.io/badge/AppVersion-0.6.7-informational?style=flat-square)
 
 A Kubernetes Helm Chart to discover orphaned resources using kor
 
@@ -21,10 +21,14 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | cronJob.failedJobsHistoryLimit | int | `2` |  |
 | cronJob.image.repository | string | `"yonahdissen/kor"` |  |
 | cronJob.image.tag | string | `"latest"` |  |
+| cronJob.imagePullPolicy | string | `"Always"` |  |
+| cronJob.imagePullSecrets | list | `[]` |  |
 | cronJob.name | string | `"kor"` |  |
 | cronJob.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources |
+| cronJob.podSecurityContext | object | `{}` |  |
 | cronJob.restartPolicy | string | `"OnFailure"` |  |
 | cronJob.schedule | string | `"0 1 * * 1"` |  |
+| cronJob.securityContext | object | `{}` |  |
 | cronJob.slackAuthToken | string | `""` |  |
 | cronJob.slackChannel | string | `""` |  |
 | cronJob.slackWebhookUrl | string | `""` |  |
