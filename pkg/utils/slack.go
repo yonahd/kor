@@ -7,11 +7,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/yonahd/kor/pkg/common"
 )
 
 const slackEndpointURL = "https://slack.com/api/chat.postMessage"
+
+var client = &http.Client{
+	Timeout: 5 * time.Minute,
+}
 
 type SendMessageToSlack interface {
 	SendToSlack(opts common.Opts, outputBuffer string) error
@@ -40,31 +45,31 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 	}
 
 	if opts.WebhookURL != "" {
-
-		// Prepare payload safely
-		slackPayload := SlackPayload{Text: outputBuffer}
+		slackPayload := SlackPayload{
+			Text: outputBuffer,
+		}
 		payload, err := json.Marshal(slackPayload)
 		if err != nil {
 			return fmt.Errorf("failed to marshal payload: %w", err)
 		}
 
-		resp, err := http.Post(opts.WebhookURL, "application/json", bytes.NewBuffer(payload))
+		response, err := client.Post(opts.WebhookURL, "application/json", bytes.NewBuffer(payload))
 		if err != nil {
 			return err
 		}
 		defer func() {
-			if err := resp.Body.Close(); err != nil {
+			if err := response.Body.Close(); err != nil {
 				fmt.Printf("failed to close response body: %v\n", err)
 			}
 		}()
 
-		body, err := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("non-OK status code: %d, body: %s", resp.StatusCode, string(body))
+		if response.StatusCode != http.StatusOK {
+			return fmt.Errorf("non-OK status code: %d, body: %s", response.StatusCode, string(body))
 		}
 
 		return nil
@@ -80,31 +85,30 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 			return fmt.Errorf("failed to marshal payload: %w", err)
 		}
 
-		req, err := http.NewRequest("POST", slackEndpointURL, bytes.NewBuffer(payload))
+		request, err := http.NewRequest(http.MethodPost, slackEndpointURL, bytes.NewBuffer(payload))
 		if err != nil {
 			return err
 		}
-		req.Header.Set("Authorization", "Bearer "+opts.Token)
-		req.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Authorization", "Bearer "+opts.Token)
+		request.Header.Set("Content-Type", "application/json")
 
-		client := &http.Client{}
-		resp, err := client.Do(req)
+		response, err := client.Do(request)
 		if err != nil {
 			return err
 		}
 		defer func() {
-			if err := resp.Body.Close(); err != nil {
+			if err := response.Body.Close(); err != nil {
 				fmt.Printf("failed to close response body: %v\n", err)
 			}
 		}()
 
-		body, err := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(response.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("non-OK status code: %d, body: %s", resp.StatusCode, string(body))
+		if response.StatusCode != http.StatusOK {
+			return fmt.Errorf("non-OK status code: %d, body: %s", response.StatusCode, string(body))
 		}
 
 		var slackResp SlackAPIResponse
