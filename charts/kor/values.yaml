@@ -101,40 +101,120 @@ serviceAccount:
 rbac:
   # -- Create Role and/or ClusterRole (true, false, "clusterrole" or "role")
   create: true
-  # -- Resources to grant access to
-  resources:
-    - pods
-    - configmaps
-    - secrets
-    - services
-    - serviceaccounts
-    - deployments
-    - statefulsets
-    - roles
-    - rolebindings
-    - horizontalpodautoscalers
-    - persistentvolumeclaims
-    - ingresses
-    - poddisruptionbudgets
-    - endpoints
-    - endpointslices
-    - jobs
-    - replicasets
-    - daemonsets
-    - networkpolicies
-    - namespaces
-    - clusterroles
-    - clusterrolebindings
-    - persistentvolumes
-    - customresourcedefinitions
-    - storageclasses
-    - volumeattachments
-    - priorityclasses
-  # -- API groups to grant access to
-  apiGroups:
-    - "*"
-  # -- Verbs to grant
-  verbs:
-    - get
-    - list
-    - watch
+  # -- RBAC rules with proper API group to resource mappings
+  rules:
+    # Core API resources
+    - apiGroups:
+        - ""
+      resources:
+        - pods
+        - configmaps
+        - secrets
+        - services
+        - serviceaccounts
+        - persistentvolumeclaims
+        - endpoints
+        - namespaces
+        - persistentvolumes
+      verbs:
+        - get
+        - list
+        - watch
+    # Apps API resources
+    - apiGroups:
+        - apps
+      resources:
+        - deployments
+        - statefulsets
+        - replicasets
+        - daemonsets
+      verbs:
+        - get
+        - list
+        - watch
+    # Networking API resources
+    - apiGroups:
+        - networking.k8s.io
+      resources:
+        - ingresses
+        - networkpolicies
+      verbs:
+        - get
+        - list
+        - watch
+    # RBAC API resources
+    - apiGroups:
+        - rbac.authorization.k8s.io
+      resources:
+        - roles
+        - rolebindings
+        - clusterroles
+        - clusterrolebindings
+      verbs:
+        - get
+        - list
+        - watch
+    # Autoscaling API resources
+    - apiGroups:
+        - autoscaling
+      resources:
+        - horizontalpodautoscalers
+      verbs:
+        - get
+        - list
+        - watch
+    # Policy API resources
+    - apiGroups:
+        - policy
+      resources:
+        - poddisruptionbudgets
+      verbs:
+        - get
+        - list
+        - watch
+    # Batch API resources
+    - apiGroups:
+        - batch
+      resources:
+        - jobs
+      verbs:
+        - get
+        - list
+        - watch
+    # Discovery API resources
+    - apiGroups:
+        - discovery.k8s.io
+      resources:
+        - endpointslices
+      verbs:
+        - get
+        - list
+        - watch
+    # Storage API resources
+    - apiGroups:
+        - storage.k8s.io
+      resources:
+        - storageclasses
+        - volumeattachments
+      verbs:
+        - get
+        - list
+        - watch
+    # Scheduling API resources
+    - apiGroups:
+        - scheduling.k8s.io
+      resources:
+        - priorityclasses
+      verbs:
+        - get
+        - list
+        - watch
+    # API extensions resources
+    - apiGroups:
+        - apiextensions.k8s.io
+      resources:
+        - customresourcedefinitions
+      verbs:
+        - get
+        - list
+        - watch

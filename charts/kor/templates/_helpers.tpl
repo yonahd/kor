@@ -95,16 +95,18 @@ Check if ClusterRole should be created
 Generate resource rules
 */}}
 {{- define "kor.resourceRules" -}}
+{{- range .Values.rbac.rules }}
 - apiGroups:
-{{- range .Values.rbac.apiGroups }}
+{{- range .apiGroups }}
     - {{ . | quote }}
 {{- end }}
   resources:
-{{- range .Values.rbac.resources }}
+{{- range .resources }}
     - {{ . }}
 {{- end }}
   verbs:
-{{- range .Values.rbac.verbs }}
+{{- range .verbs }}
     - {{ . }}
+{{- end }}
 {{- end }}
 {{- end }}
