@@ -63,13 +63,13 @@ func (sm SlackMessage) SendToSlack(opts common.Opts, outputBuffer string) error 
 			}
 		}()
 
-		body, err := io.ReadAll(response.Body)
+		_, err = io.ReadAll(response.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
 		if response.StatusCode != http.StatusOK {
-			return fmt.Errorf("non-OK status code: %d, body: %s", response.StatusCode, string(body))
+			return fmt.Errorf("non-OK status code: %d", response.StatusCode)
 		}
 
 		return nil
