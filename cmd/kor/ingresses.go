@@ -27,5 +27,6 @@ var ingressCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(ingressCmd)
 	rootCmd.AddCommand(ingressCmd)
 }

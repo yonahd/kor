@@ -26,5 +26,6 @@ var configmapCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(configmapCmd)
 	rootCmd.AddCommand(configmapCmd)
 }

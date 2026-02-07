@@ -27,5 +27,6 @@ var dsCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(dsCmd)
 	rootCmd.AddCommand(dsCmd)
 }
