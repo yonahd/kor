@@ -101,12 +101,14 @@ Generate resource rules
     - {{ . | quote }}
 {{- end }}
   resources:
-{{- range .resources }}
-    - {{ . }}
-{{- end }}
+    {{- toYaml .resources | nindent 4 }}
   verbs:
-{{- range .verbs }}
-    - {{ . }}
-{{- end }}
+  {{- if .verbs }}
+    {{- toYaml .verbs | nindent 4 }}
+  {{- else }}
+    - get
+    - list
+    - watch
+  {{- end }}
 {{- end }}
 {{- end }}
