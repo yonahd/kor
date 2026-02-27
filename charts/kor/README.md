@@ -1,6 +1,6 @@
 # kor
 
-![Version: 0.2.13](https://img.shields.io/badge/Version-0.2.13-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.7](https://img.shields.io/badge/AppVersion-0.6.7-informational?style=flat-square)
+![Version: 0.2.14](https://img.shields.io/badge/Version-0.2.14-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.7](https://img.shields.io/badge/AppVersion-0.6.7-informational?style=flat-square)
 
 A Kubernetes Helm Chart to discover orphaned resources using kor
 
@@ -62,6 +62,8 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | prometheusExporter.serviceMonitor.targetLabels | list | `[]` | Set of labels to transfer on the Kubernetes Service onto the target. |
 | prometheusExporter.serviceMonitor.telemetryPath | string | `"/metrics"` |  |
 | prometheusExporter.serviceMonitor.timeout | string | `"10s"` | Set timeout for scrape |
+| rbac.create | bool | `true` | Create Role and/or ClusterRole (true, false, "clusterrole" or "role") |
+| rbac.rules | list | `[{"apiGroups":[""],"resources":["pods","configmaps","secrets","services","serviceaccounts","persistentvolumeclaims","endpoints","namespaces","persistentvolumes"]},{"apiGroups":["apps"],"resources":["deployments","statefulsets","replicasets","daemonsets"]},{"apiGroups":["networking.k8s.io"],"resources":["ingresses","networkpolicies"]},{"apiGroups":["rbac.authorization.k8s.io"],"resources":["roles","rolebindings","clusterroles","clusterrolebindings"]},{"apiGroups":["autoscaling"],"resources":["horizontalpodautoscalers"]},{"apiGroups":["policy"],"resources":["poddisruptionbudgets"]},{"apiGroups":["batch"],"resources":["jobs"]},{"apiGroups":["discovery.k8s.io"],"resources":["endpointslices"]},{"apiGroups":["storage.k8s.io"],"resources":["storageclasses","volumeattachments"]},{"apiGroups":["scheduling.k8s.io"],"resources":["priorityclasses"]},{"apiGroups":["apiextensions.k8s.io"],"resources":["customresourcedefinitions"]}]` | Verbs default to [get, list, watch] if not specified |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.name | string | `""` | If not set and create is true, a name is generated using the fullname template |
