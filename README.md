@@ -37,6 +37,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - RoleBindings
 - VolumeAttachments
 - PriorityClasses
+- Namespaces
 
 > **Looking for cost analysis and multi-cluster management?** Check out [KorPro](#korpro), our cloud-based platform built on top of Kor.
 
@@ -143,6 +144,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `priorityclass` - Gets unused PriorityClasses in the cluster (non-namespaced resource).
 - `finalizer` - Gets unused pending deletion resources for the specified namespace or all namespaces.
 - `networkpolicy` - Gets unused NetworkPolicies for the specified namespace or all namespaces.
+- `namespace` - Gets unused Namespaces for the specified namespace or all namespaces.
 - `exporter` - Export Prometheus metrics.
 - `version` - Print kor version information.
 
@@ -194,6 +196,7 @@ kor [subcommand] --help
 | HPAs            | HPAs not used in Deployments<br/> HPAs not used in StatefulSets                                                                                                                                                                   |                                                                                                                                                                       |
 | Ingresses       | Ingresses not pointing at any Service                                                                                                                                                                                             |                                                                                                                                                                       |
 | Jobs            | Jobs status is completed<br/> Jobs status is suspended<br/> Jobs failed with backoff limit exceeded (including indexed jobs) <br/> Jobs failed with dedaline exceeded                                                             |                                                                                                                                                                       |
+| Namespaces      | Only empty namespaces |
 | NetworkPolicies | NetworkPolicies with no Pods selected by podSelector or Ingress / Egress rules                                                                                                                                                    |
 | PDBs            | PDBs not used in Deployments / StatefulSets (templates) or in arbitrary Pods<br/>PDBs with empty selectors (match every pod) but no running pods in namespace                                                                     |                                                                                                                                                                       |
 | Pods            | Pods in `Failed` phase with reason `Evicted` (i.e., evicted pods)<br/> Pods in Crashloopbackoff                                                                                                                                   |                                                                                                   |

@@ -223,3 +223,40 @@ func TestResourceExceptionWithRegexPrefixInNamespace(t *testing.T) {
 		t.Error("Expected to find exception")
 	}
 }
+
+func TestNamespacedMessageSuffix(t *testing.T) {
+	type args struct {
+		namespace string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "empty string passed",
+			args: args{
+				namespace: "",
+			},
+			want: "",
+		},
+		{
+			name: "namespace name passed",
+			args: args{
+				namespace: "test-ns1",
+			},
+			want: " in namespace test-ns1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := namespacedMessageSuffix(tt.args.namespace); got != tt.want {
+				t.Errorf(
+					"namespacedMessageSuffix() = '%v', want '%v'",
+					got,
+					tt.want,
+				)
+			}
+		})
+	}
+}
