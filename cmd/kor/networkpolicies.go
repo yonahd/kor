@@ -26,5 +26,6 @@ var netpolCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(netpolCmd)
 	rootCmd.AddCommand(netpolCmd)
 }

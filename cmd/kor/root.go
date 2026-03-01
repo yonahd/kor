@@ -64,6 +64,7 @@ func init() {
 	initFlags()
 	initViper()
 	addFilterOptionsFlag(rootCmd, filterOptions)
+	addGroupByFlag(rootCmd)
 }
 
 func initKindsList() {
@@ -83,7 +84,6 @@ func initFlags() {
 	rootCmd.PersistentFlags().BoolVar(&opts.DeleteFlag, "delete", false, "Delete unused resources")
 	rootCmd.PersistentFlags().BoolVar(&opts.NoInteractive, "no-interactive", false, "Do not prompt for confirmation when deleting resources. Be careful when using this flag!")
 	rootCmd.PersistentFlags().BoolVarP(&opts.Verbose, "verbose", "v", false, "Verbose output (print empty namespaces)")
-	rootCmd.PersistentFlags().StringVar(&opts.GroupBy, "group-by", "namespace", "Group output by (namespace, resource)")
 	rootCmd.PersistentFlags().BoolVar(&opts.ShowReason, "show-reason", false, "Print reason resource is considered unused")
 }
 
@@ -123,6 +123,18 @@ func Execute() {
 		fmt.Fprintf(os.Stderr, "Error while executing your CLI '%s'", err)
 		os.Exit(1)
 	}
+}
+
+func addGroupByFlag(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&opts.GroupBy, "group-by", "namespace", "Group output by (namespace, resource)")
+}
+
+func addNamespacedFlag(cmd *cobra.Command) {
+	cmd.Flags().BoolVar(&opts.Namespaced, "namespaced", true, "If false, non-namespaced resources will be returned, otherwise returning namespaced resources by default. If not used, both are returned")
+}
+
+func addResourcesFlag(cmd *cobra.Command) {
+	cmd.Flags().StringSliceVarP(&resourceList, "resources", "r", nil, "Comma-separated list of resources to monitor (e.g., deployment,service)")
 }
 
 func addFilterOptionsFlag(cmd *cobra.Command, opts *filters.Options) {

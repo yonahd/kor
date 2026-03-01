@@ -26,5 +26,6 @@ var finalizerCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(finalizerCmd)
 	rootCmd.AddCommand(finalizerCmd)
 }
