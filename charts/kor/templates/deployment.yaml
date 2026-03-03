@@ -30,7 +30,7 @@ spec:
           securityContext:
             {{ toYaml . | nindent 12 }}
           {{- end }}
-          image: "{{ .Values.prometheusExporter.deployment.image.repository }}:{{ .Values.prometheusExporter.deployment.image.tag }}"
+          image: "{{ .Values.prometheusExporter.deployment.image.repository }}:{{ .Values.prometheusExporter.deployment.image.tag | default (printf "v%s" .Chart.AppVersion) }}"
           command:
             {{- toYaml .Values.prometheusExporter.command | nindent 12 }}
           args:
