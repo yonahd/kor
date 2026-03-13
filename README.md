@@ -6,6 +6,7 @@
 [![Discord](https://discord.com/api/guilds/1159544275722321990/embed.png)](https://discord.gg/ajptYPwcJY)
 [![KorPro Available](https://img.shields.io/badge/KorPro-Available-blue)](https://korpro.io)
 
+<a href="https://trendshift.io/repositories/3513" target="_blank"><img src="https://trendshift.io/api/badge/repositories/3513" alt="yonahd%2Fkor | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
 # Kor - Kubernetes Orphaned Resources Finder
 
