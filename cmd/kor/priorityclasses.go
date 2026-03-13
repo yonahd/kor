@@ -28,5 +28,6 @@ var priorityClassCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(priorityClassCmd)
 	rootCmd.AddCommand(priorityClassCmd)
 }

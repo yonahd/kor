@@ -26,5 +26,6 @@ var deployCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(deployCmd)
 	rootCmd.AddCommand(deployCmd)
 }
