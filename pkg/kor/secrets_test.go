@@ -188,7 +188,7 @@ func TestRetrieveIngressTLS(t *testing.T) {
 		t.Fatalf("Error creating fake %s: %v", "Secret", err)
 	}
 
-	tlsSecrets, err := retrieveIngressTLS(clientset, testNamespace)
+	tlsSecrets, err := retrieveIngressSecrets(clientset, testNamespace)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
