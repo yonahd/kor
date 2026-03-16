@@ -85,6 +85,28 @@ func GetConfig(kubeconfig string) (*rest.Config, error) {
 	return kubeConfig.ClientConfig()
 }
 
+func GetClusterName(kubeconfig string) string {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	if kubeconfig != "" {
+		loadingRules.ExplicitPath = kubeconfig
+	}
+
+	configOverrides := &clientcmd.ConfigOverrides{}
+	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+
+	rawConfig, err := kubeConfig.RawConfig()
+	if err != nil {
+		return ""
+	}
+
+	currentContext := rawConfig.CurrentContext
+	if ctx, ok := rawConfig.Contexts[currentContext]; ok && ctx != nil {
+		return ctx.Cluster
+	}
+
+	return ""
+}
+
 func GetKubeClient(kubeconfig string) *kubernetes.Clientset {
 	config, err := GetConfig(kubeconfig)
 	if err != nil {

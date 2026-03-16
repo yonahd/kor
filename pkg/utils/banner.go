@@ -12,7 +12,7 @@ func PrintVersion() {
 	fmt.Printf("kor version: v%s\n", Version)
 }
 
-func PrintLogo(outputFormat string) {
+func PrintLogo(outputFormat string, clusterName string) {
 	boldBlue := color.New(color.FgHiBlue, color.Bold)
 	asciiLogo := `
   _  _____  ____
@@ -26,6 +26,9 @@ func PrintLogo(outputFormat string) {
 	// processing of the `outputFormat` happens inside of the rootCmd so this requires a pretty large change
 	// to keep the banner. Instead just loop through os args and find if the format was set and handle it there
 	if outputFormat != "yaml" && outputFormat != "json" {
+		if clusterName != "" {
+			fmt.Printf("kor cluster: %s\n", clusterName)
+		}
 		PrintVersion()
 		_, _ = boldBlue.Println(asciiLogo)
 	}

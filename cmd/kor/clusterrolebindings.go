@@ -20,7 +20,7 @@ var clusterRoleBindingCmd = &cobra.Command{
 		if response, err := kor.GetUnusedClusterRoleBindings(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(outputFormat, kor.GetClusterName(kubeconfig))
 			fmt.Println(response)
 		}
 	},
