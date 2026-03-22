@@ -40,6 +40,7 @@ var rootCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		resourceNames := args[0]
+		cluster := kor.GetClusterName(kubeconfig)
 		clientset := kor.GetKubeClient(kubeconfig)
 		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
@@ -47,7 +48,7 @@ var rootCmd = &cobra.Command{
 		if response, err := kor.GetUnusedMulti(resourceNames, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(outputFormat, cluster)
 			fmt.Println(response)
 		}
 	},

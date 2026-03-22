@@ -15,12 +15,13 @@ var priorityClassCmd = &cobra.Command{
 	Short:   "Gets unused priorityClasses",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
+		cluster := kor.GetClusterName(kubeconfig)
 		clientset := kor.GetKubeClient(kubeconfig)
 
 		if response, err := kor.GetUnusedPriorityClasses(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(outputFormat, cluster)
 			fmt.Println(response)
 		}
 

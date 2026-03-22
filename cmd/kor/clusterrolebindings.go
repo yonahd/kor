@@ -15,12 +15,13 @@ var clusterRoleBindingCmd = &cobra.Command{
 	Short:   "Gets unused cluster role bindings",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
+		cluster := kor.GetClusterName(kubeconfig)
 		clientset := kor.GetKubeClient(kubeconfig)
 
 		if response, err := kor.GetUnusedClusterRoleBindings(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(outputFormat, cluster)
 			fmt.Println(response)
 		}
 	},

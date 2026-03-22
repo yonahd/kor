@@ -15,12 +15,13 @@ var volumeAttachmentCmd = &cobra.Command{
 	Short:   "Gets unused volumeattachments",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
+		cluster := kor.GetClusterName(kubeconfig)
 		clientset := kor.GetKubeClient(kubeconfig)
 
 		if response, err := kor.GetUnusedVolumeAttachments(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(outputFormat, cluster)
 			fmt.Println(response)
 		}
 	},
