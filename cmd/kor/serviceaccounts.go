@@ -15,13 +15,12 @@ var serviceAccountCmd = &cobra.Command{
 	Short:   "Gets unused service accounts",
 	Args:    cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		cluster := kor.GetClusterName(kubeconfig)
 		clientset := kor.GetKubeClient(kubeconfig)
 
 		if response, err := kor.GetUnusedServiceAccounts(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat, cluster)
+			utils.PrintLogo(outputFormat, opts.ClusterNameOverride)
 			fmt.Println(response)
 		}
 	},

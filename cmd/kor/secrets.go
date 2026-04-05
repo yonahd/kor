@@ -15,13 +15,12 @@ var secretCmd = &cobra.Command{
 	Short:   "Gets unused secrets",
 	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		cluster := kor.GetClusterName(kubeconfig)
 		clientset := kor.GetKubeClient(kubeconfig)
 
 		if response, err := kor.GetUnusedSecrets(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat, cluster)
+			utils.PrintLogo(outputFormat, opts.ClusterNameOverride)
 			fmt.Println(response)
 		}
 	},

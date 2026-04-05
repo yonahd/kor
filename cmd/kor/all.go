@@ -14,7 +14,6 @@ var allCmd = &cobra.Command{
 	Short: "Gets unused resources",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		cluster := kor.GetClusterName(kubeconfig)
 		clientset := kor.GetKubeClient(kubeconfig)
 		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
@@ -23,7 +22,7 @@ var allCmd = &cobra.Command{
 		if response, err := kor.GetUnusedAll(filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat, cluster)
+			utils.PrintLogo(outputFormat, opts.ClusterNameOverride)
 			fmt.Println(response)
 		}
 	},

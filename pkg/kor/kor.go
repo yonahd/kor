@@ -74,9 +74,7 @@ func isRunningInCluster() bool {
 }
 
 func GetClusterName(kubeconfig string) string {
-	if override, ok := os.LookupEnv("KUBERNETES_CLUSTER_NAME_OVERRIDE"); ok {
-		return override
-	} else if !isRunningInCluster() {
+	if !isRunningInCluster() {
 		loader := clientcmd.NewDefaultClientConfigLoadingRules()
 		loader.ExplicitPath = kubeconfig
 		overrides := &clientcmd.ConfigOverrides{}
@@ -84,8 +82,6 @@ func GetClusterName(kubeconfig string) string {
 		if rawConfig, err := config.RawConfig(); err == nil {
 			return rawConfig.CurrentContext
 		}
-
-		return ""
 	}
 
 	return ""

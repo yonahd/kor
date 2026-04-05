@@ -35,12 +35,16 @@ var rootCmd = &cobra.Command{
 			return nil
 		}
 
+		if opts.ClusterNameOverride == "" {
+			opts.ClusterNameOverride = kor.GetClusterName(kubeconfig)
+		}
+
 		initKindsList()
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		resourceNames := args[0]
-		cluster := kor.GetClusterName(kubeconfig)
+
 		clientset := kor.GetKubeClient(kubeconfig)
 		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
@@ -48,7 +52,7 @@ var rootCmd = &cobra.Command{
 		if response, err := kor.GetUnusedMulti(resourceNames, filterOptions, clientset, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat, cluster)
+			utils.PrintLogo(outputFormat, opts.ClusterNameOverride)
 			fmt.Println(response)
 		}
 	},
@@ -81,6 +85,7 @@ func initFlags() {
 	rootCmd.PersistentFlags().StringVar(&opts.WebhookURL, "slack-webhook-url", "", "Slack webhook URL to send notifications to")
 	rootCmd.PersistentFlags().StringVar(&opts.Channel, "slack-channel", "", "Slack channel to send notifications to, requires --slack-auth-token to be set")
 	rootCmd.PersistentFlags().StringVar(&opts.Token, "slack-auth-token", "", "Slack auth token to send notifications to, requires --slack-channel to be set")
+	rootCmd.PersistentFlags().StringVar(&opts.ClusterNameOverride, "cluster-name-override", "", "Override the cluster name used in notifications")
 	rootCmd.PersistentFlags().BoolVar(&opts.DeleteFlag, "delete", false, "Delete unused resources")
 	rootCmd.PersistentFlags().BoolVar(&opts.NoInteractive, "no-interactive", false, "Do not prompt for confirmation when deleting resources. Be careful when using this flag!")
 	rootCmd.PersistentFlags().BoolVarP(&opts.Verbose, "verbose", "v", false, "Verbose output (print empty namespaces)")
