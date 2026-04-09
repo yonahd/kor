@@ -21,7 +21,7 @@ var crdCmd = &cobra.Command{
 		if response, err := kor.GetUnusedCrds(filterOptions, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat, opts.ClusterNameOverride)
+			utils.PrintLogo(outputFormat, opts.ClusterName)
 			fmt.Println(response)
 		}
 

@@ -20,7 +20,7 @@ var scCmd = &cobra.Command{
 		if response, err := kor.GetUnusedStorageClasses(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat, opts.ClusterNameOverride)
+			utils.PrintLogo(outputFormat, opts.ClusterName)
 			fmt.Println(response)
 		}
 

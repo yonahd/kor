@@ -20,7 +20,7 @@ var serviceCmd = &cobra.Command{
 		if response, err := kor.GetUnusedServices(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat, opts.ClusterNameOverride)
+			utils.PrintLogo(outputFormat, opts.ClusterName)
 			fmt.Println(response)
 		}
 	},
