@@ -166,6 +166,9 @@ func TestGetClusterName(t *testing.T) {
 			t.Logf("failed to remove temp file: %v", err)
 		}
 	}()
+	if err := os.WriteFile(configFile.Name(), []byte(getFakeConfigContent()), 0666); err != nil {
+		t.Error(err)
+	}
 
 	clusterName := GetClusterName(configFile.Name())
 	if clusterName != "foo-cluster" {
