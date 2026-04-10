@@ -156,6 +156,30 @@ func TestGetKubeClientFromInput(t *testing.T) {
 	}
 }
 
+func TestGetClusterName(t *testing.T) {
+	configFile, err := os.CreateTemp("", "kubeconfig-")
+	if err != nil {
+		t.Error(err)
+	}
+	defer func() {
+		if err := os.Remove(configFile.Name()); err != nil {
+			t.Logf("failed to remove temp file: %v", err)
+		}
+	}()
+
+	clusterName := GetClusterName(configFile.Name())
+	if clusterName != "foo-cluster" {
+		t.Errorf("Expected %q, got %q", "foo-cluster", clusterName)
+	}
+}
+
+func TestGetClusterNameInvalidPath(t *testing.T) {
+	clusterName := GetClusterName("/nonexistent/kubeconfig")
+	if clusterName != "" {
+		t.Errorf("Expected empty string, got %q", clusterName)
+	}
+}
+
 func getFakeExceptions() []ExceptionResource {
 	return []ExceptionResource{
 		{
