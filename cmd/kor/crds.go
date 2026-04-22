@@ -17,10 +17,11 @@ var crdCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		apiExtClient := kor.GetAPIExtensionsClient(kubeconfig)
 		dynamicClient := kor.GetDynamicClient(kubeconfig)
+
 		if response, err := kor.GetUnusedCrds(filterOptions, apiExtClient, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(outputFormat, opts.ClusterName)
 			fmt.Println(response)
 		}
 

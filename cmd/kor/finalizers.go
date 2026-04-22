@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/yonahd/kor/pkg/kor"
+	"github.com/yonahd/kor/pkg/utils"
 )
 
 var finalizerCmd = &cobra.Command{
@@ -20,6 +21,7 @@ var finalizerCmd = &cobra.Command{
 		if response, err := kor.GetUnusedfinalizers(filterOptions, clientset, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
+			utils.PrintLogo(outputFormat, opts.ClusterName)
 			fmt.Println(response)
 		}
 	},
