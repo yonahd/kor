@@ -8,6 +8,7 @@ cronJob:
   #   limits:
   #     memory: "32Mi"
   #     cpu: "10m"
+  securityContext: {}
   schedule: "0 1 * * 1"
   image:
     repository: yonahdissen/kor
@@ -23,6 +24,9 @@ cronJob:
   slackChannel: ""
   slackAuthToken: ""
   restartPolicy: OnFailure
+  imagePullPolicy: Always
+  imagePullSecrets: []
+  podSecurityContext: {}
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 2
 
@@ -97,3 +101,42 @@ serviceAccount:
   # -- The name of the service account to use.
   # -- If not set and create is true, a name is generated using the fullname template
   name: ""
+
+rbac:
+  # -- Create Role and/or ClusterRole (true, false, "clusterrole" or "role")
+  create: true
+  # -- RBAC rules with proper API group to resource mappings
+  # -- Verbs default to [get, list, watch] if not specified
+  rules:
+    - apiGroups: [""]
+      resources: ["pods", "configmaps", "secrets", "services", "serviceaccounts", "persistentvolumeclaims", "endpoints", "namespaces", "persistentvolumes"]
+
+    - apiGroups: ["apps"]
+      resources: ["deployments", "statefulsets", "replicasets", "daemonsets"]
+
+    - apiGroups: ["networking.k8s.io"]
+      resources: ["ingresses", "networkpolicies"]
+
+    - apiGroups: ["rbac.authorization.k8s.io"]
+      resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+
+    - apiGroups: ["autoscaling"]
+      resources: ["horizontalpodautoscalers"]
+
+    - apiGroups: ["policy"]
+      resources: ["poddisruptionbudgets"]
+
+    - apiGroups: ["batch"]
+      resources: ["jobs"]
+
+    - apiGroups: ["discovery.k8s.io"]
+      resources: ["endpointslices"]
+
+    - apiGroups: ["storage.k8s.io"]
+      resources: ["storageclasses", "volumeattachments"]
+
+    - apiGroups: ["scheduling.k8s.io"]
+      resources: ["priorityclasses"]
+
+    - apiGroups: ["apiextensions.k8s.io"]
+      resources: ["customresourcedefinitions"]

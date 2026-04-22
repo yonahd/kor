@@ -20,7 +20,7 @@ var roleCmd = &cobra.Command{
 		if response, err := kor.GetUnusedRoles(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(outputFormat, opts.ClusterName)
 			fmt.Println(response)
 		}
 	},

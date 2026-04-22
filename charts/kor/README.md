@@ -21,10 +21,14 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | cronJob.failedJobsHistoryLimit | int | `2` |  |
 | cronJob.image.repository | string | `"yonahdissen/kor"` |  |
 | cronJob.image.tag | string | `"latest"` |  |
+| cronJob.imagePullPolicy | string | `"Always"` |  |
+| cronJob.imagePullSecrets | list | `[]` |  |
 | cronJob.name | string | `"kor"` |  |
 | cronJob.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources |
+| cronJob.podSecurityContext | object | `{}` |  |
 | cronJob.restartPolicy | string | `"OnFailure"` |  |
 | cronJob.schedule | string | `"0 1 * * 1"` |  |
+| cronJob.securityContext | object | `{}` |  |
 | cronJob.slackAuthToken | string | `""` |  |
 | cronJob.slackChannel | string | `""` |  |
 | cronJob.slackWebhookUrl | string | `""` |  |
@@ -58,6 +62,8 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | prometheusExporter.serviceMonitor.targetLabels | list | `[]` | Set of labels to transfer on the Kubernetes Service onto the target. |
 | prometheusExporter.serviceMonitor.telemetryPath | string | `"/metrics"` |  |
 | prometheusExporter.serviceMonitor.timeout | string | `"10s"` | Set timeout for scrape |
+| rbac.create | bool | `true` | Create Role and/or ClusterRole (true, false, "clusterrole" or "role") |
+| rbac.rules | list | `[{"apiGroups":[""],"resources":["pods","configmaps","secrets","services","serviceaccounts","persistentvolumeclaims","endpoints","namespaces","persistentvolumes"]},{"apiGroups":["apps"],"resources":["deployments","statefulsets","replicasets","daemonsets"]},{"apiGroups":["networking.k8s.io"],"resources":["ingresses","networkpolicies"]},{"apiGroups":["rbac.authorization.k8s.io"],"resources":["roles","rolebindings","clusterroles","clusterrolebindings"]},{"apiGroups":["autoscaling"],"resources":["horizontalpodautoscalers"]},{"apiGroups":["policy"],"resources":["poddisruptionbudgets"]},{"apiGroups":["batch"],"resources":["jobs"]},{"apiGroups":["discovery.k8s.io"],"resources":["endpointslices"]},{"apiGroups":["storage.k8s.io"],"resources":["storageclasses","volumeattachments"]},{"apiGroups":["scheduling.k8s.io"],"resources":["priorityclasses"]},{"apiGroups":["apiextensions.k8s.io"],"resources":["customresourcedefinitions"]}]` | Verbs default to [get, list, watch] if not specified |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.name | string | `""` | If not set and create is true, a name is generated using the fullname template |

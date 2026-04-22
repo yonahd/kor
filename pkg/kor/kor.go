@@ -68,15 +68,42 @@ func GetKubeConfigPath() string {
 	return filepath.Join(home, ".kube", "config")
 }
 
-func GetConfig(kubeconfig string) (*rest.Config, error) {
-	if _, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount/token"); err == nil {
-		return rest.InClusterConfig()
+func isRunningInCluster() bool {
+	_, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount/token")
+	return err == nil
+}
+
+func GetClusterName(kubeconfig string) string {
+	if isRunningInCluster() {
+		return ""
 	}
 
+	loader := clientcmd.NewDefaultClientConfigLoadingRules()
+	loader.ExplicitPath = kubeconfig
+	overrides := &clientcmd.ConfigOverrides{}
+	config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loader, overrides)
+	rawConfig, err := config.RawConfig()
+	if err != nil {
+		return ""
+	}
+
+	contexts, ok := rawConfig.Contexts[rawConfig.CurrentContext]
+	if !ok || contexts.Cluster == "" {
+		return ""
+	}
+
+	return contexts.Cluster
+}
+
+func GetConfig(kubeconfig string) (*rest.Config, error) {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 
 	if kubeconfig != "" {
 		loadingRules.ExplicitPath = kubeconfig
+	} else {
+		if isRunningInCluster() {
+			return rest.InClusterConfig()
+		}
 	}
 
 	configOverrides := &clientcmd.ConfigOverrides{}
