@@ -27,5 +27,6 @@ var podCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(podCmd)
 	rootCmd.AddCommand(podCmd)
 }

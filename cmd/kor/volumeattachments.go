@@ -27,5 +27,6 @@ var volumeAttachmentCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(volumeAttachmentCmd)
 	rootCmd.AddCommand(volumeAttachmentCmd)
 }

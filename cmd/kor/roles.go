@@ -27,5 +27,6 @@ var roleCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(roleCmd)
 	rootCmd.AddCommand(roleCmd)
 }

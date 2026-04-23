@@ -27,5 +27,6 @@ var pdbCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(pdbCmd)
 	rootCmd.AddCommand(pdbCmd)
 }

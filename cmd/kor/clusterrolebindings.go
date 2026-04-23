@@ -27,5 +27,6 @@ var clusterRoleBindingCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(clusterRoleBindingCmd)
 	rootCmd.AddCommand(clusterRoleBindingCmd)
 }

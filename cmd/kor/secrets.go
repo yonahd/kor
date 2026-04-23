@@ -27,5 +27,6 @@ var secretCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(secretCmd)
 	rootCmd.AddCommand(secretCmd)
 }
