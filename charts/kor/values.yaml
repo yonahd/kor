@@ -44,7 +44,7 @@ prometheusExporter:
   deployment:
     image:
       repository: yonahdissen/kor
-      tag: latest
+      # tag: latest, default is appVersion read from Chart.yaml
     restartPolicy: Always
     imagePullPolicy: Always
     imagePullSecrets: []
