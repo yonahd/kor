@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 
 	v1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -72,7 +71,7 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 	for _, clusterRole := range clusterRoles.Items {
 		clusterRolesMap[clusterRole.Name] = clusterRole
 	}
-	// Create a list wich holds all aggregated labels
+	// Create a list which holds all aggregated labels
 	aggregatedLabels := make([]string, 0)
 
 	for clusterRole := range usedClusterRoles {
@@ -89,10 +88,7 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 		for _, clusterRole := range clusterRoles.Items {
 			for label, value := range clusterRole.Labels {
 				if slices.Contains(aggregatedLabels, label+": "+value) {
-					usedClusterRoles[clusterRole.Name], err = strconv.ParseBool(value)
-					if err != nil {
-						return nil, fmt.Errorf("couldn't convert string to bool %v", err)
-					}
+					usedClusterRoles[clusterRole.Name] = true
 					if clusterRole.AggregationRule == nil {
 						continue
 					}

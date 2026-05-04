@@ -275,6 +275,51 @@ func TestGetUnusedClusterRolesStructuredWithOwnerReferences(t *testing.T) {
 	}
 }
 
+func TestRetrieveUsedClusterRolesWithNonBooleanLabels(t *testing.T) {
+	// Regression test for: strconv.ParseBool called on arbitrary label value
+	// A parent ClusterRole with an AggregationRule whose matchLabels selector uses
+	// a non-boolean value (e.g. "app: kyverno") must not cause an error.
+	clientset := fake.NewClientset()
+
+	_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	nonBoolSelector := map[string]string{"app": "kyverno"}
+	parentRole := CreateTestClusterRole("parent-clusterRole", AppLabels, v1.LabelSelector{MatchLabels: nonBoolSelector})
+	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), parentRole, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating parent ClusterRole: %v", err)
+	}
+
+	childRole := CreateTestClusterRole("child-clusterRole", nonBoolSelector)
+	_, err = clientset.RbacV1().ClusterRoles().Create(context.TODO(), childRole, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating child ClusterRole: %v", err)
+	}
+
+	parentRoleRef := CreateTestRoleRefForClusterRole("parent-clusterRole")
+	crb := CreateTestClusterRoleBindingRoleRef(testNamespace, "test-crb-nbl", "test-sa", parentRoleRef)
+	_, err = clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(), crb, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating ClusterRoleBinding: %v", err)
+	}
+
+	usedClusterRoles, err := retrieveUsedClusterRoles(clientset, &filters.Options{})
+	if err != nil {
+		t.Errorf("Expected no error with non-boolean label values, got %v", err)
+	}
+
+	sort.Strings(usedClusterRoles)
+	expectedRoles := []string{"child-clusterRole", "parent-clusterRole"}
+	if !reflect.DeepEqual(usedClusterRoles, expectedRoles) {
+		t.Errorf("Expected roles %v, got %v", expectedRoles, usedClusterRoles)
+	}
+}
+
 func init() {
 	scheme.Scheme = runtime.NewScheme()
 	_ = appsv1.AddToScheme(scheme.Scheme)
