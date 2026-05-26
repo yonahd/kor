@@ -1,6 +1,7 @@
 package kor
 
 import (
+	"slices"
 	"testing"
 	"time"
 
@@ -8,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	fakedynamic "k8s.io/client-go/dynamic/fake"
-	"k8s.io/utils/strings/slices"
 
 	"github.com/yonahd/kor/pkg/filters"
 )
