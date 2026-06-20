@@ -393,7 +393,7 @@ func TestIsNamespaceUsed(t *testing.T) {
 			},
 
 			expectedReturn: true,
-			expectedError:  true,
+			expectedError:  false,
 		},
 		{
 			name: "imitate broken APIResourceList, error in discovery, ignoring secrets",
@@ -445,7 +445,8 @@ func TestIsNamespaceUsed(t *testing.T) {
 				},
 			}
 			clientset, dynamicClient := tt.getClientsFunc(ctx, t, tt.namespaceName, tt.objName)
-			got, err := isNamespaceUsed(ctx, clientset, dynamicClient, tt.namespaceName, tt.filterOpts)
+			apiResourceLists, _ := clientset.Discovery().ServerPreferredNamespacedResources()
+			got, err := isNamespaceUsed(ctx, dynamicClient, tt.namespaceName, tt.filterOpts, apiResourceLists)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("isNamespaceUsed() = expected error: %t, got: '%v'", tt.expectedError, err)
 			}

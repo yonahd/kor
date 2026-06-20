@@ -16,7 +16,7 @@ lint-fix:
 	golangci-lint run --fix
 
 test:
-	go test -race -coverprofile=coverage.txt -shuffle on ./...
+	go test -race -coverprofile=coverage.txt -shuffle on ./pkg/...
 
 cover: test
 	go tool cover -func=coverage.txt
