@@ -22,7 +22,7 @@ var namespaceCmd = &cobra.Command{
 		if response, err := kor.GetUnusedNamespaces(ctx, filterOptions, clientset, dynamicClient, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(outputFormat, opts.ClusterName)
 			fmt.Println(response)
 		}
 	},
