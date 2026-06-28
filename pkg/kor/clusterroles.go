@@ -88,12 +88,7 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 		for _, clusterRole := range clusterRoles.Items {
 			for label, value := range clusterRole.Labels {
 				if slices.Contains(aggregatedLabels, label+": "+value) {
-					// A ClusterRole whose label matches an aggregation selector is
-					// pulled into the aggregated (used) ClusterRole, so it is itself
-					// used. Previously this parsed the label *value* as a bool — but
-					// aggregation label values are arbitrary strings (e.g.
-					// "emissary-emissary-ingress-agent"), so ParseBool errored and
-					// aborted the entire ClusterRole scan.
+					// Aggregated into a used ClusterRole, so it is itself used.
 					usedClusterRoles[clusterRole.Name] = true
 					if clusterRole.AggregationRule == nil {
 						continue
