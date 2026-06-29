@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"slices"
 	"sort"
 	"testing"
 
@@ -278,4 +279,48 @@ func TestGetUnusedClusterRolesStructuredWithOwnerReferences(t *testing.T) {
 func init() {
 	scheme.Scheme = runtime.NewScheme()
 	_ = appsv1.AddToScheme(scheme.Scheme)
+}
+
+// TestRetrieveUsedClusterRoles_NonBooleanAggregationLabel is a regression test
+// for aggregated ClusterRoles whose aggregation label value is an arbitrary
+// string (e.g. Emissary's "emissary-emissary-ingress-agent") rather than a
+// boolean. Previously the scan parsed the label value as a bool and errored,
+// aborting ClusterRole detection entirely on such clusters.
+func TestRetrieveUsedClusterRoles_NonBooleanAggregationLabel(t *testing.T) {
+	clientset := fake.NewClientset()
+
+	if _, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: testNamespace},
+	}, v1.CreateOptions{}); err != nil {
+		t.Fatalf("Error creating namespace %s: %v", testNamespace, err)
+	}
+
+	// Aggregation label with a non-boolean value, as shipped by Emissary/Ambassador.
+	nonBoolLabel := map[string]string{"rbac.authorization.k8s.io/aggregate-to-emissary": "emissary-emissary-ingress-agent"}
+	selector := v1.LabelSelector{MatchLabels: nonBoolLabel}
+
+	// Aggregator ClusterRole selects the non-boolean label; it is "used" via a binding.
+	aggregator := CreateTestClusterRole("emissary-aggregator", AppLabels, selector)
+	if _, err := clientset.RbacV1().ClusterRoles().Create(context.TODO(), aggregator, v1.CreateOptions{}); err != nil {
+		t.Fatalf("Error creating aggregator clusterRole: %v", err)
+	}
+	// Member ClusterRole carries the matching non-boolean label.
+	member := CreateTestClusterRole("emissary-member", nonBoolLabel)
+	if _, err := clientset.RbacV1().ClusterRoles().Create(context.TODO(), member, v1.CreateOptions{}); err != nil {
+		t.Fatalf("Error creating member clusterRole: %v", err)
+	}
+	// Bind the aggregator so it lands in usedClusterRoles and the aggregation loop runs.
+	ref := CreateTestRoleRefForClusterRole("emissary-aggregator")
+	crb := CreateTestClusterRoleBindingRoleRef(testNamespace, "emissary-rb", "test-sa", ref)
+	if _, err := clientset.RbacV1().ClusterRoleBindings().Create(context.TODO(), crb, v1.CreateOptions{}); err != nil {
+		t.Fatalf("Error creating clusterRoleBinding: %v", err)
+	}
+
+	used, err := retrieveUsedClusterRoles(clientset, &filters.Options{})
+	if err != nil {
+		t.Fatalf("non-boolean aggregation label must not error: %v", err)
+	}
+	if !slices.Contains(used, "emissary-member") {
+		t.Errorf("expected aggregated 'emissary-member' to be marked used, got %v", used)
+	}
 }
