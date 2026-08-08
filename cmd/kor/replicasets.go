@@ -27,5 +27,6 @@ var replicaSetCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(replicaSetCmd)
 	rootCmd.AddCommand(replicaSetCmd)
 }

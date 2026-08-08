@@ -27,5 +27,6 @@ var serviceCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(serviceCmd)
 	rootCmd.AddCommand(serviceCmd)
 }

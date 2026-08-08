@@ -28,5 +28,6 @@ var hpaCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(hpaCmd)
 	rootCmd.AddCommand(hpaCmd)
 }

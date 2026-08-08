@@ -27,5 +27,6 @@ var jobCmd = &cobra.Command{
 }
 
 func init() {
+	addGroupByFlag(jobCmd)
 	rootCmd.AddCommand(jobCmd)
 }

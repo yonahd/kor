@@ -29,6 +29,7 @@ var allCmd = &cobra.Command{
 }
 
 func init() {
-	allCmd.Flags().BoolVar(&opts.Namespaced, "namespaced", true, "If false, non-namespaced resources will be returned, otherwise returning namespaced resources by default. If not used, both are returned")
+	addGroupByFlag(allCmd)
+	addNamespacedFlag(allCmd)
 	rootCmd.AddCommand(allCmd)
 }
