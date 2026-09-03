@@ -7,6 +7,7 @@ require (
 	github.com/jarcoal/httpmock v1.4.2
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/prometheus/client_golang v1.24.1
+	github.com/prometheus/client_model v0.6.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	k8s.io/api v0.37.0
@@ -50,7 +51,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
-	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.70.1 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
