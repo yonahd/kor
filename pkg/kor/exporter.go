@@ -67,15 +67,24 @@ func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interfac
 			}
 
 			orphanedResourcesCounter.Reset()
-
-			for namespace, resources := range data {
-				for kind, resourceList := range resources {
-					for _, resourceName := range resourceList {
-						orphanedResourcesCounter.WithLabelValues(kind, namespace, resourceName).Set(1)
-					}
-				}
-			}
+			setOrphanedResourceMetrics(data, opts.GroupBy)
 			time.Sleep(time.Duration(exporterIntervalValue) * time.Minute)
+		}
+	}
+}
+
+func setOrphanedResourceMetrics(data map[string]map[string][]string, groupBy string) {
+	for outerKey, resources := range data {
+		for innerKey, resourceList := range resources {
+			for _, resourceName := range resourceList {
+				kind := innerKey
+				namespace := outerKey
+				if groupBy == "resource" {
+					kind = outerKey
+					namespace = innerKey
+				}
+				orphanedResourcesCounter.WithLabelValues(kind, namespace, resourceName).Set(1)
+			}
 		}
 	}
 }

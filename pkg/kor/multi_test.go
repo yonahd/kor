@@ -122,6 +122,47 @@ func TestGetUnusedMulti(t *testing.T) {
 
 }
 
+func TestGetUnusedMultiGroupByResource(t *testing.T) {
+	clientset := createTestMultiResources(t)
+	resourceList := "cm,pdb,deployment"
+
+	opts := common.Opts{
+		WebhookURL:    "",
+		Channel:       "",
+		Token:         "",
+		DeleteFlag:    false,
+		NoInteractive: true,
+		GroupBy:       "resource",
+	}
+
+	output, err := GetUnusedMulti(resourceList, &filters.Options{}, clientset, nil, nil, "json", opts)
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedMulti: %v", err)
+	}
+
+	expectedOutput := map[string]map[string][]string{
+		"ConfigMap": {
+			"test-namespace": {
+				"configmap-1",
+			},
+		},
+		"Deployment": {
+			"test-namespace": {
+				"test-deployment1",
+			},
+		},
+	}
+
+	var actualOutput map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &actualOutput); err != nil {
+		t.Fatalf("Error unmarshaling actual output: %v", err)
+	}
+
+	if !reflect.DeepEqual(expectedOutput, actualOutput) {
+		t.Errorf("Expected output does not match \n actualOutput:\n %s \n expectedOutput:\n %s", actualOutput, expectedOutput)
+	}
+}
+
 func TestGetUnusedMultiWithMultipleResources(t *testing.T) {
 	clientset := fake.NewClientset()
 
