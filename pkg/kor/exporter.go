@@ -74,15 +74,19 @@ func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interfac
 }
 
 func setOrphanedResourceMetrics(data map[string]map[string][]string, groupBy string) {
+	labelValues := func(outerKey, innerKey string) (kind, namespace string) {
+		return innerKey, outerKey
+	}
+	if groupBy == "resource" {
+		labelValues = func(outerKey, innerKey string) (kind, namespace string) {
+			return outerKey, innerKey
+		}
+	}
+
 	for outerKey, resources := range data {
 		for innerKey, resourceList := range resources {
 			for _, resourceName := range resourceList {
-				kind := innerKey
-				namespace := outerKey
-				if groupBy == "resource" {
-					kind = outerKey
-					namespace = innerKey
-				}
+				kind, namespace := labelValues(outerKey, innerKey)
 				orphanedResourcesGauge.WithLabelValues(kind, namespace, resourceName).Set(1)
 			}
 		}
