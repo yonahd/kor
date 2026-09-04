@@ -7,7 +7,7 @@ import (
 )
 
 func TestSetOrphanedResourceMetricsGroupByNamespace(t *testing.T) {
-	orphanedResourcesCounter.Reset()
+	orphanedResourcesGauge.Reset()
 
 	data := map[string]map[string][]string{
 		"default": {
@@ -18,7 +18,7 @@ func TestSetOrphanedResourceMetricsGroupByNamespace(t *testing.T) {
 	setOrphanedResourceMetrics(data, "namespace")
 
 	metric := &dto.Metric{}
-	if err := orphanedResourcesCounter.WithLabelValues("ConfigMap", "default", "script").Write(metric); err != nil {
+	if err := orphanedResourcesGauge.WithLabelValues("ConfigMap", "default", "script").Write(metric); err != nil {
 		t.Fatalf("failed writing metric: %v", err)
 	}
 	value := metric.GetGauge().GetValue()
@@ -28,7 +28,7 @@ func TestSetOrphanedResourceMetricsGroupByNamespace(t *testing.T) {
 }
 
 func TestSetOrphanedResourceMetricsGroupByResource(t *testing.T) {
-	orphanedResourcesCounter.Reset()
+	orphanedResourcesGauge.Reset()
 
 	data := map[string]map[string][]string{
 		"ConfigMap": {
@@ -39,7 +39,7 @@ func TestSetOrphanedResourceMetricsGroupByResource(t *testing.T) {
 	setOrphanedResourceMetrics(data, "resource")
 
 	metric := &dto.Metric{}
-	if err := orphanedResourcesCounter.WithLabelValues("ConfigMap", "default", "script").Write(metric); err != nil {
+	if err := orphanedResourcesGauge.WithLabelValues("ConfigMap", "default", "script").Write(metric); err != nil {
 		t.Fatalf("failed writing metric: %v", err)
 	}
 	value := metric.GetGauge().GetValue()
