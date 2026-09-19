@@ -24,6 +24,7 @@ Kor is a tool to discover unused Kubernetes resources. Currently, Kor can identi
 - ClusterRoles
 - ClusterRoleBindings
 - HPAs
+- VPAs
 - PVCs
 - Ingresses
 - PDBs
@@ -130,6 +131,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 - `clusterrolebinding` - Gets unused ClusterRoleBindings in the cluster (non namespaced resource).
 - `rolebinding` - Gets unused RoleBindings for the specified namespace or all namespaces.
 - `hpa` - Gets unused HPAs for the specified namespace or all namespaces.
+- `vpa` - Gets unused VPAs for the specified namespace or all namespaces.
 - `pod` - Gets unused Pods for the specified namespace or all namespaces.
 - `pvc` - Gets unused PVCs for the specified namespace or all namespaces.
 - `pv` - Gets unused PVs in the cluster (non namespaced resource).
@@ -209,6 +211,7 @@ kor [subcommand] --help
 | Services        | Services with no endpoints                                                                                                                                                                                                        |                                                                                                                                                                       |
 | StatefulSets    | StatefulSets with no replicas                                                                                                                                                                                                     |                                                                                                                                                                       |
 | StorageClasses  | StorageClasses not used by any PVs / PVCs                                                                                                                                                                                         |                                                                                                                                                                       |
+| VPAs            | VPAs not used in Deployments<br/>VPAs not used in StatefulSets<br/>VPAs marked with `kor/used=false` label                                                                                                  |                                                                                                                                                                       |
 | VolumeAttachments | VolumeAttachments referencing a non-existent Node, PV, or CSIDriver                                                                                                                                                               |
 
 ### Deleting Unused resources

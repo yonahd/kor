@@ -513,3 +513,28 @@ func CreateTestPriorityClass(name string, value int32) *schedulingv1.PriorityCla
 		Value:      value,
 	}
 }
+
+func CreateTestVpa(namespace, name, kind, targetName string, labels map[string]string) *unstructured.Unstructured {
+	labelsMap := make(map[string]interface{}, len(labels))
+	for k, v := range labels {
+		labelsMap[k] = v
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "autoscaling.k8s.io/v1",
+			"kind":       "VerticalPodAutoscaler",
+			"metadata": map[string]interface{}{
+				"namespace": namespace,
+				"name":      name,
+				"labels":    labelsMap,
+			},
+			"spec": map[string]interface{}{
+				"targetRef": map[string]interface{}{
+					"apiVersion": "apps/v1",
+					"kind":       kind,
+					"name":       targetName,
+				},
+			},
+		},
+	}
+}

@@ -61,7 +61,7 @@ func TestGetUnusedAllNamespacedGroupByNamespace(t *testing.T) {
 	clientset := createTestMultiResources(t)
 
 	opts := common.Opts{GroupBy: "namespace"}
-	output, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, "json", opts)
+	output, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, nil, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedAllNamespaced: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestGetUnusedAllNamespacedGroupByResource(t *testing.T) {
 	clientset := createTestMultiResources(t)
 
 	opts := common.Opts{GroupBy: "resource"}
-	output, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, "json", opts)
+	output, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, nil, "json", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedAllNamespaced: %v", err)
 	}
@@ -105,7 +105,7 @@ func TestGetUnusedAllNamespacedTable(t *testing.T) {
 	clientset := createTestMultiResources(t)
 
 	opts := common.Opts{GroupBy: "namespace"}
-	output, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, "table", opts)
+	output, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, nil, "table", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedAllNamespaced: %v", err)
 	}
@@ -121,7 +121,7 @@ func TestGetUnusedAllNamespacedTableGroupByResource(t *testing.T) {
 	clientset := createTestMultiResources(t)
 
 	opts := common.Opts{GroupBy: "resource"}
-	output, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, "table", opts)
+	output, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, nil, "table", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedAllNamespaced: %v", err)
 	}
@@ -137,7 +137,7 @@ func TestGetUnusedAllNamespacedYAML(t *testing.T) {
 	clientset := createTestMultiResources(t)
 
 	opts := common.Opts{GroupBy: "namespace"}
-	output, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, "yaml", opts)
+	output, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, nil, "yaml", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedAllNamespaced: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestGetUnusedAllNamespacedEmptyNamespace(t *testing.T) {
 	clientset := createLonelyTestNamespace(t)
 
 	opts := common.Opts{GroupBy: "namespace", Verbose: true}
-	output, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, "table", opts)
+	output, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, nil, "table", opts)
 	if err != nil {
 		t.Fatalf("Error calling GetUnusedAllNamespaced: %v", err)
 	}

@@ -151,6 +151,18 @@ func getUnusedHpas(clientset kubernetes.Interface, namespace string, filterOpts 
 	return namespaceHpaDiff
 }
 
+func getUnusedVpas(clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ResourceDiff {
+	vpaDiff, err := processNamespaceVpas(clientset, dynamicClient, namespace, filterOpts, opts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "vpas", namespace, err)
+	}
+	namespaceVpaDiff := ResourceDiff{
+		"Vpa",
+		vpaDiff,
+	}
+	return namespaceVpaDiff
+}
+
 func getUnusedPvcs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ResourceDiff {
 	pvcDiff, err := processNamespacePvcs(clientset, namespace, filterOpts, opts)
 	if err != nil {
@@ -319,8 +331,9 @@ func getUnusedRoleBindings(clientset kubernetes.Interface, namespace string, fil
 	return namespaceRoleBindingDiff
 }
 
-func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
+func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
+	vpaSupported := isVpaSupported(clientset)
 	maxWorkers := utils.MaxParallelWorkers()
 	namespaces := filterOpts.Namespaces(clientset)
 
@@ -333,7 +346,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 	for _, namespace := range namespaces {
 		ns := namespace
 		namespaceJobs = append(namespaceJobs, func() namespaceResult {
-			resourceDiffs := utils.RunJobs([]func() ResourceDiff{
+			resourceJobs := []func() ResourceDiff{
 				func() ResourceDiff { return getUnusedCMs(clientset, ns, filterOpts, opts) },
 				func() ResourceDiff { return getUnusedSVCs(clientset, ns, filterOpts, opts) },
 				func() ResourceDiff { return getUnusedSecrets(clientset, ns, filterOpts, opts) },
@@ -342,6 +355,13 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 				func() ResourceDiff { return getUnusedStatefulSets(clientset, ns, filterOpts, opts) },
 				func() ResourceDiff { return getUnusedRoles(clientset, ns, filterOpts, opts) },
 				func() ResourceDiff { return getUnusedHpas(clientset, ns, filterOpts, opts) },
+			}
+			if vpaSupported {
+				resourceJobs = append(resourceJobs, func() ResourceDiff {
+					return getUnusedVpas(clientset, dynamicClient, ns, filterOpts, opts)
+				})
+			}
+			resourceJobs = append(resourceJobs,
 				func() ResourceDiff { return getUnusedPvcs(clientset, ns, filterOpts, opts) },
 				func() ResourceDiff { return getUnusedPods(clientset, ns, filterOpts, opts) },
 				func() ResourceDiff { return getUnusedIngresses(clientset, ns, filterOpts, opts) },
@@ -351,8 +371,9 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 				func() ResourceDiff { return getUnusedDaemonSets(clientset, ns, filterOpts, opts) },
 				func() ResourceDiff { return getUnusedNetworkPolicies(clientset, ns, filterOpts, opts) },
 				func() ResourceDiff { return getUnusedRoleBindings(clientset, ns, filterOpts, opts) },
-			}, maxWorkers, resourceDiffJobPanicHandler)
+			)
 
+			resourceDiffs := utils.RunJobs(resourceJobs, maxWorkers, resourceDiffJobPanicHandler)
 			return namespaceResult{namespace: ns, diffs: resourceDiffs}
 		})
 	}
@@ -439,12 +460,12 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	if NamespacedFlagUsed {
 		if opts.Namespaced {
-			return GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
+			return GetUnusedAllNamespaced(filterOpts, clientset, dynamicClient, outputFormat, opts)
 		}
 		return GetUnusedAllNonNamespaced(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)
 	}
 
-	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
+	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, dynamicClient, outputFormat, opts)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
