@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -185,6 +186,63 @@ func TestFlagDynamicResource(t *testing.T) {
 			}
 			if test.labels == true && resource.GetLabels()["test"] != "true" {
 				t.Errorf("Resource Lost his labels")
+			}
+		})
+	}
+}
+
+func TestDeleteDynamicResource(t *testing.T) {
+	scheme := runtime.NewScheme()
+	gvrToListKind := map[schema.GroupVersionResource]string{
+		VpaGVR: "VerticalPodAutoscalerList",
+	}
+	dynamicClient := fakedynamic.NewSimpleDynamicClientWithCustomListKinds(scheme, gvrToListKind)
+
+	vpa1 := CreateTestVpa(testNamespace, "test-vpa1", "Deployment", "test-deployment", AppLabels)
+	vpa2 := CreateTestVpa(testNamespace, "test-vpa2", "Deployment", "non-existing-deployment", AppLabels)
+
+	for _, vpa := range []*unstructured.Unstructured{vpa1, vpa2} {
+		if _, err := dynamicClient.Resource(VpaGVR).Namespace(testNamespace).Create(context.TODO(), vpa, metav1.CreateOptions{}); err != nil {
+			t.Fatalf("Error creating fake Vpa: %v", err)
+		}
+	}
+
+	tests := []struct {
+		name          string
+		diff          []ResourceInfo
+		expectedDiff  []ResourceInfo
+		expectedError bool
+	}{
+		{
+			name: "Test VPA deletion via dynamic client",
+			diff: []ResourceInfo{
+				{Name: "test-vpa1", Reason: "Scale target Deployment does not exist"},
+				{Name: "test-vpa2", Reason: "Scale target Deployment does not exist"},
+			},
+			expectedDiff: []ResourceInfo{
+				{Name: "test-vpa1-DELETED", Reason: "Scale target Deployment does not exist"},
+				{Name: "test-vpa2-DELETED", Reason: "Scale target Deployment does not exist"},
+			},
+			expectedError: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			deletedDiff, err := DeleteDynamicResource(test.diff, dynamicClient, testNamespace, VpaGVR, true)
+			if (err != nil) != test.expectedError {
+				t.Fatalf("Expected error: %v, Got: %v", test.expectedError, err)
+			}
+			for i, deleted := range deletedDiff {
+				if deleted != test.expectedDiff[i] {
+					t.Errorf("Expected: %s, Got: %s", test.expectedDiff[i], deleted)
+				}
+			}
+
+			for _, name := range []string{"test-vpa1", "test-vpa2"} {
+				if _, err := dynamicClient.Resource(VpaGVR).Namespace(testNamespace).Get(context.TODO(), name, metav1.GetOptions{}); err == nil {
+					t.Errorf("Expected VPA %s to be deleted, but it still exists", name)
+				}
 			}
 		})
 	}

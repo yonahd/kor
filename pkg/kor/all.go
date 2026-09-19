@@ -146,6 +146,18 @@ func getUnusedHpas(clientset kubernetes.Interface, namespace string, filterOpts 
 	return namespaceHpaDiff
 }
 
+func getUnusedVpas(clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ResourceDiff {
+	vpaDiff, err := processNamespaceVpas(clientset, dynamicClient, namespace, filterOpts, opts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "vpas", namespace, err)
+	}
+	namespaceVpaDiff := ResourceDiff{
+		"Vpa",
+		vpaDiff,
+	}
+	return namespaceVpaDiff
+}
+
 func getUnusedPvcs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ResourceDiff {
 	pvcDiff, err := processNamespacePvcs(clientset, namespace, filterOpts, opts)
 	if err != nil {
@@ -314,8 +326,9 @@ func getUnusedRoleBindings(clientset kubernetes.Interface, namespace string, fil
 	return namespaceRoleBindingDiff
 }
 
-func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
+func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
+	vpaSupported := isVpaSupported(clientset)
 	for _, namespace := range filterOpts.Namespaces(clientset) {
 		switch opts.GroupBy {
 		case "namespace":
@@ -328,6 +341,9 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 			resources[namespace]["StatefulSet"] = getUnusedStatefulSets(clientset, namespace, filterOpts, opts).diff
 			resources[namespace]["Role"] = getUnusedRoles(clientset, namespace, filterOpts, opts).diff
 			resources[namespace]["Hpa"] = getUnusedHpas(clientset, namespace, filterOpts, opts).diff
+			if vpaSupported {
+				resources[namespace]["Vpa"] = getUnusedVpas(clientset, dynamicClient, namespace, filterOpts, opts).diff
+			}
 			resources[namespace]["Pvc"] = getUnusedPvcs(clientset, namespace, filterOpts, opts).diff
 			resources[namespace]["Pod"] = getUnusedPods(clientset, namespace, filterOpts, opts).diff
 			resources[namespace]["Ingress"] = getUnusedIngresses(clientset, namespace, filterOpts, opts).diff
@@ -346,6 +362,9 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 			appendResources(resources, "StatefulSet", namespace, getUnusedStatefulSets(clientset, namespace, filterOpts, opts).diff)
 			appendResources(resources, "Role", namespace, getUnusedRoles(clientset, namespace, filterOpts, opts).diff)
 			appendResources(resources, "Hpa", namespace, getUnusedHpas(clientset, namespace, filterOpts, opts).diff)
+			if vpaSupported {
+				appendResources(resources, "Vpa", namespace, getUnusedVpas(clientset, dynamicClient, namespace, filterOpts, opts).diff)
+			}
 			appendResources(resources, "Pvc", namespace, getUnusedPvcs(clientset, namespace, filterOpts, opts).diff)
 			appendResources(resources, "Pod", namespace, getUnusedPods(clientset, namespace, filterOpts, opts).diff)
 			appendResources(resources, "Ingress", namespace, getUnusedIngresses(clientset, namespace, filterOpts, opts).diff)
@@ -424,12 +443,12 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 func GetUnusedAll(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	if NamespacedFlagUsed {
 		if opts.Namespaced {
-			return GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
+			return GetUnusedAllNamespaced(filterOpts, clientset, dynamicClient, outputFormat, opts)
 		}
 		return GetUnusedAllNonNamespaced(filterOpts, clientset, apiExtClient, dynamicClient, outputFormat, opts)
 	}
 
-	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, outputFormat, opts)
+	unusedAllNamespaced, err := GetUnusedAllNamespaced(filterOpts, clientset, dynamicClient, outputFormat, opts)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}

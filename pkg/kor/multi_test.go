@@ -61,7 +61,7 @@ func TestRetrieveNamespaceDiff(t *testing.T) {
 	resourceList := []string{"cm", "pdb", "deployment"}
 	filterOpts := &filters.Options{}
 
-	namespaceDiff := retrieveNamespaceDiffs(clientset, testNamespace, resourceList, filterOpts, common.Opts{})
+	namespaceDiff := retrieveNamespaceDiffs(clientset, nil, testNamespace, resourceList, filterOpts, common.Opts{})
 
 	if len(namespaceDiff) != 3 {
 		t.Fatalf("Expected 3 diffs, got %d", len(namespaceDiff))
