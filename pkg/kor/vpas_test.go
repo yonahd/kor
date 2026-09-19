@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -187,5 +188,225 @@ func TestGetUnusedVpasUnsupported(t *testing.T) {
 
 	if output != "{}" {
 		t.Errorf("Expected '{}' when VPA is unsupported, got %s", output)
+	}
+}
+
+func TestGetVpaScaleTargetRef(t *testing.T) {
+	vpaNoTargetRef := CreateTestVpa("test-namespace", "vpa-no-targetref", "Deployment", "non-existing-deployment", AppLabels)
+	unstructured.RemoveNestedField(vpaNoTargetRef.Object, "spec", "targetRef")
+
+	vpaNoKind := CreateTestVpa("test-namespace", "vpa-no-kind", "Deployment", "non-existing-deployment", AppLabels)
+	if err := unstructured.SetNestedField(vpaNoKind.Object, "", "spec", "targetRef", "kind"); err != nil {
+		t.Fatalf("Error clearing kind from VPA: %v", err)
+	}
+
+	vpaNoName := CreateTestVpa("test-namespace", "vpa-no-name", "Deployment", "", AppLabels)
+
+	tests := []struct {
+		name     string
+		vpa      *unstructured.Unstructured
+		wantKind string
+		wantName string
+		wantErr  bool
+	}{
+		{
+			name:     "valid target ref",
+			vpa:      CreateTestVpa("test-namespace", "vpa-valid", "Deployment", "test-deployment", AppLabels),
+			wantKind: "Deployment",
+			wantName: "test-deployment",
+		},
+		{
+			name:    "missing target ref",
+			vpa:     vpaNoTargetRef,
+			wantErr: true,
+		},
+		{
+			name:    "missing kind",
+			vpa:     vpaNoKind,
+			wantErr: true,
+		},
+		{
+			name:    "missing name",
+			vpa:     vpaNoName,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kind, name, err := getVpaScaleTargetRef(tt.vpa)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("expected an error, got none")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if kind != tt.wantKind || name != tt.wantName {
+				t.Errorf("expected kind=%q name=%q, got kind=%q name=%q", tt.wantKind, tt.wantName, kind, name)
+			}
+		})
+	}
+}
+
+func TestProcessNamespaceVpasWithExcludeLabels(t *testing.T) {
+	clientset, dynamicClient := createTestVpas(t)
+
+	filterOpts := &filters.Options{
+		ExcludeLabels: []string{"kor/used=false"},
+	}
+	unusedVpas, err := processNamespaceVpas(clientset, dynamicClient, testNamespace, filterOpts, common.Opts{})
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if len(unusedVpas) != 2 {
+		t.Fatalf("Expected 2 unused VPAs, got %d", len(unusedVpas))
+	}
+
+	unusedNames := map[string]bool{}
+	for _, vpa := range unusedVpas {
+		unusedNames[vpa.Name] = true
+	}
+	for _, name := range []string{"test-vpa2", "test-vpa6"} {
+		if !unusedNames[name] {
+			t.Errorf("Expected %s in unused VPAs, got %v", name, unusedNames)
+		}
+	}
+	if unusedNames["test-vpa4"] {
+		t.Errorf("Expected test-vpa4 to be excluded by the label filter, got %v", unusedNames)
+	}
+}
+
+func TestProcessNamespaceVpasSkipsInvalidTargetRef(t *testing.T) {
+	clientset, dynamicClient := createTestVpas(t)
+
+	vpaNoTargetRef := CreateTestVpa(testNamespace, "test-vpa-no-targetref", "Deployment", "non-existing-deployment", AppLabels)
+	unstructured.RemoveNestedField(vpaNoTargetRef.Object, "spec", "targetRef")
+
+	vpaNoKind := CreateTestVpa(testNamespace, "test-vpa-no-kind", "Deployment", "non-existing-deployment", AppLabels)
+	if err := unstructured.SetNestedField(vpaNoKind.Object, "", "spec", "targetRef", "kind"); err != nil {
+		t.Fatalf("Error clearing kind from VPA: %v", err)
+	}
+
+	vpaDaemonSet := CreateTestVpa(testNamespace, "test-vpa-daemonset", "DaemonSet", "non-existing-daemonset", AppLabels)
+
+	for _, vpa := range []*unstructured.Unstructured{vpaNoTargetRef, vpaNoKind, vpaDaemonSet} {
+		if _, err := dynamicClient.Resource(VpaGVR).Namespace(testNamespace).Create(context.TODO(), vpa, metav1.CreateOptions{}); err != nil {
+			t.Fatalf("Error creating fake Vpa: %v", err)
+		}
+	}
+
+	unusedVpas, err := processNamespaceVpas(clientset, dynamicClient, testNamespace, &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if len(unusedVpas) != 3 {
+		t.Errorf("Expected 3 unused VPAs, got %d", len(unusedVpas))
+	}
+	for _, vpa := range unusedVpas {
+		switch vpa.Name {
+		case "test-vpa-no-targetref", "test-vpa-no-kind", "test-vpa-daemonset":
+			t.Errorf("VPA %s should not be reported as unused", vpa.Name)
+		}
+	}
+}
+
+func TestProcessNamespaceVpasMarkedUnusedReason(t *testing.T) {
+	clientset, dynamicClient := createTestVpas(t)
+
+	unusedVpas, err := processNamespaceVpas(clientset, dynamicClient, testNamespace, &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	target := "test-vpa4"
+	for _, vpa := range unusedVpas {
+		if vpa.Name == target {
+			if vpa.Reason != "Marked with unused label" {
+				t.Errorf("Expected reason %q for %s, got %q", "Marked with unused label", target, vpa.Reason)
+			}
+			return
+		}
+	}
+	t.Errorf("Expected %s in unused VPAs, got %v", target, unusedVpas)
+}
+
+func TestGetUnusedVpasYamlOutput(t *testing.T) {
+	clientset, dynamicClient := createTestVpas(t)
+
+	clientset.Discovery().(*discoveryfake.FakeDiscovery).Resources = append(
+		clientset.Discovery().(*discoveryfake.FakeDiscovery).Resources,
+		&metav1.APIResourceList{
+			GroupVersion: "autoscaling.k8s.io/v1",
+			APIResources: []metav1.APIResource{
+				{
+					Name:       "verticalpodautoscalers",
+					Namespaced: true,
+					Kind:       "VerticalPodAutoscaler",
+				},
+			},
+		},
+	)
+
+	opts := common.Opts{
+		GroupBy: "namespace",
+	}
+	output, err := GetUnusedVpas(&filters.Options{}, clientset, dynamicClient, "yaml", opts)
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedVpas: %v", err)
+	}
+
+	for _, name := range []string{"test-vpa2", "test-vpa4", "test-vpa6"} {
+		if !strings.Contains(output, name) {
+			t.Errorf("Expected %s in yaml output, got:\n%s", name, output)
+		}
+	}
+}
+
+func TestGetUnusedVpasGroupByResource(t *testing.T) {
+	clientset, dynamicClient := createTestVpas(t)
+
+	clientset.Discovery().(*discoveryfake.FakeDiscovery).Resources = append(
+		clientset.Discovery().(*discoveryfake.FakeDiscovery).Resources,
+		&metav1.APIResourceList{
+			GroupVersion: "autoscaling.k8s.io/v1",
+			APIResources: []metav1.APIResource{
+				{
+					Name:       "verticalpodautoscalers",
+					Namespaced: true,
+					Kind:       "VerticalPodAutoscaler",
+				},
+			},
+		},
+	)
+
+	opts := common.Opts{
+		GroupBy: "resource",
+	}
+	output, err := GetUnusedVpas(&filters.Options{}, clientset, dynamicClient, "json", opts)
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedVpas: %v", err)
+	}
+
+	expectedOutput := map[string]map[string][]string{
+		"Vpa": {
+			testNamespace: {
+				"test-vpa2",
+				"test-vpa4",
+				"test-vpa6",
+			},
+		},
+	}
+
+	var actualOutput map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &actualOutput); err != nil {
+		t.Fatalf("Error unmarshaling actual output: %v", err)
+	}
+
+	if !reflect.DeepEqual(expectedOutput, actualOutput) {
+		t.Errorf("Expected output does not match actual output: %v", actualOutput)
 	}
 }
