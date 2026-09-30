@@ -1,6 +1,8 @@
 package kor
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
@@ -12,6 +14,7 @@ import (
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
+	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
 )
 
@@ -163,5 +166,51 @@ func init() {
 	// External v1 types
 	if err := apiextensionsv1.AddToScheme(clientgoscheme.Scheme); err != nil {
 		panic(err)
+	}
+}
+
+func TestGetUnusedCrds(t *testing.T) {
+	apiExtClient, dynamicClient := createTestCRDs(t)
+
+	opts := common.Opts{GroupBy: "namespace"}
+	output, err := GetUnusedCrds(&filters.Options{}, apiExtClient, dynamicClient, "json", opts)
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedCrds: %v", err)
+	}
+
+	var actual map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &actual); err != nil {
+		t.Fatalf("Error unmarshaling output: %v", err)
+	}
+
+	crds := actual[""]["Crd"]
+	if len(crds) != 2 {
+		t.Errorf("Expected 2 unused CRDs, got %v", crds)
+	}
+
+	if !contains(crds, "testresources.example.com") {
+		t.Errorf("Expected testresources.example.com in unused CRDs, got %v", crds)
+	}
+	if !contains(crds, "multiresources.example.com") {
+		t.Errorf("Expected multiresources.example.com in unused CRDs, got %v", crds)
+	}
+}
+
+func TestGetUnusedCrdsGroupByResource(t *testing.T) {
+	apiExtClient, dynamicClient := createTestCRDs(t)
+	ResourceKindList = map[string]ResourceKind{
+		"crd": {Plural: "crds"},
+	}
+
+	opts := common.Opts{GroupBy: "resource"}
+	output, err := GetUnusedCrds(&filters.Options{}, apiExtClient, dynamicClient, "table", opts)
+	if err != nil {
+		t.Fatalf("Error calling GetUnusedCrds: %v", err)
+	}
+
+	for _, expected := range []string{"Unused crds", "testresources.example.com", "multiresources.example.com"} {
+		if !strings.Contains(output, expected) {
+			t.Errorf("Expected output to contain %q, got %s", expected, output)
+		}
 	}
 }
