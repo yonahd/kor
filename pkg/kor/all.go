@@ -50,13 +50,19 @@ func runResourceDiffJobs(jobs []func() ResourceDiff, maxWorkers int) []ResourceD
 	var wg sync.WaitGroup
 
 	for i, job := range jobs {
+		workers <- struct{}{}
+
 		wg.Add(1)
 		go func(index int, diffFn func() ResourceDiff) {
 			defer wg.Done()
 
-			workers <- struct{}{}
 			defer func() {
 				<-workers
+			}()
+			defer func() {
+				if recovered := recover(); recovered != nil {
+					fmt.Fprintf(os.Stderr, "Failed to process resource diff job: %v\n", recovered)
+				}
 			}()
 
 			results[index] = diffFn()
