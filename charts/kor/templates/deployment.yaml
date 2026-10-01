@@ -34,7 +34,7 @@ spec:
           command:
             {{- toYaml .Values.prometheusExporter.command | nindent 12 }}
           args:
-            {{- toYaml .Values.prometheusExporter.args | nindent 12 }}
+            {{- include "kor.buildArgs" (dict "args" .Values.prometheusExporter.args "config" .Values.prometheusExporter.config) | nindent 12 }}
           {{- if ne .Values.prometheusExporter.namespaced nil}}
             - --namespaced={{ .Values.prometheusExporter.namespaced }}
           {{- end}}

@@ -1,2 +1,24 @@
 cronJob:
   enabled: true
+  args:
+    - all
+  config:
+    namespaced: true
+    clusterName: ci-cluster
+    delete: true
+    excludeLabels:
+      - env=dev
+    excludeNamespaces:
+      - kube-system
+    groupBy: resource
+    ignoreOwnerReferences: true
+    includeNamespaces:
+      - default
+    newerThan: 1h
+    noInteractive: true
+    olderThan: 24h
+    output: json
+    showReason: true
+    verbose: true
+prometheusExporter:
+  enabled: false
