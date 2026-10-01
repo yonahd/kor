@@ -1,7 +1,7 @@
 ![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/yonahd/kor)
 ![GitHub Release](https://img.shields.io/github/v/release/yonahd/kor?filter=v*&color=green&link=https://github.com/yonahd/kor/releases)
 ![GitHub Release](https://img.shields.io/github/v/release/yonahd/kor?filter=kor-*&logo=Helm&color=green&link=https://github.com/yonahd/kor/releases)
-![Docker Pulls](https://img.shields.io/docker/pulls/yonahdissen/kor)
+![Docker Pulls](https://shields.io/docker/pulls/yonahdissen/kor)
 [![codecov](https://codecov.io/gh/yonahd/kor/branch/main/graph/badge.svg?token=tNKcOjlxLo)](https://codecov.io/gh/yonahd/kor)
 [![Discord](https://discord.com/api/guilds/1159544275722321990/embed.png)](https://discord.gg/ajptYPwcJY)
 [![KorPro Available](https://img.shields.io/badge/KorPro-Available-blue)](https://korpro.io)
