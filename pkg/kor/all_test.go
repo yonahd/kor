@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -353,4 +354,59 @@ func TestSetNamespacedFlagState(t *testing.T) {
 	if NamespacedFlagUsed {
 		t.Errorf("Expected NamespacedFlagUsed to be false")
 	}
+}
+
+func TestRunResourceDiffJobsReturnsAllResults(t *testing.T) {
+	jobs := []func() ResourceDiff{
+		func() ResourceDiff { return ResourceDiff{resourceType: "ConfigMap", diff: []ResourceInfo{{Name: "cm"}}} },
+		func() ResourceDiff { return ResourceDiff{resourceType: "Service", diff: []ResourceInfo{{Name: "svc"}}} },
+		func() ResourceDiff { return ResourceDiff{resourceType: "Secret", diff: []ResourceInfo{{Name: "secret"}}} },
+	}
+
+	results := runResourceDiffJobs(jobs, 2)
+	if len(results) != len(jobs) {
+		t.Fatalf("Expected %d results, got %d", len(jobs), len(results))
+	}
+
+	if results[0].resourceType != "ConfigMap" || !containsResource(results[0].diff, "cm") {
+		t.Fatalf("Unexpected first result: %+v", results[0])
+	}
+	if results[1].resourceType != "Service" || !containsResource(results[1].diff, "svc") {
+		t.Fatalf("Unexpected second result: %+v", results[1])
+	}
+	if results[2].resourceType != "Secret" || !containsResource(results[2].diff, "secret") {
+		t.Fatalf("Unexpected third result: %+v", results[2])
+	}
+}
+
+func TestRunResourceDiffJobsImprovesSpeedWithParallelism(t *testing.T) {
+	sleepDuration := 40 * time.Millisecond
+	jobs := []func() ResourceDiff{
+		func() ResourceDiff { time.Sleep(sleepDuration); return ResourceDiff{resourceType: "ConfigMap"} },
+		func() ResourceDiff { time.Sleep(sleepDuration); return ResourceDiff{resourceType: "Service"} },
+		func() ResourceDiff { time.Sleep(sleepDuration); return ResourceDiff{resourceType: "Secret"} },
+		func() ResourceDiff { time.Sleep(sleepDuration); return ResourceDiff{resourceType: "Pod"} },
+	}
+
+	start := time.Now()
+	runResourceDiffJobs(jobs, 1)
+	sequentialDuration := time.Since(start)
+
+	start = time.Now()
+	runResourceDiffJobs(jobs, len(jobs))
+	parallelDuration := time.Since(start)
+	t.Logf("sequential duration=%s parallel duration=%s", sequentialDuration, parallelDuration)
+
+	if parallelDuration >= sequentialDuration {
+		t.Fatalf("Expected parallel execution to be faster. sequential=%s parallel=%s", sequentialDuration, parallelDuration)
+	}
+}
+
+func containsResource(resources []ResourceInfo, target string) bool {
+	for _, resource := range resources {
+		if resource.Name == target {
+			return true
+		}
+	}
+	return false
 }
