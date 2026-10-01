@@ -12,6 +12,7 @@ import (
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
+	"github.com/yonahd/kor/pkg/utils"
 )
 
 var NamespacedFlagUsed bool
@@ -24,6 +25,10 @@ type GetUnusedResourceJSONResponse struct {
 type ResourceDiff struct {
 	resourceType string
 	diff         []ResourceInfo
+}
+
+func resourceDiffJobPanicHandler(recovered any) {
+	fmt.Fprintf(os.Stderr, "Failed to process resource diff job: %v\n", recovered)
 }
 
 func getUnusedCMs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ResourceDiff {
@@ -319,7 +324,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 	maxWorkers := getMaxParallelResourceWorkers()
 
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		resourceDiffs := runResourceDiffJobs([]func() ResourceDiff{
+		resourceDiffs := utils.RunJobs([]func() ResourceDiff{
 			func() ResourceDiff { return getUnusedCMs(clientset, namespace, filterOpts, opts) },
 			func() ResourceDiff { return getUnusedSVCs(clientset, namespace, filterOpts, opts) },
 			func() ResourceDiff { return getUnusedSecrets(clientset, namespace, filterOpts, opts) },
@@ -337,7 +342,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 			func() ResourceDiff { return getUnusedDaemonSets(clientset, namespace, filterOpts, opts) },
 			func() ResourceDiff { return getUnusedNetworkPolicies(clientset, namespace, filterOpts, opts) },
 			func() ResourceDiff { return getUnusedRoleBindings(clientset, namespace, filterOpts, opts) },
-		}, maxWorkers)
+		}, maxWorkers, resourceDiffJobPanicHandler)
 
 		switch opts.GroupBy {
 		case "namespace":
@@ -374,7 +379,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 
 func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
-	resourceDiffs := runResourceDiffJobs([]func() ResourceDiff{
+	resourceDiffs := utils.RunJobs([]func() ResourceDiff{
 		func() ResourceDiff { return getUnusedCrds(apiExtClient, dynamicClient, filterOpts) },
 		func() ResourceDiff { return getUnusedPvs(clientset, filterOpts) },
 		func() ResourceDiff { return getUnusedClusterRoles(clientset, filterOpts) },
@@ -382,7 +387,7 @@ func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes
 		func() ResourceDiff { return getUnusedStorageClasses(clientset, filterOpts) },
 		func() ResourceDiff { return getUnusedVolumeAttachments(clientset, filterOpts) },
 		func() ResourceDiff { return getUnusedPriorityClasses(clientset, filterOpts) },
-	}, getMaxParallelResourceWorkers())
+	}, utils.MaxParallelWorkers(), resourceDiffJobPanicHandler)
 	switch opts.GroupBy {
 	case "namespace":
 		resources[""] = make(map[string][]ResourceInfo)
