@@ -12,6 +12,7 @@ import (
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
+	"github.com/yonahd/kor/pkg/utils"
 )
 
 var NamespacedFlagUsed bool
@@ -24,6 +25,10 @@ type GetUnusedResourceJSONResponse struct {
 type ResourceDiff struct {
 	resourceType string
 	diff         []ResourceInfo
+}
+
+func resourceDiffJobPanicHandler(recovered any) {
+	fmt.Fprintf(os.Stderr, "Failed to process resource diff job: %v\n", recovered)
 }
 
 func getUnusedCMs(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ResourceDiff {
@@ -316,45 +321,39 @@ func getUnusedRoleBindings(clientset kubernetes.Interface, namespace string, fil
 
 func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
+	maxWorkers := getMaxParallelResourceWorkers()
+
 	for _, namespace := range filterOpts.Namespaces(clientset) {
+		resourceDiffs := utils.RunJobs([]func() ResourceDiff{
+			func() ResourceDiff { return getUnusedCMs(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedSVCs(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedSecrets(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedServiceAccounts(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedDeployments(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedStatefulSets(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedRoles(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedHpas(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedPvcs(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedPods(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedIngresses(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedPdbs(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedJobs(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedReplicaSets(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedDaemonSets(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedNetworkPolicies(clientset, namespace, filterOpts, opts) },
+			func() ResourceDiff { return getUnusedRoleBindings(clientset, namespace, filterOpts, opts) },
+		}, maxWorkers, resourceDiffJobPanicHandler)
+
 		switch opts.GroupBy {
 		case "namespace":
 			resources[namespace] = make(map[string][]ResourceInfo)
-			resources[namespace]["ConfigMap"] = getUnusedCMs(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["Service"] = getUnusedSVCs(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["Secret"] = getUnusedSecrets(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["ServiceAccount"] = getUnusedServiceAccounts(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["Deployment"] = getUnusedDeployments(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["StatefulSet"] = getUnusedStatefulSets(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["Role"] = getUnusedRoles(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["Hpa"] = getUnusedHpas(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["Pvc"] = getUnusedPvcs(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["Pod"] = getUnusedPods(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["Ingress"] = getUnusedIngresses(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["Pdb"] = getUnusedPdbs(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["Job"] = getUnusedJobs(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["ReplicaSet"] = getUnusedReplicaSets(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["DaemonSet"] = getUnusedDaemonSets(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["NetworkPolicy"] = getUnusedNetworkPolicies(clientset, namespace, filterOpts, opts).diff
-			resources[namespace]["RoleBinding"] = getUnusedRoleBindings(clientset, namespace, filterOpts, opts).diff
+			for _, diff := range resourceDiffs {
+				resources[namespace][diff.resourceType] = diff.diff
+			}
 		case "resource":
-			appendResources(resources, "ConfigMap", namespace, getUnusedCMs(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "Service", namespace, getUnusedSVCs(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "Secret", namespace, getUnusedSecrets(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "ServiceAccount", namespace, getUnusedServiceAccounts(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "Deployment", namespace, getUnusedDeployments(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "StatefulSet", namespace, getUnusedStatefulSets(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "Role", namespace, getUnusedRoles(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "Hpa", namespace, getUnusedHpas(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "Pvc", namespace, getUnusedPvcs(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "Pod", namespace, getUnusedPods(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "Ingress", namespace, getUnusedIngresses(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "Pdb", namespace, getUnusedPdbs(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "Job", namespace, getUnusedJobs(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "ReplicaSet", namespace, getUnusedReplicaSets(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "DaemonSet", namespace, getUnusedDaemonSets(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "NetworkPolicy", namespace, getUnusedNetworkPolicies(clientset, namespace, filterOpts, opts).diff)
-			appendResources(resources, "RoleBinding", namespace, getUnusedRoleBindings(clientset, namespace, filterOpts, opts).diff)
+			for _, diff := range resourceDiffs {
+				appendResources(resources, diff.resourceType, namespace, diff.diff)
+			}
 		}
 	}
 
@@ -380,24 +379,25 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 
 func GetUnusedAllNonNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, apiExtClient apiextensionsclientset.Interface, dynamicClient dynamic.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
+	resourceDiffs := utils.RunJobs([]func() ResourceDiff{
+		func() ResourceDiff { return getUnusedCrds(apiExtClient, dynamicClient, filterOpts) },
+		func() ResourceDiff { return getUnusedPvs(clientset, filterOpts) },
+		func() ResourceDiff { return getUnusedClusterRoles(clientset, filterOpts) },
+		func() ResourceDiff { return getUnusedClusterRoleBindings(clientset, filterOpts, opts) },
+		func() ResourceDiff { return getUnusedStorageClasses(clientset, filterOpts) },
+		func() ResourceDiff { return getUnusedVolumeAttachments(clientset, filterOpts) },
+		func() ResourceDiff { return getUnusedPriorityClasses(clientset, filterOpts) },
+	}, utils.MaxParallelWorkers(), resourceDiffJobPanicHandler)
 	switch opts.GroupBy {
 	case "namespace":
 		resources[""] = make(map[string][]ResourceInfo)
-		resources[""]["Crd"] = getUnusedCrds(apiExtClient, dynamicClient, filterOpts).diff
-		resources[""]["Pv"] = getUnusedPvs(clientset, filterOpts).diff
-		resources[""]["ClusterRole"] = getUnusedClusterRoles(clientset, filterOpts).diff
-		resources[""]["ClusterRoleBinding"] = getUnusedClusterRoleBindings(clientset, filterOpts, opts).diff
-		resources[""]["StorageClass"] = getUnusedStorageClasses(clientset, filterOpts).diff
-		resources[""]["VolumeAttachment"] = getUnusedVolumeAttachments(clientset, filterOpts).diff
-		resources[""]["PriorityClass"] = getUnusedPriorityClasses(clientset, filterOpts).diff
+		for _, diff := range resourceDiffs {
+			resources[""][diff.resourceType] = diff.diff
+		}
 	case "resource":
-		appendResources(resources, "Crd", "", getUnusedCrds(apiExtClient, dynamicClient, filterOpts).diff)
-		appendResources(resources, "Pv", "", getUnusedPvs(clientset, filterOpts).diff)
-		appendResources(resources, "ClusterRole", "", getUnusedClusterRoles(clientset, filterOpts).diff)
-		appendResources(resources, "ClusterRoleBinding", "", getUnusedClusterRoleBindings(clientset, filterOpts, opts).diff)
-		appendResources(resources, "StorageClass", "", getUnusedStorageClasses(clientset, filterOpts).diff)
-		appendResources(resources, "VolumeAttachment", "", getUnusedVolumeAttachments(clientset, filterOpts).diff)
-		appendResources(resources, "PriorityClass", "", getUnusedPriorityClasses(clientset, filterOpts).diff)
+		for _, diff := range resourceDiffs {
+			appendResources(resources, diff.resourceType, "", diff.diff)
+		}
 
 	}
 

@@ -3,8 +3,11 @@ package kor
 import (
 	"context"
 	"encoding/json"
+	"runtime"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -353,4 +356,136 @@ func TestSetNamespacedFlagState(t *testing.T) {
 	if NamespacedFlagUsed {
 		t.Errorf("Expected NamespacedFlagUsed to be false")
 	}
+}
+
+func TestRunResourceDiffJobsReturnsAllResults(t *testing.T) {
+	jobs := []func() ResourceDiff{
+		func() ResourceDiff { return ResourceDiff{resourceType: "ConfigMap", diff: []ResourceInfo{{Name: "cm"}}} },
+		func() ResourceDiff { return ResourceDiff{resourceType: "Service", diff: []ResourceInfo{{Name: "svc"}}} },
+		func() ResourceDiff { return ResourceDiff{resourceType: "Secret", diff: []ResourceInfo{{Name: "secret"}}} },
+	}
+
+	results := runResourceDiffJobs(jobs, 2)
+	if len(results) != len(jobs) {
+		t.Fatalf("Expected %d results, got %d", len(jobs), len(results))
+	}
+
+	if results[0].resourceType != "ConfigMap" || !containsResource(results[0].diff, "cm") {
+		t.Fatalf("Unexpected first result: %+v", results[0])
+	}
+	if results[1].resourceType != "Service" || !containsResource(results[1].diff, "svc") {
+		t.Fatalf("Unexpected second result: %+v", results[1])
+	}
+	if results[2].resourceType != "Secret" || !containsResource(results[2].diff, "secret") {
+		t.Fatalf("Unexpected third result: %+v", results[2])
+	}
+}
+
+func TestRunResourceDiffJobsImprovesSpeedWithParallelism(t *testing.T) {
+	sleepDuration := 40 * time.Millisecond
+	jobs := []func() ResourceDiff{
+		func() ResourceDiff { time.Sleep(sleepDuration); return ResourceDiff{resourceType: "ConfigMap"} },
+		func() ResourceDiff { time.Sleep(sleepDuration); return ResourceDiff{resourceType: "Service"} },
+		func() ResourceDiff { time.Sleep(sleepDuration); return ResourceDiff{resourceType: "Secret"} },
+		func() ResourceDiff { time.Sleep(sleepDuration); return ResourceDiff{resourceType: "Pod"} },
+	}
+
+	start := time.Now()
+	runResourceDiffJobs(jobs, 1)
+	sequentialDuration := time.Since(start)
+
+	start = time.Now()
+	runResourceDiffJobs(jobs, len(jobs))
+	parallelDuration := time.Since(start)
+	t.Logf("sequential duration=%s parallel duration=%s", sequentialDuration, parallelDuration)
+
+	if parallelDuration >= sequentialDuration {
+		t.Fatalf("Expected parallel execution to be faster. sequential=%s parallel=%s", sequentialDuration, parallelDuration)
+	}
+}
+
+func TestRunResourceDiffJobsLimitsSpawnedGoroutines(t *testing.T) {
+	const (
+		jobCount       = 1000
+		maxWorkers     = 1
+		maxGoroutines  = 64
+		settleDuration = 50 * time.Millisecond
+	)
+
+	baseline := runtime.NumGoroutine()
+	firstJobStarted := make(chan struct{})
+	releaseJobs := make(chan struct{})
+	var startedOnce sync.Once
+
+	jobs := make([]func() ResourceDiff, 0, jobCount)
+	for i := 0; i < jobCount; i++ {
+		jobs = append(jobs, func() ResourceDiff {
+			startedOnce.Do(func() {
+				close(firstJobStarted)
+			})
+			<-releaseJobs
+			return ResourceDiff{resourceType: "ConfigMap"}
+		})
+	}
+
+	done := make(chan struct{})
+	go func() {
+		runResourceDiffJobs(jobs, maxWorkers)
+		close(done)
+	}()
+
+	select {
+	case <-firstJobStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatalf("Timed out waiting for the first job to start")
+	}
+
+	time.Sleep(settleDuration)
+
+	current := runtime.NumGoroutine()
+	if current-baseline > maxGoroutines {
+		t.Fatalf("Expected bounded goroutine usage, got baseline=%d current=%d delta=%d", baseline, current, current-baseline)
+	}
+
+	close(releaseJobs)
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatalf("Timed out waiting for runResourceDiffJobs to complete")
+	}
+}
+
+func TestRunResourceDiffJobsRecoversFromPanics(t *testing.T) {
+	jobs := []func() ResourceDiff{
+		func() ResourceDiff {
+			panic("boom")
+		},
+		func() ResourceDiff {
+			return ResourceDiff{resourceType: "Service", diff: []ResourceInfo{{Name: "svc"}}}
+		},
+	}
+
+	results := runResourceDiffJobs(jobs, 2)
+
+	if len(results) != 2 {
+		t.Fatalf("Expected 2 results, got %d", len(results))
+	}
+
+	if results[0].resourceType != "" || len(results[0].diff) != 0 {
+		t.Fatalf("Expected zero-value result for panicked job, got %+v", results[0])
+	}
+
+	if results[1].resourceType != "Service" || !containsResource(results[1].diff, "svc") {
+		t.Fatalf("Unexpected second result: %+v", results[1])
+	}
+}
+
+func containsResource(resources []ResourceInfo, target string) bool {
+	for _, resource := range resources {
+		if resource.Name == target {
+			return true
+		}
+	}
+	return false
 }
