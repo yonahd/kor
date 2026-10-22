@@ -18,7 +18,45 @@ cronJob:
     - kor
   args:
     - all
-  # -- Set true/false to explicitly return namespaced/non-namespaced resources
+  # -- Configure kor CLI flags that will be appended to the args above.
+  # -- Only values that differ from the kor defaults are appended, so existing
+  # -- `args` are fully preserved unless a corresponding config value is set.
+  # -- See https://github.com/yonahd/kor#flags for the description of each flag.
+  config:
+    # -- Set true/false to explicitly return namespaced/non-namespaced resources. If unset (null), both are returned
+    namespaced: null
+    # -- Cluster name shown in CLI output and Slack notifications
+    clusterName: ""
+    # -- Delete unused resources
+    delete: false
+    # -- Selector to filter out, Example: --exclude-labels key1=value1,key2=value2
+    excludeLabels: []
+    # -- Namespaces to be excluded, Example: --exclude-namespaces ns1,ns2,ns3
+    excludeNamespaces: []
+    # -- Group output by (namespace, resource)
+    groupBy: namespace
+    # -- Skip resources that have ownerReferences set (for all resource types)
+    ignoreOwnerReferences: false
+    # -- Selector to filter in, Example: --include-labels key1=value1
+    includeLabels: ""
+    # -- Namespaces to run on, Example: --include-namespaces ns1,ns2,ns3
+    includeNamespaces: []
+    # -- Path to kubeconfig file (optional)
+    kubeconfig: ""
+    # -- The maximum age of the resources to be considered unused. Example: --newer-than=1h2m
+    newerThan: ""
+    # -- Do not prompt for confirmation when deleting resources
+    noInteractive: false
+    # -- The minimum age of the resources to be considered unused. Example: --older-than=1h2m
+    olderThan: ""
+    # -- Output format (table, json or yaml)
+    output: table
+    # -- Print reason resource is considered unused
+    showReason: false
+    # -- Verbose output (print empty namespaces)
+    verbose: false
+  # -- Set true/false to explicitly return namespaced/non-namespaced resources.
+  # -- Deprecated: use cronJob.config.namespaced instead.
   namespaced: null
   slackWebhookUrl: ""
   slackChannel: ""
@@ -39,7 +77,45 @@ prometheusExporter:
     - kor
   args:
     - exporter
-  # -- Set true/false to explicitly return namespaced/non-namespaced resources
+  # -- Configure kor CLI flags that will be appended to the args above.
+  # -- Only values that differ from the kor defaults are appended, so existing
+  # -- `args` are fully preserved unless a corresponding config value is set.
+  # -- See https://github.com/yonahd/kor#flags for the description of each flag.
+  config:
+    # -- Set true/false to explicitly return namespaced/non-namespaced resources. If unset (null), both are returned
+    namespaced: null
+    # -- Cluster name shown in CLI output and Slack notifications
+    clusterName: ""
+    # -- Comma-separated list of resources to monitor (e.g., deployment,service)
+    resources: []
+    # -- Selector to filter out, Example: --exclude-labels key1=value1,key2=value2
+    excludeLabels: []
+    # -- Namespaces to be excluded, Example: --exclude-namespaces ns1,ns2,ns3
+    excludeNamespaces: []
+    # -- Group output by (namespace, resource)
+    groupBy: namespace
+    # -- Skip resources that have ownerReferences set (for all resource types)
+    ignoreOwnerReferences: false
+    # -- Selector to filter in, Example: --include-labels key1=value1
+    includeLabels: ""
+    # -- Namespaces to run on, Example: --include-namespaces ns1,ns2,ns3
+    includeNamespaces: []
+    # -- Path to kubeconfig file (optional)
+    kubeconfig: ""
+    # -- The maximum age of the resources to be considered unused. Example: --newer-than=1h2m
+    newerThan: ""
+    # -- Do not prompt for confirmation when deleting resources
+    noInteractive: false
+    # -- The minimum age of the resources to be considered unused. Example: --older-than=1h2m
+    olderThan: ""
+    # -- Output format (table, json or yaml)
+    output: table
+    # -- Print reason resource is considered unused
+    showReason: false
+    # -- Verbose output (print empty namespaces)
+    verbose: false
+  # -- Set true/false to explicitly return namespaced/non-namespaced resources.
+  # -- Deprecated: use prometheusExporter.config.namespaced instead.
   namespaced: null
   deployment:
     image:
