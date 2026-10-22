@@ -2,13 +2,17 @@ package filters
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"sort"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 )
 
 func TestNewFilterOptions(t *testing.T) {
@@ -223,5 +227,20 @@ func TestOptionsNamespaces(t *testing.T) {
 				t.Errorf("Namespaces() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestOptionsNamespacesForbiddenGet(t *testing.T) {
+	clientset := fake.NewClientset()
+	clientset.PrependReactor("get", "namespaces", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		name := action.(k8stesting.GetAction).GetName()
+		return true, nil, apierrors.NewForbidden(corev1.Resource("namespaces"), name, errors.New("cluster scope"))
+	})
+
+	opts := &Options{IncludeNamespaces: []string{"kor-test-namespace"}}
+	got := opts.Namespaces(clientset)
+	want := []string{"kor-test-namespace"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Namespaces() = %v, want %v", got, want)
 	}
 }
