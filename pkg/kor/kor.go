@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"sync/atomic"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/dynamic"
@@ -17,6 +18,8 @@ import (
 )
 
 var ResourceKindList map[string]ResourceKind
+
+var impersonatedUser atomic.Value // string
 
 type ExceptionResource struct {
 	Namespace    string
@@ -95,7 +98,24 @@ func GetClusterName(kubeconfig string) string {
 	return contexts.Cluster
 }
 
+// SetImpersonatedUser sets the username for subsequently created clients in this
+// process. An empty user preserves any impersonation settings from kubeconfig.
+func SetImpersonatedUser(user string) {
+	impersonatedUser.Store(user)
+}
+
 func GetConfig(kubeconfig string) (*rest.Config, error) {
+	config, err := loadConfig(kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+	if user, _ := impersonatedUser.Load().(string); user != "" {
+		config.Impersonate.UserName = user
+	}
+	return config, nil
+}
+
+func loadConfig(kubeconfig string) (*rest.Config, error) {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 
 	if kubeconfig != "" {
