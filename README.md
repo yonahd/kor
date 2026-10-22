@@ -150,6 +150,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 ### Supported Flags
 
 ```
+      --as string                    Username to impersonate for Kubernetes operations
       --delete                       Delete unused resources
   -l, --exclude-labels strings       Selector to filter out, Example: --exclude-labels key1=value1,key2=value2. If --include-labels is set, --exclude-labels will be ignored
   -e, --exclude-namespaces strings   Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored
@@ -230,6 +231,18 @@ To delete with no prompt (⚠️ use with caution):
 ```sh
 kor configmap --include-namespaces my-namespace --delete --no-interactive
 ```
+
+### User impersonation
+
+Use `--as` to run Kubernetes operations as another user, including discovery, resource scans, and deletions:
+
+```sh
+kor pvc --include-namespaces my-namespace --delete --as admin
+```
+
+The authenticated user must have permission to impersonate the requested user, and the impersonated user must have permission to discover, list, and delete the relevant resources. See [Kubernetes user impersonation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#user-impersonation) for the required permissions.
+
+The flag works with kubeconfig and in-cluster authentication. When omitted, existing kubeconfig impersonation settings are preserved. When provided, `--as` overrides the impersonated username; other kubeconfig settings, including impersonation groups, remain in effect.
 
 ### Ignore Resources
 
