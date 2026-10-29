@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
@@ -129,9 +130,13 @@ func (o *Options) Namespaces(clientset kubernetes.Interface) []string {
 			for _, ns := range includeNamespaces {
 
 				_, err := clientset.CoreV1().Namespaces().Get(context.TODO(), ns, metav1.GetOptions{})
-				if err == nil {
+				switch {
+				case err == nil:
 					namespacesMap[ns] = true
-				} else {
+				case apierrors.IsForbidden(err):
+					fmt.Fprintf(os.Stderr, "not allowed to get namespace [%s], assuming it exists: %v\n", ns, err)
+					namespacesMap[ns] = true
+				default:
 					fmt.Fprintf(os.Stderr, "namespace [%s] not found\n", ns)
 				}
 			}
