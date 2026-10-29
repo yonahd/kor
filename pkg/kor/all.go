@@ -321,38 +321,53 @@ func getUnusedRoleBindings(clientset kubernetes.Interface, namespace string, fil
 
 func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
-	maxWorkers := getMaxParallelResourceWorkers()
+	maxWorkers := utils.MaxParallelWorkers()
+	namespaces := filterOpts.Namespaces(clientset)
 
-	for _, namespace := range filterOpts.Namespaces(clientset) {
-		resourceDiffs := utils.RunJobs([]func() ResourceDiff{
-			func() ResourceDiff { return getUnusedCMs(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedSVCs(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedSecrets(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedServiceAccounts(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedDeployments(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedStatefulSets(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedRoles(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedHpas(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedPvcs(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedPods(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedIngresses(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedPdbs(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedJobs(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedReplicaSets(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedDaemonSets(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedNetworkPolicies(clientset, namespace, filterOpts, opts) },
-			func() ResourceDiff { return getUnusedRoleBindings(clientset, namespace, filterOpts, opts) },
-		}, maxWorkers, resourceDiffJobPanicHandler)
+	type namespaceResult struct {
+		namespace string
+		diffs     []ResourceDiff
+	}
 
+	namespaceJobs := make([]func() namespaceResult, 0, len(namespaces))
+	for _, namespace := range namespaces {
+		ns := namespace
+		namespaceJobs = append(namespaceJobs, func() namespaceResult {
+			resourceDiffs := utils.RunJobs([]func() ResourceDiff{
+				func() ResourceDiff { return getUnusedCMs(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedSVCs(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedSecrets(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedServiceAccounts(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedDeployments(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedStatefulSets(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedRoles(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedHpas(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedPvcs(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedPods(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedIngresses(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedPdbs(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedJobs(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedReplicaSets(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedDaemonSets(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedNetworkPolicies(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedRoleBindings(clientset, ns, filterOpts, opts) },
+			}, maxWorkers, resourceDiffJobPanicHandler)
+
+			return namespaceResult{namespace: ns, diffs: resourceDiffs}
+		})
+	}
+
+	namespaceResults := utils.RunJobs(namespaceJobs, maxWorkers, resourceDiffJobPanicHandler)
+	for _, result := range namespaceResults {
 		switch opts.GroupBy {
 		case "namespace":
-			resources[namespace] = make(map[string][]ResourceInfo)
-			for _, diff := range resourceDiffs {
-				resources[namespace][diff.resourceType] = diff.diff
+			resources[result.namespace] = make(map[string][]ResourceInfo)
+			for _, diff := range result.diffs {
+				resources[result.namespace][diff.resourceType] = diff.diff
 			}
 		case "resource":
-			for _, diff := range resourceDiffs {
-				appendResources(resources, diff.resourceType, namespace, diff.diff)
+			for _, diff := range result.diffs {
+				appendResources(resources, diff.resourceType, result.namespace, diff.diff)
 			}
 		}
 	}

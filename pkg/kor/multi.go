@@ -13,6 +13,7 @@ import (
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
+	"github.com/yonahd/kor/pkg/utils"
 )
 
 func retrieveResourceDiffs(resourceList []string, diffRetriever func(resource string) ResourceDiff) []ResourceDiff {
@@ -24,7 +25,7 @@ func retrieveResourceDiffs(resourceList []string, diffRetriever func(resource st
 		})
 	}
 
-	return runResourceDiffJobs(resourceJobs, getMaxParallelResourceWorkers())
+	return utils.RunJobs(resourceJobs, utils.MaxParallelWorkers(), resourceDiffJobPanicHandler)
 }
 
 func getCanonicalResourceType(resourceName string) string {
@@ -94,7 +95,7 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 		}
 	}
 
-	noNamespaceDiff := runResourceDiffJobs(noNamespaceJobs, getMaxParallelResourceWorkers())
+	noNamespaceDiff := utils.RunJobs(noNamespaceJobs, utils.MaxParallelWorkers(), resourceDiffJobPanicHandler)
 
 	// Remove elements marked for removal
 	var clearedResourceList []string
@@ -181,23 +182,38 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 		}
 	}
 
+	type namespaceResult struct {
+		namespace string
+		diffs     []ResourceDiff
+	}
+
+	namespaceJobs := make([]func() namespaceResult, 0, len(namespaces))
 	for _, namespace := range namespaces {
-		allDiffs := retrieveNamespaceDiffs(clientset, namespace, resourceList, filterOpts, opts)
+		ns := namespace
+		namespaceJobs = append(namespaceJobs, func() namespaceResult {
+			return namespaceResult{
+				namespace: ns,
+				diffs:     retrieveNamespaceDiffs(clientset, ns, resourceList, filterOpts, opts),
+			}
+		})
+	}
+
+	for _, result := range utils.RunJobs(namespaceJobs, utils.MaxParallelWorkers(), resourceDiffJobPanicHandler) {
 		if opts.GroupBy == "namespace" {
-			resources[namespace] = make(map[string][]ResourceInfo)
+			resources[result.namespace] = make(map[string][]ResourceInfo)
 		}
 
-		for _, diff := range allDiffs {
+		for _, diff := range result.diffs {
 			if opts.DeleteFlag {
-				if diff.diff, err = DeleteResource(diff.diff, clientset, namespace, diff.resourceType, opts.NoInteractive); err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", diff.resourceType, diff.diff, namespace, err)
+				if diff.diff, err = DeleteResource(diff.diff, clientset, result.namespace, diff.resourceType, opts.NoInteractive); err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", diff.resourceType, diff.diff, result.namespace, err)
 				}
 			}
 			switch opts.GroupBy {
 			case "namespace":
-				resources[namespace][diff.resourceType] = diff.diff
+				resources[result.namespace][diff.resourceType] = diff.diff
 			case "resource":
-				appendResources(resources, diff.resourceType, namespace, diff.diff)
+				appendResources(resources, diff.resourceType, result.namespace, diff.diff)
 			}
 		}
 	}
