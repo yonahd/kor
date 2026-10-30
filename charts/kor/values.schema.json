@@ -1,0 +1,410 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "kor Helm Chart Values",
+  "description": "Values file schema for the kor Helm chart",
+  "type": "object",
+  "properties": {
+    "cronJob": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether to deploy kor as a CronJob"
+        },
+        "name": {
+          "type": "string"
+        },
+        "resources": {
+          "type": "object",
+          "description": "Kubernetes resource requests and limits for the CronJob Pod"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "schedule": {
+          "type": "string",
+          "description": "Cron schedule for the CronJob"
+        },
+        "image": {
+          "type": "object",
+          "properties": {
+            "repository": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          }
+        },
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Free-form kor CLI arguments"
+        },
+        "config": {
+          "$ref": "#/definitions/korConfig"
+        },
+        "namespaced": {
+          "type": ["boolean", "null"],
+          "description": "Set true/false to explicitly return namespaced/non-namespaced resources. Deprecated: use cronJob.config.namespaced instead"
+        },
+        "slackWebhookUrl": {
+          "type": "string"
+        },
+        "slackChannel": {
+          "type": "string"
+        },
+        "slackAuthToken": {
+          "type": "string"
+        },
+        "restartPolicy": {
+          "type": "string",
+          "enum": ["Always", "OnFailure", "Never"]
+        },
+        "imagePullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "podSecurityContext": {
+          "type": "object"
+        },
+        "successfulJobsHistoryLimit": {
+          "type": "integer"
+        },
+        "failedJobsHistoryLimit": {
+          "type": "integer"
+        },
+        "env": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Extra environment variables for the CronJob Pod container"
+        }
+      }
+    },
+    "prometheusExporter": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether to deploy kor as a Prometheus exporter Deployment"
+        },
+        "name": {
+          "type": "string"
+        },
+        "exporterInterval": {
+          "type": "string",
+          "description": "Time in minutes between exporter runs, default is 10 minutes"
+        },
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Free-form kor CLI arguments"
+        },
+        "config": {
+          "type": "object",
+          "allOf": [
+            { "$ref": "#/definitions/korConfig" }
+          ],
+          "properties": {
+            "resources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Comma-separated list of resources to monitor (e.g., deployment,service)"
+            }
+          }
+        },
+        "namespaced": {
+          "type": ["boolean", "null"],
+          "description": "Set true/false to explicitly return namespaced/non-namespaced resources. Deprecated: use prometheusExporter.config.namespaced instead"
+        },
+        "deployment": {
+          "type": "object",
+          "properties": {
+            "image": {
+              "type": "object",
+              "properties": {
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              }
+            },
+            "restartPolicy": {
+              "type": "string",
+              "enum": ["Always", "OnFailure", "Never"]
+            },
+            "imagePullPolicy": {
+              "type": "string",
+              "enum": ["Always", "IfNotPresent", "Never"]
+            },
+            "imagePullSecrets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "podSecurityContext": {
+              "type": "object"
+            },
+            "replicaCount": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "resources": {
+              "type": "object",
+              "description": "Kubernetes resource requests and limits for the exporter Deployment Pod"
+            },
+            "securityContext": {
+              "type": "object"
+            },
+            "nodeSelector": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "tolerations": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "affinity": {
+              "type": "object"
+            }
+          }
+        },
+        "service": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["ClusterIP", "NodePort", "LoadBalancer", "ExternalName"]
+            },
+            "port": {
+              "type": "integer"
+            }
+          }
+        },
+        "serviceMonitor": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "namespace": {
+              "type": "string"
+            },
+            "labels": {
+              "type": "object"
+            },
+            "interval": {
+              "type": "string"
+            },
+            "telemetryPath": {
+              "type": "string"
+            },
+            "timeout": {
+              "type": "string"
+            },
+            "relabelings": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "targetLabels": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "metricRelabelings": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "additionalLabels": {
+      "type": "object",
+      "description": "Custom labels to add into metadata"
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean"
+        },
+        "annotations": {
+          "type": "object"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "rbac": {
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": ["boolean", "string"],
+          "enum": [true, false, "clusterrole", "role"],
+          "description": "Create Role and/or ClusterRole (true, false, \"clusterrole\" or \"role\")"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["apiGroups", "resources"],
+            "properties": {
+              "apiGroups": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "verbs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Verbs default to [get, list, watch] if not specified"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "korConfig": {
+      "type": "object",
+      "description": "Typed kor CLI flags. Only values that differ from the kor defaults are appended to the args",
+      "properties": {
+        "namespaced": {
+          "type": ["boolean", "null"],
+          "description": "Set true/false to explicitly return namespaced/non-namespaced resources. If unset (null), both are returned"
+        },
+        "clusterName": {
+          "type": "string",
+          "description": "Cluster name shown in CLI output and Slack notifications"
+        },
+        "delete": {
+          "type": "boolean",
+          "description": "Delete unused resources"
+        },
+        "excludeLabels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Selector to filter out, Example: --exclude-labels key1=value1,key2=value2"
+        },
+        "excludeNamespaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Namespaces to be excluded, Example: --exclude-namespaces ns1,ns2,ns3"
+        },
+        "groupBy": {
+          "type": "string",
+          "enum": ["namespace", "resource"],
+          "description": "Group output by (namespace, resource)"
+        },
+        "ignoreOwnerReferences": {
+          "type": "boolean",
+          "description": "Skip resources that have ownerReferences set (for all resource types)"
+        },
+        "includeLabels": {
+          "type": "string",
+          "description": "Selector to filter in, Example: --include-labels key1=value1"
+        },
+        "includeNamespaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Namespaces to run on, Example: --include-namespaces ns1,ns2,ns3"
+        },
+        "kubeconfig": {
+          "type": "string",
+          "description": "Path to kubeconfig file (optional)"
+        },
+        "newerThan": {
+          "type": "string",
+          "description": "The maximum age of the resources to be considered unused. Example: --newer-than=1h2m"
+        },
+        "noInteractive": {
+          "type": "boolean",
+          "description": "Do not prompt for confirmation when deleting resources"
+        },
+        "olderThan": {
+          "type": "string",
+          "description": "The minimum age of the resources to be considered unused. Example: --older-than=1h2m"
+        },
+        "output": {
+          "type": "string",
+          "enum": ["table", "json", "yaml"],
+          "description": "Output format (table, json or yaml)"
+        },
+        "showReason": {
+          "type": "boolean",
+          "description": "Print reason resource is considered unused"
+        },
+        "verbose": {
+          "type": "boolean",
+          "description": "Verbose output (print empty namespaces)"
+        }
+      }
+    }
+  }
+}

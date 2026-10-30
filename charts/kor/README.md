@@ -1,6 +1,6 @@
 # kor
 
-![Version: 0.2.16](https://img.shields.io/badge/Version-0.2.16-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.9](https://img.shields.io/badge/AppVersion-0.6.9-informational?style=flat-square)
+![Version: 0.2.17](https://img.shields.io/badge/Version-0.2.17-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.9](https://img.shields.io/badge/AppVersion-0.6.9-informational?style=flat-square)
 
 A Kubernetes Helm Chart to discover orphaned resources using kor
 
@@ -9,6 +9,7 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | Name | Email | Url |
 | ---- | ------ | --- |
 | yonahd |  | <https://github.com/yonahd/kor> |
+| hurzelpurzel |  | <https://github.com/hurzelpurzel> |
 
 ## Values
 
@@ -17,6 +18,17 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | additionalLabels | object | `{}` | Custom labels to add into metadata |
 | cronJob.args[0] | string | `"all"` |  |
 | cronJob.command[0] | string | `"kor"` |  |
+| cronJob.config | object | `{"clusterName":"","delete":false,"excludeLabels":[],"excludeNamespaces":[],"groupBy":"namespace","ignoreOwnerReferences":false,"includeLabels":"","includeNamespaces":[],"kubeconfig":"","namespaced":null,"newerThan":"","noInteractive":false,"olderThan":"","output":"table","showReason":false,"verbose":false}` | See https://github.com/yonahd/kor#flags for the description of each flag. |
+| cronJob.config.clusterName | string | `""` | Cluster name shown in CLI output and Slack notifications |
+| cronJob.config.delete | bool | `false` | Delete unused resources |
+| cronJob.config.groupBy | string | `"namespace"` | Group output by (namespace, resource) |
+| cronJob.config.ignoreOwnerReferences | bool | `false` | Skip resources that have ownerReferences set (for all resource types) |
+| cronJob.config.kubeconfig | string | `""` | Path to kubeconfig file (optional) |
+| cronJob.config.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources. If unset (null), both are returned |
+| cronJob.config.noInteractive | bool | `false` | Do not prompt for confirmation when deleting resources |
+| cronJob.config.output | string | `"table"` | Output format (table, json or yaml) |
+| cronJob.config.showReason | bool | `false` | Print reason resource is considered unused |
+| cronJob.config.verbose | bool | `false` | Verbose output (print empty namespaces) |
 | cronJob.enabled | bool | `false` |  |
 | cronJob.failedJobsHistoryLimit | int | `2` |  |
 | cronJob.image.repository | string | `"yonahdissen/kor"` |  |
@@ -24,7 +36,7 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | cronJob.imagePullPolicy | string | `"Always"` |  |
 | cronJob.imagePullSecrets | list | `[]` |  |
 | cronJob.name | string | `"kor"` |  |
-| cronJob.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources |
+| cronJob.namespaced | string | `nil` | Deprecated: use cronJob.config.namespaced instead. |
 | cronJob.podSecurityContext | object | `{}` |  |
 | cronJob.restartPolicy | string | `"OnFailure"` |  |
 | cronJob.schedule | string | `"0 1 * * 1"` |  |
@@ -35,6 +47,17 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | cronJob.successfulJobsHistoryLimit | int | `3` |  |
 | prometheusExporter.args[0] | string | `"exporter"` |  |
 | prometheusExporter.command[0] | string | `"kor"` |  |
+| prometheusExporter.config | object | `{"clusterName":"","excludeLabels":[],"excludeNamespaces":[],"groupBy":"namespace","ignoreOwnerReferences":false,"includeLabels":"","includeNamespaces":[],"kubeconfig":"","namespaced":null,"newerThan":"","noInteractive":false,"olderThan":"","output":"table","resources":[],"showReason":false,"verbose":false}` | See https://github.com/yonahd/kor#flags for the description of each flag. |
+| prometheusExporter.config.clusterName | string | `""` | Cluster name shown in CLI output and Slack notifications |
+| prometheusExporter.config.groupBy | string | `"namespace"` | Group output by (namespace, resource) |
+| prometheusExporter.config.ignoreOwnerReferences | bool | `false` | Skip resources that have ownerReferences set (for all resource types) |
+| prometheusExporter.config.kubeconfig | string | `""` | Path to kubeconfig file (optional) |
+| prometheusExporter.config.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources. If unset (null), both are returned |
+| prometheusExporter.config.noInteractive | bool | `false` | Do not prompt for confirmation when deleting resources |
+| prometheusExporter.config.output | string | `"table"` | Output format (table, json or yaml) |
+| prometheusExporter.config.resources | list | `[]` | Comma-separated list of resources to monitor (e.g., deployment,service) |
+| prometheusExporter.config.showReason | bool | `false` | Print reason resource is considered unused |
+| prometheusExporter.config.verbose | bool | `false` | Verbose output (print empty namespaces) |
 | prometheusExporter.deployment.affinity | object | `{}` |  |
 | prometheusExporter.deployment.image.repository | string | `"yonahdissen/kor"` |  |
 | prometheusExporter.deployment.image.tag | string | `"latest"` |  |
@@ -50,7 +73,7 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | prometheusExporter.enabled | bool | `true` |  |
 | prometheusExporter.exporterInterval | string | `""` |  |
 | prometheusExporter.name | string | `"kor-exporter"` |  |
-| prometheusExporter.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources |
+| prometheusExporter.namespaced | string | `nil` | Deprecated: use prometheusExporter.config.namespaced instead. |
 | prometheusExporter.service.port | int | `8080` |  |
 | prometheusExporter.service.type | string | `"ClusterIP"` |  |
 | prometheusExporter.serviceMonitor.enabled | bool | `true` |  |
