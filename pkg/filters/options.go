@@ -130,6 +130,7 @@ func (o *Options) Namespaces(clientset kubernetes.Interface) []string {
 			includeNamespaces = slices.Compact(includeNamespaces)
 
 			if o.SkipNamespaceValidation {
+				fmt.Fprintf(os.Stderr, "Warning: skipping namespace validation for %s; nonexistent namespaces will surface as \"not found\" errors\n", strings.Join(includeNamespaces, ", "))
 				for _, ns := range includeNamespaces {
 					namespacesMap[ns] = true
 				}
