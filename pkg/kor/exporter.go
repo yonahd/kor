@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	orphanedResourcesCounter = prometheus.NewGaugeVec(
+	orphanedResourcesGauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "kubernetes_orphaned_resources",
 			Help: "Orphaned resources in Kubernetes",
@@ -30,7 +30,7 @@ var (
 )
 
 func init() {
-	prometheus.MustRegister(orphanedResourcesCounter)
+	prometheus.MustRegister(orphanedResourcesGauge)
 }
 
 // TODO: add option to change port / url !?
@@ -66,16 +66,29 @@ func exportMetrics(filterOptions *filters.Options, clientset kubernetes.Interfac
 				return
 			}
 
-			orphanedResourcesCounter.Reset()
-
-			for namespace, resources := range data {
-				for kind, resourceList := range resources {
-					for _, resourceName := range resourceList {
-						orphanedResourcesCounter.WithLabelValues(kind, namespace, resourceName).Set(1)
-					}
-				}
-			}
+			orphanedResourcesGauge.Reset()
+			setOrphanedResourceMetrics(data, opts.GroupBy)
 			time.Sleep(time.Duration(exporterIntervalValue) * time.Minute)
+		}
+	}
+}
+
+func setOrphanedResourceMetrics(data map[string]map[string][]string, groupBy string) {
+	labelValues := func(outerKey, innerKey string) (kind, namespace string) {
+		return innerKey, outerKey
+	}
+	if groupBy == "resource" {
+		labelValues = func(outerKey, innerKey string) (kind, namespace string) {
+			return outerKey, innerKey
+		}
+	}
+
+	for outerKey, resources := range data {
+		for innerKey, resourceList := range resources {
+			for _, resourceName := range resourceList {
+				kind, namespace := labelValues(outerKey, innerKey)
+				orphanedResourcesGauge.WithLabelValues(kind, namespace, resourceName).Set(1)
+			}
 		}
 	}
 }

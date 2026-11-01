@@ -7,13 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
+	"slices"
 
 	v1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
-	"k8s.io/utils/strings/slices"
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
@@ -89,10 +88,8 @@ func retrieveUsedClusterRoles(clientset kubernetes.Interface, filterOpts *filter
 		for _, clusterRole := range clusterRoles.Items {
 			for label, value := range clusterRole.Labels {
 				if slices.Contains(aggregatedLabels, label+": "+value) {
-					usedClusterRoles[clusterRole.Name], err = strconv.ParseBool(value)
-					if err != nil {
-						return nil, fmt.Errorf("couldn't convert string to bool %v", err)
-					}
+					// Aggregated into a used ClusterRole, so it is itself used.
+					usedClusterRoles[clusterRole.Name] = true
 					if clusterRole.AggregationRule == nil {
 						continue
 					}

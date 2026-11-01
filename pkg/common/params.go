@@ -4,6 +4,7 @@ type Opts struct {
 	DeleteFlag    bool
 	NoInteractive bool
 	Verbose       bool
+	ClusterName   string
 	WebhookURL    string
 	Channel       string
 	Token         string

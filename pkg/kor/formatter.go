@@ -31,7 +31,11 @@ func unusedResourceFormatter(outputFormat string, outputBuffer bytes.Buffer, opt
 		if opts.WebhookURL == "" && (opts.Channel == "" || opts.Token == "") {
 			return outputBuffer.String(), nil
 		}
-		if err := utils.SendToSlack(utils.SlackMessage{}, opts, outputBuffer.String()); err != nil {
+		slackOutput := outputBuffer.String()
+		if opts.ClusterName != "" {
+			slackOutput = fmt.Sprintf("Cluster: %s\n\n%s", opts.ClusterName, slackOutput)
+		}
+		if err := utils.SendToSlack(utils.SlackMessage{}, opts, slackOutput); err != nil {
 			return "", fmt.Errorf("failed to send message to slack: %w", err)
 		}
 		return outputBuffer.String(), nil

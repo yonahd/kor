@@ -20,7 +20,7 @@ var pdbCmd = &cobra.Command{
 		if response, err := kor.GetUnusedPdbs(filterOptions, clientset, outputFormat, opts); err != nil {
 			fmt.Println(err)
 		} else {
-			utils.PrintLogo(outputFormat)
+			utils.PrintLogo(outputFormat, opts.ClusterName)
 			fmt.Println(response)
 		}
 	},
