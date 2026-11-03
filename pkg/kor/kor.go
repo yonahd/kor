@@ -19,7 +19,7 @@ import (
 
 var ResourceKindList map[string]ResourceKind
 
-var impersonatedUser atomic.Value // string
+var impersonatedUser atomic.Pointer[string]
 
 type ExceptionResource struct {
 	Namespace    string
@@ -99,9 +99,15 @@ func GetClusterName(kubeconfig string) string {
 }
 
 // SetImpersonatedUser sets the username for subsequently created clients in this
-// process. An empty user preserves any impersonation settings from kubeconfig.
+// process. An empty user clears all impersonation settings from kubeconfig.
 func SetImpersonatedUser(user string) {
-	impersonatedUser.Store(user)
+	impersonatedUser.Store(&user)
+}
+
+// ResetImpersonatedUser removes the process-wide override so subsequently created
+// clients preserve any impersonation settings from kubeconfig.
+func ResetImpersonatedUser() {
+	impersonatedUser.Store(nil)
 }
 
 func GetConfig(kubeconfig string) (*rest.Config, error) {
@@ -109,8 +115,12 @@ func GetConfig(kubeconfig string) (*rest.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	if user, _ := impersonatedUser.Load().(string); user != "" {
-		config.Impersonate.UserName = user
+	if user := impersonatedUser.Load(); user != nil {
+		if *user == "" {
+			config.Impersonate = rest.ImpersonationConfig{}
+		} else {
+			config.Impersonate.UserName = *user
+		}
 	}
 	return config, nil
 }

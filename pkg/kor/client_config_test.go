@@ -17,7 +17,7 @@ import (
 )
 
 func TestClientImpersonation(t *testing.T) {
-	t.Cleanup(func() { SetImpersonatedUser("") })
+	t.Cleanup(ResetImpersonatedUser)
 
 	kubeconfigIdentity := rest.ImpersonationConfig{
 		UserName: "configured-user",
@@ -32,17 +32,23 @@ func TestClientImpersonation(t *testing.T) {
 		name       string
 		configured rest.ImpersonationConfig
 		user       string
+		override   bool
 		want       rest.ImpersonationConfig
 		useEnv     bool
 	}{
 		{name: "no impersonation"},
-		{name: "explicit user", user: "admin", want: rest.ImpersonationConfig{UserName: "admin"}},
-		{name: "empty user restores kubeconfig identity", configured: kubeconfigIdentity, want: kubeconfigIdentity},
-		{name: "override kubeconfig username", configured: kubeconfigIdentity, user: "admin", want: overriddenIdentity},
-		{name: "KUBECONFIG environment", configured: kubeconfigIdentity, user: "admin", want: overriddenIdentity, useEnv: true},
+		{name: "explicit user", user: "admin", override: true, want: rest.ImpersonationConfig{UserName: "admin"}},
+		{name: "reset restores kubeconfig identity", configured: kubeconfigIdentity, want: kubeconfigIdentity},
+		{name: "override kubeconfig username", configured: kubeconfigIdentity, user: "admin", override: true, want: overriddenIdentity},
+		{name: "explicit empty user clears kubeconfig identity", configured: kubeconfigIdentity, override: true},
+		{name: "KUBECONFIG environment", configured: kubeconfigIdentity, user: "admin", override: true, want: overriddenIdentity, useEnv: true},
+		{name: "clear KUBECONFIG identity", configured: kubeconfigIdentity, override: true, useEnv: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			SetImpersonatedUser(tc.user)
+			ResetImpersonatedUser()
+			if tc.override {
+				SetImpersonatedUser(tc.user)
+			}
 
 			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if got := r.Header.Get("Impersonate-User"); got != tc.want.UserName {
@@ -103,6 +109,14 @@ func TestClientImpersonation(t *testing.T) {
 				path = ""
 			}
 
+			restConfig, err := GetConfig(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(restConfig.Impersonate, tc.want) {
+				t.Fatalf("impersonation config = %#v, want %#v", restConfig.Impersonate, tc.want)
+			}
+
 			typedClient := GetKubeClient(path)
 			if _, err := typedClient.Discovery().ServerVersion(); err != nil {
 				t.Fatalf("discovery: %v", err)
@@ -126,7 +140,7 @@ func TestClientImpersonation(t *testing.T) {
 
 func TestGetConfigInvalidPathWithImpersonation(t *testing.T) {
 	SetImpersonatedUser("admin")
-	t.Cleanup(func() { SetImpersonatedUser("") })
+	t.Cleanup(ResetImpersonatedUser)
 	config, err := GetConfig(filepath.Join(t.TempDir(), "missing"))
 	if err == nil || config != nil {
 		t.Fatalf("expected nil config and an error, got %v, %v", config, err)

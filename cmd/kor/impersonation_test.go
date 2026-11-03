@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -39,6 +40,8 @@ func TestImpersonationCLI(t *testing.T) {
 	}{
 		{name: "kubeconfig identity", user: "configured-user"},
 		{name: "as flag", args: []string{"--as", "admin"}, user: "admin"},
+		{name: "empty as flag", args: []string{"--as="}},
+		{name: "empty as argument", args: []string{"--as", ""}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var mu sync.Mutex
@@ -49,6 +52,23 @@ func TestImpersonationCLI(t *testing.T) {
 				mu.Unlock()
 				if got := r.Header.Get("Impersonate-User"); got != tc.user {
 					t.Errorf("%s %s: impersonated user = %q, want %q", r.Method, r.URL.Path, got, tc.user)
+				}
+				if tc.user == "" {
+					for key, values := range r.Header {
+						if strings.HasPrefix(key, "Impersonate-") {
+							t.Errorf("%s %s: unexpected impersonation header %s: %v", r.Method, r.URL.Path, key, values)
+						}
+					}
+				} else {
+					if got := r.Header.Get("Impersonate-Uid"); got != "configured-uid" {
+						t.Errorf("impersonated UID = %q, want configured-uid", got)
+					}
+					if got := r.Header.Values("Impersonate-Group"); !slices.Equal(got, []string{"configured-group"}) {
+						t.Errorf("impersonated groups = %v, want [configured-group]", got)
+					}
+					if got := r.Header.Get("Impersonate-Extra-Project"); got != "example" {
+						t.Errorf("impersonated extra project = %q, want example", got)
+					}
 				}
 				w.Header().Set("Content-Type", "application/json")
 				var response string
@@ -80,7 +100,12 @@ func TestImpersonationCLI(t *testing.T) {
 
 			config := clientcmdapi.NewConfig()
 			config.Clusters["test"] = &clientcmdapi.Cluster{Server: server.URL}
-			config.AuthInfos["test"] = &clientcmdapi.AuthInfo{Impersonate: "configured-user"}
+			config.AuthInfos["test"] = &clientcmdapi.AuthInfo{
+				Impersonate:          "configured-user",
+				ImpersonateUID:       "configured-uid",
+				ImpersonateGroups:    []string{"configured-group"},
+				ImpersonateUserExtra: map[string][]string{"project": {"example"}},
+			}
 			config.Contexts["test"] = &clientcmdapi.Context{Cluster: "test", AuthInfo: "test"}
 			config.CurrentContext = "test"
 			path := filepath.Join(t.TempDir(), "kubeconfig")
