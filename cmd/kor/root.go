@@ -35,6 +35,11 @@ var rootCmd = &cobra.Command{
 			return nil
 		}
 
+		kor.ResetImpersonatedUser()
+		if cmd.Flags().Changed("as") {
+			kor.SetImpersonatedUser(impersonateUser)
+		}
+
 		if opts.ClusterName == "" {
 			opts.ClusterName = kor.GetClusterName(kubeconfig)
 		}
@@ -59,10 +64,11 @@ var rootCmd = &cobra.Command{
 }
 
 var (
-	outputFormat  string
-	kubeconfig    string
-	opts          common.Opts
-	filterOptions = &filters.Options{}
+	outputFormat    string
+	kubeconfig      string
+	impersonateUser string
+	opts            common.Opts
+	filterOptions   = &filters.Options{}
 )
 
 func init() {
@@ -81,6 +87,7 @@ func initKindsList() {
 
 func initFlags() {
 	rootCmd.PersistentFlags().StringVarP(&kubeconfig, "kubeconfig", "k", "", "Path to kubeconfig file (optional)")
+	rootCmd.PersistentFlags().StringVar(&impersonateUser, "as", "", "Username to impersonate for Kubernetes operations; explicitly set to empty to disable impersonation")
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "Output format (table, json or yaml)")
 	rootCmd.PersistentFlags().StringVar(&opts.WebhookURL, "slack-webhook-url", "", "Slack webhook URL to send notifications to")
 	rootCmd.PersistentFlags().StringVar(&opts.Channel, "slack-channel", "", "Slack channel to send notifications to, requires --slack-auth-token to be set")

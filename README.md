@@ -150,6 +150,7 @@ Kor provides various subcommands to identify and list unused resources. The avai
 ### Supported Flags
 
 ```
+      --as string                    Username to impersonate for Kubernetes operations; explicitly set to empty to disable impersonation
       --delete                       Delete unused resources
   -l, --exclude-labels strings       Selector to filter out, Example: --exclude-labels key1=value1,key2=value2. If --include-labels is set, --exclude-labels will be ignored
   -e, --exclude-namespaces strings   Namespaces to be excluded, split by commas. Example: --exclude-namespaces ns1,ns2,ns3. If --include-namespaces is set, --exclude-namespaces will be ignored
@@ -230,6 +231,26 @@ To delete with no prompt (⚠️ use with caution):
 ```sh
 kor configmap --include-namespaces my-namespace --delete --no-interactive
 ```
+
+### User impersonation
+
+Use `--as` to run Kubernetes operations as another user, including discovery, resource scans, and deletions:
+
+```sh
+kor pvc --include-namespaces my-namespace --delete --as admin
+```
+
+The authenticated user must have permission to impersonate the requested user, and the impersonated user must have permission to discover, list, and delete the relevant resources. See [Kubernetes user impersonation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#user-impersonation) for the required permissions.
+
+The flag works with kubeconfig and in-cluster authentication. When omitted, existing kubeconfig impersonation settings are preserved. A non-empty `--as` value overrides the impersonated username; other kubeconfig settings, including impersonation groups, remain in effect.
+
+To disable impersonation configured in kubeconfig and use the authenticated identity, explicitly pass an empty value:
+
+```sh
+kor pvc --include-namespaces my-namespace --as=""
+```
+
+This clears all impersonation fields (username, UID, groups, and extra attributes) for the invocation without modifying the kubeconfig file or the underlying credentials.
 
 ### Ignore Resources
 
