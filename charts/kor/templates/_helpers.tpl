@@ -112,3 +112,35 @@ Generate resource rules
   {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+Build the kor CLI args from the user-provided args and the typed config.
+Args passed via `args` are preserved as-is. Config values that differ from
+the kor CLI defaults are appended as `--flag=value` entries, giving the
+structured config the final say while keeping existing `args` working.
+*/}}
+{{- define "kor.buildArgs" -}}
+{{- $args := list -}}
+{{- range .args | default list -}}
+{{- $args = append $args . -}}
+{{- end -}}
+{{- $config := .config | default dict -}}
+{{- if $config.kubeconfig }}{{- $args = append $args (printf "--kubeconfig=%s" $config.kubeconfig) -}}{{- end -}}
+{{- if and $config.output (ne $config.output "table") }}{{- $args = append $args (printf "--output=%s" $config.output) -}}{{- end -}}
+{{- if $config.clusterName }}{{- $args = append $args (printf "--cluster-name=%s" $config.clusterName) -}}{{- end -}}
+{{- if $config.delete }}{{- $args = append $args "--delete" -}}{{- end -}}
+{{- if $config.noInteractive }}{{- $args = append $args "--no-interactive" -}}{{- end -}}
+{{- if $config.verbose }}{{- $args = append $args "--verbose" -}}{{- end -}}
+{{- if $config.showReason }}{{- $args = append $args "--show-reason" -}}{{- end -}}
+{{- if and $config.groupBy (ne $config.groupBy "namespace") }}{{- $args = append $args (printf "--group-by=%s" $config.groupBy) -}}{{- end -}}
+{{- with $config.excludeLabels }}{{- $args = append $args (printf "--exclude-labels=%s" (join "," .)) -}}{{- end -}}
+{{- if $config.includeLabels }}{{- $args = append $args (printf "--include-labels=%s" $config.includeLabels) -}}{{- end -}}
+{{- with $config.excludeNamespaces }}{{- $args = append $args (printf "--exclude-namespaces=%s" (join "," .)) -}}{{- end -}}
+{{- with $config.includeNamespaces }}{{- $args = append $args (printf "--include-namespaces=%s" (join "," .)) -}}{{- end -}}
+{{- if $config.ignoreOwnerReferences }}{{- $args = append $args "--ignore-owner-references" -}}{{- end -}}
+{{- if $config.newerThan }}{{- $args = append $args (printf "--newer-than=%s" $config.newerThan) -}}{{- end -}}
+{{- if $config.olderThan }}{{- $args = append $args (printf "--older-than=%s" $config.olderThan) -}}{{- end -}}
+{{- with $config.resources }}{{- $args = append $args (printf "--resources=%s" (join "," .)) -}}{{- end -}}
+{{- if kindIs "bool" $config.namespaced }}{{- $args = append $args (printf "--namespaced=%t" $config.namespaced) -}}{{- end -}}
+{{- toYaml $args -}}
+{{- end }}
