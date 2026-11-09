@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"sigs.k8s.io/yaml"
 
 	"github.com/yonahd/kor/pkg/common"
@@ -16,6 +18,22 @@ import (
 type ResourceInfo struct {
 	Name   string `json:"name"`
 	Reason string `json:"reason,omitempty"`
+}
+
+func newTableWriter(w io.Writer) *tablewriter.Table {
+	return tablewriter.NewTable(
+		w,
+		tablewriter.WithSymbols(tw.NewSymbols(tw.StyleASCII)),
+		tablewriter.WithColumnMax(60),
+	)
+}
+
+func setTableHeader(table *tablewriter.Table, header []string) {
+	headerArgs := make([]any, len(header))
+	for i, column := range header {
+		headerArgs[i] = column
+	}
+	table.Header(headerArgs...)
 }
 
 func getTableRow(index int, columns ...string) []string {
@@ -105,9 +123,8 @@ func FormatOutput(resources map[string]map[string][]ResourceInfo, opts common.Op
 
 func formatOutputForNamespace(namespace string, resources map[string][]ResourceInfo, opts common.Opts) string {
 	var buf strings.Builder
-	table := tablewriter.NewWriter(&buf)
-	table.SetColWidth(60)
-	table.SetHeader(getTableHeader(opts.GroupBy, opts.ShowReason))
+	table := newTableWriter(&buf)
+	setTableHeader(table, getTableHeader(opts.GroupBy, opts.ShowReason))
 	allEmpty := true
 	var index int
 	for resourceType, diff := range resources {
@@ -116,7 +133,7 @@ func formatOutputForNamespace(namespace string, resources map[string][]ResourceI
 			if opts.ShowReason && info.Reason != "" {
 				row = append(row, info.Reason)
 			}
-			table.Append(row)
+			_ = table.Append(row)
 			allEmpty = false
 			index++
 		}
@@ -128,7 +145,7 @@ func formatOutputForNamespace(namespace string, resources map[string][]ResourceI
 		return ""
 	}
 
-	table.Render()
+	_ = table.Render()
 	return fmt.Sprintf("Unused resources in namespace: %q\n%s\n", namespace, buf.String())
 }
 
@@ -140,9 +157,8 @@ func formatOutputForResource(resource string, resources map[string][]ResourceInf
 		return ""
 	}
 	var buf bytes.Buffer
-	table := tablewriter.NewWriter(&buf)
-	table.SetColWidth(60)
-	table.SetHeader(getTableHeader(opts.GroupBy, opts.ShowReason))
+	table := newTableWriter(&buf)
+	setTableHeader(table, getTableHeader(opts.GroupBy, opts.ShowReason))
 	var index int
 	for ns, infos := range resources {
 		for _, info := range infos {
@@ -150,11 +166,11 @@ func formatOutputForResource(resource string, resources map[string][]ResourceInf
 			if opts.ShowReason && info.Reason != "" {
 				row = append(row, info.Reason)
 			}
-			table.Append(row)
+			_ = table.Append(row)
 			index++
 		}
 	}
-	table.Render()
+	_ = table.Render()
 	return fmt.Sprintf("Unused %s:\n%s\n", ResourceKindList[strings.ToLower(resource)].Plural, buf.String())
 }
 
@@ -216,15 +232,14 @@ func getTableRowResourceInfo(index int, resourceType string, resource ResourceIn
 
 func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts common.Opts) string {
 	var buf strings.Builder
-	table := tablewriter.NewWriter(&buf)
-	table.SetColWidth(60)
-	table.SetHeader(getTableHeader(opts.GroupBy, opts.ShowReason))
+	table := newTableWriter(&buf)
+	setTableHeader(table, getTableHeader(opts.GroupBy, opts.ShowReason))
 	allEmpty := true
 	var index int
 	for _, data := range allDiffs {
 		for _, info := range data.diff {
 			row := getTableRowResourceInfo(index, data.resourceType, info, opts.ShowReason)
-			table.Append(row)
+			_ = table.Append(row)
 			allEmpty = false
 			index++
 		}
@@ -236,6 +251,6 @@ func FormatOutputAll(namespace string, allDiffs []ResourceDiff, opts common.Opts
 		return ""
 	}
 
-	table.Render()
+	_ = table.Render()
 	return fmt.Sprintf("Unused resources in namespace: %q\n%s\n", namespace, buf.String())
 }
