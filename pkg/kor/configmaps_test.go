@@ -217,6 +217,49 @@ func TestRetrieveUsedCM(t *testing.T) {
 	}
 }
 
+func TestProcessNamespaceCMInitContainerVolumeMountName(t *testing.T) {
+	clientset := fake.NewClientset()
+
+	mounted := CreateTestConfigmap(testNamespace, "app-settings", AppLabels)
+	orphan := CreateTestConfigmap(testNamespace, "config", AppLabels)
+
+	pod := CreateTestPod(testNamespace, "init-pod", "", []corev1.Volume{
+		{
+			Name: "config",
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: mounted.Name},
+			}},
+		},
+	}, AppLabels)
+	pod.Spec.InitContainers = []corev1.Container{
+		{
+			Name:         "init",
+			VolumeMounts: []corev1.VolumeMount{{Name: "config", MountPath: "/etc/app"}},
+		},
+	}
+
+	if _, err := clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod, metav1.CreateOptions{}); err != nil {
+		t.Fatalf("Error creating fake pod: %v", err)
+	}
+	for _, cm := range []*corev1.ConfigMap{mounted, orphan} {
+		if _, err := clientset.CoreV1().ConfigMaps(testNamespace).Create(context.TODO(), cm, metav1.CreateOptions{}); err != nil {
+			t.Fatalf("Error creating fake configmap: %v", err)
+		}
+	}
+
+	unusedConfigmaps, err := processNamespaceCM(clientset, testNamespace, &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused ConfigMaps: %v", err)
+	}
+
+	if resourceInfoContains(unusedConfigmaps, mounted.Name) {
+		t.Errorf("Expected %s to be used through the pod volume", mounted.Name)
+	}
+	if !resourceInfoContains(unusedConfigmaps, orphan.Name) {
+		t.Errorf("Expected %s to be reported as unused: it only shares its name with an init container volume mount", orphan.Name)
+	}
+}
+
 func TestGetUnusedConfigmapsStructured(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 

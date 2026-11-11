@@ -62,11 +62,6 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 			}
 		}
 		for _, initContainer := range pod.Spec.InitContainers {
-			for _, volume := range initContainer.VolumeMounts {
-				if volume.Name != "" && volume.MountPath != "" {
-					volumesCM = append(volumesCM, volume.Name)
-				}
-			}
 			for _, env := range initContainer.Env {
 				if env.ValueFrom != nil && env.ValueFrom.ConfigMapKeyRef != nil {
 					envFromInitContainerCM = append(envFromInitContainerCM, env.ValueFrom.ConfigMapKeyRef.Name)
