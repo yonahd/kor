@@ -294,6 +294,44 @@ func TestProcessNamespaceSecret(t *testing.T) {
 
 }
 
+func TestProcessNamespaceSecretCSINodePublishSecretRef(t *testing.T) {
+	clientset := fake.NewClientset()
+
+	usedSecret := CreateTestSecret(testNamespace, "csi-credentials", AppLabels)
+	unusedSecret := CreateTestSecret(testNamespace, "orphan", AppLabels)
+
+	pod := CreateTestPod(testNamespace, "csi-pod", "", []corev1.Volume{
+		{
+			Name: "secrets-store",
+			VolumeSource: corev1.VolumeSource{CSI: &corev1.CSIVolumeSource{
+				Driver:               "secrets-store.csi.k8s.io",
+				NodePublishSecretRef: &corev1.LocalObjectReference{Name: usedSecret.Name},
+			}},
+		},
+	}, AppLabels)
+
+	if _, err := clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod, v1.CreateOptions{}); err != nil {
+		t.Fatalf("Error creating fake pod: %v", err)
+	}
+	for _, secret := range []*corev1.Secret{usedSecret, unusedSecret} {
+		if _, err := clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret, v1.CreateOptions{}); err != nil {
+			t.Fatalf("Error creating fake secret: %v", err)
+		}
+	}
+
+	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused secrets: %v", err)
+	}
+
+	if resourceInfoContains(unusedSecrets, usedSecret.Name) {
+		t.Errorf("Secret %s is referenced by a CSI volume nodePublishSecretRef and must not be reported as unused", usedSecret.Name)
+	}
+	if !resourceInfoContains(unusedSecrets, unusedSecret.Name) {
+		t.Errorf("Expected %s to be reported as unused", unusedSecret.Name)
+	}
+}
+
 func TestGetUnusedSecretsStructured(t *testing.T) {
 	clientset := createTestSecrets(t)
 
