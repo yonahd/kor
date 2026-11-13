@@ -9,6 +9,8 @@ import (
 	"os"
 	"slices"
 
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
@@ -43,6 +45,40 @@ func retrieveIngressTLS(clientset kubernetes.Interface, namespace string) ([]str
 
 	return secretNames, nil
 
+}
+
+// retrievePersistentVolumeSecrets returns the Secrets in namespace that CSI
+// PersistentVolumes reference for their mount, stage, publish or expand calls,
+// as statically provisioned SMB, NFS or Azure Files volumes do. Without access
+// to PersistentVolumes no reference is returned.
+func retrievePersistentVolumeSecrets(clientset kubernetes.Interface, namespace string) ([]string, error) {
+	pvs, err := clientset.CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		if apierrors.IsForbidden(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to retrieve PersistentVolumes: %v", err)
+	}
+
+	var secretNames []string
+	for _, pv := range pvs.Items {
+		csi := pv.Spec.CSI
+		if csi == nil {
+			continue
+		}
+		for _, ref := range []*corev1.SecretReference{
+			csi.ControllerPublishSecretRef,
+			csi.NodeStageSecretRef,
+			csi.NodePublishSecretRef,
+			csi.ControllerExpandSecretRef,
+			csi.NodeExpandSecretRef,
+		} {
+			if ref != nil && ref.Name != "" && ref.Namespace == namespace {
+				secretNames = append(secretNames, ref.Name)
+			}
+		}
+	}
+	return secretNames, nil
 }
 
 func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
@@ -167,6 +203,11 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 		return nil, err
 	}
 
+	pvSecrets, err := retrievePersistentVolumeSecrets(clientset, namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	envSecrets = RemoveDuplicatesAndSort(envSecrets)
 	envSecrets2 = RemoveDuplicatesAndSort(envSecrets2)
 	volumeSecrets = RemoveDuplicatesAndSort(volumeSecrets)
@@ -187,6 +228,7 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 		pullSecrets,
 		tlsSecrets,
 		initContainerEnvSecrets,
+		pvSecrets,
 	}
 
 	for _, slice := range slicesToAppend {
