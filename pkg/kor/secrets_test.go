@@ -332,6 +332,56 @@ func TestProcessNamespaceSecretCSINodePublishSecretRef(t *testing.T) {
 	}
 }
 
+func TestProcessNamespaceSecretPersistentVolumeCSIRefs(t *testing.T) {
+	clientset := fake.NewClientset()
+
+	stageSecret := CreateTestSecret(testNamespace, "smb-credentials", AppLabels)
+	expandSecret := CreateTestSecret(testNamespace, "expand-credentials", AppLabels)
+	unusedSecret := CreateTestSecret(testNamespace, "orphan", AppLabels)
+	otherNamespaceSecret := CreateTestSecret("other-namespace", "smb-credentials", AppLabels)
+
+	pv := &corev1.PersistentVolume{
+		ObjectMeta: v1.ObjectMeta{Name: "smb-static"},
+		Spec: corev1.PersistentVolumeSpec{
+			PersistentVolumeSource: corev1.PersistentVolumeSource{CSI: &corev1.CSIPersistentVolumeSource{
+				Driver:                    "smb.csi.k8s.io",
+				VolumeHandle:              "smb-server/share",
+				NodeStageSecretRef:        &corev1.SecretReference{Name: stageSecret.Name, Namespace: testNamespace},
+				ControllerExpandSecretRef: &corev1.SecretReference{Name: expandSecret.Name, Namespace: testNamespace},
+			}},
+		},
+	}
+	if _, err := clientset.CoreV1().PersistentVolumes().Create(context.TODO(), pv, v1.CreateOptions{}); err != nil {
+		t.Fatalf("Error creating fake persistent volume: %v", err)
+	}
+	for _, secret := range []*corev1.Secret{stageSecret, expandSecret, unusedSecret, otherNamespaceSecret} {
+		if _, err := clientset.CoreV1().Secrets(secret.Namespace).Create(context.TODO(), secret, v1.CreateOptions{}); err != nil {
+			t.Fatalf("Error creating fake secret: %v", err)
+		}
+	}
+
+	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused secrets: %v", err)
+	}
+	for _, used := range []string{stageSecret.Name, expandSecret.Name} {
+		if resourceInfoContains(unusedSecrets, used) {
+			t.Errorf("Secret %s is referenced by a CSI PersistentVolume and must not be reported as unused", used)
+		}
+	}
+	if !resourceInfoContains(unusedSecrets, unusedSecret.Name) {
+		t.Errorf("Expected %s to be reported as unused", unusedSecret.Name)
+	}
+
+	otherUnused, err := processNamespaceSecret(clientset, "other-namespace", &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused secrets: %v", err)
+	}
+	if !resourceInfoContains(otherUnused, otherNamespaceSecret.Name) {
+		t.Errorf("A Secret with the same name in another namespace must still be reported as unused")
+	}
+}
+
 func TestGetUnusedSecretsStructured(t *testing.T) {
 	clientset := createTestSecrets(t)
 
