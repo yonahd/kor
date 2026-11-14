@@ -458,3 +458,54 @@ func init() {
 	scheme.Scheme = runtime.NewScheme()
 	_ = appsv1.AddToScheme(scheme.Scheme)
 }
+
+func TestProcessNamespaceSecretInTreeVolumeSecretRefs(t *testing.T) {
+	clientset := fake.NewClientset()
+
+	ref := func(name string) *corev1.LocalObjectReference {
+		return &corev1.LocalObjectReference{Name: name}
+	}
+	volumes := []corev1.Volume{
+		{Name: "azure", VolumeSource: corev1.VolumeSource{AzureFile: &corev1.AzureFileVolumeSource{
+			SecretName: "azure-storage", ShareName: "share",
+		}}},
+		{Name: "cephfs", VolumeSource: corev1.VolumeSource{CephFS: &corev1.CephFSVolumeSource{
+			Monitors: []string{"10.0.0.1:6789"}, SecretRef: ref("ceph-admin"),
+		}}},
+		{Name: "rbd", VolumeSource: corev1.VolumeSource{RBD: &corev1.RBDVolumeSource{
+			CephMonitors: []string{"10.0.0.1:6789"}, RBDImage: "img", SecretRef: ref("rbd-key"),
+		}}},
+		{Name: "iscsi", VolumeSource: corev1.VolumeSource{ISCSI: &corev1.ISCSIVolumeSource{
+			TargetPortal: "10.0.0.2:3260", IQN: "iqn.2001-04.com.example:storage", SecretRef: ref("chap"),
+		}}},
+		{Name: "flex", VolumeSource: corev1.VolumeSource{FlexVolume: &corev1.FlexVolumeSource{
+			Driver: "example/cifs", SecretRef: ref("cifs-credentials"),
+		}}},
+	}
+	pod := CreateTestPod(testNamespace, "in-tree-pod", "", volumes, AppLabels)
+	if _, err := clientset.CoreV1().Pods(testNamespace).Create(context.TODO(), pod, v1.CreateOptions{}); err != nil {
+		t.Fatalf("Error creating fake pod: %v", err)
+	}
+
+	used := []string{"azure-storage", "ceph-admin", "rbd-key", "chap", "cifs-credentials"}
+	for _, name := range append(used, "orphan") {
+		secret := CreateTestSecret(testNamespace, name, AppLabels)
+		if _, err := clientset.CoreV1().Secrets(testNamespace).Create(context.TODO(), secret, v1.CreateOptions{}); err != nil {
+			t.Fatalf("Error creating fake secret: %v", err)
+		}
+	}
+
+	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused secrets: %v", err)
+	}
+
+	for _, name := range used {
+		if resourceInfoContains(unusedSecrets, name) {
+			t.Errorf("Secret %s is referenced by an in-tree volume and must not be reported as unused", name)
+		}
+	}
+	if !resourceInfoContains(unusedSecrets, "orphan") {
+		t.Errorf("Expected orphan to be reported as unused")
+	}
+}
