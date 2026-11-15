@@ -90,6 +90,9 @@ func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]str
 			if volume.Secret != nil {
 				volumeSecrets = append(volumeSecrets, volume.Secret.SecretName)
 			}
+			if volume.CSI != nil && volume.CSI.NodePublishSecretRef != nil {
+				volumeSecrets = append(volumeSecrets, volume.CSI.NodePublishSecretRef.Name)
+			}
 			if volume.Projected != nil && volume.Projected.Sources != nil {
 				for _, projectedResource := range volume.Projected.Sources {
 					if projectedResource.Secret != nil {

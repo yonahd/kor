@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"runtime"
 	"testing"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -412,5 +414,34 @@ func TestGetUnusedMultiWithNonNamespacedResources(t *testing.T) {
 
 	if !reflect.DeepEqual(expectedOutput, actualOutput) {
 		t.Errorf("Expected output does not match \n actualOutput:\n %s \n expectedOutput:\n %s", actualOutput, expectedOutput)
+	}
+}
+
+func TestRetrieveResourceDiffsImprovesSpeedWithParallelism(t *testing.T) {
+	resourceList := []string{"configmap", "deployment", "secret", "pod"}
+	originalMaxProcs := runtime.GOMAXPROCS(1)
+	defer runtime.GOMAXPROCS(originalMaxProcs)
+
+	diffRetriever := func(resource string) ResourceDiff {
+		time.Sleep(40 * time.Millisecond)
+		return ResourceDiff{resourceType: resource}
+	}
+
+	start := time.Now()
+	sequentialDiffs := retrieveResourceDiffs(resourceList, diffRetriever)
+	sequentialDuration := time.Since(start)
+
+	runtime.GOMAXPROCS(4)
+	start = time.Now()
+	parallelDiffs := retrieveResourceDiffs(resourceList, diffRetriever)
+	parallelDuration := time.Since(start)
+
+	if !reflect.DeepEqual(sequentialDiffs, parallelDiffs) {
+		t.Fatalf("Expected same diff results for sequential and parallel retrieval")
+	}
+
+	t.Logf("multi helper sequential duration=%s parallel duration=%s", sequentialDuration, parallelDuration)
+	if parallelDuration >= sequentialDuration {
+		t.Fatalf("Expected parallel execution to be faster. sequential=%s parallel=%s", sequentialDuration, parallelDuration)
 	}
 }

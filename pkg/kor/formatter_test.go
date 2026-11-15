@@ -65,6 +65,30 @@ func TestFormatOutput(t *testing.T) {
 	}
 }
 
+func TestFormatOutputKeepsASCIITableFormat(t *testing.T) {
+	resources := map[string]map[string][]ResourceInfo{
+		"test-namespace": {
+			"ConfigMap": {{Name: "configmap-1"}},
+		},
+	}
+
+	opts := common.Opts{GroupBy: "namespace"}
+	buffer := FormatOutput(resources, opts)
+	output := buffer.String()
+	for _, expected := range []string{
+		"+---+---------------+---------------+",
+		"| # | RESOURCE TYPE | RESOURCE NAME |",
+		"| 1 | ConfigMap     | configmap-1   |",
+	} {
+		if !strings.Contains(output, expected) {
+			t.Errorf("Expected output to contain %q, got %s", expected, output)
+		}
+	}
+	if strings.Contains(output, "┌") {
+		t.Errorf("Expected ASCII table style, got %s", output)
+	}
+}
+
 func TestFormatOutputGroupByResource(t *testing.T) {
 	ResourceKindList = map[string]ResourceKind{
 		"configmap": {Plural: "configmaps"},
