@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"sync"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -47,11 +48,12 @@ func retrieveIngressTLS(clientset kubernetes.Interface, namespace string) ([]str
 
 }
 
-// retrievePersistentVolumeSecrets returns the Secrets in namespace that CSI
+// retrievePersistentVolumeSecrets returns, by namespace, the Secrets that CSI
 // PersistentVolumes reference for their mount, stage, publish or expand calls,
-// as statically provisioned SMB, NFS or Azure Files volumes do. Without access
+// as statically provisioned SMB, NFS or Azure Files volumes do. PersistentVolumes
+// are cluster scoped, so they are listed once for all namespaces. Without access
 // to PersistentVolumes no reference is returned.
-func retrievePersistentVolumeSecrets(clientset kubernetes.Interface, namespace string) ([]string, error) {
+func retrievePersistentVolumeSecrets(clientset kubernetes.Interface) (map[string][]string, error) {
 	pvs, err := clientset.CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		if apierrors.IsForbidden(err) {
@@ -60,7 +62,7 @@ func retrievePersistentVolumeSecrets(clientset kubernetes.Interface, namespace s
 		return nil, fmt.Errorf("failed to retrieve PersistentVolumes: %v", err)
 	}
 
-	var secretNames []string
+	secretNames := make(map[string][]string)
 	for _, pv := range pvs.Items {
 		csi := pv.Spec.CSI
 		if csi == nil {
@@ -73,12 +75,21 @@ func retrievePersistentVolumeSecrets(clientset kubernetes.Interface, namespace s
 			csi.ControllerExpandSecretRef,
 			csi.NodeExpandSecretRef,
 		} {
-			if ref != nil && ref.Name != "" && ref.Namespace == namespace {
-				secretNames = append(secretNames, ref.Name)
+			if ref != nil && ref.Name != "" && ref.Namespace != "" {
+				secretNames[ref.Namespace] = append(secretNames[ref.Namespace], ref.Name)
 			}
 		}
 	}
 	return secretNames, nil
+}
+
+// persistentVolumeSecretsOnce lists the PersistentVolume Secret references the
+// first time it is called and returns the same result afterwards, so commands
+// that go through several namespaces list PersistentVolumes only once.
+func persistentVolumeSecretsOnce(clientset kubernetes.Interface) func() (map[string][]string, error) {
+	return sync.OnceValues(func() (map[string][]string, error) {
+		return retrievePersistentVolumeSecrets(clientset)
+	})
 }
 
 func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, []string, error) {
@@ -197,13 +208,11 @@ func retrieveSecretNames(clientset kubernetes.Interface, namespace string, filte
 	return names, unusedSecretNames, nil
 }
 
-func processNamespaceSecret(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
+// processNamespaceSecret reports the unused Secrets of namespace. pvSecrets are
+// the Secrets of namespace referenced by PersistentVolumes, see
+// retrievePersistentVolumeSecrets.
+func processNamespaceSecret(clientset kubernetes.Interface, namespace string, pvSecrets []string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
 	envSecrets, envSecrets2, volumeSecrets, initContainerEnvSecrets, pullSecrets, tlsSecrets, err := retrieveUsedSecret(clientset, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	pvSecrets, err := retrievePersistentVolumeSecrets(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -258,8 +267,12 @@ func processNamespaceSecret(clientset kubernetes.Interface, namespace string, fi
 
 func GetUnusedSecrets(filterOpts *filters.Options, clientset kubernetes.Interface, outputFormat string, opts common.Opts) (string, error) {
 	resources := make(map[string]map[string][]ResourceInfo)
+	pvSecrets, err := retrievePersistentVolumeSecrets(clientset)
+	if err != nil {
+		return "", err
+	}
 	for _, namespace := range filterOpts.Namespaces(clientset) {
-		diff, err := processNamespaceSecret(clientset, namespace, filterOpts, opts)
+		diff, err := processNamespaceSecret(clientset, namespace, pvSecrets[namespace], filterOpts, opts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to process namespace %s: %v\n", namespace, err)
 			continue
