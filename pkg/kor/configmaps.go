@@ -73,6 +73,18 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 				}
 			}
 		}
+		for _, container := range pod.Spec.EphemeralContainers {
+			for _, env := range container.Env {
+				if env.ValueFrom != nil && env.ValueFrom.ConfigMapKeyRef != nil {
+					envCM = append(envCM, env.ValueFrom.ConfigMapKeyRef.Name)
+				}
+			}
+			for _, envFrom := range container.EnvFrom {
+				if envFrom.ConfigMapRef != nil {
+					envFromCM = append(envFromCM, envFrom.ConfigMapRef.Name)
+				}
+			}
+		}
 	}
 
 	return volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, nil
