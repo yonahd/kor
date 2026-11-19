@@ -93,6 +93,23 @@ func retrieveUsedSecret(clientset kubernetes.Interface, namespace string) ([]str
 			if volume.CSI != nil && volume.CSI.NodePublishSecretRef != nil {
 				volumeSecrets = append(volumeSecrets, volume.CSI.NodePublishSecretRef.Name)
 			}
+			// in-tree volume plugins that read their credentials from a Secret
+			switch {
+			case volume.AzureFile != nil && volume.AzureFile.SecretName != "":
+				volumeSecrets = append(volumeSecrets, volume.AzureFile.SecretName)
+			case volume.CephFS != nil && volume.CephFS.SecretRef != nil:
+				volumeSecrets = append(volumeSecrets, volume.CephFS.SecretRef.Name)
+			case volume.RBD != nil && volume.RBD.SecretRef != nil:
+				volumeSecrets = append(volumeSecrets, volume.RBD.SecretRef.Name)
+			case volume.ISCSI != nil && volume.ISCSI.SecretRef != nil:
+				volumeSecrets = append(volumeSecrets, volume.ISCSI.SecretRef.Name)
+			case volume.FlexVolume != nil && volume.FlexVolume.SecretRef != nil:
+				volumeSecrets = append(volumeSecrets, volume.FlexVolume.SecretRef.Name)
+			case volume.ScaleIO != nil && volume.ScaleIO.SecretRef != nil:
+				volumeSecrets = append(volumeSecrets, volume.ScaleIO.SecretRef.Name)
+			case volume.StorageOS != nil && volume.StorageOS.SecretRef != nil:
+				volumeSecrets = append(volumeSecrets, volume.StorageOS.SecretRef.Name)
+			}
 			if volume.Projected != nil && volume.Projected.Sources != nil {
 				for _, projectedResource := range volume.Projected.Sources {
 					if projectedResource.Secret != nil {
