@@ -108,7 +108,7 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 	return noNamespaceDiff, clearedResourceList
 }
 
-func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *filters.Options, opts common.Opts) []ResourceDiff {
+func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, pvSecrets func() (map[string][]string, error), filterOpts *filters.Options, opts common.Opts) []ResourceDiff {
 	return retrieveResourceDiffs(resourceList, func(resource string) ResourceDiff {
 		canonicalType := getCanonicalResourceType(resource)
 		switch canonicalType {
@@ -117,7 +117,7 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 		case "service":
 			return getUnusedSVCs(clientset, namespace, filterOpts, opts)
 		case "secret":
-			return getUnusedSecrets(clientset, namespace, filterOpts, opts)
+			return getUnusedSecrets(clientset, namespace, pvSecrets, filterOpts, opts)
 		case "serviceaccount":
 			return getUnusedServiceAccounts(clientset, namespace, filterOpts, opts)
 		case "deployment":
@@ -187,13 +187,14 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 		diffs     []ResourceDiff
 	}
 
+	pvSecrets := persistentVolumeSecretsOnce(clientset)
 	namespaceJobs := make([]func() namespaceResult, 0, len(namespaces))
 	for _, namespace := range namespaces {
 		ns := namespace
 		namespaceJobs = append(namespaceJobs, func() namespaceResult {
 			return namespaceResult{
 				namespace: ns,
-				diffs:     retrieveNamespaceDiffs(clientset, ns, resourceList, filterOpts, opts),
+				diffs:     retrieveNamespaceDiffs(clientset, ns, resourceList, pvSecrets, filterOpts, opts),
 			}
 		})
 	}
