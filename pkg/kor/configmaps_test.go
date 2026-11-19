@@ -260,6 +260,45 @@ func TestProcessNamespaceCMInitContainerVolumeMountName(t *testing.T) {
 	}
 }
 
+func TestGetUnusedConfigmapsEphemeralContainerEnv(t *testing.T) {
+	keyRef := CreateTestConfigmap(testNamespace, "debug-key-ref", AppLabels)
+	keyRef.Data = map[string]string{"mode": "verbose"}
+	envFrom := CreateTestConfigmap(testNamespace, "debug-env-from", AppLabels)
+	envFrom.Data = map[string]string{"DEBUG_LEVEL": "1"}
+	orphan := CreateTestConfigmap(testNamespace, "unreferenced", AppLabels)
+	pod := CreateTestPod(testNamespace, "debugged-pod", "", nil, AppLabels)
+	pod.Spec.Containers = []corev1.Container{{Name: "app", Image: "busybox"}}
+	pod.Spec.EphemeralContainers = []corev1.EphemeralContainer{
+		{EphemeralContainerCommon: corev1.EphemeralContainerCommon{
+			Name:  "debugger",
+			Image: "busybox",
+			Env: []corev1.EnvVar{{
+				Name: "DEBUG_MODE",
+				ValueFrom: &corev1.EnvVarSource{ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{Name: keyRef.Name},
+					Key:                  "mode",
+				}},
+			}},
+			EnvFrom: []corev1.EnvFromSource{{
+				ConfigMapRef: &corev1.ConfigMapEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: envFrom.Name}},
+			}},
+		}},
+	}
+	clientset := fake.NewClientset(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: testNamespace}}, pod, keyRef, envFrom, orphan)
+
+	output, err := GetUnusedConfigmaps(&filters.Options{}, clientset, "json", common.Opts{GroupBy: "namespace"})
+	if err != nil {
+		t.Fatalf("Error retrieving unused ConfigMaps: %v", err)
+	}
+	var got map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &got); err != nil {
+		t.Fatalf("Error unmarshaling unused ConfigMaps: %v", err)
+	}
+	if unused := got[testNamespace]["ConfigMap"]; !reflect.DeepEqual(unused, []string{orphan.Name}) {
+		t.Errorf("Expected only %s to be unused, got %v", orphan.Name, unused)
+	}
+}
+
 func TestGetUnusedConfigmapsStructured(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 
