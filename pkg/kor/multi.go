@@ -108,7 +108,8 @@ func retrieveNoNamespaceDiff(clientset kubernetes.Interface, apiExtClient apiext
 	return noNamespaceDiff, clearedResourceList
 }
 
-func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, resourceList []string, filterOpts *filters.Options, opts common.Opts) []ResourceDiff {
+func retrieveNamespaceDiffs(clientset kubernetes.Interface, dynamicClient dynamic.Interface, namespace string, resourceList []string, filterOpts *filters.Options, opts common.Opts) []ResourceDiff {
+	vpaSupported := isVpaSupported(clientset)
 	return retrieveResourceDiffs(resourceList, func(resource string) ResourceDiff {
 		canonicalType := getCanonicalResourceType(resource)
 		switch canonicalType {
@@ -128,6 +129,11 @@ func retrieveNamespaceDiffs(clientset kubernetes.Interface, namespace string, re
 			return getUnusedRoles(clientset, namespace, filterOpts, opts)
 		case "horizontalpodautoscaler":
 			return getUnusedHpas(clientset, namespace, filterOpts, opts)
+		case "verticalpodautoscaler":
+			if !vpaSupported {
+				return ResourceDiff{}
+			}
+			return getUnusedVpas(clientset, dynamicClient, namespace, filterOpts, opts)
 		case "persistentvolumeclaim":
 			return getUnusedPvcs(clientset, namespace, filterOpts, opts)
 		case "ingress":
@@ -193,7 +199,7 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 		namespaceJobs = append(namespaceJobs, func() namespaceResult {
 			return namespaceResult{
 				namespace: ns,
-				diffs:     retrieveNamespaceDiffs(clientset, ns, resourceList, filterOpts, opts),
+				diffs:     retrieveNamespaceDiffs(clientset, dynamicClient, ns, resourceList, filterOpts, opts),
 			}
 		})
 	}
@@ -205,7 +211,11 @@ func GetUnusedMulti(resourceNames string, filterOpts *filters.Options, clientset
 
 		for _, diff := range result.diffs {
 			if opts.DeleteFlag {
-				if diff.diff, err = DeleteResource(diff.diff, clientset, result.namespace, diff.resourceType, opts.NoInteractive); err != nil {
+				if diff.resourceType == "Vpa" {
+					if diff.diff, err = DeleteDynamicResource(diff.diff, dynamicClient, result.namespace, VpaGVR, opts.NoInteractive); err != nil {
+						fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", diff.resourceType, diff.diff, result.namespace, err)
+					}
+				} else if diff.diff, err = DeleteResource(diff.diff, clientset, result.namespace, diff.resourceType, opts.NoInteractive); err != nil {
 					fmt.Fprintf(os.Stderr, "Failed to delete %s %s in namespace %s: %v\n", diff.resourceType, diff.diff, result.namespace, err)
 				}
 			}
