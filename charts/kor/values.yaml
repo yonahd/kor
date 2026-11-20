@@ -27,6 +27,7 @@ cronJob:
   imagePullPolicy: Always
   imagePullSecrets: []
   podSecurityContext: {}
+  priorityClassName: ""
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 2
 
@@ -49,6 +50,7 @@ prometheusExporter:
     imagePullPolicy: Always
     imagePullSecrets: []
     podSecurityContext: {}
+    priorityClassName: ""
     replicaCount: 1
     resources: {}
       # limits:

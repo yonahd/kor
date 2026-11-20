@@ -64,6 +64,9 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- with .Values.cronJob.priorityClassName }}
+          priorityClassName: {{ . | quote }}
+          {{- end }}
   {{- if .Values.cronJob.successfulJobsHistoryLimit }}
   successfulJobsHistoryLimit: {{ .Values.cronJob.successfulJobsHistoryLimit }}
   {{- end }}
