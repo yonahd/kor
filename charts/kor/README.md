@@ -1,6 +1,6 @@
 # kor
 
-![Version: 0.2.17](https://img.shields.io/badge/Version-0.2.17-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.7.0](https://img.shields.io/badge/AppVersion-0.7.0-informational?style=flat-square)
+![Version: 0.2.18](https://img.shields.io/badge/Version-0.2.18-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.7.0](https://img.shields.io/badge/AppVersion-0.7.0-informational?style=flat-square)
 
 A Kubernetes Helm Chart to discover orphaned resources using kor
 
@@ -36,6 +36,7 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | prometheusExporter.args[0] | string | `"exporter"` |  |
 | prometheusExporter.command[0] | string | `"kor"` |  |
 | prometheusExporter.deployment.affinity | object | `{}` |  |
+| prometheusExporter.deployment.extraEnv | list | `[]` |  |
 | prometheusExporter.deployment.image.repository | string | `"yonahdissen/kor"` |  |
 | prometheusExporter.deployment.image.tag | string | `"latest"` |  |
 | prometheusExporter.deployment.imagePullPolicy | string | `"Always"` |  |
