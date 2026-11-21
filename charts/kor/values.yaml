@@ -69,6 +69,7 @@ prometheusExporter:
     nodeSelector: {}
     tolerations: []
     affinity: {}
+    extraEnv: []
 
   service:
     type: ClusterIP

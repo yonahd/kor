@@ -46,11 +46,16 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if .Values.prometheusExporter.exporterInterval }}
+          {{- if (or .Values.prometheusExporter.deployment.extraEnv .Values.prometheusExporter.exporterInterval) }}
           env:
-          - name: EXPORTER_INTERVAL
-            value: {{ .Values.prometheusExporter.exporterInterval | quote }}
-          {{- end}}
+            {{- with .Values.prometheusExporter.exporterInterval }}
+            - name: EXPORTER_INTERVAL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.prometheusExporter.deployment.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
       {{- with .Values.prometheusExporter.deployment.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
