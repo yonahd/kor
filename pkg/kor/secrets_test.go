@@ -3,15 +3,18 @@ package kor
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"reflect"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+	clienttesting "k8s.io/client-go/testing"
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
@@ -279,7 +282,7 @@ func TestRetrieveSecretNames(t *testing.T) {
 func TestProcessNamespaceSecret(t *testing.T) {
 	clientset := createTestSecrets(t)
 
-	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, &filters.Options{}, common.Opts{})
+	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, nil, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Fatalf("Error retrieving unused secrets: %v", err)
 	}
@@ -319,7 +322,7 @@ func TestProcessNamespaceSecretCSINodePublishSecretRef(t *testing.T) {
 		}
 	}
 
-	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, &filters.Options{}, common.Opts{})
+	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, nil, &filters.Options{}, common.Opts{})
 	if err != nil {
 		t.Fatalf("Error retrieving unused secrets: %v", err)
 	}
@@ -329,6 +332,140 @@ func TestProcessNamespaceSecretCSINodePublishSecretRef(t *testing.T) {
 	}
 	if !resourceInfoContains(unusedSecrets, unusedSecret.Name) {
 		t.Errorf("Expected %s to be reported as unused", unusedSecret.Name)
+	}
+}
+
+func TestProcessNamespaceSecretPersistentVolumeCSIRefs(t *testing.T) {
+	clientset := fake.NewClientset()
+
+	stageSecret := CreateTestSecret(testNamespace, "smb-credentials", AppLabels)
+	expandSecret := CreateTestSecret(testNamespace, "expand-credentials", AppLabels)
+	unusedSecret := CreateTestSecret(testNamespace, "orphan", AppLabels)
+	otherNamespaceSecret := CreateTestSecret("other-namespace", "smb-credentials", AppLabels)
+
+	pv := &corev1.PersistentVolume{
+		ObjectMeta: v1.ObjectMeta{Name: "smb-static"},
+		Spec: corev1.PersistentVolumeSpec{
+			PersistentVolumeSource: corev1.PersistentVolumeSource{CSI: &corev1.CSIPersistentVolumeSource{
+				Driver:                    "smb.csi.k8s.io",
+				VolumeHandle:              "smb-server/share",
+				NodeStageSecretRef:        &corev1.SecretReference{Name: stageSecret.Name, Namespace: testNamespace},
+				ControllerExpandSecretRef: &corev1.SecretReference{Name: expandSecret.Name, Namespace: testNamespace},
+			}},
+		},
+	}
+	if _, err := clientset.CoreV1().PersistentVolumes().Create(context.TODO(), pv, v1.CreateOptions{}); err != nil {
+		t.Fatalf("Error creating fake persistent volume: %v", err)
+	}
+	for _, secret := range []*corev1.Secret{stageSecret, expandSecret, unusedSecret, otherNamespaceSecret} {
+		if _, err := clientset.CoreV1().Secrets(secret.Namespace).Create(context.TODO(), secret, v1.CreateOptions{}); err != nil {
+			t.Fatalf("Error creating fake secret: %v", err)
+		}
+	}
+
+	pvSecrets, err := retrievePersistentVolumeSecrets(clientset)
+	if err != nil {
+		t.Fatalf("Error retrieving PersistentVolume secrets: %v", err)
+	}
+
+	unusedSecrets, err := processNamespaceSecret(clientset, testNamespace, pvSecrets[testNamespace], &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused secrets: %v", err)
+	}
+	for _, used := range []string{stageSecret.Name, expandSecret.Name} {
+		if resourceInfoContains(unusedSecrets, used) {
+			t.Errorf("Secret %s is referenced by a CSI PersistentVolume and must not be reported as unused", used)
+		}
+	}
+	if !resourceInfoContains(unusedSecrets, unusedSecret.Name) {
+		t.Errorf("Expected %s to be reported as unused", unusedSecret.Name)
+	}
+
+	otherUnused, err := processNamespaceSecret(clientset, "other-namespace", pvSecrets["other-namespace"], &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Fatalf("Error retrieving unused secrets: %v", err)
+	}
+	if !resourceInfoContains(otherUnused, otherNamespaceSecret.Name) {
+		t.Errorf("A Secret with the same name in another namespace must still be reported as unused")
+	}
+}
+
+func countPersistentVolumeLists(clientset *fake.Clientset) int {
+	count := 0
+	for _, action := range clientset.Actions() {
+		if action.Matches("list", "persistentvolumes") {
+			count++
+		}
+	}
+	return count
+}
+
+func createTestNamespacesWithSecrets(t *testing.T, clientset *fake.Clientset, namespaces ...string) {
+	t.Helper()
+	for _, ns := range namespaces {
+		if _, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+			ObjectMeta: v1.ObjectMeta{Name: ns},
+		}, v1.CreateOptions{}); err != nil {
+			t.Fatalf("Error creating namespace %s: %v", ns, err)
+		}
+		if _, err := clientset.CoreV1().Secrets(ns).Create(context.TODO(), CreateTestSecret(ns, "orphan", AppLabels), v1.CreateOptions{}); err != nil {
+			t.Fatalf("Error creating fake secret: %v", err)
+		}
+	}
+}
+
+func TestGetUnusedSecretsListsPersistentVolumesOnce(t *testing.T) {
+	clientset := fake.NewClientset()
+	createTestNamespacesWithSecrets(t, clientset, "ns-a", "ns-b", "ns-c")
+
+	opts := common.Opts{NoInteractive: true, GroupBy: "namespace"}
+	if _, err := GetUnusedSecrets(&filters.Options{}, clientset, "json", opts); err != nil {
+		t.Fatalf("Error calling GetUnusedSecrets: %v", err)
+	}
+	if got := countPersistentVolumeLists(clientset); got != 1 {
+		t.Errorf("Expected PersistentVolumes to be listed once for 3 namespaces, got %d", got)
+	}
+
+	clientset.ClearActions()
+	if _, err := GetUnusedAllNamespaced(&filters.Options{}, clientset, "json", opts); err != nil {
+		t.Fatalf("Error calling GetUnusedAllNamespaced: %v", err)
+	}
+	if got := countPersistentVolumeLists(clientset); got != 1 {
+		t.Errorf("Expected GetUnusedAllNamespaced to list PersistentVolumes once for 3 namespaces, got %d", got)
+	}
+}
+
+func TestGetUnusedSecretsPersistentVolumesForbidden(t *testing.T) {
+	clientset := fake.NewClientset()
+	createTestNamespacesWithSecrets(t, clientset, testNamespace)
+	clientset.PrependReactor("list", "persistentvolumes", func(clienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewForbidden(corev1.Resource("persistentvolumes"), "", errors.New("no access"))
+	})
+
+	opts := common.Opts{NoInteractive: true, GroupBy: "namespace"}
+	output, err := GetUnusedSecrets(&filters.Options{}, clientset, "json", opts)
+	if err != nil {
+		t.Fatalf("Expected no error when PersistentVolumes cannot be listed, got: %v", err)
+	}
+	var actual map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &actual); err != nil {
+		t.Fatalf("Error unmarshaling actual JSON: %v", err)
+	}
+	if got := actual[testNamespace]["Secret"]; !reflect.DeepEqual(got, []string{"orphan"}) {
+		t.Errorf("Expected orphan to be reported as unused, got %v", got)
+	}
+}
+
+func TestGetUnusedSecretsPersistentVolumesError(t *testing.T) {
+	clientset := fake.NewClientset()
+	createTestNamespacesWithSecrets(t, clientset, testNamespace)
+	clientset.PrependReactor("list", "persistentvolumes", func(clienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, errors.New("connection refused")
+	})
+
+	opts := common.Opts{NoInteractive: true, GroupBy: "namespace"}
+	if _, err := GetUnusedSecrets(&filters.Options{}, clientset, "json", opts); err == nil {
+		t.Fatal("Expected an error when listing PersistentVolumes fails")
 	}
 }
 
@@ -405,7 +542,7 @@ func TestFilterOwnerReferencedSecrets(t *testing.T) {
 
 	// Test without filter - should return both
 	filterOptsNoSkip := &filters.Options{IgnoreOwnerReferences: false}
-	unusedWithoutFilter, err := processNamespaceSecret(clientset, testNamespace, filterOptsNoSkip, common.Opts{})
+	unusedWithoutFilter, err := processNamespaceSecret(clientset, testNamespace, nil, filterOptsNoSkip, common.Opts{})
 	if err != nil {
 		t.Fatalf("Error retrieving unused secrets: %v", err)
 	}
@@ -416,7 +553,7 @@ func TestFilterOwnerReferencedSecrets(t *testing.T) {
 
 	// Test with filter - should return only standalone
 	filterOptsWithSkip := &filters.Options{IgnoreOwnerReferences: true}
-	unusedWithFilter, err := processNamespaceSecret(clientset, testNamespace, filterOptsWithSkip, common.Opts{})
+	unusedWithFilter, err := processNamespaceSecret(clientset, testNamespace, nil, filterOptsWithSkip, common.Opts{})
 	if err != nil {
 		t.Fatalf("Error retrieving unused secrets: %v", err)
 	}

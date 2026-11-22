@@ -55,8 +55,12 @@ func getUnusedSVCs(clientset kubernetes.Interface, namespace string, filterOpts 
 	return namespaceSVCDiff
 }
 
-func getUnusedSecrets(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ResourceDiff {
-	secretDiff, err := processNamespaceSecret(clientset, namespace, filterOpts, opts)
+func getUnusedSecrets(clientset kubernetes.Interface, namespace string, pvSecrets func() (map[string][]string, error), filterOpts *filters.Options, opts common.Opts) ResourceDiff {
+	var secretDiff []ResourceInfo
+	refs, err := pvSecrets()
+	if err == nil {
+		secretDiff, err = processNamespaceSecret(clientset, namespace, refs[namespace], filterOpts, opts)
+	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get %s namespace %s: %v\n", "secrets", namespace, err)
 	}
@@ -323,6 +327,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 	resources := make(map[string]map[string][]ResourceInfo)
 	maxWorkers := utils.MaxParallelWorkers()
 	namespaces := filterOpts.Namespaces(clientset)
+	pvSecrets := persistentVolumeSecretsOnce(clientset)
 
 	type namespaceResult struct {
 		namespace string
@@ -336,7 +341,7 @@ func GetUnusedAllNamespaced(filterOpts *filters.Options, clientset kubernetes.In
 			resourceDiffs := utils.RunJobs([]func() ResourceDiff{
 				func() ResourceDiff { return getUnusedCMs(clientset, ns, filterOpts, opts) },
 				func() ResourceDiff { return getUnusedSVCs(clientset, ns, filterOpts, opts) },
-				func() ResourceDiff { return getUnusedSecrets(clientset, ns, filterOpts, opts) },
+				func() ResourceDiff { return getUnusedSecrets(clientset, ns, pvSecrets, filterOpts, opts) },
 				func() ResourceDiff { return getUnusedServiceAccounts(clientset, ns, filterOpts, opts) },
 				func() ResourceDiff { return getUnusedDeployments(clientset, ns, filterOpts, opts) },
 				func() ResourceDiff { return getUnusedStatefulSets(clientset, ns, filterOpts, opts) },
