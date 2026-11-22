@@ -9,6 +9,7 @@ import (
 	"os"
 
 	v1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -30,10 +31,21 @@ func filterSubjects(subjects []v1.Subject, kind string) []v1.Subject {
 	return serviceAccountSubjects
 }
 
-// Check if any valid service accounts exist in the RoleBinding
-func isUsingValidServiceAccount(serviceAccounts []v1.Subject, serviceAccountNames map[string]bool) bool {
+// Check if any valid service accounts exist in the RoleBinding.
+// serviceAccountNames holds the service accounts of the RoleBinding namespace. A subject
+// without a namespace refers to that namespace, any other subject is looked up in its own namespace.
+func isUsingValidServiceAccount(clientset kubernetes.Interface, namespace string, serviceAccounts []v1.Subject, serviceAccountNames map[string]bool) bool {
 	for _, sa := range serviceAccounts {
-		if serviceAccountNames[sa.Name] {
+		if sa.Namespace == "" || sa.Namespace == namespace {
+			if serviceAccountNames[sa.Name] {
+				return true
+			}
+			continue
+		}
+
+		_, err := clientset.CoreV1().ServiceAccounts(sa.Namespace).Get(context.TODO(), sa.Name, metav1.GetOptions{})
+		// Only NotFound proves the service account is missing, so do not report the RoleBinding on other errors.
+		if err == nil || !apierrors.IsNotFound(err) {
 			return true
 		}
 	}
@@ -116,7 +128,7 @@ func processNamespaceRoleBindings(clientset kubernetes.Interface, namespace stri
 		}
 
 		// Check if RoleBinding uses a valid service account
-		if !isUsingValidServiceAccount(serviceAccountSubjects, serviceAccountNames) {
+		if !isUsingValidServiceAccount(clientset, namespace, serviceAccountSubjects, serviceAccountNames) {
 			unusedRoleBindingNames = append(unusedRoleBindingNames, ResourceInfo{Name: rb.Name, Reason: "RoleBinding references a non-existing ServiceAccount"})
 		}
 	}

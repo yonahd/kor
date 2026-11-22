@@ -3,16 +3,19 @@ package kor
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"reflect"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+	clienttesting "k8s.io/client-go/testing"
 
 	"github.com/yonahd/kor/pkg/common"
 	"github.com/yonahd/kor/pkg/filters"
@@ -154,6 +157,111 @@ func TestGetUnusedRoleBindingStructured(t *testing.T) {
 
 	if !reflect.DeepEqual(expectedOutput, actualOutput) {
 		t.Errorf("Expected output does not match actual output")
+	}
+}
+
+func TestProcessNamespaceRoleBindingsServiceAccountNamespace(t *testing.T) {
+	const otherNamespace = "other-namespace"
+
+	clientset := fake.NewClientset()
+
+	for _, ns := range []string{testNamespace, otherNamespace} {
+		_, err := clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+			ObjectMeta: v1.ObjectMeta{Name: ns},
+		}, v1.CreateOptions{})
+		if err != nil {
+			t.Fatalf("Error creating namespace %s: %v", ns, err)
+		}
+	}
+
+	_, err := clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), CreateTestRole(testNamespace, "existing-role", AppLabels), v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake Role: %v", err)
+	}
+
+	// "builder" only exists in otherNamespace, "local" only exists in testNamespace.
+	serviceAccounts := map[string]string{
+		"builder": otherNamespace,
+		"local":   testNamespace,
+	}
+	for name, ns := range serviceAccounts {
+		_, err = clientset.CoreV1().ServiceAccounts(ns).Create(context.TODO(), CreateTestServiceAccount(ns, name, AppLabels), v1.CreateOptions{})
+		if err != nil {
+			t.Fatalf("Error creating fake ServiceAccount %s/%s: %v", ns, name, err)
+		}
+	}
+
+	roleBindings := []struct {
+		name    string
+		subject rbacv1.Subject
+	}{
+		// The ServiceAccount lives in another namespace: the RoleBinding is in use.
+		{"cross-namespace-existing", rbacv1.Subject{Kind: "ServiceAccount", Name: "builder", Namespace: otherNamespace}},
+		// A ServiceAccount with this name exists in the RoleBinding namespace, but the subject points elsewhere.
+		{"cross-namespace-missing", rbacv1.Subject{Kind: "ServiceAccount", Name: "local", Namespace: otherNamespace}},
+		// The subject namespace is explicit and matches the RoleBinding namespace.
+		{"same-namespace-existing", rbacv1.Subject{Kind: "ServiceAccount", Name: "local", Namespace: testNamespace}},
+		// An empty subject namespace defaults to the RoleBinding namespace.
+		{"implicit-namespace-existing", rbacv1.Subject{Kind: "ServiceAccount", Name: "local"}},
+		{"implicit-namespace-missing", rbacv1.Subject{Kind: "ServiceAccount", Name: "builder"}},
+	}
+	for _, rb := range roleBindings {
+		roleBinding := CreateTestRoleBinding(testNamespace, rb.name, "unused", CreateTestRoleRef("existing-role"))
+		roleBinding.Subjects = []rbacv1.Subject{rb.subject}
+		_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), roleBinding, v1.CreateOptions{})
+		if err != nil {
+			t.Fatalf("Error creating fake RoleBinding %s: %v", rb.name, err)
+		}
+	}
+
+	unusedRoleBindings, err := processNamespaceRoleBindings(clientset, testNamespace, &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	var got []string
+	for _, rb := range unusedRoleBindings {
+		got = append(got, rb.Name)
+	}
+
+	expected := []string{"cross-namespace-missing", "implicit-namespace-missing"}
+	if !stringSlicesEqual(got, expected) {
+		t.Errorf("Expected unused role bindings %v, got %v", expected, got)
+	}
+}
+
+func TestProcessNamespaceRoleBindingsServiceAccountLookupError(t *testing.T) {
+	const otherNamespace = "other-namespace"
+
+	clientset := fake.NewClientset()
+
+	_, err := clientset.RbacV1().Roles(testNamespace).Create(context.TODO(), CreateTestRole(testNamespace, "existing-role", AppLabels), v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake Role: %v", err)
+	}
+
+	// Reading service accounts of the other namespace is not allowed, so we cannot tell if "builder" exists.
+	clientset.PrependReactor("get", "serviceaccounts", func(action clienttesting.Action) (bool, runtime.Object, error) {
+		if action.GetNamespace() != otherNamespace {
+			return false, nil, nil
+		}
+		return true, nil, apierrors.NewForbidden(corev1.Resource("serviceaccounts"), "builder", errors.New("not allowed"))
+	})
+
+	roleBinding := CreateTestRoleBinding(testNamespace, "cross-namespace", "unused", CreateTestRoleRef("existing-role"))
+	roleBinding.Subjects = []rbacv1.Subject{{Kind: "ServiceAccount", Name: "builder", Namespace: otherNamespace}}
+	_, err = clientset.RbacV1().RoleBindings(testNamespace).Create(context.TODO(), roleBinding, v1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Error creating fake RoleBinding: %v", err)
+	}
+
+	unusedRoleBindings, err := processNamespaceRoleBindings(clientset, testNamespace, &filters.Options{}, common.Opts{})
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if len(unusedRoleBindings) != 0 {
+		t.Errorf("Expected no unused role bindings when the service account lookup fails, got %v", unusedRoleBindings)
 	}
 }
 
