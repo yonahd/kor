@@ -68,6 +68,9 @@ spec:
       dnsPolicy: ClusterFirst
       {{- with .Values.prometheusExporter.deployment.podSecurityContext }}
       securityContext: 
-        {{- toYaml . | nindent 8}}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.prometheusExporter.deployment.priorityClassName }}
+      priorityClassName: {{ . | quote }}
       {{- end }}
 {{- end }}
