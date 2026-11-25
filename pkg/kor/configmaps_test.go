@@ -279,8 +279,7 @@ func TestGetUnusedConfigmapsEphemeralContainerEnv(t *testing.T) {
 			}},
 		}},
 	}
-	clientset := fake.NewClientset(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name:
-pod, keyRef, envFrom, orphan)
+	clientset := fake.NewClientset(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: testNamespace}}, pod, keyRef, envFrom, orphan)
 
 	output, err := GetUnusedConfigmaps(&filters.Options{}, clientset, "json", common.Opts{GroupBy: "namespace"})
 	if err != nil {
@@ -397,3 +396,4 @@ func init() {
 	scheme.Scheme = runtime.NewScheme()
 	_ = appsv1.AddToScheme(scheme.Scheme)
 }
+ 
