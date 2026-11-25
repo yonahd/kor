@@ -19,16 +19,15 @@ import (
 //go:embed exceptions/configmaps/configmaps.json
 var configMapsConfig []byte
 
-func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, []string, error) {
+func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string, []string, []string, []string, error) {
 	var volumesCM []string
 	var envCM []string
 	var envFromCM []string
-	var envFromContainerCM []string
 	var envFromInitContainerCM []string
 
 	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	for _, pod := range pods.Items {
@@ -53,11 +52,6 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 			for _, envFrom := range container.EnvFrom {
 				if envFrom.ConfigMapRef != nil {
 					envFromCM = append(envFromCM, envFrom.ConfigMapRef.Name)
-				}
-			}
-			for _, envFrom := range container.EnvFrom {
-				if envFrom.ConfigMapRef != nil {
-					envFromContainerCM = append(envFromContainerCM, envFrom.ConfigMapRef.Name)
 				}
 			}
 		}
@@ -87,7 +81,7 @@ func retrieveUsedCM(clientset kubernetes.Interface, namespace string) ([]string,
 		}
 	}
 
-	return volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, nil
+	return volumesCM, envCM, envFromCM, envFromInitContainerCM, nil
 }
 
 func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options) ([]string, []string, error) {
@@ -120,7 +114,7 @@ func retrieveConfigMapNames(clientset kubernetes.Interface, namespace string, fi
 }
 
 func processNamespaceCM(clientset kubernetes.Interface, namespace string, filterOpts *filters.Options, opts common.Opts) ([]ResourceInfo, error) {
-	volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, namespace)
+	volumesCM, envCM, envFromCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +126,6 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 	volumesCM = RemoveDuplicatesAndSort(volumesCM)
 	envCM = RemoveDuplicatesAndSort(envCM)
 	envFromCM = RemoveDuplicatesAndSort(envFromCM)
-	envFromContainerCM = RemoveDuplicatesAndSort(envFromContainerCM)
 	envFromInitContainerCM = RemoveDuplicatesAndSort(envFromInitContainerCM)
 
 	configMapNames, unusedConfigmapNames, err := retrieveConfigMapNames(clientset, namespace, filterOpts)
@@ -145,7 +138,6 @@ func processNamespaceCM(clientset kubernetes.Interface, namespace string, filter
 		volumesCM,
 		envCM,
 		envFromCM,
-		envFromContainerCM,
 		envFromInitContainerCM,
 	}
 
