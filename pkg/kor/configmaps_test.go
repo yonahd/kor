@@ -183,7 +183,7 @@ func TestProcessNamespaceCM(t *testing.T) {
 func TestRetrieveUsedCM(t *testing.T) {
 	clientset := createTestConfigmaps(t)
 
-	volumesCM, envCM, envFromCM, envFromContainerCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, testNamespace)
+	volumesCM, envCM, envFromCM, envFromInitContainerCM, err := retrieveUsedCM(clientset, testNamespace)
 
 	if err != nil {
 		t.Fatalf("Error retrieving used ConfigMaps: %v", err)
@@ -204,11 +204,6 @@ func TestRetrieveUsedCM(t *testing.T) {
 	expectedEnvFromCM := []string{"configmap-2"}
 	if !equalSlices(envFromCM, expectedEnvFromCM) {
 		t.Errorf("Expected envFrom configmaps %v, got %v", expectedEnvFromCM, envFromCM)
-	}
-
-	expectedEnvFromContainerCM := []string{"configmap-2"}
-	if !equalSlices(envFromContainerCM, expectedEnvFromContainerCM) {
-		t.Errorf("Expected envFrom configmaps %v, got %v", expectedEnvFromContainerCM, envFromContainerCM)
 	}
 
 	expectedEnvFromInitContainerCM := []string{"configmap-2", "configmap-6"}
@@ -284,7 +279,8 @@ func TestGetUnusedConfigmapsEphemeralContainerEnv(t *testing.T) {
 			}},
 		}},
 	}
-	clientset := fake.NewClientset(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: testNamespace}}, pod, keyRef, envFrom, orphan)
+	clientset := fake.NewClientset(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name:
+pod, keyRef, envFrom, orphan)
 
 	output, err := GetUnusedConfigmaps(&filters.Options{}, clientset, "json", common.Opts{GroupBy: "namespace"})
 	if err != nil {
