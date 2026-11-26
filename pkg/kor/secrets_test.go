@@ -469,6 +469,45 @@ func TestGetUnusedSecretsPersistentVolumesError(t *testing.T) {
 	}
 }
 
+func TestGetUnusedSecretsEphemeralContainerEnv(t *testing.T) {
+	keyRef := CreateTestSecret(testNamespace, "debug-key-ref", AppLabels)
+	keyRef.Data = map[string][]byte{"mode": []byte("verbose")}
+	envFrom := CreateTestSecret(testNamespace, "debug-env-from", AppLabels)
+	envFrom.Data = map[string][]byte{"DEBUG_LEVEL": []byte("1")}
+	orphan := CreateTestSecret(testNamespace, "unreferenced", AppLabels)
+	pod := CreateTestPod(testNamespace, "debugged-pod", "", nil, AppLabels)
+	pod.Spec.Containers = []corev1.Container{{Name: "app", Image: "busybox"}}
+	pod.Spec.EphemeralContainers = []corev1.EphemeralContainer{
+		{EphemeralContainerCommon: corev1.EphemeralContainerCommon{
+			Name:  "debugger",
+			Image: "busybox",
+			Env: []corev1.EnvVar{{
+				Name: "DEBUG_MODE",
+				ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{Name: keyRef.Name},
+					Key:                  "mode",
+				}},
+			}},
+			EnvFrom: []corev1.EnvFromSource{{
+				SecretRef: &corev1.SecretEnvSource{LocalObjectReference: corev1.LocalObjectReference{Name: envFrom.Name}},
+			}},
+		}},
+	}
+	clientset := fake.NewClientset(&corev1.Namespace{ObjectMeta: v1.ObjectMeta{Name: testNamespace}}, pod, keyRef, envFrom, orphan)
+
+	output, err := GetUnusedSecrets(&filters.Options{}, clientset, "json", common.Opts{GroupBy: "namespace"})
+	if err != nil {
+		t.Fatalf("Error retrieving unused Secrets: %v", err)
+	}
+	var got map[string]map[string][]string
+	if err := json.Unmarshal([]byte(output), &got); err != nil {
+		t.Fatalf("Error unmarshaling unused Secrets: %v", err)
+	}
+	if unused := got[testNamespace]["Secret"]; !reflect.DeepEqual(unused, []string{orphan.Name}) {
+		t.Errorf("Expected only %s to be unused, got %v", orphan.Name, unused)
+	}
+}
+
 func TestGetUnusedSecretsStructured(t *testing.T) {
 	clientset := createTestSecrets(t)
 
