@@ -49,6 +49,7 @@ prometheusExporter:
     restartPolicy: Always
     imagePullPolicy: Always
     imagePullSecrets: []
+    podAnnotations: {}
     podSecurityContext: {}
     priorityClassName: ""
     replicaCount: 1
