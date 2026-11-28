@@ -76,6 +76,7 @@ prometheusExporter:
     extraEnv: []
 
   service:
+    annotations: {}
     type: ClusterIP
     port: 8080
 
