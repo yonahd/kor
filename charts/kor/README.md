@@ -1,6 +1,6 @@
 # kor
 
-![Version: 0.2.20](https://img.shields.io/badge/Version-0.2.20-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.7.1](https://img.shields.io/badge/AppVersion-0.7.1-informational?style=flat-square)
+![Version: 0.2.21](https://img.shields.io/badge/Version-0.2.21-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.7.1](https://img.shields.io/badge/AppVersion-0.7.1-informational?style=flat-square)
 
 A Kubernetes Helm Chart to discover orphaned resources using kor
 
@@ -25,6 +25,7 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | cronJob.imagePullSecrets | list | `[]` |  |
 | cronJob.name | string | `"kor"` |  |
 | cronJob.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources |
+| cronJob.podAnnotations | object | `{}` |  |
 | cronJob.podSecurityContext | object | `{}` |  |
 | cronJob.priorityClassName | string | `""` |  |
 | cronJob.restartPolicy | string | `"OnFailure"` |  |
@@ -43,6 +44,7 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | prometheusExporter.deployment.imagePullPolicy | string | `"Always"` |  |
 | prometheusExporter.deployment.imagePullSecrets | list | `[]` |  |
 | prometheusExporter.deployment.nodeSelector | object | `{}` |  |
+| prometheusExporter.deployment.podAnnotations | object | `{}` |  |
 | prometheusExporter.deployment.podSecurityContext | object | `{}` |  |
 | prometheusExporter.deployment.priorityClassName | string | `""` |  |
 | prometheusExporter.deployment.replicaCount | int | `1` |  |
@@ -54,6 +56,7 @@ A Kubernetes Helm Chart to discover orphaned resources using kor
 | prometheusExporter.exporterInterval | string | `""` |  |
 | prometheusExporter.name | string | `"kor-exporter"` |  |
 | prometheusExporter.namespaced | string | `nil` | Set true/false to explicitly return namespaced/non-namespaced resources |
+| prometheusExporter.service.annotations | object | `{}` |  |
 | prometheusExporter.service.port | int | `8080` |  |
 | prometheusExporter.service.type | string | `"ClusterIP"` |  |
 | prometheusExporter.serviceMonitor.enabled | bool | `true` |  |
