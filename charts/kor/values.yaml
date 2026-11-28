@@ -26,6 +26,7 @@ cronJob:
   restartPolicy: OnFailure
   imagePullPolicy: Always
   imagePullSecrets: []
+  podAnnotations: {}
   podSecurityContext: {}
   priorityClassName: ""
   successfulJobsHistoryLimit: 3
@@ -49,6 +50,7 @@ prometheusExporter:
     restartPolicy: Always
     imagePullPolicy: Always
     imagePullSecrets: []
+    podAnnotations: {}
     podSecurityContext: {}
     priorityClassName: ""
     replicaCount: 1
@@ -74,6 +76,7 @@ prometheusExporter:
     extraEnv: []
 
   service:
+    annotations: {}
     type: ClusterIP
     port: 8080
 

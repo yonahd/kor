@@ -3,10 +3,17 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Values.prometheusExporter.name }}
+  {{- $annotations := dict
+      "prometheus.io/scrape" "true"
+      "prometheus.io/path" "/metrics"
+      "prometheus.io/port" (.Values.prometheusExporter.service.port | toString) }}
+  {{- range $key, $value := .Values.prometheusExporter.service.annotations }}
+  {{- $_ := set $annotations $key (toString $value) }}
+  {{- end }}
+  {{- with $annotations }}
   annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/path: /metrics
-    prometheus.io/port: "8080"
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "kor.labels" . | nindent 4 }}
     app: {{ .Values.prometheusExporter.name }}
