@@ -26,6 +26,7 @@ cronJob:
   restartPolicy: OnFailure
   imagePullPolicy: Always
   imagePullSecrets: []
+  podAnnotations: {}
   podSecurityContext: {}
   priorityClassName: ""
   successfulJobsHistoryLimit: 3
